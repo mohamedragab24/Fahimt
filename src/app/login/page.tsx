@@ -56,9 +56,11 @@ export default function LoginPage() {
     e.preventDefault();
     if (isLogin) {
       try {
-        initiateEmailSignIn(auth, email, password);
+        initiateEmailSignIn(auth, email, password).catch((err: any) => {
+          toast({ variant: "destructive", title: "خطأ في الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
+        });
       } catch (err: any) {
-        toast({ variant: "destructive", title: "خطأ", description: "يرجى التأكد من البريد وكلمة المرور" });
+        toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ غير متوقع." });
       }
       return;
     }
@@ -66,6 +68,19 @@ export default function LoginPage() {
     if (!fullName || !phoneNumber || !birthDate || !email || !password) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال كافة البيانات الإلزامية" });
       return;
+    }
+
+    // التحقق من وجود البريد مسبقاً في قاعدة البيانات قبل الإرسال
+    if (firestore) {
+      setIsVerifying(true);
+      const q = query(collection(firestore, "users"), where("email", "==", email));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        toast({ variant: "destructive", title: "تنبيه", description: "هذا البريد الإلكتروني مسجل بالفعل، يرجى تسجيل الدخول." });
+        setIsVerifying(false);
+        return;
+      }
+      setIsVerifying(false);
     }
 
     setShowVerification(true);
@@ -110,14 +125,26 @@ export default function LoginPage() {
       const snap = await getDocs(q);
       
       if (!snap.empty) {
-        initiateEmailSignUp(auth, email, password);
-        await deleteDoc(snap.docs[0].ref);
+        // محاولة إنشاء الحساب مع معالجة الخطأ إذا كان البريد مستخدماً
+        initiateEmailSignUp(auth, email, password)
+          .then(async () => {
+            await deleteDoc(snap.docs[0].ref);
+          })
+          .catch((err: any) => {
+            if (err.code === 'auth/email-already-in-use') {
+              toast({ variant: "destructive", title: "خطأ في التسجيل", description: "هذا البريد مسجل بالفعل في النظام." });
+            } else {
+              toast({ variant: "destructive", title: "خطأ", description: "فشل إنشاء الحساب، يرجى المحاولة لاحقاً." });
+            }
+            setIsVerifying(false);
+            setShowVerification(false);
+          });
       } else {
         toast({ variant: "destructive", title: "خطأ", description: "رمز التحقق غير صحيح أو انتهت صلاحيته" });
+        setIsVerifying(false);
       }
     } catch (err) {
       toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء التحقق" });
-    } finally {
       setIsVerifying(false);
     }
   };
@@ -239,8 +266,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full font-black text-xl py-8 rounded-2xl shadow-xl">
-                {isLogin ? "دخول" : "إرسال رمز التحقق"}
+              <Button type="submit" disabled={isVerifying} className="w-full font-black text-xl py-8 rounded-2xl shadow-xl">
+                {isVerifying ? "جاري المعالجة..." : (isLogin ? "دخول" : "إرسال رمز التحقق")}
               </Button>
             </form>
           )}
