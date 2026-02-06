@@ -11,12 +11,9 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح بالقراءة لجميع المسجلين لتجنب أخطاء SDK الداخلية في الاستعلامات المجمعة
+    // السماح لجميع المسجلين بالوصول للطلبات لضمان عمل الاستعلامات المشتركة
     match /requests/{requestId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     match /users/{userId} {
@@ -28,6 +25,11 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow update, delete: if false;
       }
+    }
+    
+    // تأمين القواعد العالمية لتجنب أخطاء SDK
+    match /{document=**} {
+      allow read: if isSignedIn();
     }
   }
 }

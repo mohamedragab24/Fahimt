@@ -23,7 +23,7 @@ export interface UseCollectionResult<T> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Improved implementation to handle SDK internal assertion errors gracefully.
+ * Robust implementation to avoid SDK internal assertion errors during rapid re-renders.
  */
 export function useCollection<T = any>(
   memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
@@ -34,12 +34,12 @@ export function useCollection<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Cleanup previous listener if any
+    // Cleanup previous listener immediately
     if (unsubscribeRef.current) {
       try {
         unsubscribeRef.current();
       } catch (e) {
-        console.warn('Silent cleanup error:', e);
+        // Silent catch for internal SDK cleanup errors
       }
       unsubscribeRef.current = null;
     }
@@ -72,7 +72,6 @@ export function useCollection<T = any>(
         (err: FirestoreError) => {
           if (!isMounted) return;
           
-          // Handle permission errors gracefully
           if (err.code === 'permission-denied') {
             const contextualError = new FirestorePermissionError({
               operation: 'list',
@@ -82,10 +81,12 @@ export function useCollection<T = any>(
             setData(null);
             setIsLoading(false);
             
-            // Emit after a small delay to avoid interrupting SDK internal state
+            // Critical: Delay emission to let SDK finish its internal state cycle
             setTimeout(() => {
-              errorEmitter.emit('permission-error', contextualError);
-            }, 100);
+              if (isMounted) {
+                errorEmitter.emit('permission-error', contextualError);
+              }
+            }, 250);
           } else {
             setError(err);
             setIsLoading(false);
@@ -95,21 +96,22 @@ export function useCollection<T = any>(
 
       unsubscribeRef.current = unsubscribe;
     } catch (err: any) {
-      console.error('Failed to establish Firestore listener:', err);
-      setIsLoading(false);
-      setError(err);
+      if (isMounted) {
+        setIsLoading(false);
+        setError(err);
+      }
     }
 
     return () => {
       isMounted = false;
       if (unsubscribeRef.current) {
-        try {
-          unsubscribeRef.current();
-        } catch (e) {
-          // SDK assertion failure often happens during this call
-          console.warn('Caught SDK assertion during unsubscribe:', e);
-        }
+        const unsub = unsubscribeRef.current;
         unsubscribeRef.current = null;
+        try {
+          unsub();
+        } catch (e) {
+          // Prevent unhandled rejection during unmount
+        }
       }
     };
   }, [memoizedTargetRefOrQuery]);

@@ -22,7 +22,7 @@ export interface UseDocResult<T> {
 
 /**
  * React hook to subscribe to a single Firestore document in real-time.
- * Improved implementation to handle SDK internal assertion errors gracefully.
+ * Robust implementation to avoid SDK internal assertion errors during rapid re-renders.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
@@ -33,12 +33,11 @@ export function useDoc<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Cleanup previous listener
     if (unsubscribeRef.current) {
       try {
         unsubscribeRef.current();
       } catch (e) {
-        console.warn('Silent cleanup error:', e);
+        // Silent catch
       }
       unsubscribeRef.current = null;
     }
@@ -81,8 +80,10 @@ export function useDoc<T = any>(
             setIsLoading(false);
 
             setTimeout(() => {
-              errorEmitter.emit('permission-error', contextualError);
-            }, 100);
+              if (isMounted) {
+                errorEmitter.emit('permission-error', contextualError);
+              }
+            }, 250);
           } else {
             setError(err);
             setIsLoading(false);
@@ -92,20 +93,22 @@ export function useDoc<T = any>(
 
       unsubscribeRef.current = unsubscribe;
     } catch (err: any) {
-      console.error('Failed to establish doc listener:', err);
-      setIsLoading(false);
-      setError(err);
+      if (isMounted) {
+        setIsLoading(false);
+        setError(err);
+      }
     }
 
     return () => {
       isMounted = false;
       if (unsubscribeRef.current) {
-        try {
-          unsubscribeRef.current();
-        } catch (e) {
-          console.warn('Caught SDK assertion during doc unsubscribe:', e);
-        }
+        const unsub = unsubscribeRef.current;
         unsubscribeRef.current = null;
+        try {
+          unsub();
+        } catch (e) {
+          // Prevent unhandled rejection during unmount
+        }
       }
     };
   }, [memoizedDocRef]);

@@ -20,13 +20,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, doc, orderBy } from "firebase/firestore";
+import { collection, query, where, doc, orderBy, limit } from "firebase/firestore";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 export default function RequestsPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const requestsRef = useMemoFirebase(() => {
@@ -34,29 +34,28 @@ export default function RequestsPage() {
     return collection(firestore, "requests");
   }, [firestore, user]);
 
-  // استعلام للطلبات التي يكون فيها المستخدم طالباً
   const studentQuery = useMemoFirebase(() => {
-    if (!requestsRef || !user) return null;
-    return query(requestsRef, where("studentId", "==", user.uid), orderBy("createdAt", "desc"));
-  }, [requestsRef, user]);
+    if (!requestsRef || !user?.uid) return null;
+    return query(requestsRef, where("studentId", "==", user.uid), orderBy("createdAt", "desc"), limit(50));
+  }, [requestsRef, user?.uid]);
 
-  // استعلام للطلبات التي يكون فيها المستخدم مدرساً
   const teacherQuery = useMemoFirebase(() => {
-    if (!requestsRef || !user) return null;
-    return query(requestsRef, where("teacherId", "==", user.uid), orderBy("createdAt", "desc"));
-  }, [requestsRef, user]);
+    if (!requestsRef || !user?.uid) return null;
+    return query(requestsRef, where("teacherId", "==", user.uid), orderBy("createdAt", "desc"), limit(50));
+  }, [requestsRef, user?.uid]);
 
   const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(studentQuery);
   const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(teacherQuery);
 
-  // دمج الطلبات وتصفية المتكرر وترتيبها
   const allRequests = [...(studentRequests || []), ...(teacherRequests || [])].sort((a: any, b: any) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values());
 
-  if (isLoadingStudent || isLoadingTeacher) return <div className="p-10 text-center font-bold">جاري تحميل طلباتك...</div>;
+  if (isUserLoading || isLoadingStudent || isLoadingTeacher) {
+    return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل طلباتك...</div>;
+  }
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-10">
@@ -118,7 +117,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     } else if (action === 'complete') {
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
-      // المعاملات المالية
       createTransactionNonBlocking(firestore, req.teacherId, {
         amount: req.amount * 0.8,
         type: 'earning',
