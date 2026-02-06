@@ -8,33 +8,30 @@ service cloud.firestore {
     }
 
     // قواعد مجموعة الطلبات العامة (Marketplace)
-    // نستخدم {document=**} لضمان شمولية القواعد لكل العمليات والقوائم
-    match /requests/{document=**} {
-      // السماح بالقراءة (get/list) لكل المستخدمين المسجلين
+    match /requests/{requestId} {
+      // القراءة متاحة لكل مستخدم مسجل ليتمكن المعلمون من رؤية الطلبات والطلاب من متابعة طلباتهم
       allow read: if isSignedIn();
       
       // السماح بإنشاء طلب جديد لأي مستخدم مسجل
       allow create: if isSignedIn();
       
-      // السماح بالتحديث لأي مستخدم مسجل (لقبول الطلب)
+      // السماح بالتحديث لأي مستخدم مسجل (لقبول الطلب، إكماله، أو إلغائه)
       allow update: if isSignedIn();
       
-      // المسح فقط لصاحب الطلب
+      // الحذف فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
     // قواعد ملفات المستخدمين
     match /users/{userId} {
-      // السماح بالقراءة لأي مستخدم مسجل
+      // السماح بالقراءة لأي مستخدم مسجل (لرؤية ملفات المعلمين والطلاب عند التواصل)
       allow read: if isSignedIn();
       // الكتابة فقط لصاحب الحساب
       allow write: if isSignedIn() && request.auth.uid == userId;
 
-      // العمليات المالية (المعاملات)
+      // العمليات المالية (المعاملات) - خاصة جداً
       match /transactions/{transactionId} {
-        // الوصول فقط لصاحب الحساب
         allow read: if isSignedIn() && request.auth.uid == userId;
-        // الكتابة فقط لصاحب الحساب
         allow write: if isSignedIn() && request.auth.uid == userId;
       }
     }
