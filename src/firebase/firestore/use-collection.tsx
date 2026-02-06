@@ -63,29 +63,32 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
-        // محاولة استخراج المسار بشكل آمن للخطأ السياقي
-        let path = 'unknown';
+        // استخراج المسار بشكل آمن للخطأ السياقي
+        let path = 'requests'; 
         try {
-          if (memoizedTargetRefOrQuery.type === 'collection') {
+          if ('path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as CollectionReference).path;
           } else {
-            // في حال الاستعلامات، نحاول الوصول للمسار الداخلي إن وجد
-            path = (memoizedTargetRefOrQuery as any)._query?.path?.canonicalString() || 'query/requests';
+             // محاولة استخراج المسار من الاستعلام (Query) بشكل غير رسمي للمساعدة في التصحيح
+             const internalQuery = (memoizedTargetRefOrQuery as any)._query;
+             if (internalQuery && internalQuery.path) {
+                path = internalQuery.path.canonicalString();
+             }
           }
         } catch (e) {
-          path = 'requests';
+          console.warn('Could not determine path for permission error', e);
         }
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path,
+          path: path || 'requests',
         });
 
         setError(contextualError);
         setData(null);
         setIsLoading(false);
 
-        // إرسال الخطأ للمستمع العالمي
+        // إرسال الخطأ للمستمع العالمي ليظهر في Next.js overlay
         errorEmitter.emit('permission-error', contextualError);
       }
     );

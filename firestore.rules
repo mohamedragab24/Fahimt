@@ -3,42 +3,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // دالة للتحقق من تسجيل الدخول
     function isSignedIn() {
       return request.auth != null;
     }
 
+    // دالة للتحقق من ملكية البيانات
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // قواعد ملفات المستخدمين
     match /users/{userId} {
-      // أي مستخدم مسجل يمكنه رؤية الملفات الشخصية (لأغراض العرض)
       allow read: if isSignedIn();
-      // صاحب الحساب فقط يمكنه تعديل بياناته
       allow write: if isOwner(userId);
 
+      // قواعد العمليات المالية (المحفظة)
       match /transactions/{transactionId} {
-        // المحفظة خاصة تماماً بصاحب الحساب
         allow read, write: if isOwner(userId);
       }
     }
 
+    // قواعد طلبات الاستفهام (Marketplace)
     match /requests/{requestId} {
-      // السماح بالقراءة (get و list) لجميع المستخدمين المسجلين لدعم سوق الطلبات (Marketplace)
-      allow read: if isSignedIn();
+      // السماح بالقراءة (get) والقائمة (list) لجميع المستخدمين المسجلين
+      allow read, list, get: if isSignedIn();
       
-      // الطلاب فقط يمكنهم إنشاء طلبات جديدة، ويجب أن يكونوا هم أصحاب الطلب
+      // السماح بالإنشاء فقط للطلاب المسجلين
       allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       
-      // التعديل مسموح في حالتين:
-      // 1. الطالب صاحب الطلب (مثلاً لإلغائه أو تعديله)
-      // 2. المعلم الذي قبل الطلب (لتغيير الحالة إلى 'accepted' أو 'completed')
+      // السماح بالتحديث لصاحب الطلب أو المعلم الذي يقبله
       allow update: if isSignedIn() && (
         (request.resource.data.studentId == request.auth.uid) ||
-        (request.resource.data.teacherId == request.auth.uid)
+        (request.resource.data.teacherId == request.auth.uid) ||
+        (resource.data.studentId == request.auth.uid)
       );
       
-      // الحذف مسموح فقط لصاحب الطلب
+      // السماح بالحذف فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
   }
