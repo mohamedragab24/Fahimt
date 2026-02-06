@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -53,7 +53,7 @@ export default function ProfilePage() {
     if (user?.uid) {
       navigator.clipboard.writeText(user.uid);
       setCopied(true);
-      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي للحافظة." });
+      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي (UID) للحافظة لاستخدامه في Firebase." });
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -151,15 +151,11 @@ export default function ProfilePage() {
                       <><ShieldCheck className="h-4 w-4" /> مُفهم معتمد</>
                     )}
                   </Badge>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={copyProfileId}
-                    className="rounded-full border-dashed border-primary text-primary hover:bg-primary/5 font-bold"
-                  >
-                    {copied ? <Check className="h-4 w-4 ml-2" /> : <Copy className="h-4 w-4 ml-2" />}
-                    ID: {user?.uid?.slice(0, 8)}...
-                  </Button>
+                  {profile.isAdmin && (
+                    <Badge variant="destructive" className="px-6 py-1.5 text-md font-black rounded-full shadow-lg">
+                      مسؤول النظام
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -176,6 +172,23 @@ export default function ProfilePage() {
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
               />
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-xl font-black flex items-center gap-3">
+                <Fingerprint className="h-5 w-5 text-primary" /> معرف الحساب (UID)
+              </Label>
+              <div className="flex gap-2">
+                <Input 
+                  value={user?.uid} 
+                  readOnly 
+                  className="h-16 text-sm font-mono font-bold rounded-2xl bg-muted/40 border-none px-6"
+                />
+                <Button onClick={copyProfileId} variant="outline" className="h-16 rounded-2xl px-6 border-2">
+                  {copied ? <Check className="text-green-500" /> : <Copy />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mr-2 font-bold italic">استخدم هذا المعرف للبحث عن حسابك في Firebase Console.</p>
             </div>
 
             <div className="space-y-4">
