@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -133,19 +134,17 @@ export default function ProfilePage() {
               <Label htmlFor="email" className="text-xl font-black flex items-center gap-3 text-muted-foreground/60">
                 <Mail className="h-5 w-5" /> البريد الإلكتروني <Lock className="h-4 w-4" />
               </Label>
-              <div className="relative group">
-                <Input 
-                  id="email" 
-                  value={profile.email} 
-                  disabled 
-                  className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner"
-                />
-              </div>
+              <Input 
+                id="email" 
+                value={profile.email} 
+                disabled 
+                className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-50"
+              />
             </div>
 
             <div className="space-y-4">
               <Label htmlFor="phone" className="text-xl font-black flex items-center gap-3">
-                <Phone className="h-5 w-5 text-primary" /> رقم الواتساب (للتحويل)
+                <Phone className="h-5 w-5 text-primary" /> رقم الهاتف (للتواصل)
               </Label>
               <Input 
                 id="phone" 
@@ -188,12 +187,10 @@ export default function ProfilePage() {
         <div className="flex-1 space-y-2 text-center md:text-right">
           <h3 className="text-2xl font-black text-primary">أمان بياناتك هو أولويتنا</h3>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            بياناتك الشخصية مشفرة بالكامل ولا يتم مشاركتها إلا مع الطرف الآخر (المفهم/المستفهم) لغرض التواصل التعليمي فقط.
+            بياناتك الشخصية مشفرة بالكامل ولا يتم مشاركتها إلا مع الطرف الآخر لغرض التواصل التعليمي فقط.
           </p>
         </div>
       </div>
     </div>
   );
 }
-
-import { ShieldCheck } from "lucide-react";

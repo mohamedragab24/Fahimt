@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +14,8 @@ import {
   User, 
   MessageCircle, 
   BadgeCent,
-  AlertCircle
+  AlertCircle,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -110,7 +112,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     } else if (action === 'complete') {
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
-      // Teacher earns money (80% for example or full amount for MVP)
+      // Teacher earns money
       createTransactionNonBlocking(firestore, req.teacherId, {
         amount: req.amount,
         type: 'earning',
@@ -118,7 +120,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
         requestId: req.id
       });
 
-      // Student record of payment (already deducted or recorded here)
+      // Student record of payment
       createTransactionNonBlocking(firestore, req.studentId, {
         amount: req.amount,
         type: 'payment',
