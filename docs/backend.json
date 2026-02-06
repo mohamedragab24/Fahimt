@@ -70,6 +70,9 @@
           "type": "string",
           "description": "Reference to UserProfile (Mufhem). Can be null if pending."
         },
+        "teacherName": {
+          "type": "string"
+        },
         "title": {
           "type": "string",
           "description": "The title of the request."
@@ -94,6 +97,18 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "studentJoined": {
+          "type": "boolean"
+        },
+        "teacherJoined": {
+          "type": "boolean"
+        },
+        "rating": {
+          "type": "number"
+        },
+        "review": {
+          "type": "string"
         }
       },
       "required": [

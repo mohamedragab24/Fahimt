@@ -1,12 +1,12 @@
 
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Calendar, 
-  Clock, 
   CheckCircle2, 
   XCircle, 
   Timer, 
@@ -16,7 +16,10 @@ import {
   BadgeCent,
   AlertCircle,
   ClipboardList,
-  Video
+  Video,
+  Copy,
+  Check,
+  Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -49,7 +52,6 @@ export default function RequestsPage() {
 
   const allRequests = [...(studentRequests || []), ...(teacherRequests || [])];
   
-  // دمج وترتيب فريد في جانب العميل لتجنب مشاكل الفهرسة
   const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values())
     .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -104,6 +106,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleAction = (req: any, action: 'cancel' | 'complete') => {
     if (!firestore) return;
@@ -138,6 +141,13 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     }
   };
 
+  const copyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    toast({ title: "تم النسخ", description: "تم نسخ معرف الطلب." });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const openWhatsApp = (phone: string, title: string) => {
     if (!phone) return;
     const message = encodeURIComponent(`أهلاً، أنا بخصوص طلبك على "فهمني": "${title}"`);
@@ -151,7 +161,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
           <ClipboardList size={48} className="text-muted-foreground opacity-30" />
         </div>
         <p className="text-muted-foreground text-xl md:text-2xl font-black">لا توجد طلبات في هذا القسم حالياً</p>
-        <p className="text-muted-foreground mt-2">كل ما يخص هذا القسم سيظهر هنا فوراً.</p>
       </div>
     );
   }
@@ -166,7 +175,14 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                 <div className="space-y-3">
                   <div className="flex gap-2 justify-end md:justify-start">
                     <Badge variant="secondary" className="px-4 py-1 text-md font-bold bg-primary/10 text-primary border-none">{req.category}</Badge>
-                    <Badge variant="outline" className="px-4 py-1 text-md font-bold text-muted-foreground">#{req.id.slice(-5)}</Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="px-4 py-1 text-md font-bold text-muted-foreground cursor-pointer hover:bg-muted"
+                      onClick={() => copyId(req.id)}
+                    >
+                      {copiedId === req.id ? <Check className="h-3 w-3 ml-2 text-green-500" /> : <Copy className="h-3 w-3 ml-2" />}
+                      ID: {req.id.slice(-5)}
+                    </Badge>
                   </div>
                   <CardTitle className="text-2xl md:text-3xl font-black leading-tight group-hover:text-primary transition-colors">{req.title}</CardTitle>
                 </div>
@@ -176,6 +192,17 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   <span className="text-xs font-bold text-primary mr-1">ج.م</span>
                 </div>
               </div>
+
+              {req.status === 'completed' && req.rating && (
+                <div className="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-center justify-between">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} className={`h-5 w-5 ${req.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-yellow-700 font-bold italic">"{req.review || "تجربة رائعة!"}"</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-6 bg-muted/10 rounded-3xl border border-dashed border-muted-foreground/20">
                 <div className="flex items-center gap-4 justify-end md:justify-start">
@@ -235,7 +262,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                       className="w-full py-6 font-black text-lg rounded-2xl text-primary hover:bg-primary/5 transition-all" 
                       onClick={() => handleAction(req, 'complete')}
                     >
-                      تأكيد إتمام الجلسة
+                      إتمام الجلسة يدوياً
                     </Button>
                   )}
                 </>
