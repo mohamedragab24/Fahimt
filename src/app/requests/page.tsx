@@ -15,13 +15,15 @@ import {
   MessageCircle, 
   BadgeCent,
   AlertCircle,
-  ClipboardList
+  ClipboardList,
+  Video
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function RequestsPage() {
   const { user } = useUser();
@@ -101,6 +103,7 @@ export default function RequestsPage() {
 function RequestList({ requests, status, userId }: { requests: any[], status: string, userId?: string }) {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleAction = (req: any, action: 'cancel' | 'complete') => {
     if (!firestore) return;
@@ -215,18 +218,25 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
               {status === 'accepted' && (
                 <>
                   <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 py-10 font-black text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+                    className="w-full bg-blue-600 hover:bg-blue-700 py-10 font-black text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+                    onClick={() => router.push(`/meeting/${req.id}`)}
+                  >
+                    <Video className="h-6 w-6 ml-3" /> دخول الجلسة المباشرة
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full border-green-600 text-green-600 hover:bg-green-50 py-10 font-black text-xl rounded-2xl transition-all"
                     onClick={() => openWhatsApp(req.studentId === userId ? req.teacherPhone : req.studentPhone, req.title)}
                   >
                     <MessageCircle className="h-6 w-6 ml-3" /> تواصل واتساب
                   </Button>
                   {req.teacherId === userId && (
                     <Button 
-                      variant="outline" 
-                      className="w-full py-10 font-black text-xl rounded-2xl border-primary text-primary bg-white hover:bg-primary/5 transition-all" 
+                      variant="ghost" 
+                      className="w-full py-10 font-black text-lg rounded-2xl text-primary hover:bg-primary/5 transition-all" 
                       onClick={() => handleAction(req, 'complete')}
                     >
-                      إتمام الجلسة الآن
+                      تأكيد إتمام الجلسة
                     </Button>
                   )}
                 </>
