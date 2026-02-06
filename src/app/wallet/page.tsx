@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { collection, query, orderBy, doc, addDoc } from "firebase/firestore";
 import { createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -51,31 +52,51 @@ export default function WalletPage() {
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
-  // حساب الرصيد
+  // حساب الرصيد المتاح
   const balance = transactions?.reduce((acc: number, tx: any) => 
     acc + (tx.type === 'deposit' || tx.type === 'earning' ? tx.amount : -tx.amount), 0) || 0;
 
-  const handleTransaction = () => {
-    if (!firestore || !user || !amount) return;
+  const handleTransaction = async () => {
+    if (!firestore || !user || !amount || !profile) return;
     
-    const isTeacher = profile?.role === 'mufhem';
-    const txType = isTeacher ? 'withdrawal' : 'deposit';
+    const isTeacher = profile.role === 'mufhem';
     
-    createTransactionNonBlocking(firestore, user.uid, {
-      amount: Number(amount),
-      type: txType,
-      details: isTeacher ? 'طلب سحب أرباح للمحفظة' : 'شحن رصيد المحفظة (فودافون كاش)',
-      status: 'completed'
-    });
+    if (isTeacher) {
+      // طلب سحب - إنشاء سجل في مجموعة طلبات السحب لمراجعته من الأدمن
+      if (Number(amount) > balance) {
+        toast({ variant: "destructive", title: "خطأ", description: "رصيدك غير كافٍ لسحب هذا المبلغ." });
+        return;
+      }
+      
+      await addDoc(collection(firestore, "payoutRequests"), {
+        userId: user.uid,
+        userName: profile.fullName,
+        phoneNumber: profile.phoneNumber,
+        amount: Number(amount),
+        status: 'pending',
+        timestamp: new Date().toISOString()
+      });
+
+      toast({
+        title: "تم استلام طلب السحب",
+        description: "سيتم مراجعة الطلب وتحويل المبلغ لرقمك خلال 24 ساعة.",
+      });
+    } else {
+      // شحن رصيد - نفترض اكتمال الدفع أوتوماتيكياً في هذه النسخة
+      createTransactionNonBlocking(firestore, user.uid, {
+        amount: Number(amount),
+        type: 'deposit',
+        details: 'شحن رصيد المحفظة (فودافون كاش)',
+        status: 'completed'
+      });
+      toast({
+        title: "تم شحن الرصيد",
+        description: "تم إضافة المبلغ لمحفظتك بنجاح.",
+      });
+    }
 
     setIsModalOpen(false);
     setAmount("");
-    toast({
-      title: "تم استلام الطلب",
-      description: isTeacher 
-        ? "سيتم مراجعة طلب السحب وتحويل المبلغ لرقمك خلال 24 ساعة." 
-        : "تم شحن رصيدك بنجاح. شكراً لثقتكم.",
-    });
   };
 
   if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل بيانات المحفظة...</div>;
@@ -128,7 +149,7 @@ export default function WalletPage() {
                     <DialogDescription className="text-right text-lg">
                       {profile?.role === 'mustafhem' 
                         ? 'أدخل المبلغ المراد شحنه عبر فودافون كاش أو أي محفظة إلكترونية.' 
-                        : 'سيتم تحويل 80% من إجمالي أرباحك إلى رقمك المسجل.'}
+                        : 'سيتم مراجعة طلب السحب وتحويل المبلغ لرقمك خلال 24 ساعة.'}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-8 space-y-6">

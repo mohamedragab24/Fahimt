@@ -1,19 +1,25 @@
 
 "use client";
 
+import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, doc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, query, where, doc, updateDoc, addDoc, getDocs, limit } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldCheck, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { ShieldCheck, XCircle, CheckCircle2, AlertCircle, Search, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminVerification() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchedUser, setSearchedUser] = useState<any>(null);
 
+  // جلب الطلبات المعلقة
   const verQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
@@ -21,88 +27,170 @@ export default function AdminVerification() {
 
   const { data: requests, isLoading } = useCollection(verQuery);
 
-  const handleAction = async (req: any, action: 'approve' | 'reject') => {
+  // البحث عن مستخدم يدوياً لتوثيقه
+  const handleManualSearch = async () => {
+    if (!firestore || !searchQuery) return;
+    try {
+      // البحث بالـ ID أولاً
+      const userRef = doc(firestore, "users", searchQuery);
+      const userSnap = await getDocs(query(collection(firestore, "users"), where("email", "==", searchQuery), limit(1)));
+      
+      let targetDoc: any = null;
+      if (userSnap.size > 0) {
+        targetDoc = { ...userSnap.docs[0].data(), id: userSnap.docs[0].id };
+      } else {
+        // محاولة البحث بالـ ID المباشر
+        const directSnap = await getDocs(query(collection(firestore, "users"), where("id", "==", searchQuery), limit(1)));
+        if (directSnap.size > 0) {
+          targetDoc = { ...directSnap.docs[0].data(), id: directSnap.id };
+        }
+      }
+
+      if (targetDoc) {
+        setSearchedUser(targetDoc);
+      } else {
+        toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على المستخدم." });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل البحث." });
+    }
+  };
+
+  const handleAction = async (userId: string, action: 'approve' | 'reject', requestId?: string) => {
     if (!firestore) return;
     try {
       const status = action === 'approve' ? 'approved' : 'rejected';
-      await updateDoc(doc(firestore, "verificationRequests", req.id), { status });
       
-      if (action === 'approve') {
-        await updateDoc(doc(firestore, "users", req.userId), { isVerified: true });
-        toast({ title: "تم التوثيق!", description: "تم منح المستخدم الشارة الزرقاء." });
-      } else {
-        toast({ title: "تم الرفض", description: "تم رفض طلب التوثيق بنجاح." });
+      // تحديث طلب التوثيق إن وجد
+      if (requestId) {
+        await updateDoc(doc(firestore, "verificationRequests", requestId), { status });
       }
-
-      // إضافة سجل
+      
+      // تحديث حالة المستخدم
+      await updateDoc(doc(firestore, "users", userId), { isVerified: action === 'approve' });
+      
+      // سجل العمليات
       await addDoc(collection(firestore, "adminLogs"), {
-        action: `${status}_verification`,
-        targetUserId: req.userId,
+        action: action === 'approve' ? 'verify_user' : 'unverify_user',
+        targetUserId: userId,
         timestamp: new Date().toISOString()
       });
+
+      toast({ 
+        title: action === 'approve' ? "تم التوثيق!" : "تم الرفض/الإلغاء", 
+        description: `تم تحديث حالة المستخدم بنجاح.` 
+      });
+      
+      if (searchedUser?.id === userId) {
+        setSearchedUser({ ...searchedUser, isVerified: action === 'approve' });
+      }
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل تنفيذ العملية" });
     }
   };
 
   return (
-    <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="flex justify-between items-center gap-6 border-r-8 border-orange-500 pr-6">
+    <div className="p-6 md:p-10 space-y-12" dir="rtl">
+      <div className="flex justify-between items-center border-r-8 border-orange-500 pr-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">مركز التوثيق</h1>
-          <p className="text-muted-foreground text-lg">مراجعة طلبات التوثيق ومنح الشارة الزرقاء للمفهمين.</p>
+          <p className="text-muted-foreground text-lg">إدارة الشارات الزرقاء والتحقق من الهوية.</p>
         </div>
-        <Badge className="bg-orange-100 text-orange-600 px-6 py-2 text-lg font-black rounded-2xl">
-          {requests?.length || 0} طلب قيد الانتظار
-        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {isLoading ? (
-          <div className="col-span-full text-center py-32 text-2xl font-black animate-pulse">جاري فحص الطلبات...</div>
-        ) : requests?.map((req) => (
-          <Card key={req.id} className="shadow-xl rounded-[2.5rem] overflow-hidden border-2 border-transparent hover:border-orange-500/20 transition-all group">
-            <CardHeader className="bg-muted/30 p-8 flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
-                <AvatarImage src={req.profilePictureUrl || `https://picsum.photos/seed/${req.userId}/200/200`} />
-                <AvatarFallback>{req.userName?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="text-center">
-                <CardTitle className="text-2xl font-black group-hover:text-orange-500 transition-colors">{req.userName}</CardTitle>
-                <p className="text-sm text-muted-foreground font-bold">{req.userEmail}</p>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              <div className="p-4 bg-orange-50 rounded-2xl border border-dashed border-orange-200">
-                <p className="text-xs text-orange-700 font-bold flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" /> يرجى مطابقة الصورة الشخصية مع بيانات البروفايل.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  onClick={() => handleAction(req, 'approve')}
-                  className="bg-green-600 hover:bg-green-700 h-16 rounded-2xl font-black text-lg shadow-lg shadow-green-500/20"
-                >
-                  <CheckCircle2 className="ml-2 h-6 w-6" /> توثيق الحساب
-                </Button>
-                <Button 
-                  variant="destructive"
-                  onClick={() => handleAction(req, 'reject')}
-                  className="h-16 rounded-2xl font-black text-lg shadow-lg shadow-red-500/20"
-                >
-                  <XCircle className="ml-2 h-6 w-6" /> رفض الطلب
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {(!requests || requests.length === 0) && (
-          <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border-4 border-dashed border-muted text-muted-foreground">
-            <ShieldCheck className="mx-auto h-20 w-20 opacity-20 mb-6" />
-            <p className="text-2xl font-black">لا توجد طلبات توثيق جديدة حالياً.</p>
+      {/* البحث اليدوي والتوثيق المباشر */}
+      <Card className="shadow-xl rounded-[2.5rem] border-2 bg-orange-50/30">
+        <CardHeader>
+          <CardTitle className="text-2xl font-black flex items-center gap-3">
+            <Search className="text-orange-500" /> توثيق يدوي (بالبريد أو الـ ID)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex gap-4">
+            <Input 
+              placeholder="أدخل البريد الإلكتروني أو User ID..." 
+              className="h-14 rounded-2xl text-lg bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button onClick={handleManualSearch} className="h-14 px-8 rounded-2xl bg-orange-500 hover:bg-orange-600">
+              بحث
+            </Button>
           </div>
-        )}
+
+          {searchedUser && (
+            <div className="p-6 bg-white rounded-3xl border-2 border-dashed flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={searchedUser.profilePictureUrl} />
+                  <AvatarFallback>{searchedUser.fullName?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h4 className="font-black text-xl flex items-center gap-2">
+                    {searchedUser.fullName}
+                    {searchedUser.isVerified && <ShieldCheck className="h-5 w-5 text-blue-500 fill-blue-500/10" />}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">{searchedUser.email}</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => handleAction(searchedUser.id, searchedUser.isVerified ? 'reject' : 'approve')}
+                variant={searchedUser.isVerified ? "destructive" : "default"}
+                className="rounded-xl font-bold"
+              >
+                {searchedUser.isVerified ? "إلغاء التوثيق" : "توثيق الحساب الآن"}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* طلبات التوثيق المعلقة */}
+      <div className="space-y-6">
+        <h3 className="text-2xl font-black flex items-center gap-3">
+          <Clock className="text-orange-500" /> طلبات معلقة ({requests?.length || 0})
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {isLoading ? (
+            <div className="col-span-full py-20 text-center animate-pulse font-bold">جاري تحميل الطلبات...</div>
+          ) : requests?.map((req) => (
+            <Card key={req.id} className="shadow-lg rounded-[2.5rem] overflow-hidden border-2 hover:border-orange-500/20 transition-all">
+              <CardHeader className="bg-muted/30 p-8 flex flex-col items-center gap-4 text-center">
+                <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
+                  <AvatarImage src={req.profilePictureUrl} />
+                  <AvatarFallback>{req.userName?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-xl font-black">{req.userName}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{req.userEmail}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    onClick={() => handleAction(req.userId, 'approve', req.id)}
+                    className="bg-green-600 hover:bg-green-700 h-14 rounded-xl font-bold"
+                  >
+                    <CheckCircle2 className="ml-2 h-5 w-5" /> توثيق
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => handleAction(req.userId, 'reject', req.id)}
+                    className="h-14 rounded-xl font-bold"
+                  >
+                    <XCircle className="ml-2 h-5 w-5" /> رفض
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {(!requests || requests.length === 0) && (
+            <div className="col-span-full py-20 text-center bg-white rounded-[2rem] border-4 border-dashed text-muted-foreground font-bold">
+              لا توجد طلبات توثيق معلقة حالياً.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

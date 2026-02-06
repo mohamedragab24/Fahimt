@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirestore } from "@/firebase";
-import { doc, getDoc, updateDoc, addDoc, collection } from "firebase/firestore";
+import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,14 +22,29 @@ export default function AdminRoles() {
 
   const handleSearch = async () => {
     if (!firestore || !searchId) return;
-    const userRef = doc(firestore, "users", searchId);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      setTargetUser({ ...snap.data(), id: snap.id });
-      setPermissions(snap.data().adminPermissions || ["support"]);
-    } else {
-      toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على مستخدم بهذا المعرف." });
-      setTargetUser(null);
+    try {
+      // البحث بالبريد أولاً
+      const usersRef = collection(firestore, "users");
+      const q = query(usersRef, where("email", "==", searchId));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        setTargetUser({ ...snap.docs[0].data(), id: snap.docs[0].id });
+        setPermissions(snap.docs[0].data().adminPermissions || ["support"]);
+      } else {
+        // البحث بالـ ID المباشر
+        const userRef = doc(firestore, "users", searchId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setTargetUser({ ...userSnap.data(), id: userSnap.id });
+          setPermissions(userSnap.data().adminPermissions || ["support"]);
+        } else {
+          toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على المستخدم." });
+          setTargetUser(null);
+        }
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل البحث" });
     }
   };
 
@@ -69,25 +84,25 @@ export default function AdminRoles() {
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="flex justify-between items-center gap-6 border-r-8 border-red-500 pr-6">
+      <div className="flex justify-between items-center border-r-8 border-red-500 pr-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">الإدارة والصلاحيات</h1>
-          <p className="text-muted-foreground text-lg">إضافة مساعدين وتحديد صلاحياتهم داخل لوحة التحكم.</p>
+          <p className="text-muted-foreground text-lg">إدارة رتب المسؤولين وسحبها عبر البريد أو الـ ID.</p>
         </div>
       </div>
 
-      <Card className="max-w-4xl mx-auto shadow-2xl rounded-[3rem] overflow-hidden border-2">
+      <Card className="max-w-4xl mx-auto shadow-2xl rounded-[3rem] border-2">
         <CardHeader className="bg-zinc-900 text-white p-10">
           <CardTitle className="text-3xl font-black flex items-center gap-4">
-            <ShieldAlert className="h-10 w-10 text-red-500" /> تعيين مسؤول جديد
+            <ShieldAlert className="h-10 w-10 text-red-500" /> تعيين / إلغاء مسؤول
           </CardTitle>
         </CardHeader>
         <CardContent className="p-10 space-y-10">
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
-              <Label className="text-lg font-bold">معرف المستخدم (User ID)</Label>
+              <Label className="text-lg font-bold">معرف المستخدم أو البريد الإلكتروني</Label>
               <Input 
-                placeholder="أدخل الـ ID الخاص بالمستخدم..." 
+                placeholder="أدخل البريد أو الـ ID هنا..." 
                 className="h-16 text-xl rounded-2xl border-2 px-6"
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
@@ -99,7 +114,7 @@ export default function AdminRoles() {
           </div>
 
           {targetUser && (
-            <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 border-dashed space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 border-dashed space-y-8 animate-in fade-in">
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
                   <AvatarImage src={targetUser.profilePictureUrl} />
@@ -123,7 +138,7 @@ export default function AdminRoles() {
               {!targetUser.isAdmin && (
                 <div className="space-y-6 bg-white p-8 rounded-3xl border shadow-sm">
                   <h5 className="text-xl font-black flex items-center gap-3">
-                    <Shield className="text-primary" /> تحديد الصلاحيات:
+                    <Shield className="text-primary" /> تحديد الصلاحيات للمسؤول الجديد:
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
@@ -160,15 +175,6 @@ export default function AdminRoles() {
           )}
         </CardContent>
       </Card>
-
-      <div className="bg-zinc-100 p-8 rounded-[2.5rem] border-2 border-dashed border-zinc-300">
-        <h3 className="text-xl font-black mb-4">تنبيه هام للأمان:</h3>
-        <ul className="list-disc list-inside space-y-2 text-muted-foreground font-bold">
-          <li>تعيين مسؤول جديد يمنحه حق الوصول لبيانات المستخدمين الحساسة.</li>
-          <li>تأكد من هوية الشخص قبل منحه صلاحيات "سوبر أدمن".</li>
-          <li>يتم تسجيل كافة تحركات المسؤولين في "سجل العمليات" للمراقبة.</li>
-        </ul>
-      </div>
     </div>
   );
 }
