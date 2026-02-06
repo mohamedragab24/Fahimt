@@ -47,11 +47,14 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read: if isOwner(resource.data.userId);
     }
+    
+    match /payoutRequests/{payoutId} {
+      allow create: if isSignedIn();
+      allow read: if isOwner(resource.data.userId);
+    }
 
-    // قواعد رموز التحقق المؤقتة
-    match /temp_otp/{docId} {
-      allow create: if true; // يسمح لأي مستخدم بطلب كود عند التسجيل
-      allow read, delete: if true; // يسمح بالتحقق والحذف
+    match /adminLogs/{logId} {
+      allow read, write: if isAdmin();
     }
   }
 }
