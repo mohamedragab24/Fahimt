@@ -18,7 +18,8 @@ import {
   Video,
   Copy,
   Check,
-  Star
+  Star,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -209,8 +210,13 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
                   <div className="text-right">
                     <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المُفهم (المدرس)" : "المُستفهم (الطالب)"}</span>
-                    <span className="font-bold truncate max-w-[150px] block">
-                      {req.studentId === userId ? (req.teacherName || "بانتظار قبول مدرس...") : (req.studentName || "مستفهم")}
+                    <span className="font-bold truncate max-w-[150px] flex items-center gap-2">
+                      {req.studentId === userId ? (
+                        <>
+                          {req.teacherName || "بانتظار قبول مدرس..."}
+                          {req.teacherName && <ShieldCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />}
+                        </>
+                      ) : (req.studentName || "مستفهم")}
                     </span>
                   </div>
                 </div>

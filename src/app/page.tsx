@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays } from "lucide-react";
+import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -48,18 +48,27 @@ export default function HomePage() {
               <Sparkles className="text-primary h-6 w-6 md:h-8 md:w-8" />
               {profile.role === "mufhem" ? "أهلاً يا مُفهم!" : "أهلاً يا مُستفهم!"}
             </h1>
-            <span className="block text-primary text-4xl md:text-6xl font-black">{profile.fullName || "مستخدم فهمني"}</span>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <span className="block text-primary text-4xl md:text-6xl font-black">{profile.fullName || "مستخدم فهمني"}</span>
+              {profile.role === 'mufhem' && (
+                <div className="bg-blue-500 p-1.5 rounded-full shadow-lg animate-pulse">
+                  <ShieldCheck className="text-white h-6 w-6 md:h-8 md:w-8" />
+                </div>
+              )}
+            </div>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed">
               {profile.role === "mufhem" 
                 ? "لديك فرصة لمساعدة الطلاب ومشاركة خبراتك وتحقيق دخل إضافي اليوم." 
-                : "ابحث عن المساعدة التي تحتاجها في دراستك أو مهاراتك من أفضل الخبراء."}
+                : "ابحث عن المساعدة التي تحتاجها في دراستك أو مهاراتك من أفضل الخبراء الموثقين."}
             </p>
           </div>
           <div className="flex flex-col items-center bg-primary/5 p-6 md:p-8 rounded-3xl border-2 border-primary/10">
             <TrendingUp className="text-primary h-8 w-8 md:h-10 md:w-10 mb-2" />
             <span className="text-xs md:text-sm text-muted-foreground font-bold">الرتبة الحالية</span>
-            <Badge className="mt-2 px-6 py-2 text-md font-bold bg-primary shadow-lg">
-              {profile.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
+            <Badge className="mt-2 px-6 py-2 text-md font-bold bg-primary shadow-lg flex items-center gap-2">
+              {profile.role === "mufhem" ? (
+                <><ShieldCheck className="h-4 w-4" /> مُفهم معتمد</>
+              ) : "مُستفهم طموح"}
             </Badge>
           </div>
         </div>
@@ -203,6 +212,12 @@ function StudentView({ profile }: { profile: any }) {
                   <CalendarDays className="h-5 w-5" />
                   <span className="text-sm">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 </div>
+                {req.teacherName && (
+                  <div className="flex items-center gap-2 pt-2 text-sm font-bold text-blue-600">
+                    <ShieldCheck className="h-4 w-4" />
+                    المُفهم: {req.teacherName}
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <div className="flex items-center text-md text-muted-foreground font-medium">
                     <Clock className="h-5 w-5 ml-2 text-primary/60" />
@@ -279,7 +294,7 @@ function TeacherView({ profile }: { profile: any }) {
         </h3>
         <div className="flex items-center gap-3">
           <div className="h-3 w-3 bg-accent rounded-full animate-pulse"></div>
-          <span className="text-sm md:text-lg font-bold text-accent">بانتظار المفهمين</span>
+          <span className="text-sm md:text-lg font-bold text-accent">بانتظار المفهمين الموثقين</span>
         </div>
       </div>
 
@@ -334,4 +349,3 @@ function TeacherView({ profile }: { profile: any }) {
     </div>
   );
 }
-

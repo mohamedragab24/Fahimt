@@ -139,10 +139,17 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 space-y-4 text-center md:text-right">
               <div className="space-y-1">
-                <h2 className="text-3xl md:text-4xl font-black tracking-tight">{formData.fullName}</h2>
+                <div className="flex items-center justify-center md:justify-start gap-3">
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight">{formData.fullName}</h2>
+                  {profile.role === 'mufhem' && (
+                    <ShieldCheck className="h-8 w-8 text-blue-500 fill-blue-500/20" />
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                  <Badge className="bg-primary text-white px-6 py-1.5 text-md font-black rounded-full shadow-lg">
-                    {profile.role === 'mustafhem' ? 'مُستفهم طموح' : 'مُفهم معتمد'}
+                  <Badge className="bg-primary text-white px-6 py-1.5 text-md font-black rounded-full shadow-lg flex items-center gap-2">
+                    {profile.role === 'mustafhem' ? 'مُستفهم طموح' : (
+                      <><ShieldCheck className="h-4 w-4" /> مُفهم معتمد</>
+                    )}
                   </Badge>
                   <Button 
                     variant="outline" 

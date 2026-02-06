@@ -2,7 +2,7 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Sparkles, Bell, Video, MessageSquare } from "lucide-react";
+import { Sparkles, Bell, Video, MessageSquare, ShieldCheck } from "lucide-react";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { doc, collection, query, where, limit } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,12 +22,9 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // جلب الطلبات المقبولة مؤخراً لإظهارها كإشعارات
   const notificationsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     const requestsRef = collection(firestore, "requests");
-    // إذا كان مستفهم، نبحث عن طلباته التي قبلت
-    // إذا كان مفهم، نبحث عن الطلبات التي قبلها هو
     const field = profile?.role === "mufhem" ? "teacherId" : "studentId";
     return query(
       requestsRef,
@@ -105,7 +102,10 @@ export function Header() {
           </DropdownMenu>
 
           <div className="hidden md:flex flex-col text-left items-end mr-2">
-            <span className="text-sm font-bold leading-none">{profile?.fullName || "جاري التحميل..."}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-bold leading-none">{profile?.fullName || "جاري التحميل..."}</span>
+              {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+            </div>
             <span className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-tighter">
               {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
             </span>
