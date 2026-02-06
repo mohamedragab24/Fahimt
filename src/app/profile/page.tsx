@@ -1,12 +1,13 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -31,7 +33,8 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    birthDate: ""
+    birthDate: "",
+    profilePictureUrl: ""
   });
 
   useEffect(() => {
@@ -39,17 +42,30 @@ export default function ProfilePage() {
       setFormData({
         fullName: profile.fullName || "",
         phone: profile.phoneNumber || "",
-        birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : ""
+        birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
+        profilePictureUrl: profile.profilePictureUrl || ""
       });
     }
   }, [profile]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, profilePictureUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = () => {
     if (!userRef) return;
     updateDocumentNonBlocking(userRef, {
       fullName: formData.fullName,
       phoneNumber: formData.phone,
-      birthDate: formData.birthDate
+      birthDate: formData.birthDate,
+      profilePictureUrl: formData.profilePictureUrl
     });
     toast({
       title: "تم تحديث البيانات",
@@ -62,15 +78,15 @@ export default function ProfilePage() {
     router.push("/login");
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات...</div>;
+  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
   if (!profile) return null;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-2 border-r-8 border-primary pr-6">
-          <h1 className="text-5xl font-black font-headline tracking-tight">إعدادات الملف الشخصي</h1>
-          <p className="text-muted-foreground text-xl">إدارة بياناتك الشخصية وخصوصية حسابك.</p>
+          <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tight">إعدادات الملف الشخصي</h1>
+          <p className="text-muted-foreground text-lg md:text-xl">إدارة بياناتك الشخصية وخصوصية حسابك.</p>
         </div>
         <Button 
           variant="destructive" 
@@ -87,30 +103,37 @@ export default function ProfilePage() {
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
         </div>
         
-        <CardContent className="relative px-12 pb-16">
-          <div className="flex flex-col md:flex-row items-end gap-10 -mt-24 mb-16">
+        <CardContent className="relative px-6 md:px-12 pb-16">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-10 -mt-24 mb-16">
             <div className="relative group">
               <Avatar className="h-48 w-48 border-8 border-white shadow-2xl transition-transform hover:scale-[1.02]">
-                <AvatarImage src={profile.profilePictureUrl || `https://picsum.photos/seed/${profile.id}/300/300`} />
+                <AvatarImage src={formData.profilePictureUrl} />
                 <AvatarFallback className="text-4xl font-black bg-primary/10 text-primary">
-                  {profile.fullName?.charAt(0)}
+                  {formData.fullName?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <Button 
                 size="icon" 
+                onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-4 right-4 rounded-2xl h-14 w-14 shadow-2xl border-4 border-white hover:scale-110 transition-transform bg-primary"
               >
-                <Camera className="h-7 w-7" />
+                <Upload className="h-7 w-7" />
               </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+              />
             </div>
             <div className="flex-1 space-y-4 text-center md:text-right">
               <div className="space-y-1">
-                <h2 className="text-4xl font-black tracking-tight">{profile.fullName}</h2>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight">{formData.fullName}</h2>
                 <div className="flex items-center justify-center md:justify-start gap-3">
                   <Badge className="bg-primary text-white px-6 py-1.5 text-md font-black rounded-full shadow-lg">
                     {profile.role === 'mustafhem' ? 'مُستفهم طموح' : 'مُفهم معتمد'}
                   </Badge>
-                  <span className="text-sm text-muted-foreground font-bold bg-muted px-4 py-1.5 rounded-full">ID: {profile.id.slice(0, 12)}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +193,7 @@ export default function ProfilePage() {
             <div className="md:col-span-2 pt-12 flex justify-center md:justify-end">
               <Button 
                 onClick={handleSave} 
-                className="bg-primary px-16 py-10 rounded-[2rem] font-black text-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:scale-105 transition-all active:scale-95 group"
+                className="bg-primary w-full md:w-auto px-16 py-10 rounded-[2rem] font-black text-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:scale-105 transition-all active:scale-95 group"
               >
                 <Save className="ml-4 h-8 w-8 group-hover:animate-bounce" /> حفظ التعديلات الآن
               </Button>

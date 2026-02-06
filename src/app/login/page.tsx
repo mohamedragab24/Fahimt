@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, RefreshCw } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,7 +22,9 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"mustafhem" | "mufhem">("mustafhem");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
@@ -35,13 +37,16 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // توليد صورة عشوائية عند كتابة الاسم لأول مرة
-  useEffect(() => {
-    if (!isLogin && fullName && !profilePictureUrl) {
-      const seed = encodeURIComponent(fullName);
-      setProfilePictureUrl(`https://picsum.photos/seed/${seed}/200/200`);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePictureUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }, [fullName, isLogin, profilePictureUrl]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +54,8 @@ export default function LoginPage() {
       if (isLogin) {
         initiateEmailSignIn(auth, email, password);
       } else {
-        if (!fullName || !phoneNumber) {
-          toast({ variant: "destructive", title: "خطأ", description: "يرجى إكمال كافة البيانات" });
+        if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl) {
+          toast({ variant: "destructive", title: "خطأ", description: "يرجى إكمال كافة البيانات بما في ذلك صورة البروفايل" });
           return;
         }
         initiateEmailSignUp(auth, email, password);
@@ -64,7 +69,6 @@ export default function LoginPage() {
     }
   };
 
-  // مزامنة البروفايل بعد التسجيل الناجح
   useEffect(() => {
     if (user && !isLogin) {
       const userRef = doc(firestore, "users", user.uid);
@@ -76,13 +80,13 @@ export default function LoginPage() {
             email,
             phoneNumber,
             role,
-            birthDate: new Date().toISOString(),
+            birthDate: new Date(birthDate).toISOString(),
             profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`
           });
         }
       });
     }
-  }, [user, isLogin, firestore, fullName, email, phoneNumber, role, profilePictureUrl]);
+  }, [user, isLogin, firestore, fullName, email, phoneNumber, role, profilePictureUrl, birthDate]);
 
   if (isUserLoading) return <div className="flex h-screen items-center justify-center font-bold animate-pulse">جاري التحميل...</div>;
 
@@ -117,15 +121,22 @@ export default function LoginPage() {
                   <Button 
                     type="button"
                     size="icon" 
-                    onClick={() => setProfilePictureUrl(`https://picsum.photos/seed/${Date.now()}/200/200`)}
+                    onClick={() => fileInputRef.current?.click()}
                     className="absolute -bottom-2 -right-2 rounded-xl h-10 w-10 shadow-lg"
                   >
-                    <RefreshCw className="h-5 w-5" />
+                    <Upload className="h-5 w-5" />
                   </Button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                  />
                 </div>
                 <div className="text-center">
                   <Label className="text-primary font-bold">صورة الملف الشخصي</Label>
-                  <p className="text-xs text-muted-foreground mt-1">يتم توليد صورة تلقائية لك، يمكنك تغييرها لاحقاً</p>
+                  <p className="text-xs text-muted-foreground mt-1">يرجى اختيار صورة من جهازك</p>
                 </div>
               </div>
             )}
@@ -139,6 +150,10 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="font-bold mr-2 text-muted-foreground">رقم الواتساب</Label>
                   <Input id="phone" placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-12 rounded-xl" />
+                </div>
+                <div className="col-span-full space-y-2">
+                  <Label htmlFor="birthDate" className="font-bold mr-2 text-muted-foreground">تاريخ الميلاد</Label>
+                  <Input id="birthDate" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-12 rounded-xl" />
                 </div>
               </div>
             )}
