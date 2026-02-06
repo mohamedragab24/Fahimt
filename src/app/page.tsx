@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
@@ -73,7 +73,7 @@ export default function HomePage() {
 function StudentView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "دراسة" });
+  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "دراسة", meetingTime: "" });
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
@@ -83,7 +83,6 @@ function StudentView({ profile }: { profile: any }) {
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
-    // تم إزالة orderBy لتجنب الحاجة لفهرس مركب
     return query(
       requestsRef, 
       where("studentId", "==", profile.id), 
@@ -93,14 +92,13 @@ function StudentView({ profile }: { profile: any }) {
 
   const { data: rawRequests } = useCollection(myRequestsQuery);
   
-  // ترتيب البيانات في جانب العميل
   const myRequests = rawRequests 
     ? [...rawRequests].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6)
     : [];
 
   const handleCreateRequest = () => {
-    if (!requestsRef || !newRequest.title || !newRequest.amount) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب." });
+    if (!requestsRef || !newRequest.title || !newRequest.amount || !newRequest.meetingTime) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب بما في ذلك موعد المحاضرة." });
       return;
     }
 
@@ -111,16 +109,17 @@ function StudentView({ profile }: { profile: any }) {
       status: "pending",
       studentId: profile.id,
       studentName: profile.fullName || "مستفهم",
+      studentEmail: profile.email || "",
       studentPhone: profile.phoneNumber || "",
       createdAt: new Date().toISOString(),
-      meetingTime: new Date().toISOString()
+      meetingTime: new Date(newRequest.meetingTime).toISOString()
     });
 
     setIsDialogOpen(false);
-    setNewRequest({ title: "", amount: "", category: "دراسة" });
+    setNewRequest({ title: "", amount: "", category: "دراسة", meetingTime: "" });
     toast({
       title: "تم إرسال الطلب بنجاح",
-      description: "سيظهر طلبك الآن في قائمة الطلبات بانتظار قبول المدرسين.",
+      description: "سيتم إخطارك فور قبول أحد المفهمين لطلبك وإرسال رابط الاجتماع لبريدك.",
     });
   };
 
@@ -139,21 +138,21 @@ function StudentView({ profile }: { profile: any }) {
               اطلب استفهام الآن
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]" dir="rtl">
+          <DialogContent className="sm:max-w-[600px]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="text-right text-3xl font-bold">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-              <DialogDescription className="text-right text-lg">صف طلبك بوضوح ليتمكن المدرسون من مساعدتك بشكل أفضل.</DialogDescription>
+              <DialogDescription className="text-right text-lg">حدد موعداً مناسباً ووصفاً دقيقاً ليتمكن المدرس من مساعدتك.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-8 py-8">
-              <div className="space-y-3">
-                <Label htmlFor="title" className="text-xl font-bold">عنوان الطلب</Label>
-                <Input id="title" placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" value={newRequest.title} onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} className="h-14 text-lg rounded-xl" />
+            <div className="grid gap-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-lg font-bold">عنوان الطلب</Label>
+                <Input id="title" placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" value={newRequest.title} onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} className="h-12 rounded-xl" />
               </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="category" className="text-xl font-bold">التصنيف</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-lg font-bold">التصنيف</Label>
                   <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
-                    <SelectTrigger className="h-14 text-lg rounded-xl">
+                    <SelectTrigger className="h-12 rounded-xl">
                       <SelectValue placeholder="اختر التصنيف" />
                     </SelectTrigger>
                     <SelectContent>
@@ -164,15 +163,25 @@ function StudentView({ profile }: { profile: any }) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-3">
-                  <Label htmlFor="amount" className="text-xl font-bold">المبلغ المعروض (ج.م)</Label>
-                  <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-14 text-lg rounded-xl" />
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-lg font-bold">المبلغ (ج.م)</Label>
+                  <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-12 rounded-xl" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meetingTime" className="text-lg font-bold">تاريخ ووقت المحاضرة المطلوب</Label>
+                <Input 
+                  id="meetingTime" 
+                  type="datetime-local" 
+                  value={newRequest.meetingTime} 
+                  onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} 
+                  className="h-12 rounded-xl font-bold"
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCreateRequest} className="w-full py-8 text-2xl font-black rounded-2xl shadow-lg">
-                <Send className="ml-4 h-8 w-8" /> إرسال الطلب الآن
+              <Button onClick={handleCreateRequest} className="w-full py-6 text-xl font-black rounded-xl">
+                <Send className="ml-3 h-6 w-6" /> إرسال الطلب الآن
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -190,6 +199,10 @@ function StudentView({ profile }: { profile: any }) {
                   <span className="text-2xl font-black text-primary">{req.amount} ج.م</span>
                 </div>
                 <h4 className="font-bold text-2xl leading-tight h-16 line-clamp-2 group-hover:text-primary transition-colors">{req.title}</h4>
+                <div className="flex items-center gap-2 text-primary font-bold bg-primary/5 p-3 rounded-xl">
+                  <CalendarDays className="h-5 w-5" />
+                  <span className="text-sm">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <div className="flex items-center text-md text-muted-foreground font-medium">
                     <Clock className="h-5 w-5 ml-2 text-primary/60" />
@@ -237,7 +250,6 @@ function TeacherView({ profile }: { profile: any }) {
 
   const { data: rawRequests, isLoading } = useCollection(availableRequestsQuery);
   
-  // ترتيب البيانات في جانب العميل
   const requests = rawRequests 
     ? [...rawRequests].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : [];
@@ -254,8 +266,8 @@ function TeacherView({ profile }: { profile: any }) {
     });
 
     toast({
-      title: "تم قبول الطلب!",
-      description: "يمكنك الآن التواصل مع الطالب ودخول المحاضرة من صفحة 'طلباتي'.",
+      title: "تم قبول الطلب بنجاح!",
+      description: "تم إرسال رابط المحاضرة وبريد التأكيد للطالب. يمكنك دخول الجلسة من صفحة 'طلباتي'.",
     });
   };
 
@@ -288,6 +300,10 @@ function TeacherView({ profile }: { profile: any }) {
                 <CardTitle className="text-2xl font-black mt-6 leading-tight group-hover:text-primary transition-colors h-16 line-clamp-2">
                   {req.title}
                 </CardTitle>
+                <div className="flex items-center gap-2 text-accent font-bold mt-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-xs">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                </div>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
                 <div className="flex flex-col gap-3">
@@ -318,3 +334,4 @@ function TeacherView({ profile }: { profile: any }) {
     </div>
   );
 }
+
