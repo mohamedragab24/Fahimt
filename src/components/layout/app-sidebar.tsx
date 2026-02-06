@@ -16,7 +16,8 @@ import {
   BadgeCent,
   Lock,
   ChevronDown,
-  Layers
+  Layers,
+  Video
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -53,6 +54,7 @@ const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
   { title: "إدارة المفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
+  { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
@@ -156,7 +158,7 @@ export function AppSidebar() {
           ))}
 
           {profile?.isAdmin && (
-            <Collapsible asChild className="group/collapsible">
+            <Collapsible asChild className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton 

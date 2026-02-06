@@ -3,13 +3,14 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, doc } from "firebase/firestore";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Layers, Tag } from "lucide-react";
+import { Plus, Trash2, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCategories() {
@@ -25,30 +26,25 @@ export default function AdminCategories() {
 
   const { data: categories, isLoading } = useCollection(categoriesQuery);
 
-  const handleAddCategory = async () => {
+  const handleAddCategory = () => {
     if (!firestore || !newCategory.trim()) return;
     
-    try {
-      await addDoc(collection(firestore, "categories"), {
-        name: newCategory.trim(),
-        icon: icon,
-        createdAt: new Date().toISOString()
-      });
-      setNewCategory("");
-      toast({ title: "تمت الإضافة", description: "تم إضافة القسم الجديد بنجاح." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إضافة القسم." });
-    }
+    const categoriesRef = collection(firestore, "categories");
+    addDocumentNonBlocking(categoriesRef, {
+      name: newCategory.trim(),
+      icon: icon,
+      createdAt: new Date().toISOString()
+    });
+    
+    setNewCategory("");
+    toast({ title: "تم إرسال الطلب", description: "جاري إضافة القسم الجديد للمنصة." });
   };
 
-  const handleDeleteCategory = async (id: string) => {
+  const handleDeleteCategory = (id: string) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, "categories", id));
-      toast({ title: "تم الحذف", description: "تم حذف القسم بنجاح." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف القسم." });
-    }
+    const categoryRef = doc(firestore, "categories", id);
+    deleteDocumentNonBlocking(categoryRef);
+    toast({ title: "تم طلب الحذف", description: "سيتم إزالة القسم من القائمة فوراً." });
   };
 
   return (
@@ -90,7 +86,7 @@ export default function AdminCategories() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 shadow-xl rounded-[2.5rem] overflow-hidden border-2">
+        <Card className="lg:col-span-2 shadow-xl rounded-[2.5rem] overflow-hidden border-2 bg-white">
           <Table>
             <TableHeader className="bg-muted/50 h-16">
               <TableRow>
