@@ -10,6 +10,7 @@ import {
   Home,
   User as UserIcon,
   Sparkles,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,11 +23,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
+import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
@@ -40,6 +43,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
+  const { toggleSidebar, isMobile } = useSidebar();
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -57,15 +61,27 @@ export function AppSidebar() {
 
   return (
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
-      <SidebarHeader className="p-6">
-        <div className="flex items-center gap-4 overflow-hidden">
-          <div className="bg-primary w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg">
-            <Sparkles className="text-white h-6 w-6" />
+      <SidebarHeader className="p-4 md:p-6">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-4 overflow-hidden">
+            <div className="bg-primary w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="text-white h-6 w-6" />
+            </div>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
+              <span className="font-black text-2xl font-headline leading-tight">فهمني</span>
+              <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">التعليم الذكي</span>
+            </div>
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
-            <span className="font-black text-2xl font-headline leading-tight">فهمني</span>
-            <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">التعليم الذكي</span>
-          </div>
+          
+          {/* زر الإغلاق المخصص للجوال والقائمة المفتوحة */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar}
+            className="md:hidden h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground"
+          >
+            <X className="h-6 w-6" />
+          </Button>
         </div>
       </SidebarHeader>
 
