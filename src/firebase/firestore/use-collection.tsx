@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Query,
   onSnapshot,
@@ -22,7 +23,7 @@ export interface UseCollectionResult<T> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Robust implementation to avoid SDK "Internal Assertion Failed" errors.
+ * Improved implementation to handle SDK internal assertion errors gracefully.
  */
 export function useCollection<T = any>(
   memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
@@ -30,8 +31,19 @@ export function useCollection<T = any>(
   const [data, setData] = useState<WithId<T>[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Cleanup previous listener if any
+    if (unsubscribeRef.current) {
+      try {
+        unsubscribeRef.current();
+      } catch (e) {
+        console.warn('Silent cleanup error:', e);
+      }
+      unsubscribeRef.current = null;
+    }
+
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
@@ -42,53 +54,62 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
-    // Track if the hook is still mounted to avoid state updates on unmounted components
     let isMounted = true;
 
-    const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        if (!isMounted) return;
-        const results: WithId<T>[] = [];
-        snapshot.forEach((doc) => {
-          results.push({ ...(doc.data() as T), id: doc.id });
-        });
-        setData(results);
-        setError(null);
-        setIsLoading(false);
-      },
-      (err: FirestoreError) => {
-        if (!isMounted) return;
-        
-        if (err.code !== 'permission-denied') {
-          setError(err);
+    try {
+      const unsubscribe = onSnapshot(
+        memoizedTargetRefOrQuery,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          if (!isMounted) return;
+          const results: WithId<T>[] = [];
+          snapshot.forEach((doc) => {
+            results.push({ ...(doc.data() as T), id: doc.id });
+          });
+          setData(results);
+          setError(null);
           setIsLoading(false);
-          return;
+        },
+        (err: FirestoreError) => {
+          if (!isMounted) return;
+          
+          // Handle permission errors gracefully
+          if (err.code === 'permission-denied') {
+            const contextualError = new FirestorePermissionError({
+              operation: 'list',
+              path: 'collection',
+            });
+            setError(contextualError);
+            setData(null);
+            setIsLoading(false);
+            
+            // Emit after a small delay to avoid interrupting SDK internal state
+            setTimeout(() => {
+              errorEmitter.emit('permission-error', contextualError);
+            }, 100);
+          } else {
+            setError(err);
+            setIsLoading(false);
+          }
         }
+      );
 
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path: 'collection',
-        });
-
-        setError(contextualError);
-        setData(null);
-        setIsLoading(false);
-
-        // Emit with a delay to ensure SDK handles its internal state first
-        setTimeout(() => {
-          errorEmitter.emit('permission-error', contextualError);
-        }, 0);
-      }
-    );
+      unsubscribeRef.current = unsubscribe;
+    } catch (err: any) {
+      console.error('Failed to establish Firestore listener:', err);
+      setIsLoading(false);
+      setError(err);
+    }
 
     return () => {
       isMounted = false;
-      try {
-        unsubscribe();
-      } catch (e) {
-        // Silently catch unsubscription errors to avoid SDK assertion crashes
-        console.warn('Firestore unsubscription error caught:', e);
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch (e) {
+          // SDK assertion failure often happens during this call
+          console.warn('Caught SDK assertion during unsubscribe:', e);
+        }
+        unsubscribeRef.current = null;
       }
     };
   }, [memoizedTargetRefOrQuery]);

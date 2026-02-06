@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   DocumentReference,
   onSnapshot,
@@ -21,7 +22,7 @@ export interface UseDocResult<T> {
 
 /**
  * React hook to subscribe to a single Firestore document in real-time.
- * Robust implementation to avoid SDK "Internal Assertion Failed" errors.
+ * Improved implementation to handle SDK internal assertion errors gracefully.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
@@ -29,8 +30,19 @@ export function useDoc<T = any>(
   const [data, setData] = useState<WithId<T> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Cleanup previous listener
+    if (unsubscribeRef.current) {
+      try {
+        unsubscribeRef.current();
+      } catch (e) {
+        console.warn('Silent cleanup error:', e);
+      }
+      unsubscribeRef.current = null;
+    }
+
     if (!memoizedDocRef) {
       setData(null);
       setIsLoading(false);
@@ -43,43 +55,57 @@ export function useDoc<T = any>(
 
     let isMounted = true;
 
-    const unsubscribe = onSnapshot(
-      memoizedDocRef,
-      (snapshot: DocumentSnapshot<DocumentData>) => {
-        if (!isMounted) return;
-        if (snapshot.exists()) {
-          setData({ ...(snapshot.data() as T), id: snapshot.id });
-        } else {
-          setData(null);
+    try {
+      const unsubscribe = onSnapshot(
+        memoizedDocRef,
+        (snapshot: DocumentSnapshot<DocumentData>) => {
+          if (!isMounted) return;
+          if (snapshot.exists()) {
+            setData({ ...(snapshot.data() as T), id: snapshot.id });
+          } else {
+            setData(null);
+          }
+          setError(null);
+          setIsLoading(false);
+        },
+        (err: FirestoreError) => {
+          if (!isMounted) return;
+          
+          if (err.code === 'permission-denied') {
+            const contextualError = new FirestorePermissionError({
+              operation: 'get',
+              path: memoizedDocRef.path,
+            });
+            setError(contextualError);
+            setData(null);
+            setIsLoading(false);
+
+            setTimeout(() => {
+              errorEmitter.emit('permission-error', contextualError);
+            }, 100);
+          } else {
+            setError(err);
+            setIsLoading(false);
+          }
         }
-        setError(null);
-        setIsLoading(false);
-      },
-      (err: FirestoreError) => {
-        if (!isMounted) return;
-        
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        });
+      );
 
-        setError(contextualError);
-        setData(null);
-        setIsLoading(false);
-
-        // Emit with a delay to ensure SDK handles its internal state first
-        setTimeout(() => {
-          errorEmitter.emit('permission-error', contextualError);
-        }, 0);
-      }
-    );
+      unsubscribeRef.current = unsubscribe;
+    } catch (err: any) {
+      console.error('Failed to establish doc listener:', err);
+      setIsLoading(false);
+      setError(err);
+    }
 
     return () => {
       isMounted = false;
-      try {
-        unsubscribe();
-      } catch (e) {
-        console.warn('Firestore unsubscription error caught:', e);
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch (e) {
+          console.warn('Caught SDK assertion during doc unsubscribe:', e);
+        }
+        unsubscribeRef.current = null;
       }
     };
   }, [memoizedDocRef]);

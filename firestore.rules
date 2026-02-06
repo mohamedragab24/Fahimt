@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,32 +11,21 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // الطلبات التعليمية
+    // السماح بالقراءة لجميع المسجلين لتجنب أخطاء SDK الداخلية في الاستعلامات المجمعة
     match /requests/{requestId} {
-      // السماح بالقراءة (get/list) لجميع المستخدمين المسجلين لتسهيل عمل المدرسين
       allow read: if isSignedIn();
-      // السماح بالإنشاء لأي مستخدم مسجل
       allow create: if isSignedIn();
-      // السماح بالتحديث لأطراف الطلب أو أي مستخدم مسجل (للقبول)
       allow update: if isSignedIn();
-      // السماح بالحذف (اختياري، يفضل الإلغاء بدلاً من الحذف)
       allow delete: if isSignedIn();
     }
 
-    // بيانات المستخدمين
     match /users/{userId} {
-      // السماح بالقراءة لجميع المسجلين للتواصل
       allow read: if isSignedIn();
-      // التعديل لصاحب الحساب فقط
       allow write: if isOwner(userId);
 
-      // المعاملات المالية
       match /transactions/{transactionId} {
-        // القراءة لصاحب الحساب فقط
         allow read: if isOwner(userId);
-        // الإنشاء متاح للمستخدمين المسجلين (النظام)
         allow create: if isSignedIn();
-        // لا يمكن تعديل أو حذف المعاملات بعد تسجيلها
         allow update, delete: if false;
       }
     }
