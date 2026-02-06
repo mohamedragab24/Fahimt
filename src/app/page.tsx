@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, MessageCircle } from "lucide-react";
+import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -70,14 +70,14 @@ function StudentView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
+    if (!firestore || !profile?.id) return null;
     return collection(firestore, "requests");
-  }, [firestore, profile]);
+  }, [firestore, profile?.id]);
 
   const myRequestsQuery = useMemoFirebase(() => {
-    if (!requestsRef) return null;
+    if (!requestsRef || !profile?.id) return null;
     return query(requestsRef, where("studentId", "==", profile.id), limit(6), orderBy("createdAt", "desc"));
-  }, [requestsRef, profile.id]);
+  }, [requestsRef, profile?.id]);
 
   const { data: myRequests } = useCollection(myRequestsQuery);
 
@@ -194,9 +194,9 @@ function TeacherView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
+    if (!firestore || !profile?.id) return null;
     return collection(firestore, "requests");
-  }, [firestore, profile]);
+  }, [firestore, profile?.id]);
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;

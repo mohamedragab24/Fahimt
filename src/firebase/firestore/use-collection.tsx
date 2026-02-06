@@ -27,7 +27,6 @@ export interface UseCollectionResult<T> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
@@ -54,27 +53,25 @@ export function useCollection<T = any>(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
+        snapshot.forEach((doc) => {
           results.push({ ...(doc.data() as T), id: doc.id });
-        }
+        });
         setData(results);
         setError(null);
         setIsLoading(false);
       },
       (err: FirestoreError) => {
-        // Safely extract the path from the reference or query for debugging.
-        let path = 'unknown';
-        const target = memoizedTargetRefOrQuery as any;
-        if (target) {
-          if (target.path) {
+        // Safe path extraction for debugging
+        let path = 'requests'; 
+        try {
+          const target = memoizedTargetRefOrQuery as any;
+          if (target?.path) {
             path = target.path;
-          } else if (target._query && target._query.path) {
-            try {
-              path = target._query.path.canonicalString();
-            } catch (e) {
-              path = 'query-path-error';
-            }
+          } else if (target?._query?.path?.canonicalString) {
+            path = target._query.path.canonicalString();
           }
+        } catch (e) {
+          // Fallback path
         }
 
         const contextualError = new FirestorePermissionError({
