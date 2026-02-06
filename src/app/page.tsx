@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp } from "lucide-react";
+import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ export default function HomePage() {
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userRef);
 
-  if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold">جاري التحميل...</div>;
+  if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحميل...</div>;
   if (!user || !profile) return null;
 
   return (
@@ -91,10 +91,13 @@ function StudentView({ profile }: { profile: any }) {
     );
   }, [requestsRef, profile?.id]);
 
-  const { data: myRequests, error: requestsError } = useCollection(myRequestsQuery);
+  const { data: myRequests } = useCollection(myRequestsQuery);
 
   const handleCreateRequest = () => {
-    if (!requestsRef || !newRequest.title || !newRequest.amount) return;
+    if (!requestsRef || !newRequest.title || !newRequest.amount) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب." });
+      return;
+    }
 
     addDocumentNonBlocking(requestsRef, {
       title: newRequest.title,
@@ -104,15 +107,15 @@ function StudentView({ profile }: { profile: any }) {
       studentId: profile.id,
       studentName: profile.fullName || "مستفهم",
       studentPhone: profile.phoneNumber || "",
-      meetingTime: new Date().toISOString(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      meetingTime: new Date().toISOString()
     });
 
     setIsDialogOpen(false);
     setNewRequest({ title: "", amount: "", category: "دراسة" });
     toast({
       title: "تم إرسال الطلب بنجاح",
-      description: "سيتم إخطار المفهمين المتاحين للرد عليك فوراً.",
+      description: "سيظهر طلبك الآن في قائمة الطلبات بانتظار قبول المدرسين.",
     });
   };
 
@@ -189,17 +192,18 @@ function StudentView({ profile }: { profile: any }) {
                   </div>
                   <Badge className={`px-4 py-1 text-md font-bold ${
                     req.status === 'pending' ? 'bg-orange-100 text-orange-600' : 
-                    req.status === 'accepted' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                    req.status === 'accepted' ? 'bg-blue-100 text-blue-600' : 
+                    req.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                   }`}>
-                    {req.status === 'pending' ? 'قيد الانتظار' : req.status === 'accepted' ? 'تم القبول' : 'مكتمل'}
+                    {req.status === 'pending' ? 'قيد الانتظار' : req.status === 'accepted' ? 'تم القبول' : req.status === 'completed' ? 'مكتمل' : 'ملغي'}
                   </Badge>
                 </div>
               </CardContent>
             </Card>
           ))}
-          {(!myRequests || myRequests.length === 0) && !requestsError && (
+          {(!myRequests || myRequests.length === 0) && (
             <div className="col-span-full py-24 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-2xl font-bold bg-muted/5">
-              لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن وشوف الفرق!
+              لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن!
             </div>
           )}
         </div>
@@ -227,7 +231,7 @@ function TeacherView({ profile }: { profile: any }) {
     );
   }, [requestsRef]);
 
-  const { data: requests, isLoading, error } = useCollection(availableRequestsQuery);
+  const { data: requests, isLoading } = useCollection(availableRequestsQuery);
 
   const handleAcceptRequest = (req: any) => {
     if (!firestore || !profile) return;
@@ -242,7 +246,7 @@ function TeacherView({ profile }: { profile: any }) {
 
     toast({
       title: "تم قبول الطلب!",
-      description: "اذهب إلى صفحة 'طلباتي' لدخول الجلسة المباشرة الآن.",
+      description: "يمكنك الآن التواصل مع الطالب ودخول المحاضرة من صفحة 'طلباتي'.",
     });
   };
 
@@ -254,16 +258,12 @@ function TeacherView({ profile }: { profile: any }) {
         </h3>
         <div className="flex items-center gap-3">
           <div className="h-3 w-3 bg-accent rounded-full animate-pulse"></div>
-          <span className="text-lg font-bold text-accent">مُحدث الآن</span>
+          <span className="text-lg font-bold text-accent">بانتظار المفهمين</span>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-24 text-2xl font-black animate-pulse">جاري البحث عن طلبات جديدة...</div>
-      ) : error ? (
-        <div className="text-center py-24 text-destructive font-bold text-xl bg-destructive/5 rounded-3xl border-2 border-destructive/20">
-          حدث خطأ في جلب الطلبات. يرجى التأكد من اتصالك بالإنترنت.
-        </div>
+        <div className="text-center py-24 text-2xl font-black animate-pulse">جاري البحث عن طلبات...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {requests && requests.map((req) => (
@@ -301,7 +301,7 @@ function TeacherView({ profile }: { profile: any }) {
           ))}
           {(!requests || requests.length === 0) && (
             <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-2xl font-bold bg-muted/5">
-              لا توجد طلبات استفهام حالياً.. استرح قليلاً وسنعلمك عند ظهور أي طلب جديد.
+              لا توجد طلبات استفهام حالياً.. سنعلمك عند ظهور أي طلب جديد.
             </div>
           )}
         </div>

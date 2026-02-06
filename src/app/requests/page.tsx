@@ -47,11 +47,9 @@ export default function RequestsPage() {
   const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(studentQuery);
   const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(teacherQuery);
 
-  const allRequests = [...(studentRequests || []), ...(teacherRequests || [])].sort((a: any, b: any) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-
-  const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values());
+  const allRequests = [...(studentRequests || []), ...(teacherRequests || [])];
+  const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values())
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   if (isUserLoading || isLoadingStudent || isLoadingTeacher) {
     return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل طلباتك...</div>;
@@ -64,16 +62,14 @@ export default function RequestsPage() {
           <h1 className="text-4xl font-black font-headline">إدارة الطلبات</h1>
           <p className="text-muted-foreground text-lg">تتبع حالة طلباتك والوصول للمحاضرات المباشرة.</p>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-primary/10 px-4 py-2 rounded-xl flex items-center gap-2">
-            <BadgeCent className="text-primary h-5 w-5" />
-            <span className="font-bold text-primary">{uniqueRequests.length} طلب إجمالي</span>
-          </div>
+        <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
+          <BadgeCent className="text-primary h-6 w-6" />
+          <span className="font-bold text-primary text-xl">{uniqueRequests.length} طلب إجمالي</span>
         </div>
       </div>
 
       <Tabs defaultValue="pending" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-4 h-20 p-2 bg-muted/40 rounded-[2rem] shadow-inner mb-8">
+        <TabsList className="grid w-full grid-cols-4 h-20 p-2 bg-muted/40 rounded-[2rem] shadow-inner mb-10">
           <TabsTrigger value="pending" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
             <Timer className="h-5 w-5" /> الانتظار
           </TabsTrigger>
@@ -89,7 +85,7 @@ export default function RequestsPage() {
         </TabsList>
 
         {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
-          <TabsContent key={status} value={status} className="space-y-6 focus-visible:ring-0">
+          <TabsContent key={status} value={status} className="space-y-8 focus-visible:ring-0">
             <RequestList 
               requests={uniqueRequests.filter((r: any) => r.status === status)} 
               status={status} 
@@ -117,18 +113,21 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     } else if (action === 'complete') {
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
+      // تحويل مالي وهمي للمحفظة
       createTransactionNonBlocking(firestore, req.teacherId, {
         amount: req.amount * 0.8,
         type: 'earning',
         details: `أرباح جلسة: ${req.title}`,
-        requestId: req.id
+        requestId: req.id,
+        status: 'completed'
       });
 
       createTransactionNonBlocking(firestore, req.studentId, {
         amount: req.amount,
         type: 'payment',
         details: `دفع رسوم جلسة: ${req.title}`,
-        requestId: req.id
+        requestId: req.id,
+        status: 'completed'
       });
 
       toast({ 
