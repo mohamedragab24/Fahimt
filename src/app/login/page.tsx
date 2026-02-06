@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -13,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, ShieldCheck, CheckCircle2, MessageSquare, Mail } from "lucide-react";
+import { Camera, Upload, ShieldCheck, CheckCircle2, MessageSquare, Mail, Smartphone } from "lucide-react";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 
 export default function LoginPage() {
@@ -28,6 +27,7 @@ export default function LoginPage() {
   const [birthDate, setBirthDate] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationMethod, setVerificationMethod] = useState<'email' | 'whatsapp'>('whatsapp');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { auth, firestore } = useFirebase();
@@ -58,22 +58,23 @@ export default function LoginPage() {
       try {
         initiateEmailSignIn(auth, email, password);
       } catch (err: any) {
-        toast({ variant: "destructive", title: "خطأ", description: err.message });
+        toast({ variant: "destructive", title: "خطأ", description: "يرجى التأكد من البريد وكلمة المرور" });
       }
       return;
     }
 
-    if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl || !email || !password) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال كافة البيانات" });
+    if (!fullName || !phoneNumber || !birthDate || !email || !password) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال كافة البيانات الإلزامية" });
       return;
     }
 
     setShowVerification(true);
-    handleSendOTP('whatsapp');
+    handleSendOTP(verificationMethod);
   };
 
   const handleSendOTP = async (method: 'email' | 'whatsapp') => {
     setIsVerifying(true);
+    setVerificationMethod(method);
     const target = method === 'email' ? email : phoneNumber;
     try {
       const result = await generateAndSendOTP({ recipient: target, method });
@@ -84,14 +85,13 @@ export default function LoginPage() {
           expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString()
         });
         
-        // إظهار الكود في التنبيه لأغراض التجربة
         toast({ 
-          title: "تم إرسال الرمز (محاكاة)", 
-          description: `الرمز هو: ${result.code} (سيتم إرساله حقيقة عند ربط API)` 
+          title: "تم إرسال الرمز", 
+          description: `الرمز هو: ${result.code} (يصلك الآن عبر ${method === 'email' ? 'البريد' : 'الواتساب'})` 
         });
       }
     } catch (err) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال رمز التحقق" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل في إرسال الرمز" });
     } finally {
       setIsVerifying(false);
     }
@@ -113,10 +113,10 @@ export default function LoginPage() {
         initiateEmailSignUp(auth, email, password);
         await deleteDoc(snap.docs[0].ref);
       } else {
-        toast({ variant: "destructive", title: "خطأ", description: "رمز التحقق غير صحيح" });
+        toast({ variant: "destructive", title: "خطأ", description: "رمز التحقق غير صحيح أو انتهت صلاحيته" });
       }
     } catch (err) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل التحقق" });
+      toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء التحقق" });
     } finally {
       setIsVerifying(false);
     }
@@ -156,131 +156,91 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-muted/30" dir="rtl">
       <Card className="w-full max-w-lg shadow-[0_20px_60px_rgba(0,0,0,0.1)] border-t-8 border-primary rounded-[2.5rem] bg-white overflow-hidden">
         <CardHeader className="text-center space-y-4 pt-10">
-          <div className="mx-auto bg-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+          <div className="mx-auto bg-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
             <span className="text-white font-black text-3xl">ف</span>
           </div>
           <div>
             <CardTitle className="text-3xl font-black font-headline">
-              {showVerification ? "تحقق من هويتك" : (isLogin ? "مرحباً بك مجدداً" : "انضم إلى مجتمعنا")}
+              {showVerification ? "أدخل رمز التحقق" : (isLogin ? "دخول المسؤولين والمستخدمين" : "أنشئ حسابك الآن")}
             </CardTitle>
             <CardDescription className="text-lg">
-              {showVerification ? "أدخل الرمز الذي ظهر لك في التنبيه" : (isLogin ? "ادخل لمتابعة رحلة تعلمك" : "أنشئ حساباً لتبدأ التعليم أو التعلم")}
+              {showVerification ? `تم إرسال الرمز عبر ${verificationMethod === 'email' ? 'البريد' : 'الواتساب'}` : (isLogin ? "مرحباً بك مجدداً في فهمني" : "خطوة واحدة لتبدأ رحلتك التعليمية")}
             </CardDescription>
           </div>
         </CardHeader>
         
         <CardContent className="px-8 pb-8">
           {showVerification ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-              <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 text-center space-y-4">
-                <ShieldCheck className="h-12 w-12 text-primary mx-auto" />
-                <p className="font-bold text-muted-foreground">استخدم الكود الذي ظهر في التنبيه بالأعلى</p>
-              </div>
-              <div className="space-y-4">
-                <Input 
-                  placeholder="000000" 
-                  className="h-20 text-4xl text-center font-black rounded-2xl border-2 tracking-[0.5em]" 
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.slice(0, 6))}
-                />
-                <Button 
-                  onClick={handleVerifyAndComplete} 
-                  disabled={isVerifying || otpCode.length < 6}
-                  className="w-full py-8 text-2xl font-black rounded-2xl shadow-xl"
-                >
-                  {isVerifying ? "جاري التحقق..." : "تأكيد وإنشاء الحساب"}
+            <div className="space-y-8 animate-in fade-in">
+              <Input 
+                placeholder="000000" 
+                className="h-20 text-4xl text-center font-black rounded-2xl border-2 tracking-[0.5em]" 
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.slice(0, 6))}
+              />
+              <Button 
+                onClick={handleVerifyAndComplete} 
+                disabled={isVerifying || otpCode.length < 6}
+                className="w-full py-8 text-2xl font-black rounded-2xl shadow-xl"
+              >
+                {isVerifying ? "جاري التحقق..." : "تأكيد الدخول"}
+              </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" onClick={() => handleSendOTP('whatsapp')} className="rounded-xl h-12 gap-2">
+                  <MessageSquare className="h-4 w-4" /> واتساب
                 </Button>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <Button variant="outline" onClick={() => handleSendOTP('whatsapp')} className="rounded-xl h-12 gap-2">
-                    <MessageSquare className="h-4 w-4" /> إعادة واتساب
-                  </Button>
-                  <Button variant="outline" onClick={() => handleSendOTP('email')} className="rounded-xl h-12 gap-2">
-                    <Mail className="h-4 w-4" /> إعادة بريد
-                  </Button>
-                </div>
+                <Button variant="outline" onClick={() => handleSendOTP('email')} className="rounded-xl h-12 gap-2">
+                  <Mail className="h-4 w-4" /> بريد إلكتروني
+                </Button>
               </div>
-              <Button variant="ghost" onClick={() => setShowVerification(false)} className="w-full text-muted-foreground">تعديل البيانات</Button>
             </div>
           ) : (
             <form onSubmit={handleStartSignUp} className="space-y-6">
               {!isLogin && (
-                <div className="flex flex-col items-center gap-6 mb-8 p-6 bg-primary/5 rounded-[2rem] border-2 border-dashed border-primary/20">
-                  <div className="relative group">
-                    <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
-                      <AvatarImage src={profilePictureUrl} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-2xl font-black">
-                        {fullName?.charAt(0) || <Camera />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button 
-                      type="button"
-                      size="icon" 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-2 -right-2 rounded-xl h-10 w-10 shadow-lg"
-                    >
-                      <Upload className="h-5 w-5" />
-                    </Button>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                    />
-                  </div>
-                  <div className="text-center">
-                    <Label className="text-primary font-bold">صورة الملف الشخصي</Label>
-                    <p className="text-xs text-muted-foreground mt-1">يرجى اختيار صورة من جهازك</p>
-                  </div>
-                </div>
-              )}
-
-              {!isLogin && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="font-bold mr-2 text-muted-foreground">الاسم الكامل</Label>
-                    <Input id="name" placeholder="أحمد محمد" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-12 rounded-xl" />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="font-bold">الاسم الكامل</Label>
+                      <Input placeholder="أحمد محمد" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold">رقم الواتساب</Label>
+                      <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-12 rounded-xl" />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="font-bold mr-2 text-muted-foreground">رقم الواتساب</Label>
-                    <Input id="phone" placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-12 rounded-xl" />
+                    <Label className="font-bold">تاريخ الميلاد</Label>
+                    <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-12 rounded-xl" />
                   </div>
-                  <div className="col-span-full space-y-2">
-                    <Label htmlFor="birthDate" className="font-bold mr-2 text-muted-foreground">تاريخ الميلاد</Label>
-                    <Input id="birthDate" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-12 rounded-xl" />
+                  <div className="space-y-3 p-4 bg-muted/50 rounded-2xl">
+                    <Label className="font-bold text-primary">نوع الحساب</Label>
+                    <RadioGroup value={role} onValueChange={(v: any) => setRole(v)} className="flex gap-6">
+                      <div className="flex items-center space-x-2 space-x-reverse bg-white px-4 py-2 rounded-xl border-2 border-transparent data-[state=checked]:border-primary cursor-pointer">
+                        <RadioGroupItem value="mustafhem" id="mustafhem" />
+                        <Label htmlFor="mustafhem" className="cursor-pointer font-bold">مُستفهم</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 space-x-reverse bg-white px-4 py-2 rounded-xl border-2 border-transparent data-[state=checked]:border-primary cursor-pointer">
+                        <RadioGroupItem value="mufhem" id="mufhem" />
+                        <Label htmlFor="mufhem" className="cursor-pointer font-bold">مُفهم</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
-                </div>
-              )}
-
-              {!isLogin && (
-                <div className="space-y-3 p-4 bg-muted/50 rounded-2xl">
-                  <Label className="font-bold mr-2 text-primary">نوع الحساب</Label>
-                  <RadioGroup value={role} onValueChange={(v: any) => setRole(v)} className="flex gap-6">
-                    <div className="flex items-center space-x-2 space-x-reverse bg-white px-4 py-2 rounded-xl border-2 border-transparent data-[state=checked]:border-primary transition-all cursor-pointer">
-                      <RadioGroupItem value="mustafhem" id="mustafhem" />
-                      <Label htmlFor="mustafhem" className="cursor-pointer font-bold">أتعلم (مُستفهم)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse bg-white px-4 py-2 rounded-xl border-2 border-transparent data-[state=checked]:border-primary transition-all cursor-pointer">
-                      <RadioGroupItem value="mufhem" id="mufhem" />
-                      <Label htmlFor="mufhem" className="cursor-pointer font-bold">أعلّم (مُفهم)</Label>
-                    </div>
-                  </RadioGroup>
                 </div>
               )}
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="font-bold mr-2 text-muted-foreground">البريد الإلكتروني</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-12 rounded-xl" />
+                  <Label className="font-bold">البريد الإلكتروني</Label>
+                  <Input type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-12 rounded-xl" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="font-bold mr-2 text-muted-foreground">كلمة المرور</Label>
-                  <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-12 rounded-xl" />
+                  <Label className="font-bold">كلمة المرور</Label>
+                  <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-12 rounded-xl" />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full font-black text-xl py-8 rounded-2xl mt-6 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                {isLogin ? "دخول" : "إنشاء حساب مجاناً"}
+              <Button type="submit" className="w-full font-black text-xl py-8 rounded-2xl shadow-xl">
+                {isLogin ? "دخول" : "إرسال رمز التحقق"}
               </Button>
             </form>
           )}
@@ -288,8 +248,8 @@ export default function LoginPage() {
         
         {!showVerification && (
           <CardFooter className="justify-center border-t bg-muted/20 py-6">
-            <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-primary font-bold text-md">
-              {isLogin ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ ادخل من هنا"}
+            <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-primary font-bold">
+              {isLogin ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب؟ ادخل من هنا"}
             </Button>
           </CardFooter>
         )}
