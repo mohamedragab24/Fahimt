@@ -53,10 +53,12 @@ export default function AdminDashboard() {
   }, [user, isUserLoading, router]);
 
   useEffect(() => {
-    if (!isProfileLoading && profile && !profile.isAdmin) {
+    // استثناء للأدمن الرئيسي لضمان عدم حدوث إعادة توجيه خاطئة
+    const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+    if (!isProfileLoading && profile && !profile.isAdmin && !isMasterAdmin) {
       router.push("/");
     }
-  }, [profile, isProfileLoading, router]);
+  }, [profile, isProfileLoading, router, user?.email]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -87,7 +89,9 @@ export default function AdminDashboard() {
   }, [firestore]);
 
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحقق من صلاحيات المسؤول...</div>;
-  if (!profile?.isAdmin) return null;
+  
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+  if (!profile?.isAdmin && !isMasterAdmin) return null;
 
   const chartData = [
     { name: "السبت", users: 40, requests: 24 },

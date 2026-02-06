@@ -33,9 +33,10 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
@@ -67,6 +68,17 @@ export function AppSidebar() {
   }, [firestore, user]);
 
   const { data: profile } = useDoc(userRef);
+
+  // الترقية التلقائية للأدمن الرئيسي
+  useEffect(() => {
+    if (user?.email === "mohamed76y@gmail.com" && profile && !profile.isAdmin && firestore) {
+      const ref = doc(firestore, "users", user.uid);
+      updateDoc(ref, { 
+        isAdmin: true,
+        adminPermissions: ["superadmin"] 
+      });
+    }
+  }, [user, profile, firestore]);
 
   const handleLogout = async () => {
     await signOut(auth);
