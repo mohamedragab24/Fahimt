@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -200,7 +201,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   <div>
                     <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المعلم" : "المستفهم"}</span>
                     <span className="font-bold truncate max-w-[150px] block">
-                      {req.studentId === userId ? (req.teacherName || "بانتظار القبول...") : req.studentName}
+                      {req.studentId === userId ? (req.teacherName || "بانتظار القبول...") : (req.studentName || "مستفهم")}
                     </span>
                   </div>
                 </div>

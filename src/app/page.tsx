@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -47,7 +48,7 @@ export default function HomePage() {
               <Sparkles className="text-primary h-8 w-8" />
               {profile.role === "mufhem" ? "أهلاً يا مُفهم!" : "أهلاً يا مُستفهم!"}
             </h1>
-            <span className="block text-primary text-6xl font-black">{profile.fullName}</span>
+            <span className="block text-primary text-6xl font-black">{profile.fullName || "مستخدم فهمني"}</span>
             <p className="text-muted-foreground text-xl max-w-2xl leading-relaxed">
               {profile.role === "mufhem" 
                 ? "لديك فرصة لمساعدة الطلاب ومشاركة خبراتك وتحقيق دخل إضافي اليوم." 
@@ -101,8 +102,8 @@ function StudentView({ profile }: { profile: any }) {
       category: newRequest.category,
       status: "pending",
       studentId: profile.id,
-      studentName: profile.fullName,
-      studentPhone: profile.phoneNumber,
+      studentName: profile.fullName || "مستفهم",
+      studentPhone: profile.phoneNumber || "",
       meetingTime: new Date().toISOString(),
       createdAt: new Date().toISOString()
     });
@@ -235,8 +236,8 @@ function TeacherView({ profile }: { profile: any }) {
     updateDocumentNonBlocking(reqRef, {
       status: "accepted",
       teacherId: profile.id,
-      teacherName: profile.fullName,
-      teacherPhone: profile.phoneNumber
+      teacherName: profile.fullName || "مفهم",
+      teacherPhone: profile.phoneNumber || ""
     });
 
     toast({
@@ -284,9 +285,9 @@ function TeacherView({ profile }: { profile: any }) {
                   <span className="text-muted-foreground text-sm font-bold">المستفهم:</span>
                   <div className="font-bold text-xl flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl font-black border-2 border-primary/20">
-                      {req.studentName?.charAt(0)}
+                      {(req.studentName || "ف")?.charAt(0)}
                     </div>
-                    {req.studentName}
+                    {req.studentName || "مستفهم"}
                   </div>
                 </div>
                 <Button 
