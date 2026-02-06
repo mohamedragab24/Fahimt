@@ -7,41 +7,35 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // دالة للتحقق من ملكية الملف الشخصي أو الطلب
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
     // قواعد مجموعة الطلبات العامة (Marketplace)
-    match /requests/{requestId} {
-      // السماح بالقراءة (get) والقوائم (list) لكل المستخدمين المسجلين
-      // هذا ضروري للمدرسين لرؤية الطلبات المتاحة وللطلاب لرؤية طلباتهم
+    // نستخدم {document=**} لضمان شمولية القواعد لكل العمليات والقوائم
+    match /requests/{document=**} {
+      // السماح بالقراءة (get/list) لكل المستخدمين المسجلين
       allow read: if isSignedIn();
       
       // السماح بإنشاء طلب جديد لأي مستخدم مسجل
       allow create: if isSignedIn();
       
-      // السماح بالتحديث (لقبول الطلب أو تغييره) لأي مستخدم مسجل
-      // المنطق التطبيقي يتحكم في من يمكنه تحديث ماذا
+      // السماح بالتحديث لأي مستخدم مسجل (لقبول الطلب)
       allow update: if isSignedIn();
       
-      // المسح فقط لصاحب الطلب (الطالب الذي أنشأه)
+      // المسح فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
     // قواعد ملفات المستخدمين
     match /users/{userId} {
-      // السماح بالقراءة لأي مستخدم مسجل (لرؤية أسماء المدرسين مثلاً)
+      // السماح بالقراءة لأي مستخدم مسجل
       allow read: if isSignedIn();
       // الكتابة فقط لصاحب الحساب
-      allow write: if isOwner(userId);
+      allow write: if isSignedIn() && request.auth.uid == userId;
 
       // العمليات المالية (المعاملات)
       match /transactions/{transactionId} {
         // الوصول فقط لصاحب الحساب
-        allow read: if isOwner(userId);
-        // الكتابة فقط لصاحب الحساب (أو عبر السيرفر/المنطق التطبيقي المؤمن)
-        allow write: if isOwner(userId);
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        // الكتابة فقط لصاحب الحساب
+        allow write: if isSignedIn() && request.auth.uid == userId;
       }
     }
   }

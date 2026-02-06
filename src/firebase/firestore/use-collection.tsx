@@ -61,6 +61,13 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
+        // Only wrap permission-denied errors. Other errors (like missing index) should be surfaced as is.
+        if (err.code !== 'permission-denied') {
+          setError(err);
+          setIsLoading(false);
+          return;
+        }
+
         // Safe path extraction for debugging
         let path = 'requests'; 
         try {

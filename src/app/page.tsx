@@ -84,7 +84,7 @@ function StudentView({ profile }: { profile: any }) {
     );
   }, [requestsRef, profile?.id]);
 
-  const { data: myRequests } = useCollection(myRequestsQuery);
+  const { data: myRequests, error: requestsError } = useCollection(myRequestsQuery);
 
   const handleCreateRequest = () => {
     if (!requestsRef || !newRequest.title || !newRequest.amount) return;
@@ -162,6 +162,11 @@ function StudentView({ profile }: { profile: any }) {
 
       <div className="space-y-6">
         <h3 className="text-2xl font-bold font-headline border-r-4 border-primary pr-4">طلباتك الأخيرة</h3>
+        {requestsError && (
+          <div className="p-4 bg-destructive/10 text-destructive rounded-xl text-sm">
+            حدث خطأ أثناء تحميل الطلبات. يرجى التأكد من اتصالك بالإنترنت.
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myRequests && myRequests.map((req: any) => (
             <Card key={req.id} className="shadow-md border-2 hover:shadow-lg transition-shadow">
@@ -183,7 +188,7 @@ function StudentView({ profile }: { profile: any }) {
               </CardContent>
             </Card>
           ))}
-          {(!myRequests || myRequests.length === 0) && (
+          {(!myRequests || myRequests.length === 0) && !requestsError && (
             <div className="col-span-full py-16 text-center text-muted-foreground border-4 border-dashed rounded-3xl text-xl">
               لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن وشوف الفرق!
             </div>
@@ -199,14 +204,12 @@ function TeacherView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
-    // ننتظر حتى يتوفر المعرف لضمان أننا في سياق مستخدم مسجل دخول
     if (!firestore || !profile?.id) return null;
     return collection(firestore, "requests");
   }, [firestore, profile?.id]);
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    // الاستعلام عن الطلبات المعلقة فقط
     return query(
       requestsRef, 
       where("status", "==", "pending"), 
@@ -215,7 +218,7 @@ function TeacherView({ profile }: { profile: any }) {
     );
   }, [requestsRef]);
 
-  const { data: requests, isLoading } = useCollection(availableRequestsQuery);
+  const { data: requests, isLoading, error } = useCollection(availableRequestsQuery);
 
   const handleAcceptRequest = (req: any) => {
     if (!firestore || !profile) return;
@@ -245,6 +248,10 @@ function TeacherView({ profile }: { profile: any }) {
 
       {isLoading ? (
         <div className="text-center py-20 text-xl font-bold">جاري تحميل الطلبات الجديدة...</div>
+      ) : error ? (
+        <div className="text-center py-20 text-destructive font-bold">
+          حدث خطأ في جلب الطلبات. يرجى تحديث الصفحة.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {requests && requests.map((req) => (
