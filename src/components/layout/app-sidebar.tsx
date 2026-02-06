@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   BadgeCent,
   MessageSquare,
-  Lock
+  Lock,
+  ChevronDown
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -29,8 +30,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
@@ -46,12 +51,11 @@ const menuItems = [
 ];
 
 const adminItems = [
-  { title: "لوحة التحكم", icon: LayoutDashboard, href: "/admin" },
+  { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
   { title: "إدارة المفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
-  { title: "الدعم الفني", icon: MessageSquare, href: "/admin/support" },
   { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
 
@@ -60,7 +64,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { toggleSidebar } = useSidebar();
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -154,31 +158,38 @@ export function AppSidebar() {
           ))}
 
           {profile?.isAdmin && (
-            <>
-              <SidebarSeparator className="my-4" />
-              <div className="px-4 mb-2 text-xs font-black text-muted-foreground uppercase tracking-widest group-data-[collapsible=icon]:hidden">
-                لوحة المسؤول
-              </div>
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.title}
+            <Collapsible asChild className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton 
+                    tooltip="لوحة المسؤول" 
                     className={`h-14 rounded-xl transition-all ${
-                      pathname === item.href 
+                      pathname.startsWith('/admin') 
                         ? "bg-accent text-white shadow-lg" 
                         : "hover:bg-accent/10 text-muted-foreground hover:text-accent"
                     }`}
                   >
-                    <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
-                      <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-accent"}`} />
-                      <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
-                    </Link>
+                    <LayoutDashboard className={`h-6 w-6 shrink-0 ${pathname.startsWith('/admin') ? "text-white" : "text-accent"}`} />
+                    <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">لوحة المسؤول</span>
+                    <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180 group-data-[collapsible=icon]:hidden" />
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-4 pr-4 border-r-2 border-accent/20 space-y-1 mt-2">
+                    {adminItems.map((item) => (
+                      <SidebarMenuSubItem key={item.title}>
+                        <SidebarMenuSubButton asChild isActive={pathname === item.href}>
+                          <Link href={item.href} className="flex items-center gap-3 py-2">
+                            <item.icon className="h-4 w-4" />
+                            <span className="font-bold">{item.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
           )}
         </SidebarMenu>
       </SidebarContent>
