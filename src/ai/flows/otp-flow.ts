@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر البريد الإلكتروني.
@@ -55,35 +54,41 @@ const otpFlow = ai.defineFlow(
           from: 'Fahmani <onboarding@resend.dev>',
           to: input.recipient,
           subject: 'رمز التحقق الخاص بك في فهمني',
-          html: `<div dir="rtl" style="font-family: sans-serif; text-align: center; padding: 20px;">
-                  <h2>مرحباً بك في فهمني</h2>
-                  <p>رمز التحقق الخاص بك هو:</p>
-                  <h1 style="color: #2563eb; letter-spacing: 5px; font-size: 40px;">${code}</h1>
-                  <p>صلاحية هذا الرمز هي 10 دقائق.</p>
+          html: `<div dir="rtl" style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                  <h2 style="color: #2563eb;">مرحباً بك في فهمني</h2>
+                  <p style="font-size: 16px; color: #444;">لقد طلبت رمز تحقق للوصول إلى حسابك.</p>
+                  <p style="font-size: 14px; color: #666;">رمز التحقق الخاص بك هو:</p>
+                  <div style="background: #f3f4f6; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                    <h1 style="color: #2563eb; letter-spacing: 10px; font-size: 40px; margin: 0;">${code}</h1>
+                  </div>
+                  <p style="font-size: 12px; color: #999;">صلاحية هذا الرمز هي 10 دقائق. إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد.</p>
                 </div>`,
         });
 
         if (error) {
           console.error('Resend Error:', error);
+          finalMessage = "حدث خطأ أثناء إرسال البريد: " + error.message;
         } else {
           sendSuccess = true;
           console.log('Email sent successfully via Resend:', data?.id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send email:', err);
+        finalMessage = "فشل الإرسال: " + err.message;
       }
     } else {
       // محاكاة الإرسال للواتساب أو في حال غياب مفتاح API للبريد
       console.log(`[OTP SIMULATION TO ${input.recipient} via ${input.method}]: ${code}`);
       sendSuccess = true; // نعتبره نجح في المحاكاة لتجربة الواجهة
+      finalMessage = `[محاكاة ${input.method === 'whatsapp' ? 'واتساب' : 'بريد'}]: الرمز هو ${code}`;
     }
 
     return {
       success: sendSuccess,
       code,
       message: sendSuccess 
-        ? (input.method === 'email' && process.env.RESEND_API_KEY ? 'تم إرسال الرمز لبريدك الإلكتروني.' : finalMessage)
-        : 'فشل إرسال الرمز، يرجى المحاولة لاحقاً.',
+        ? (input.method === 'email' && process.env.RESEND_API_KEY ? 'تم إرسال الرمز لبريدك الإلكتروني بنجاح.' : finalMessage)
+        : finalMessage || 'فشل إرسال الرمز، يرجى المحاولة لاحقاً.',
     };
   }
 );
