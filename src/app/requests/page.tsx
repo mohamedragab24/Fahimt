@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -34,11 +33,13 @@ export default function RequestsPage() {
     return collection(firestore, "requests");
   }, [firestore, user]);
 
+  // استعلام للطلبات التي يكون فيها المستخدم طالباً
   const studentQuery = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
     return query(requestsRef, where("studentId", "==", user.uid), orderBy("createdAt", "desc"));
   }, [requestsRef, user]);
 
+  // استعلام للطلبات التي يكون فيها المستخدم مدرساً
   const teacherQuery = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
     return query(requestsRef, where("teacherId", "==", user.uid), orderBy("createdAt", "desc"));
@@ -47,6 +48,7 @@ export default function RequestsPage() {
   const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(studentQuery);
   const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(teacherQuery);
 
+  // دمج الطلبات وتصفية المتكرر وترتيبها
   const allRequests = [...(studentRequests || []), ...(teacherRequests || [])].sort((a: any, b: any) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -89,7 +91,7 @@ export default function RequestsPage() {
         {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
           <TabsContent key={status} value={status} className="space-y-6 focus-visible:ring-0">
             <RequestList 
-              requests={uniqueRequests.filter(r => r.status === status)} 
+              requests={uniqueRequests.filter((r: any) => r.status === status)} 
               status={status} 
               userId={user?.uid} 
             />
@@ -115,15 +117,15 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     } else if (action === 'complete') {
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
-      // Teacher earns money
+      // المعلم يربح 80% من المبلغ
       createTransactionNonBlocking(firestore, req.teacherId, {
-        amount: req.amount,
+        amount: req.amount * 0.8,
         type: 'earning',
         details: `أرباح جلسة: ${req.title}`,
         requestId: req.id
       });
 
-      // Student record of payment
+      // الطالب يدفع المبلغ بالكامل
       createTransactionNonBlocking(firestore, req.studentId, {
         amount: req.amount,
         type: 'payment',

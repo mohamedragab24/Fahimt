@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -73,7 +72,6 @@ export function AppSidebar() {
             </div>
           </div>
           
-          {/* زر الإغلاق المخصص للجوال والقائمة المفتوحة */}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -88,7 +86,7 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
-        {/* Profile Snapshot */}
+        {/* ملف المستخدم المصغر */}
         <div className="p-4 group-data-[collapsible=icon]:hidden">
           <div className="bg-muted/30 p-4 rounded-2xl flex items-center gap-3 border border-dashed border-primary/20">
             <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/20 shadow-sm">

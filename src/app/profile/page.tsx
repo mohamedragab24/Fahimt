@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -67,7 +66,7 @@ export default function ProfilePage() {
   if (!profile) return null;
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12">
+    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-2 border-r-8 border-primary pr-6">
           <h1 className="text-5xl font-black font-headline tracking-tight">إعدادات الملف الشخصي</h1>
@@ -117,7 +116,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10" dir="rtl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-4">
               <Label htmlFor="fullName" className="text-xl font-black flex items-center gap-3">
                 <User className="h-5 w-5 text-primary" /> الاسم بالكامل

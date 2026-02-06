@@ -12,28 +12,31 @@ service cloud.firestore {
 
     // الطلبات التعليمية
     match /requests/{requestId} {
-      // القراءة متاحة للجميع لتسهيل عمل المدرسين والبحث
+      // السماح بالقراءة (get/list) لجميع المستخدمين المسجلين لتسهيل عمل المدرسين
       allow read: if isSignedIn();
-      // الإنشاء للطالب فقط، والتحديث لأطراف الطلب
+      // السماح بالإنشاء لأي مستخدم مسجل
       allow create: if isSignedIn();
+      // السماح بالتحديث لأطراف الطلب أو أي مستخدم مسجل (للقبول)
       allow update: if isSignedIn();
+      // السماح بالحذف (اختياري، يفضل الإلغاء بدلاً من الحذف)
       allow delete: if isSignedIn();
     }
 
     // بيانات المستخدمين
     match /users/{userId} {
-      // السماح بالقراءة للمعلمين والطلاب للتواصل (مثل الاسم والصورة والهاتف)
+      // السماح بالقراءة لجميع المسجلين للتواصل
       allow read: if isSignedIn();
       // التعديل لصاحب الحساب فقط
       allow write: if isOwner(userId);
 
       // المعاملات المالية
       match /transactions/{transactionId} {
-        // قراءة السجلات المالية متاحة فقط لصاحب الحساب
+        // القراءة لصاحب الحساب فقط
         allow read: if isOwner(userId);
-        // الإنشاء متاح للنظام (المستخدمين) عند إكمال العمليات المالية
+        // الإنشاء متاح للمستخدمين المسجلين (النظام)
         allow create: if isSignedIn();
-        allow update, delete: if false; // لا يمكن تعديل أو حذف المعاملات بعد تسجيلها
+        // لا يمكن تعديل أو حذف المعاملات بعد تسجيلها
+        allow update, delete: if false;
       }
     }
   }

@@ -51,6 +51,7 @@ export default function WalletPage() {
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
+  // حساب الرصيد
   const balance = transactions?.reduce((acc: number, tx: any) => 
     acc + (tx.type === 'deposit' || tx.type === 'earning' ? tx.amount : -tx.amount), 0) || 0;
 
@@ -80,9 +81,9 @@ export default function WalletPage() {
   if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل بيانات المحفظة...</div>;
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12">
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-2">
+        <div className="space-y-2 border-r-8 border-primary pr-6">
           <h1 className="text-5xl font-black font-headline tracking-tight">المحفظة</h1>
           <p className="text-muted-foreground text-xl">إدارة أرباحك ومدفوعاتك التعليمية بكل شفافية.</p>
         </div>
