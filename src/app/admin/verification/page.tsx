@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldCheck, XCircle, CheckCircle2, AlertCircle, Search, UserCheck } from "lucide-react";
+import { ShieldCheck, XCircle, CheckCircle2, AlertCircle, Search, UserCheck, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminVerification() {
@@ -32,17 +32,19 @@ export default function AdminVerification() {
     if (!firestore || !searchQuery) return;
     try {
       // البحث بالـ ID أولاً
-      const userRef = doc(firestore, "users", searchQuery);
-      const userSnap = await getDocs(query(collection(firestore, "users"), where("email", "==", searchQuery), limit(1)));
+      const usersRef = collection(firestore, "users");
+      const q = query(usersRef, where("email", "==", searchQuery), limit(1));
+      const snap = await getDocs(q);
       
       let targetDoc: any = null;
-      if (userSnap.size > 0) {
-        targetDoc = { ...userSnap.docs[0].data(), id: userSnap.docs[0].id };
+      if (!snap.empty) {
+        targetDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
       } else {
         // محاولة البحث بالـ ID المباشر
-        const directSnap = await getDocs(query(collection(firestore, "users"), where("id", "==", searchQuery), limit(1)));
-        if (directSnap.size > 0) {
-          targetDoc = { ...directSnap.docs[0].data(), id: directSnap.id };
+        const userRef = doc(firestore, "users", searchQuery);
+        const userSnap = await getDocs(query(collection(firestore, "users"), where("id", "==", searchQuery), limit(1)));
+        if (userSnap.size > 0) {
+            targetDoc = { ...userSnap.docs[0].data(), id: userSnap.docs[0].id };
         }
       }
 
