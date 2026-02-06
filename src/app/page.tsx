@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -77,7 +76,7 @@ function StudentView({ profile }: { profile: any }) {
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    return query(requestsRef, where("studentId", "==", profile.id), orderBy("createdAt", "desc"), limit(5));
+    return query(requestsRef, where("studentId", "==", profile.id), limit(10));
   }, [requestsRef, profile.id]);
 
   const { data: myRequests } = useCollection(myRequestsQuery);
@@ -200,7 +199,7 @@ function TeacherView({ profile }: { profile: any }) {
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    return query(requestsRef, where("status", "==", "pending"), orderBy("createdAt", "desc"), limit(12));
+    return query(requestsRef, where("status", "==", "pending"), limit(12));
   }, [requestsRef]);
 
   const { data: requests, isLoading } = useCollection(availableRequestsQuery);
