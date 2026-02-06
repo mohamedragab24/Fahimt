@@ -1,14 +1,13 @@
-
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CheckCircle2, XCircle, Timer, Trash2, User } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, XCircle, Timer, Trash2, User, MessageCircle, BadgeCent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
 export default function RequestsPage() {
@@ -20,23 +19,25 @@ export default function RequestsPage() {
     return collection(firestore, "requests");
   }, [firestore, user]);
 
-  const myRequestsQuery = useMemoFirebase(() => {
+  const myRequestsAsStudent = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
-    // We want to see requests where user is either the student OR the teacher
     return query(requestsRef, where("studentId", "==", user.uid), orderBy("createdAt", "desc"));
   }, [requestsRef, user]);
 
-  const myTeachingQuery = useMemoFirebase(() => {
+  const myRequestsAsTeacher = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
     return query(requestsRef, where("teacherId", "==", user.uid), orderBy("createdAt", "desc"));
   }, [requestsRef, user]);
 
-  const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(myRequestsQuery);
-  const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(myTeachingQuery);
+  const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(myRequestsAsStudent);
+  const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(myRequestsAsTeacher);
 
   const allRequests = [...(studentRequests || []), ...(teacherRequests || [])].sort((a: any, b: any) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+
+  // Remove duplicates that might occur if a user somehow is both (unlikely in this logic but safe)
+  const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values());
 
   if (isLoadingStudent || isLoadingTeacher) return <div className="p-10 text-center font-bold">جاري تحميل طلباتك...</div>;
 
@@ -58,7 +59,7 @@ export default function RequestsPage() {
         <div className="mt-8">
           {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
             <TabsContent key={status} value={status} className="space-y-6">
-              <RequestList requests={allRequests.filter(r => r.status === status) || []} status={status} userId={user?.uid} />
+              <RequestList requests={uniqueRequests.filter(r => r.status === status) || []} status={status} userId={user?.uid} />
             </TabsContent>
           ))}
         </div>
@@ -71,17 +72,40 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const handleAction = (requestId: string, action: 'cancel' | 'complete') => {
+  const handleAction = (req: any, action: 'cancel' | 'complete') => {
     if (!firestore) return;
-    const reqRef = doc(firestore, "requests", requestId);
+    const reqRef = doc(firestore, "requests", req.id);
     
     if (action === 'cancel') {
       updateDocumentNonBlocking(reqRef, { status: 'canceled' });
       toast({ title: "تم إلغاء الطلب", description: "تم تحديث حالة الطلب إلى ملغي." });
     } else if (action === 'complete') {
+      // Logic for completion: update status and create transactions
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
-      toast({ title: "مبروك! اكتملت الجلسة", description: "تم تحديث الطلب كمكتمل بنجاح." });
+      
+      // Teacher earns money
+      createTransactionNonBlocking(firestore, req.teacherId, {
+        amount: req.amount,
+        type: 'earning',
+        details: `ربح من طلب: ${req.title}`,
+        requestId: req.id
+      });
+
+      // Student pays money
+      createTransactionNonBlocking(firestore, req.studentId, {
+        amount: req.amount,
+        type: 'payment',
+        details: `دفع لطلب: ${req.title}`,
+        requestId: req.id
+      });
+
+      toast({ title: "مبروك! اكتملت الجلسة", description: "تم تحديث الطلب وإضافة الرصيد للمفهم." });
     }
+  };
+
+  const openWhatsApp = (phone: string, title: string) => {
+    const message = encodeURIComponent(`أهلاً، بخصوص طلبك على تطبيق فهمني: "${title}"`);
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   if (requests.length === 0) {
@@ -104,15 +128,15 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   <Badge variant="outline" className="mb-2">{req.category}</Badge>
                   <CardTitle className="text-2xl font-bold">{req.title}</CardTitle>
                 </div>
-                <Badge className={`px-4 py-1 text-md ${
+                <Badge className={`px-4 py-1 text-md flex items-center gap-2 ${
                   status === 'pending' ? 'bg-orange-100 text-orange-600' : 
                   status === 'accepted' ? 'bg-blue-100 text-blue-600' :
                   status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                 }`}>
-                  {status === 'pending' && <Timer className="h-4 w-4 ml-2" />}
-                  {status === 'accepted' && <CheckCircle2 className="h-4 w-4 ml-2" />}
-                  {status === 'completed' && <CheckCircle2 className="h-4 w-4 ml-2" />}
-                  {status === 'canceled' && <XCircle className="h-4 w-4 ml-2" />}
+                  {status === 'pending' && <Timer className="h-4 w-4" />}
+                  {status === 'accepted' && <CheckCircle2 className="h-4 w-4" />}
+                  {status === 'completed' && <CheckCircle2 className="h-4 w-4" />}
+                  {status === 'canceled' && <XCircle className="h-4 w-4" />}
                   {status === 'pending' ? 'بانتظار الموافقة' : status === 'accepted' ? 'تم القبول' : status === 'completed' ? 'مكتمل' : 'ملغي'}
                 </Badge>
               </div>
@@ -132,28 +156,37 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                 </div>
                 <div className="flex items-center gap-3 truncate">
                   <User className="h-5 w-5 text-primary" />
-                  <span className="truncate">{req.studentId === userId ? `المدرس: ${req.teacherName || '---'}` : `المستفهم: ${req.studentName}`}</span>
+                  <span className="truncate">
+                    {req.studentId === userId ? `المدرس: ${req.teacherName || 'بانتظار قبول...'}` : `المستفهم: ${req.studentName}`}
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="bg-muted/30 p-6 md:w-56 flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-r">
+            <div className="bg-muted/30 p-6 md:w-64 flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-r">
               {status === 'pending' && req.studentId === userId && (
-                <Button variant="destructive" className="w-full py-6 font-bold rounded-xl" onClick={() => handleAction(req.id, 'cancel')}>
+                <Button variant="destructive" className="w-full py-6 font-bold rounded-xl" onClick={() => handleAction(req, 'cancel')}>
                   <Trash2 className="h-5 w-5 ml-2" /> إلغاء الطلب
                 </Button>
               )}
               {status === 'accepted' && (
                 <>
-                  <Button className="w-full bg-primary py-6 font-bold rounded-xl shadow-lg">بدء الجلسة</Button>
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700 py-6 font-bold rounded-xl shadow-lg"
+                    onClick={() => openWhatsApp(req.studentId === userId ? req.teacherPhone : req.studentPhone, req.title)}
+                  >
+                    <MessageCircle className="h-5 w-5 ml-2" /> تواصل واتساب
+                  </Button>
                   {req.teacherId === userId && (
-                    <Button variant="outline" className="w-full py-6 font-bold rounded-xl border-primary text-primary" onClick={() => handleAction(req.id, 'complete')}>
-                      إكمال الجلسة
+                    <Button variant="outline" className="w-full py-6 font-bold rounded-xl border-primary text-primary" onClick={() => handleAction(req, 'complete')}>
+                      إتمام الجلسة بنجاح
                     </Button>
                   )}
                 </>
               )}
               {status === 'completed' && (
-                <Button variant="outline" className="w-full py-6 font-bold rounded-xl">تقييم التجربة</Button>
+                <Button variant="outline" className="w-full py-6 font-bold rounded-xl" disabled>
+                  شكراً لثقتكم
+                </Button>
               )}
             </div>
           </CardContent>

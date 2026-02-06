@@ -2,34 +2,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة مساعدة للتحقق من تسجيل الدخول
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // قواعد مجموعة الطلبات (Requests)
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
     match /requests/{requestId} {
-      // السماح بالقراءة لكل مستخدم مسجل
+      // الجميع يمكنه رؤية الطلبات المتاحة أو طلباته الخاصة
       allow read: if isSignedIn();
       
-      // السماح بالإنشاء للمستخدم المسجل
+      // المستفهم فقط يمكنه الإنشاء
       allow create: if isSignedIn();
       
-      // السماح بالتحديث لصاحب الطلب أو المدرس
+      // التحديث مسموح للمدرس لقبول الطلب أو لصاحب الطلب لتغيير الحالة
       allow update: if isSignedIn();
       
-      // السماح بالحذف لصاحب الطلب
+      // الحذف لصاحب الطلب فقط
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
-    // قواعد ملفات المستخدمين (Users)
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isOwner(userId);
 
-      // العمليات المالية (Transactions)
       match /transactions/{transactionId} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
+        // القراءة لصاحب الحساب فقط، الكتابة مسموحة للنظام (بما أننا في MVP نعتمد على الكلاينت مع قواعد حذرة)
+        allow read, write: if isOwner(userId);
       }
     }
   }

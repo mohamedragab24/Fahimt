@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, PenTool, Code, BadgeCent, Clock, Send, Users } from "lucide-react";
+import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
@@ -76,7 +76,7 @@ function StudentView({ profile }: { profile: any }) {
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    return query(requestsRef, where("studentId", "==", profile.id), limit(10));
+    return query(requestsRef, where("studentId", "==", profile.id), limit(6), orderBy("createdAt", "desc"));
   }, [requestsRef, profile.id]);
 
   const { data: myRequests } = useCollection(myRequestsQuery);
@@ -91,6 +91,7 @@ function StudentView({ profile }: { profile: any }) {
       status: "pending",
       studentId: profile.id,
       studentName: profile.fullName,
+      studentPhone: profile.phoneNumber,
       meetingTime: new Date().toISOString(),
       createdAt: new Date().toISOString()
     });
@@ -199,19 +200,22 @@ function TeacherView({ profile }: { profile: any }) {
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    return query(requestsRef, where("status", "==", "pending"), limit(12));
+    return query(requestsRef, where("status", "==", "pending"), orderBy("createdAt", "desc"), limit(12));
   }, [requestsRef]);
 
   const { data: requests, isLoading } = useCollection(availableRequestsQuery);
 
-  const handleAcceptRequest = (requestId: string) => {
+  const handleAcceptRequest = (req: any) => {
     if (!firestore) return;
-    const reqRef = doc(firestore, "requests", requestId);
+    const reqRef = doc(firestore, "requests", req.id);
+    
     updateDocumentNonBlocking(reqRef, {
       status: "accepted",
       teacherId: profile.id,
-      teacherName: profile.fullName
+      teacherName: profile.fullName,
+      teacherPhone: profile.phoneNumber
     });
+
     toast({
       title: "تم قبول الطلب!",
       description: "يمكنك الآن البدء بالتواصل مع الطالب لترتيب الموعد.",
@@ -256,7 +260,7 @@ function TeacherView({ profile }: { profile: any }) {
                   </div>
                 </div>
                 <Button 
-                  onClick={() => handleAcceptRequest(req.id)}
+                  onClick={() => handleAcceptRequest(req)}
                   className="w-full bg-accent hover:bg-accent/90 py-7 font-bold text-xl rounded-2xl shadow-lg transition-transform hover:scale-[1.02]"
                 >
                   أنا أقدر أفهِّمك
