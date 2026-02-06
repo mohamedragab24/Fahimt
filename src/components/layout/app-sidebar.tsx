@@ -103,7 +103,6 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
-        {/* ملف المستخدم المصغر */}
         <div className="p-4 group-data-[collapsible=icon]:hidden">
           <div className="bg-muted/30 p-4 rounded-2xl flex items-center gap-3 border border-dashed border-primary/20">
             <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/20 shadow-sm">
@@ -136,7 +135,7 @@ export function AppSidebar() {
               >
                 <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
                   <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">{item.title}</span>
+                  <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -162,7 +161,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
                       <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-accent"}`} />
-                      <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">{item.title}</span>
+                      <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -182,7 +181,7 @@ export function AppSidebar() {
             >
               <Link href="https://wa.me/201234567890" target="_blank" className="flex items-center gap-4 px-3 w-full">
                 <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">الدعم الفني</span>
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">الدعم الفني</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -196,7 +195,7 @@ export function AppSidebar() {
             >
               <div className="flex items-center gap-4 px-3 w-full">
                 <LogOut className="h-6 w-6 shrink-0" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">تسجيل الخروج</span>
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

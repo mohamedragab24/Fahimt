@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { collection, query, where, getDocs, doc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -12,8 +12,6 @@ import {
   BadgeCent, 
   TrendingUp, 
   Clock, 
-  CheckCircle2, 
-  AlertCircle,
   Activity
 } from "lucide-react";
 import { 
@@ -32,6 +30,14 @@ export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: profile, isLoading: isProfileLoading } = useDoc(userRef);
+
   const [stats, setStats] = useState({
     mufahems: 0,
     mustafhems: 0,
@@ -41,33 +47,47 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && !user) router.push("/login");
-  }, [user, isUserLoading]);
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
-  // جلب إحصائيات سريعة
+  useEffect(() => {
+    if (!isProfileLoading && profile && !profile.isAdmin) {
+      router.push("/");
+    }
+  }, [profile, isProfileLoading, router]);
+
   useEffect(() => {
     const fetchStats = async () => {
       if (!firestore) return;
-      const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
-      const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
-      const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
-      
-      const [mufSnap, musSnap, verSnap] = await Promise.all([
-        getDocs(mufQuery),
-        getDocs(musQuery),
-        getDocs(verQuery)
-      ]);
+      try {
+        const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
+        const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
+        const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
+        
+        const [mufSnap, musSnap, verSnap] = await Promise.all([
+          getDocs(mufQuery),
+          getDocs(musQuery),
+          getDocs(verQuery)
+        ]);
 
-      setStats({
-        mufahems: mufSnap.size,
-        mustafhems: musSnap.size,
-        pendingVerifications: verSnap.size,
-        totalTransactions: 0, // محاكاة لسرعة العرض
-        totalRevenue: 0
-      });
+        setStats({
+          mufahems: mufSnap.size,
+          mustafhems: musSnap.size,
+          pendingVerifications: verSnap.size,
+          totalTransactions: 0,
+          totalRevenue: 0
+        });
+      } catch (e) {
+        console.error("Error fetching admin stats:", e);
+      }
     };
     fetchStats();
   }, [firestore]);
+
+  if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحقق من صلاحيات المسؤول...</div>;
+  if (!profile?.isAdmin) return null;
 
   const chartData = [
     { name: "السبت", users: 40, requests: 24 },
