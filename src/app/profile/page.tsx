@@ -168,7 +168,7 @@ export default function ProfilePage() {
               </Label>
               <Input 
                 id="fullName" 
-                value={formData.fullName} 
+                value={formData.fullName || ""} 
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
               />
@@ -180,7 +180,7 @@ export default function ProfilePage() {
               </Label>
               <div className="flex gap-2">
                 <Input 
-                  value={user?.uid} 
+                  value={user?.uid || ""} 
                   readOnly 
                   className="h-16 text-sm font-mono font-bold rounded-2xl bg-muted/40 border-none px-6"
                 />
@@ -197,7 +197,7 @@ export default function ProfilePage() {
               </Label>
               <Input 
                 id="email" 
-                value={profile.email} 
+                value={profile.email || ""} 
                 readOnly 
                 disabled
                 className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-70"
@@ -211,7 +211,7 @@ export default function ProfilePage() {
               </Label>
               <Input 
                 id="phone" 
-                value={formData.phone}
+                value={formData.phone || ""}
                 placeholder="01xxxxxxxxx"
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               <Input 
                 id="birthDate" 
                 type="date"
-                value={formData.birthDate}
+                value={formData.birthDate || ""}
                 onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
               />
