@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDocumentNonBlocking, updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
@@ -70,9 +70,9 @@ function StudentView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile) return null;
     return collection(firestore, "requests");
-  }, [firestore]);
+  }, [firestore, profile]);
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
@@ -194,9 +194,9 @@ function TeacherView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile) return null;
     return collection(firestore, "requests");
-  }, [firestore]);
+  }, [firestore, profile]);
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
