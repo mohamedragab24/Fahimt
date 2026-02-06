@@ -3,13 +3,13 @@
 
 import { useState } from "react";
 import { useFirestore } from "@/firebase";
-import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldAlert, ShieldCheck, Search, UserPlus, UserMinus, Shield } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Search, UserPlus, UserMinus, Shield, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -23,7 +23,6 @@ export default function AdminRoles() {
   const handleSearch = async () => {
     if (!firestore || !searchId) return;
     try {
-      // البحث بالبريد أولاً
       const usersRef = collection(firestore, "users");
       const q = query(usersRef, where("email", "==", searchId));
       const snap = await getDocs(q);
@@ -32,7 +31,6 @@ export default function AdminRoles() {
         setTargetUser({ ...snap.docs[0].data(), id: snap.docs[0].id });
         setPermissions(snap.docs[0].data().adminPermissions || ["support"]);
       } else {
-        // البحث بالـ ID المباشر
         const userRef = doc(firestore, "users", searchId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
@@ -50,6 +48,13 @@ export default function AdminRoles() {
 
   const toggleAdminStatus = async () => {
     if (!firestore || !targetUser) return;
+    
+    // منع سحب الصلاحية من الأدمن الأساسي لحماية النظام
+    if (targetUser.email === "mohamed76y@gmail.com") {
+      toast({ variant: "destructive", title: "تنبيه", description: "لا يمكن سحب صلاحيات الأدمن الرئيسي للمنصة." });
+      return;
+    }
+
     const isNowAdmin = !targetUser.isAdmin;
     
     try {
@@ -61,7 +66,7 @@ export default function AdminRoles() {
       await addDoc(collection(firestore, "adminLogs"), {
         action: isNowAdmin ? 'grant_admin' : 'revoke_admin',
         targetUserId: targetUser.id,
-        details: isNowAdmin ? `تم منح صلاحيات: ${permissions.join(', ')}` : 'تم سحب الصلاحيات',
+        details: isNowAdmin ? `تم منح صلاحيات: ${permissions.join(', ')}` : 'تم سحب كافة الصلاحيات الإدارية',
         timestamp: new Date().toISOString()
       });
 
@@ -87,7 +92,7 @@ export default function AdminRoles() {
       <div className="flex justify-between items-center border-r-8 border-red-500 pr-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">الإدارة والصلاحيات</h1>
-          <p className="text-muted-foreground text-lg">إدارة رتب المسؤولين وسحبها عبر البريد أو الـ ID.</p>
+          <p className="text-muted-foreground text-lg">إدارة وتعيين وسحب رتب المسؤولين المساعدين.</p>
         </div>
       </div>
 
@@ -135,7 +140,7 @@ export default function AdminRoles() {
                 </div>
               </div>
 
-              {!targetUser.isAdmin && (
+              {!targetUser.isAdmin ? (
                 <div className="space-y-6 bg-white p-8 rounded-3xl border shadow-sm">
                   <h5 className="text-xl font-black flex items-center gap-3">
                     <Shield className="text-primary" /> تحديد الصلاحيات للمسؤول الجديد:
@@ -158,17 +163,22 @@ export default function AdminRoles() {
                     ))}
                   </div>
                 </div>
+              ) : (
+                <div className="p-6 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-4 text-red-700">
+                  <AlertTriangle className="h-8 w-8 shrink-0" />
+                  <p className="font-bold">انتبه: أنت على وشك سحب كافة الصلاحيات الإدارية من هذا المستخدم. لن يتمكن من الوصول للوحة التحكم بعد الآن.</p>
+                </div>
               )}
 
               <Button 
                 onClick={toggleAdminStatus}
                 variant={targetUser.isAdmin ? "destructive" : "default"}
-                className="w-full h-16 text-2xl font-black rounded-2xl shadow-xl"
+                className="w-full h-16 text-2xl font-black rounded-2xl shadow-xl transition-all"
               >
                 {targetUser.isAdmin ? (
-                  <><UserMinus className="ml-3 h-8 w-8" /> سحب رتبة المسؤول</>
+                  <><UserMinus className="ml-3 h-8 w-8" /> سحب رتبة المسؤول وإلغاء الصلاحيات</>
                 ) : (
-                  <><UserPlus className="ml-3 h-8 w-8" /> تعيين كمسؤول الآن</>
+                  <><UserPlus className="ml-3 h-8 w-8" /> تعيين كمسؤول بالصلاحيات المحددة</>
                 )}
               </Button>
             </div>

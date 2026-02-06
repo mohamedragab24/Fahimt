@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BadgeCent, Download, Plus, History, ArrowUpRight, ArrowDownLeft, Search, CheckCircle2, XCircle, Wallet } from "lucide-react";
+import { BadgeCent, Download, Plus, History, ArrowUpRight, ArrowDownLeft, Search, CheckCircle2, XCircle, Wallet, MinusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,8 @@ export default function AdminFinance() {
   const [searchId, setSearchId] = useState("");
   const [targetUser, setTargetUser] = useState<any>(null);
   const [amount, setAmount] = useState("");
+  const [actionType, setActionType] = useState<'deposit' | 'withdrawal'>('deposit');
 
-  // جلب طلبات السحب (نعتبرها معاملات من نوع withdrawal وحالتها pending)
-  // ملاحظة: في النسخة الحالية قمنا بتبسيطها كـ transactions بفلتر معين
   const payoutQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "payoutRequests"), where("status", "==", "pending"), orderBy("timestamp", "desc"));
@@ -34,7 +33,6 @@ export default function AdminFinance() {
   const handleSearch = async () => {
     if (!firestore || !searchId) return;
     try {
-      // البحث بالبريد أولاً
       const usersRef = collection(firestore, "users");
       const q = query(usersRef, where("email", "==", searchId));
       const snap = await getDocs(q);
@@ -42,7 +40,6 @@ export default function AdminFinance() {
       if (!snap.empty) {
         setTargetUser({ ...snap.docs[0].data(), id: snap.docs[0].id });
       } else {
-        // البحث بالـ ID المباشر
         const userRef = doc(firestore, "users", searchId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
@@ -57,31 +54,36 @@ export default function AdminFinance() {
     }
   };
 
-  const handleRecharge = async () => {
+  const handleManualAction = async () => {
     if (!firestore || !targetUser || !amount) return;
     try {
       const txRef = collection(firestore, "users", targetUser.id, "transactions");
+      const numAmount = Number(amount);
+      
       await addDoc(txRef, {
-        amount: Number(amount),
-        type: 'deposit',
-        details: 'شحن رصيد بواسطة الإدارة (فودافون كاش)',
+        amount: numAmount,
+        type: actionType,
+        details: actionType === 'deposit' ? 'شحن رصيد يدوي بواسطة الإدارة' : 'خصم رصيد يدوي بواسطة الإدارة',
         status: 'completed',
         timestamp: new Date().toISOString()
       });
 
       await addDoc(collection(firestore, "adminLogs"), {
-        action: 'manual_recharge',
+        action: actionType === 'deposit' ? 'manual_recharge' : 'manual_deduction',
         targetUserId: targetUser.id,
-        amount: Number(amount),
+        amount: numAmount,
         timestamp: new Date().toISOString()
       });
 
-      toast({ title: "تم الشحن!", description: `تم إضافة ${amount} ج.م لحساب ${targetUser.fullName}` });
+      toast({ 
+        title: "تمت العملية!", 
+        description: `تم ${actionType === 'deposit' ? 'إضافة' : 'خصم'} مبلغ ${amount} ج.م لحساب ${targetUser.fullName}` 
+      });
       setAmount("");
       setTargetUser(null);
       setSearchId("");
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تنفيذ عملية الشحن" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تنفيذ العملية" });
     }
   };
 
@@ -92,7 +94,6 @@ export default function AdminFinance() {
       await updateDoc(payoutRef, { status: action === 'approve' ? 'completed' : 'rejected' });
       
       if (action === 'approve') {
-        // تسجيل المعاملة في محفظة المستخدم كخصم نهائي
         await addDoc(collection(firestore, "users", payout.userId, "transactions"), {
           amount: payout.amount,
           type: 'withdrawal',
@@ -114,25 +115,25 @@ export default function AdminFinance() {
       <div className="flex justify-between items-center border-r-8 border-purple-500 pr-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">إدارة المالية</h1>
-          <p className="text-muted-foreground text-lg">التحكم في الأرصدة وعمليات السحب اليدوية.</p>
+          <p className="text-muted-foreground text-lg">التحكم في الأرصدة (شحن/خصم) وعمليات السحب.</p>
         </div>
       </div>
 
-      <Tabs defaultValue="recharge" className="w-full">
+      <Tabs defaultValue="actions" className="w-full">
         <TabsList className="grid w-full grid-cols-2 h-16 p-1 bg-muted rounded-2xl mb-8">
-          <TabsTrigger value="recharge" className="rounded-xl text-lg font-bold">
-            <Plus className="h-5 w-5 ml-2" /> شحن رصيد يدوي
+          <TabsTrigger value="actions" className="rounded-xl text-lg font-bold">
+            <Wallet className="h-5 w-5 ml-2" /> العمليات اليدوية
           </TabsTrigger>
           <TabsTrigger value="payouts" className="rounded-xl text-lg font-bold">
             <Download className="h-5 w-5 ml-2" /> طلبات السحب ({payouts?.length || 0})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="recharge">
+        <TabsContent value="actions">
           <Card className="max-w-3xl mx-auto shadow-xl rounded-[2.5rem] overflow-hidden border-2">
             <CardHeader className="bg-purple-600 text-white p-8">
               <CardTitle className="text-2xl font-black flex items-center gap-3">
-                <Wallet className="h-8 w-8" /> شحن محفظة مستخدم
+                <BadgeCent className="h-8 w-8" /> التحكم في رصيد المستخدم
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
@@ -152,19 +153,37 @@ export default function AdminFinance() {
               </div>
 
               {targetUser && (
-                <div className="p-6 bg-green-50 rounded-2xl border-2 border-dashed border-green-200 animate-in fade-in">
-                  <div className="flex items-center gap-4 mb-6">
+                <div className="p-6 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-6 animate-in fade-in">
+                  <div className="flex items-center gap-4 mb-4">
                     <Avatar className="h-16 w-16 shadow-md border-2 border-white">
                       <AvatarImage src={targetUser.profilePictureUrl} />
                       <AvatarFallback>{targetUser.fullName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="text-xl font-black">{targetUser.fullName}</h4>
-                      <p className="text-sm text-green-700 font-bold">{targetUser.email}</p>
+                      <p className="text-sm text-muted-foreground font-bold">{targetUser.email}</p>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <Label className="font-bold">المبلغ المراد شحنه (ج.م)</Label>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button 
+                      variant={actionType === 'deposit' ? 'default' : 'outline'}
+                      onClick={() => setActionType('deposit')}
+                      className={`h-14 text-lg font-bold rounded-xl ${actionType === 'deposit' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                    >
+                      <Plus className="ml-2 h-5 w-5" /> شحن رصيد
+                    </Button>
+                    <Button 
+                      variant={actionType === 'withdrawal' ? 'destructive' : 'outline'}
+                      onClick={() => setActionType('withdrawal')}
+                      className="h-14 text-lg font-bold rounded-xl"
+                    >
+                      <MinusCircle className="ml-2 h-5 w-5" /> خصم رصيد
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t">
+                    <Label className="font-bold">المبلغ (ج.م)</Label>
                     <Input 
                       type="number" 
                       placeholder="0.00" 
@@ -172,8 +191,11 @@ export default function AdminFinance() {
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                     />
-                    <Button onClick={handleRecharge} className="w-full h-14 text-xl font-black rounded-xl bg-green-600">
-                      تأكيد الشحن
+                    <Button 
+                      onClick={handleManualAction} 
+                      className={`w-full h-14 text-xl font-black rounded-xl ${actionType === 'deposit' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                    >
+                      تأكيد عملية {actionType === 'deposit' ? 'الشحن' : 'الخصم'}
                     </Button>
                   </div>
                 </div>
