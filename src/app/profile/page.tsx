@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [copied, setCopied] = useState(false);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -47,6 +48,15 @@ export default function ProfilePage() {
       });
     }
   }, [profile]);
+
+  const copyProfileId = () => {
+    if (user?.uid) {
+      navigator.clipboard.writeText(user.uid);
+      setCopied(true);
+      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي للحافظة." });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,10 +140,19 @@ export default function ProfilePage() {
             <div className="flex-1 space-y-4 text-center md:text-right">
               <div className="space-y-1">
                 <h2 className="text-3xl md:text-4xl font-black tracking-tight">{formData.fullName}</h2>
-                <div className="flex items-center justify-center md:justify-start gap-3">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                   <Badge className="bg-primary text-white px-6 py-1.5 text-md font-black rounded-full shadow-lg">
                     {profile.role === 'mustafhem' ? 'مُستفهم طموح' : 'مُفهم معتمد'}
                   </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={copyProfileId}
+                    className="rounded-full border-dashed border-primary text-primary hover:bg-primary/5 font-bold"
+                  >
+                    {copied ? <Check className="h-4 w-4 ml-2" /> : <Copy className="h-4 w-4 ml-2" />}
+                    ID: {user?.uid?.slice(0, 8)}...
+                  </Button>
                 </div>
               </div>
             </div>
@@ -159,14 +178,16 @@ export default function ProfilePage() {
               <Input 
                 id="email" 
                 value={profile.email} 
-                disabled 
-                className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-50"
+                readOnly 
+                disabled
+                className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-70"
               />
+              <p className="text-xs text-muted-foreground mr-2 font-bold">لا يمكن تعديل البريد الإلكتروني لدواعي الأمان.</p>
             </div>
 
             <div className="space-y-4">
               <Label htmlFor="phone" className="text-xl font-black flex items-center gap-3">
-                <Phone className="h-5 w-5 text-primary" /> رقم الهاتف (للتواصل)
+                <Phone className="h-5 w-5 text-primary" /> رقم الهاتف (واتساب)
               </Label>
               <Input 
                 id="phone" 
@@ -209,7 +230,7 @@ export default function ProfilePage() {
         <div className="flex-1 space-y-2 text-center md:text-right">
           <h3 className="text-2xl font-black text-primary">أمان بياناتك هو أولويتنا</h3>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            بياناتك الشخصية مشفرة بالكامل ولا يتم مشاركتها إلا مع الطرف الآخر لغرض التواصل التعليمي فقط.
+            بياناتك الشخصية ومعلومات الدخول مشفرة بالكامل. لا يمكن لأحد تعديل معلومات الدخول الخاصة بك سوى من خلال فريق الدعم الفني بعد التحقق من هويتك.
           </p>
         </div>
       </div>

@@ -12,7 +12,6 @@ import {
   Timer, 
   Trash2, 
   User, 
-  MessageCircle, 
   BadgeCent,
   AlertCircle,
   ClipboardList,
@@ -148,12 +147,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const openWhatsApp = (phone: string, title: string) => {
-    if (!phone) return;
-    const message = encodeURIComponent(`أهلاً، أنا بخصوص طلبك على "فهمني": "${title}"`);
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-  };
-
   if (requests.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 md:py-32 bg-white rounded-[2rem] md:rounded-[3rem] border-4 border-dashed border-muted shadow-sm px-4 text-center">
@@ -244,18 +237,12 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
               {status === 'accepted' && (
                 <>
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 py-8 md:py-10 font-black text-lg md:text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+                    className="w-full bg-blue-600 hover:bg-blue-700 py-10 md:py-12 font-black text-xl md:text-2xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                     onClick={() => router.push(`/meeting/${req.id}`)}
                   >
-                    <Video className="h-6 w-6 ml-3" /> دخول المحاضرة
+                    <Video className="h-8 w-8 ml-4" /> دخول المحاضرة
                   </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full border-green-600 text-green-600 hover:bg-green-50 py-8 md:py-10 font-black text-lg md:text-xl rounded-2xl transition-all"
-                    onClick={() => openWhatsApp(req.studentId === userId ? req.teacherPhone : req.studentPhone, req.title)}
-                  >
-                    <MessageCircle className="h-6 w-6 ml-3" /> واتساب
-                  </Button>
+                  
                   {req.teacherId === userId && (
                     <Button 
                       variant="ghost" 
