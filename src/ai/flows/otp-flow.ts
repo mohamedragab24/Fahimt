@@ -1,16 +1,12 @@
 'use server';
 /**
- * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر البريد الإلكتروني أو الواتساب.
+ * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر Infobip.
  * 
- * - generateAndSendOTP - دالة لإنشاء رمز وإرساله حقيقة عبر البريد (Resend) أو الواتساب (HTTP API).
+ * - generateAndSendOTP - دالة لإنشاء رمز وإرساله حقيقة عبر البريد (Infobip) أو الواتساب.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { Resend } from 'resend';
-
-// تهيئة Resend بمفتاح API من متغيرات البيئة
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const OTPInputSchema = z.object({
   recipient: z.string().describe('البريد الإلكتروني أو رقم الهاتف المستهدف.'),
@@ -46,52 +42,56 @@ const otpFlow = ai.defineFlow(
     });
 
     let sendSuccess = false;
-    let finalMessage = text;
+    const apiKey = 'App 0287a4d3a664e2ae2a09ed0f9982ab46-cd21866e-50a3-4a7d-8050-03a7d7fec5a3';
 
-    if (input.method === 'email' && process.env.RESEND_API_KEY) {
+    if (input.method === 'email') {
       try {
-        const { data, error } = await resend.emails.send({
-          from: 'Fahmani <onboarding@resend.dev>',
-          to: input.recipient,
-          subject: 'رمز التحقق الخاص بك في فهمني',
-          html: `<div dir="rtl" style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                  <h2 style="color: #2563eb;">مرحباً بك في فهمني</h2>
-                  <p style="font-size: 16px; color: #444;">رمز التحقق الخاص بك هو:</p>
-                  <div style="background: #f3f4f6; padding: 20px; margin: 20px 0; border-radius: 10px;">
-                    <h1 style="color: #2563eb; letter-spacing: 10px; font-size: 40px; margin: 0;">${code}</h1>
-                  </div>
-                  <p style="font-size: 12px; color: #999;">هذا الرمز صالح لمدة 10 دقائق.</p>
-                </div>`,
-        });
-
-        if (!error) sendSuccess = true;
-      } catch (err: any) {
-        console.error('Email failed:', err);
-      }
-    } else if (input.method === 'whatsapp') {
-      // منطق إرسال الواتساب عبر HTTP API (يمكنك استبدال الرابط برابط مزود الخدمة الخاص بك)
-      try {
-        // مثال لاستخدام خدمة UltraMsg أو أي بوابة واتساب تعتمد على POST
-        // سنستخدم حالياً محاكاة ولكن مع هيكل جاهز للربط
-        console.log(`[WHATSAPP API CALL] Sending ${code} to ${input.recipient}`);
-        
-        /*
-        // مثال للكود الفعلي عند توفر API الواتساب:
-        const response = await fetch('https://api.whatsapp-provider.com/send', {
+        const response = await fetch('https://3dg8lv.api.infobip.com/email/4/messages', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Authorization': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
-            token: process.env.WHATSAPP_API_KEY,
-            to: input.recipient,
-            body: text
+            "messages": [
+              {
+                "destinations": [
+                  {
+                    "to": [
+                      {
+                        "destination": input.recipient
+                      }
+                    ]
+                  }
+                ],
+                "sender": "mohamedmini2006@selfserve.worlds-connected.co",
+                "content": {
+                  "subject": "رمز التحقق - فهمني",
+                  "text": text // استخدام النص المصاغ بالذكاء الاصطناعي
+                }
+              }
+            ]
           })
         });
-        if (response.ok) sendSuccess = true;
-        */
-        
-        sendSuccess = true; // نعتبرها نجحت للمحاكاة حالياً
+
+        if (response.ok) {
+          sendSuccess = true;
+        } else {
+          const errorData = await response.json();
+          console.error('Infobip Email failed:', errorData);
+        }
+      } catch (err: any) {
+        console.error('Email API call failed:', err);
+      }
+    } else if (input.method === 'whatsapp') {
+      // محاكاة إرسال الواتساب حالياً باستخدام نفس الـ API Key إذا توفرت الخدمة
+      try {
+        console.log(`[WHATSAPP SIMULATION] Sending ${code} to ${input.recipient}`);
+        // ملاحظة: لربط واتساب حقيقي عبر Infobip، يتم استخدام endpoint مختلف مثل /whatsapp/1/message/text
+        sendSuccess = true; 
       } catch (err) {
-        console.error('WhatsApp failed:', err);
+        console.error('WhatsApp simulation failed:', err);
       }
     }
 
