@@ -48,7 +48,7 @@ export default function HomePage() {
               <Sparkles className="text-primary h-8 w-8" />
               {profile.role === "mufhem" ? "أهلاً يا مُفهم!" : "أهلاً يا مُستفهم!"}
             </h1>
-            <span className="block text-primary text-6xl font-black">{profile.fullName || "مستخدم فهمني"}</span>
+            <span className="block text-primary text-5xl md:text-6xl font-black">{profile.fullName || "مستخدم فهمني"}</span>
             <p className="text-muted-foreground text-xl max-w-2xl leading-relaxed">
               {profile.role === "mufhem" 
                 ? "لديك فرصة لمساعدة الطلاب ومشاركة خبراتك وتحقيق دخل إضافي اليوم." 
@@ -118,16 +118,16 @@ function StudentView({ profile }: { profile: any }) {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col items-center justify-center p-20 bg-gradient-to-br from-primary via-primary to-accent rounded-[3.5rem] text-white shadow-2xl text-center space-y-10 relative overflow-hidden group">
+      <div className="flex flex-col items-center justify-center p-12 md:p-20 bg-gradient-to-br from-primary via-primary to-accent rounded-[3.5rem] text-white shadow-2xl text-center space-y-10 relative overflow-hidden group">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://picsum.photos/seed/learn/1000/1000')] bg-cover transition-transform group-hover:scale-110 duration-1000"></div>
-        <h2 className="text-6xl font-black font-headline max-w-4xl leading-tight relative z-10 drop-shadow-lg">
+        <h2 className="text-4xl md:text-6xl font-black font-headline max-w-4xl leading-tight relative z-10 drop-shadow-lg">
           إيه اللي واقف معاك؟ <br/> اسأل وهتلاقي اللي يفهِّمك بجد
         </h2>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-14 py-10 text-3xl rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all hover:scale-105 font-black relative z-10">
-              <PlusCircle className="ml-4 h-10 w-10" />
+            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-10 md:px-14 py-8 md:py-10 text-xl md:text-3xl rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all hover:scale-105 font-black relative z-10">
+              <PlusCircle className="ml-4 h-8 md:h-10 w-8 md:w-10" />
               اطلب استفهام الآن
             </Button>
           </DialogTrigger>
@@ -242,7 +242,7 @@ function TeacherView({ profile }: { profile: any }) {
 
     toast({
       title: "تم قبول الطلب!",
-      description: "اذهب إلى صفحة 'طلباتي' للتواصل مع الطالب وبدء الجلسة.",
+      description: "اذهب إلى صفحة 'طلباتي' لدخول الجلسة المباشرة الآن.",
     });
   };
 
@@ -292,7 +292,7 @@ function TeacherView({ profile }: { profile: any }) {
                 </div>
                 <Button 
                   onClick={() => handleAcceptRequest(req)}
-                  className="w-full bg-accent hover:bg-accent/90 py-10 font-black text-2xl rounded-2xl shadow-[0_15px_30px_rgba(0,0,0,0.1)] transition-transform hover:scale-[1.03]"
+                  className="w-full bg-accent hover:bg-accent/90 py-8 md:py-10 font-black text-2xl rounded-2xl shadow-[0_15px_30px_rgba(0,0,0,0.1)] transition-transform hover:scale-[1.03]"
                 >
                   أنا أقدر أفهِّمك
                 </Button>

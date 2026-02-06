@@ -63,12 +63,12 @@ export default function RequestsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6 bg-white/50 p-6 rounded-2xl shadow-sm">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">إدارة الطلبات</h1>
-          <p className="text-muted-foreground text-lg">تتبع حالة طلباتك أو المهام التي قبلت العمل عليها.</p>
+          <p className="text-muted-foreground text-lg">تتبع حالة طلباتك والوصول للمحاضرات المباشرة.</p>
         </div>
         <div className="flex gap-4">
           <div className="bg-primary/10 px-4 py-2 rounded-xl flex items-center gap-2">
             <BadgeCent className="text-primary h-5 w-5" />
-            <span className="font-bold text-primary">{uniqueRequests.length} إجمالي</span>
+            <span className="font-bold text-primary">{uniqueRequests.length} طلب إجمالي</span>
           </div>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function RequestsPage() {
       <Tabs defaultValue="pending" className="w-full" dir="rtl">
         <TabsList className="grid w-full grid-cols-4 h-20 p-2 bg-muted/40 rounded-[2rem] shadow-inner mb-8">
           <TabsTrigger value="pending" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
-            <Timer className="h-5 w-5" /> قيد الانتظار
+            <Timer className="h-5 w-5" /> الانتظار
           </TabsTrigger>
           <TabsTrigger value="accepted" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
             <AlertCircle className="h-5 w-5" /> المقبولة
@@ -118,7 +118,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     } else if (action === 'complete') {
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
-      // المعلم يربح 80% من المبلغ
+      // المعاملات المالية
       createTransactionNonBlocking(firestore, req.teacherId, {
         amount: req.amount * 0.8,
         type: 'earning',
@@ -126,7 +126,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
         requestId: req.id
       });
 
-      // الطالب يدفع المبلغ بالكامل
       createTransactionNonBlocking(firestore, req.studentId, {
         amount: req.amount,
         type: 'payment',
@@ -137,7 +136,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
       toast({ 
         title: "تمت المهمة!", 
         description: "تم إكمال الجلسة وتحويل المبالغ بنجاح.",
-        variant: "default"
       });
     }
   };
@@ -154,8 +152,8 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
         <div className="bg-muted/30 p-8 rounded-full mb-6">
           <ClipboardList size={64} className="text-muted-foreground opacity-30" />
         </div>
-        <p className="text-muted-foreground text-2xl font-black">لا توجد طلبات في هذا القسم حالياً</p>
-        <p className="text-muted-foreground mt-2">كل ما هو {status === 'pending' ? 'بانتظار المفهمين' : 'يخص هذا القسم'} سيظهر هنا.</p>
+        <p className="text-muted-foreground text-2xl font-black">لا توجد طلبات هنا</p>
+        <p className="text-muted-foreground mt-2">كل ما يخص هذا القسم سيظهر هنا فوراً.</p>
       </div>
     );
   }
@@ -190,19 +188,19 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm"><Clock className="h-6 w-6 text-primary" /></div>
+                  <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
                   <div>
-                    <span className="text-xs text-muted-foreground font-bold block">الوقت</span>
-                    <span className="font-bold">{new Date(req.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المُفهم (المدرس)" : "المُستفهم (الطالب)"}</span>
+                    <span className="font-bold truncate max-w-[150px] block">
+                      {req.studentId === userId ? (req.teacherName || "بانتظار قبول مدرس...") : (req.studentName || "مستفهم")}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
+                  <div className="bg-white p-3 rounded-xl shadow-sm"><BadgeCent className="h-6 w-6 text-primary" /></div>
                   <div>
-                    <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المعلم" : "المستفهم"}</span>
-                    <span className="font-bold truncate max-w-[150px] block">
-                      {req.studentId === userId ? (req.teacherName || "بانتظار القبول...") : (req.studentName || "مستفهم")}
-                    </span>
+                    <span className="text-xs text-muted-foreground font-bold block">الحالة</span>
+                    <span className="font-bold">{status === 'pending' ? 'قيد البحث' : status === 'accepted' ? 'جاهز للبث' : status === 'completed' ? 'تم بنجاح' : 'ملغي'}</span>
                   </div>
                 </div>
               </div>
@@ -224,7 +222,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                     className="w-full bg-blue-600 hover:bg-blue-700 py-10 font-black text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                     onClick={() => router.push(`/meeting/${req.id}`)}
                   >
-                    <Video className="h-6 w-6 ml-3" /> دخول الجلسة المباشرة
+                    <Video className="h-6 w-6 ml-3" /> دخول المحاضرة أونلاين
                   </Button>
                   <Button 
                     variant="outline"
@@ -247,13 +245,13 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
               {status === 'completed' && (
                 <div className="flex flex-col items-center gap-3 text-green-600 font-black text-center">
                   <CheckCircle2 size={48} />
-                  <span className="text-xl">تمت الجلسة بنجاح</span>
+                  <span className="text-xl">تمت المحاضرة بنجاح</span>
                 </div>
               )}
               {status === 'canceled' && (
                 <div className="flex flex-col items-center gap-3 text-muted-foreground font-black text-center">
                   <XCircle size={48} />
-                  <span className="text-xl">طلب ملغي</span>
+                  <span className="text-xl">تم إلغاء الطلب</span>
                 </div>
               )}
             </div>
