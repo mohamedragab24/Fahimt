@@ -12,28 +12,33 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // أي مستخدم مسجل يمكنه رؤية الملفات الشخصية (لأغراض العرض)
       allow read: if isSignedIn();
+      // صاحب الحساب فقط يمكنه تعديل بياناته
       allow write: if isOwner(userId);
 
       match /transactions/{transactionId} {
+        // المحفظة خاصة تماماً بصاحب الحساب
         allow read, write: if isOwner(userId);
       }
     }
 
     match /requests/{requestId} {
-      // All signed in users can see requests (Marketplace)
+      // السماح بالقراءة (get و list) لجميع المستخدمين المسجلين لدعم سوق الطلبات (Marketplace)
       allow read: if isSignedIn();
       
-      // Only students can create requests
+      // الطلاب فقط يمكنهم إنشاء طلبات جديدة، ويجب أن يكونوا هم أصحاب الطلب
       allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       
-      // Students can update/delete their own pending requests
-      // Teachers can update status to 'accepted' if they are the teacherId
+      // التعديل مسموح في حالتين:
+      // 1. الطالب صاحب الطلب (مثلاً لإلغائه أو تعديله)
+      // 2. المعلم الذي قبل الطلب (لتغيير الحالة إلى 'accepted' أو 'completed')
       allow update: if isSignedIn() && (
         (request.resource.data.studentId == request.auth.uid) ||
-        (request.resource.data.status == 'accepted' && request.resource.data.teacherId == request.auth.uid)
+        (request.resource.data.teacherId == request.auth.uid)
       );
       
+      // الحذف مسموح فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
   }
