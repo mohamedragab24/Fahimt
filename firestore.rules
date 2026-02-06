@@ -26,17 +26,20 @@ service cloud.firestore {
 
     // قواعد طلبات الاستفهام (Marketplace)
     match /requests/{requestId} {
-      // السماح بالقراءة (get) والقائمة (list) لجميع المستخدمين المسجلين
-      allow read, list, get: if isSignedIn();
+      // السماح بالقراءة (get و list) لجميع المستخدمين المسجلين
+      allow read: if isSignedIn();
       
       // السماح بالإنشاء فقط للطلاب المسجلين
       allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       
       // السماح بالتحديث لصاحب الطلب أو المعلم الذي يقبله
       allow update: if isSignedIn() && (
-        (request.resource.data.studentId == request.auth.uid) ||
+        // صاحب الطلب (المستفهم)
+        (resource.data.studentId == request.auth.uid) ||
+        // المعلم الذي يقبل الطلب (المفهم)
         (request.resource.data.teacherId == request.auth.uid) ||
-        (resource.data.studentId == request.auth.uid)
+        // المعلم الذي قبل الطلب مسبقاً
+        (resource.data.teacherId == request.auth.uid)
       );
       
       // السماح بالحذف فقط لصاحب الطلب
