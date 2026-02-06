@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -8,6 +9,7 @@ import {
   HelpCircle,
   Home,
   User as UserIcon,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -54,13 +56,13 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-    <Sidebar side="right" collapsible="icon" className="border-l">
+    <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-6">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-black text-xl">ف</span>
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="bg-primary w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg">
+            <Sparkles className="text-white h-6 w-6" />
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
             <span className="font-black text-2xl font-headline leading-tight">فهمني</span>
             <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">التعليم الذكي</span>
           </div>
@@ -72,11 +74,11 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Profile Snapshot */}
         <div className="p-4 group-data-[collapsible=icon]:hidden">
-          <div className="bg-muted/30 p-4 rounded-2xl flex items-center gap-3 border border-dashed">
-            <Avatar className="h-12 w-12 border-2 border-primary/20">
+          <div className="bg-muted/30 p-4 rounded-2xl flex items-center gap-3 border border-dashed border-primary/20">
+            <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/20 shadow-sm">
               <AvatarImage src={profile?.profilePictureUrl} />
               <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                {profile?.fullName?.charAt(0) || 'أ'}
+                {profile?.fullName?.charAt(0) || 'ف'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate">
@@ -88,22 +90,22 @@ export function AppSidebar() {
           </div>
         </div>
 
-        <SidebarMenu className="px-3 space-y-1">
+        <SidebarMenu className="px-3 space-y-2 pt-4">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
                 tooltip={item.title}
-                className={`py-6 rounded-xl transition-all ${
+                className={`h-14 rounded-xl transition-all ${
                   pathname === item.href 
-                    ? "bg-primary text-white shadow-md hover:bg-primary/90" 
-                    : "hover:bg-primary/5"
+                    ? "bg-primary text-white shadow-lg hover:bg-primary/90" 
+                    : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
                 }`}
               >
-                <Link href={item.href} className="flex items-center gap-4 px-3">
-                  <item.icon className={`h-5 w-5 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-md">{item.title}</span>
+                <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
+                  <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
+                  <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -111,17 +113,17 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-2">
+      <SidebarFooter className="p-4 space-y-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
               tooltip="الدعم الفني"
-              className="py-6 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors"
+              className="h-14 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100"
             >
-              <Link href="https://wa.me/201234567890" target="_blank" className="flex items-center gap-4 px-3">
-                <HelpCircle className="h-5 w-5 text-green-500" />
-                <span className="font-bold group-data-[collapsible=icon]:hidden">الدعم الفني</span>
+              <Link href="https://wa.me/201234567890" target="_blank" className="flex items-center gap-4 px-3 w-full">
+                <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">الدعم الفني</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -131,18 +133,18 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               onClick={handleLogout} 
-              className="py-6 rounded-xl text-destructive hover:bg-destructive/5 hover:text-destructive transition-colors"
+              className="h-14 rounded-xl text-destructive hover:bg-destructive/5 hover:text-destructive transition-colors"
             >
               <div className="flex items-center gap-4 px-3 w-full">
-                <LogOut className="h-5 w-5" />
-                <span className="font-bold group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
+                <LogOut className="h-6 w-6 shrink-0" />
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">تسجيل الخروج</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         
-        <div className="text-[10px] text-center text-muted-foreground font-medium pt-2 group-data-[collapsible=icon]:hidden">
-          إصدار 1.0.0 &copy; 2024
+        <div className="text-[10px] text-center text-muted-foreground font-medium pt-2 group-data-[collapsible=icon]:hidden opacity-60">
+          إصدار 1.0.0 &copy; 2024 فهمني
         </div>
       </SidebarFooter>
     </Sidebar>

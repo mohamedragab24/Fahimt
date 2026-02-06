@@ -1,8 +1,9 @@
 
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
@@ -25,12 +26,15 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen w-full">
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex min-h-screen w-full overflow-hidden">
               <AppSidebar />
-              <main className="flex-1 overflow-y-auto bg-background">
-                {children}
-              </main>
+              <div className="flex flex-col flex-1 min-w-0 bg-background">
+                <Header />
+                <main className="flex-1 overflow-y-auto p-4 md:p-0">
+                  {children}
+                </main>
+              </div>
             </div>
             <Toaster />
           </SidebarProvider>
