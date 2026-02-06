@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -59,11 +60,15 @@
         },
         "studentId": {
           "type": "string",
-          "description": "Reference to UserProfile (Mustafhem). (Relationship: UserProfile 1:N Request)"
+          "description": "Reference to UserProfile (Mustafhem)."
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Name of the student for quick display."
         },
         "teacherId": {
           "type": "string",
-          "description": "Reference to UserProfile (Mufhem). Can be null if no teacher has accepted. (Relationship: UserProfile 1:N Request)"
+          "description": "Reference to UserProfile (Mufhem). Can be null if pending."
         },
         "title": {
           "type": "string",
@@ -80,11 +85,15 @@
         },
         "status": {
           "type": "string",
-          "description": "The status of the request (Pending, Accepted, Completed, Canceled)."
+          "description": "The status of the request (pending, accepted, completed, canceled)."
         },
         "category": {
           "type": "string",
-          "description": "The category of the request (e.g., study, tech, crafts)."
+          "description": "The category (study, tech, skills)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
@@ -92,16 +101,16 @@
         "studentId",
         "title",
         "amount",
-        "meetingTime",
         "status",
-        "category"
+        "category",
+        "createdAt"
       ]
     },
     "Transaction": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Transaction",
       "type": "object",
-      "description": "Represents a financial transaction in the Fahmani application.",
+      "description": "Represents a financial transaction.",
       "properties": {
         "id": {
           "type": "string",
@@ -109,7 +118,7 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Transaction)"
+          "description": "Reference to UserProfile."
         },
         "amount": {
           "type": "number",
@@ -117,16 +126,14 @@
         },
         "type": {
           "type": "string",
-          "description": "The type of transaction (deposit or withdrawal)."
+          "description": "The type (deposit, withdrawal, earning, payment)."
         },
         "timestamp": {
           "type": "string",
-          "description": "The timestamp of the transaction.",
           "format": "date-time"
         },
         "details": {
-          "type": "string",
-          "description": "Additional details about the transaction (e.g., payment method)."
+          "type": "string"
         }
       },
       "required": [
@@ -140,8 +147,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -153,33 +159,17 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information.  Owned by the user (path-based ownership).",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
+          "description": "User profile silos."
         }
       },
       {
-        "path": "/users/{userId}/requests/{requestId}",
+        "path": "/requests/{requestId}",
         "definition": {
           "entityName": "Request",
           "schema": {
             "$ref": "#/backend/entities/Request"
           },
-          "description": "Stores learning requests made by users. Owned by the user (path-based ownership).",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (studentId)."
-            },
-            {
-              "name": "requestId",
-              "description": "The unique identifier of the request."
-            }
-          ]
+          "description": "Global requests collection for marketplace."
         }
       },
       {
@@ -189,20 +179,9 @@
           "schema": {
             "$ref": "#/backend/entities/Transaction"
           },
-          "description": "Stores financial transactions for each user. Owned by the user (path-based ownership).",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "transactionId",
-              "description": "The unique identifier of the transaction."
-            }
-          ]
+          "description": "Private financial records."
         }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the Fahmani application's user profiles, learning requests, and financial transactions while prioritizing security, scalability, and ease of debugging. The structure adheres to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.\n\n**Authorization Independence:** Authorization independence is achieved through denormalization. The `Requests` collection includes the `studentId` and potentially the `teacherId`. While the current design doesn't explicitly denormalize authorization data *into* the Request documents, the chosen path structure `/users/{userId}/requests/{requestId}` implicitly grants the user ownership and therefore simplifies rules. A future revision might include denormalizing user roles or relevant profile data into the request documents if more complex access control scenarios arise (e.g., different access levels for accepted vs. pending requests).\n\n**Structural Segregation:**  The design maintains structural segregation by keeping user profiles separate from requests and transactions. User-specific data (requests and transactions) are stored in subcollections under the `/users/{userId}` path, ensuring that security rules can be easily applied based on user ownership.\n\n**Access Modeling:** The application uses path-based ownership for private user data (user profiles, requests, transactions). This approach is straightforward and secure. Collaborative scenarios would require a membership map in the future (not currently present in the entities).\n\n**QAPs (Rules are not Filters):** The structure enables secure `list` operations. For instance, listing requests for a specific user is done via the `/users/{userId}/requests` subcollection, which is naturally scoped to that user.  To prevent listing of unauthorized data, you should avoid mixing requests from different users into single collection. Segregation of data in this model is already enforced via path structure, making it easier to write secure rules.\n\nIn summary, the recommended structure balances simplicity with security, leveraging path-based ownership and structural segregation to ensure clear authorization and scalable access control. This structure makes the Firestore rules simple, robust, and easy to debug."
+    ]
   }
 }

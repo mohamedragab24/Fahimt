@@ -1,112 +1,40 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * FAHMANI APPLICATION SECURITY RULES
-     * 
-     * Core Philosophy:
-     * This ruleset implements a strict path-based ownership model (User-Centric Data Silos). 
-     * Access to any piece of data is primary determined by its location within the 
-     * /users/{userId} hierarchy.
-     * 
-     * Data Structure:
-     * - /users/{userId}: The root profile for a user.
-     * - /users/{userId}/requests/{requestId}: Learning requests initiated by the student.
-     * - /users/{userId}/transactions/{transactionId}: Financial history for the user.
-     * 
-     * Key Security Decisions:
-     * - Authorization Independence: By nesting requests and transactions under the user's 
-     *   path, we eliminate the need for complex cross-collection lookups (get() calls).
-     * - Relational Integrity: On creation, we enforce that internal fields (like studentId 
-     *   or userId) match the path parameter to ensure data remains queryable and consistent.
-     * - Prototyping Flexibility: We strictly control "Who" can write, but we do not enforce 
-     *   "What" (schema types) beyond critical relational IDs, allowing for rapid schema iteration.
-     */
-
-    // --- GLOBAL HELPER FUNCTIONS ---
-
-    /** 
-     * Checks if the request is from a signed-in user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** 
-     * Checks if the authenticated user's UID matches the provided userId.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** 
-     * Checks if the document exists and the current user is the owner.
-     * Used for state-changing operations (update, delete).
-     */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+
+      match /transactions/{transactionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Rules for the UserProfile entity. Users can only manage their own profile.
-     * @path /users/{userId}
-     * @allow (get) If the user is the owner of the profile.
-     * @allow (create) If the user's UID matches the userId and the 'id' field matches.
-     * @deny (create) If a user tries to create a profile for a different UID.
-     * @principle Restricts access to a user's own data tree and enforces internal ID consistency.
-     */
-    match /users/{userId} {
-      allow get, list: if isOwner(userId);
+    match /requests/{requestId} {
+      // All signed in users can see requests (Marketplace)
+      allow read: if isSignedIn();
       
-      allow create: if isOwner(userId) 
-                    && request.resource.data.id == userId;
+      // Only students can create requests
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       
-      allow update: if isExistingOwner(userId) 
-                    && request.resource.data.id == resource.data.id;
+      // Students can update/delete their own pending requests
+      // Teachers can update status to 'accepted' if they are the teacherId
+      allow update: if isSignedIn() && (
+        (request.resource.data.studentId == request.auth.uid) ||
+        (request.resource.data.status == 'accepted' && request.resource.data.teacherId == request.auth.uid)
+      );
       
-      allow delete: if isExistingOwner(userId);
-
-      /**
-       * @description Rules for learning requests. Only the student (owner) can manage these requests.
-       * @path /users/{userId}/requests/{requestId}
-       * @allow (list) If the student is listing their own requests.
-       * @allow (update) If the student is modifying their own request and studentId is unchanged.
-       * @deny (delete) If a different user attempts to delete the request.
-       * @principle Path-based ownership ensures requests are naturally scoped to the creator.
-       */
-      match /requests/{requestId} {
-        allow get, list: if isOwner(userId);
-        
-        allow create: if isOwner(userId) 
-                      && request.resource.data.studentId == userId;
-        
-        allow update: if isExistingOwner(userId) 
-                      && request.resource.data.studentId == resource.data.studentId;
-        
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Rules for financial transactions. Private ledger for each user.
-       * @path /users/{userId}/transactions/{transactionId}
-       * @allow (create) If the owner records a transaction linked to their own userId.
-       * @deny (list) If a user tries to view someone else's transaction history.
-       * @principle Ensures financial privacy and auditability through path-based segregation.
-       */
-      match /transactions/{transactionId} {
-        allow get, list: if isOwner(userId);
-        
-        allow create: if isOwner(userId) 
-                      && request.resource.data.userId == userId;
-        
-        allow update: if isExistingOwner(userId) 
-                      && request.resource.data.userId == resource.data.userId;
-        
-        allow delete: if isExistingOwner(userId);
-      }
+      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
   }
 }
