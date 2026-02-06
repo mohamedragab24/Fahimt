@@ -1,5 +1,5 @@
 'use client';
-    
+
 import { useState, useEffect } from 'react';
 import {
   DocumentReference,
@@ -21,13 +21,12 @@ export interface UseDocResult<T> {
 
 /**
  * React hook to subscribe to a single Firestore document in real-time.
+ * Robust implementation to avoid SDK "Internal Assertion Failed" errors.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
 ): UseDocResult<T> {
-  type StateDataType = WithId<T> | null;
-
-  const [data, setData] = useState<StateDataType>(null);
+  const [data, setData] = useState<WithId<T> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
@@ -42,9 +41,12 @@ export function useDoc<T = any>(
     setIsLoading(true);
     setError(null);
 
+    let isMounted = true;
+
     const unsubscribe = onSnapshot(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
+        if (!isMounted) return;
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
@@ -53,21 +55,33 @@ export function useDoc<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      (err: FirestoreError) => {
+        if (!isMounted) return;
+        
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
-        })
+        });
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
 
-        errorEmitter.emit('permission-error', contextualError);
+        // Emit with a delay to ensure SDK handles its internal state first
+        setTimeout(() => {
+          errorEmitter.emit('permission-error', contextualError);
+        }, 0);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      try {
+        unsubscribe();
+      } catch (e) {
+        console.warn('Firestore unsubscription error caught:', e);
+      }
+    };
   }, [memoizedDocRef]);
 
   return { data, isLoading, error };

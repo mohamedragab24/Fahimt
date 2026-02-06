@@ -22,14 +22,12 @@ export interface UseCollectionResult<T> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
+ * Robust implementation to avoid SDK "Internal Assertion Failed" errors.
  */
 export function useCollection<T = any>(
-    memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
+  memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
 ): UseCollectionResult<T> {
-  type ResultItemType = WithId<T>;
-  type StateDataType = ResultItemType[] | null;
-
-  const [data, setData] = useState<StateDataType>(null);
+  const [data, setData] = useState<WithId<T>[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
@@ -44,10 +42,14 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
+    // Track if the hook is still mounted to avoid state updates on unmounted components
+    let isMounted = true;
+
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const results: ResultItemType[] = [];
+        if (!isMounted) return;
+        const results: WithId<T>[] = [];
         snapshot.forEach((doc) => {
           results.push({ ...(doc.data() as T), id: doc.id });
         });
@@ -56,6 +58,8 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
+        if (!isMounted) return;
+        
         if (err.code !== 'permission-denied') {
           setError(err);
           setIsLoading(false);
@@ -64,18 +68,29 @@ export function useCollection<T = any>(
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: 'requests', // Simplified path for generic error reporting
+          path: 'collection',
         });
 
         setError(contextualError);
         setData(null);
         setIsLoading(false);
 
-        errorEmitter.emit('permission-error', contextualError);
+        // Emit with a delay to ensure SDK handles its internal state first
+        setTimeout(() => {
+          errorEmitter.emit('permission-error', contextualError);
+        }, 0);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      try {
+        unsubscribe();
+      } catch (e) {
+        // Silently catch unsubscription errors to avoid SDK assertion crashes
+        console.warn('Firestore unsubscription error caught:', e);
+      }
+    };
   }, [memoizedTargetRefOrQuery]);
 
   return { data, isLoading, error };

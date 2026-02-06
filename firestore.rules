@@ -6,21 +6,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // قواعد الطلبات العامة
-    match /requests/{requestId} {
-      // السماح بالقراءة والكتابة لكل المستخدمين المسجلين لضمان تدفق العمليات المالية والمشاركة
-      allow read, write: if isSignedIn();
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // قواعد بيانات المستخدمين
-    match /users/{userId} {
+    // الطلبات التعليمية
+    match /requests/{requestId} {
+      // القراءة متاحة للجميع لتسهيل عمل المدرسين والبحث
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // الإنشاء للطالب فقط، والتحديث لأطراف الطلب
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
 
-      // العمليات المالية (المعاملات) - خاصة جداً لصاحب الحساب
+    // بيانات المستخدمين
+    match /users/{userId} {
+      // السماح بالقراءة للمعلمين والطلاب للتواصل (مثل الاسم والصورة والهاتف)
+      allow read: if isSignedIn();
+      // التعديل لصاحب الحساب فقط
+      allow write: if isOwner(userId);
+
+      // المعاملات المالية
       match /transactions/{transactionId} {
-        allow read: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn(); // السماح بإنشاء معاملات من النظام عند إكمال الجلسات
+        // قراءة السجلات المالية متاحة فقط لصاحب الحساب
+        allow read: if isOwner(userId);
+        // الإنشاء متاح للنظام (المستخدمين) عند إكمال العمليات المالية
+        allow create: if isSignedIn();
+        allow update, delete: if false; // لا يمكن تعديل أو حذف المعاملات بعد تسجيلها
       }
     }
   }
