@@ -21,24 +21,30 @@ export default function AdminRoles() {
   const [permissions, setPermissions] = useState<string[]>(["support"]);
 
   const handleSearch = async () => {
-    if (!firestore || !searchId) return;
+    if (!firestore || !searchId.trim()) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال البريد الإلكتروني أو المعرف للبحث." });
+      return;
+    }
+    
+    setTargetUser(null);
     try {
       const usersRef = collection(firestore, "users");
-      const q = query(usersRef, where("email", "==", searchId));
+      const q = query(usersRef, where("email", "==", searchId.trim()));
       const snap = await getDocs(q);
       
       if (!snap.empty) {
         setTargetUser({ ...snap.docs[0].data(), id: snap.docs[0].id });
         setPermissions(snap.docs[0].data().adminPermissions || ["support"]);
+        toast({ title: "تم العثور على المستخدم", description: `المستخدم: ${snap.docs[0].data().fullName}` });
       } else {
-        const userRef = doc(firestore, "users", searchId);
+        const userRef = doc(firestore, "users", searchId.trim());
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           setTargetUser({ ...userSnap.data(), id: userSnap.id });
           setPermissions(userSnap.data().adminPermissions || ["support"]);
+          toast({ title: "تم العثور على المستخدم", description: `المستخدم: ${userSnap.data().fullName}` });
         } else {
-          toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على المستخدم." });
-          setTargetUser(null);
+          toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على المستخدم المطلوب." });
         }
       }
     } catch (e) {
@@ -49,7 +55,6 @@ export default function AdminRoles() {
   const toggleAdminStatus = async () => {
     if (!firestore || !targetUser) return;
     
-    // منع سحب الصلاحية من الأدمن الأساسي لحماية النظام
     if (targetUser.email === "mohamed76y@gmail.com") {
       toast({ variant: "destructive", title: "تنبيه", description: "لا يمكن سحب صلاحيات الأدمن الرئيسي للمنصة." });
       return;
@@ -71,13 +76,13 @@ export default function AdminRoles() {
       });
 
       toast({ 
-        title: isNowAdmin ? "تم التعيين!" : "تم سحب الصلاحية", 
+        title: isNowAdmin ? "تم التعيين كمسؤول!" : "تم سحب الصلاحية", 
         description: `تم تحديث رتبة ${targetUser.fullName} بنجاح.` 
       });
       
       setTargetUser({ ...targetUser, isAdmin: isNowAdmin });
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث الصلاحيات." });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث الصلاحيات الإدارية." });
     }
   };
 

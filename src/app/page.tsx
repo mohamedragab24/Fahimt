@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
@@ -282,7 +282,7 @@ function TeacherView({ profile }: { profile: any }) {
 
     toast({
       title: "تم قبول الطلب بنجاح!",
-      description: "تم إرسال رابط المحاضرة وبريد التأكيد للطالب. يمكنك دخول الجلسة من صفحة 'طلباتي'.",
+      description: `لقد قبلت طلب ${req.studentName}. تم إرسال إشعار له برابط المحاضرة.`,
     });
   };
 

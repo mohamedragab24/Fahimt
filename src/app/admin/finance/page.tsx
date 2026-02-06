@@ -31,26 +31,34 @@ export default function AdminFinance() {
   const { data: payouts, isLoading: isLoadingPayouts } = useCollection(payoutQuery);
 
   const handleSearch = async () => {
-    if (!firestore || !searchId) return;
+    if (!firestore || !searchId.trim()) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال البريد الإلكتروني أو المعرف للبحث." });
+      return;
+    }
+    
+    setTargetUser(null);
     try {
       const usersRef = collection(firestore, "users");
-      const q = query(usersRef, where("email", "==", searchId));
+      // البحث بالبريد
+      const q = query(usersRef, where("email", "==", searchId.trim()));
       const snap = await getDocs(q);
       
       if (!snap.empty) {
         setTargetUser({ ...snap.docs[0].data(), id: snap.docs[0].id });
+        toast({ title: "تم العثور على المستخدم", description: `المستخدم: ${snap.docs[0].data().fullName}` });
       } else {
-        const userRef = doc(firestore, "users", searchId);
+        // محاولة البحث بالـ ID
+        const userRef = doc(firestore, "users", searchId.trim());
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           setTargetUser({ ...userSnap.data(), id: userSnap.id });
+          toast({ title: "تم العثور على المستخدم", description: `المستخدم: ${userSnap.data().fullName}` });
         } else {
-          toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على مستخدم." });
-          setTargetUser(null);
+          toast({ variant: "destructive", title: "خطأ في البحث", description: "عذراً، هذا المستخدم غير موجود في النظام." });
         }
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل البحث" });
+      toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء محاولة البحث." });
     }
   };
 
@@ -76,14 +84,14 @@ export default function AdminFinance() {
       });
 
       toast({ 
-        title: "تمت العملية!", 
+        title: "تمت العملية بنجاح!", 
         description: `تم ${actionType === 'deposit' ? 'إضافة' : 'خصم'} مبلغ ${amount} ج.م لحساب ${targetUser.fullName}` 
       });
       setAmount("");
       setTargetUser(null);
       setSearchId("");
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تنفيذ العملية" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تنفيذ العملية المالية." });
     }
   };
 
@@ -101,12 +109,12 @@ export default function AdminFinance() {
           status: 'completed',
           timestamp: new Date().toISOString()
         });
-        toast({ title: "تم التحويل", description: "تم تأكيد تحويل المبلغ للمستخدم." });
+        toast({ title: "تم التحويل", description: "تم تأكيد تحويل المبلغ للمستخدم بنجاح." });
       } else {
         toast({ title: "تم الرفض", description: "تم رفض طلب السحب." });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل معالجة الطلب" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل معالجة طلب السحب." });
     }
   };
 
