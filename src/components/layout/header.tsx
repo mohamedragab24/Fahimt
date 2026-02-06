@@ -2,16 +2,18 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Sparkles, Bell, MessageSquare, Video } from "lucide-react";
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { Sparkles, Bell, Video, MessageSquare } from "lucide-react";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { doc, collection, query, where, limit } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -19,6 +21,23 @@ export function Header() {
   }, [firestore, user]);
 
   const { data: profile } = useDoc(userRef);
+
+  // جلب الطلبات المقبولة مؤخراً لإظهارها كإشعارات
+  const notificationsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    const requestsRef = collection(firestore, "requests");
+    // إذا كان مستفهم، نبحث عن طلباته التي قبلت
+    // إذا كان مفهم، نبحث عن الطلبات التي قبلها هو
+    const field = profile?.role === "mufhem" ? "teacherId" : "studentId";
+    return query(
+      requestsRef,
+      where(field, "==", user.uid),
+      where("status", "==", "accepted"),
+      limit(5)
+    );
+  }, [firestore, user, profile?.role]);
+
+  const { data: acceptedRequests } = useCollection(notificationsQuery);
 
   if (!user) return null;
 
@@ -40,41 +59,48 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/5 text-muted-foreground transition-all">
                 <Bell className="h-6 w-6" />
-                <span className="absolute top-2 right-2 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                </span>
+                {acceptedRequests && acceptedRequests.length > 0 && (
+                  <span className="absolute top-2 right-2 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  </span>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
               <DropdownMenuLabel className="text-lg font-black p-3">الإشعارات</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-96 overflow-y-auto">
-                <DropdownMenuItem className="p-4 rounded-xl cursor-pointer hover:bg-primary/5 border-b last:border-0">
-                  <div className="flex gap-4">
-                    <div className="bg-blue-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                      <Video className="text-blue-600 h-6 w-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-bold text-sm leading-tight">تم قبول طلبك! رابط المحاضرة متاح الآن.</p>
-                      <p className="text-[10px] text-muted-foreground">منذ دقيقتين</p>
-                    </div>
+                {acceptedRequests && acceptedRequests.length > 0 ? (
+                  acceptedRequests.map((req: any) => (
+                    <DropdownMenuItem 
+                      key={req.id} 
+                      className="p-4 rounded-xl cursor-pointer hover:bg-primary/5 border-b last:border-0"
+                      onClick={() => router.push(`/meeting/${req.id}`)}
+                    >
+                      <div className="flex gap-4">
+                        <div className="bg-blue-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
+                          <Video className="text-blue-600 h-6 w-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-bold text-sm leading-tight">
+                            {profile?.role === "mufhem" 
+                              ? `لديك محاضرة الآن بخصوص: ${req.title}` 
+                              : `تم قبول طلبك! اضغط لدخول المحاضرة: ${req.title}`}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">رابط المحاضرة متاح الآن</p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground text-sm font-bold">
+                    لا توجد إشعارات جديدة حالياً
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="p-4 rounded-xl cursor-pointer hover:bg-primary/5 border-b last:border-0">
-                  <div className="flex gap-4">
-                    <div className="bg-green-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                      <MessageSquare className="text-green-600 h-6 w-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-bold text-sm leading-tight">رسالة جديدة من المفهم بخصوص المحاضرة.</p>
-                      <p className="text-[10px] text-muted-foreground">منذ ساعة</p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
+                )}
               </div>
               <DropdownMenuSeparator />
-              <Button variant="ghost" className="w-full font-bold text-primary hover:text-primary py-2 text-sm">عرض كل الإشعارات</Button>
+              <Button variant="ghost" onClick={() => router.push('/requests')} className="w-full font-bold text-primary hover:text-primary py-2 text-sm">عرض كل الطلبات</Button>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -95,4 +121,3 @@ export function Header() {
     </header>
   );
 }
-
