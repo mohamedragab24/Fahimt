@@ -1,14 +1,21 @@
 
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, PenTool, Code, Search, Clock, BadgeCent } from "lucide-react";
+import { PlusCircle, BookOpen, PenTool, Code, BadgeCent, Clock, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { doc, collection, query, where, limit } from "firebase/firestore";
+import { doc, collection, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -47,12 +54,50 @@ export default function HomePage() {
         </div>
       </div>
 
-      {profile.role === "mustafhem" ? <StudentView /> : <TeacherView />}
+      {profile.role === "mustafhem" ? <StudentView userId={user.uid} /> : <TeacherView />}
     </div>
   );
 }
 
-function StudentView() {
+function StudentView({ userId }: { userId: string }) {
+  const { firestore } = useFirestore() ? { firestore: useFirestore() } : { firestore: null };
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "دراسة" });
+  const { toast } = useToast();
+
+  const requestsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "users", userId, "requests");
+  }, [firestore, userId]);
+
+  const recentRequestsQuery = useMemoFirebase(() => {
+    if (!requestsRef) return null;
+    return query(requestsRef, limit(5));
+  }, [requestsRef]);
+
+  const { data: myRequests } = useCollection(recentRequestsQuery);
+
+  const handleCreateRequest = () => {
+    if (!requestsRef || !newRequest.title || !newRequest.amount) return;
+
+    addDocumentNonBlocking(requestsRef, {
+      title: newRequest.title,
+      amount: Number(newRequest.amount),
+      category: newRequest.category,
+      status: "pending",
+      studentId: userId,
+      meetingTime: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    });
+
+    setIsDialogOpen(false);
+    setNewRequest({ title: "", amount: "", category: "دراسة" });
+    toast({
+      title: "تم إرسال الطلب",
+      description: "سيقوم المفهومون بمراجعة طلبك والرد عليك قريباً.",
+    });
+  };
+
   const categories = [
     { name: "دراسة", icon: BookOpen, color: "bg-blue-100 text-blue-600" },
     { name: "تقنية", icon: Code, color: "bg-purple-100 text-purple-600" },
@@ -65,25 +110,73 @@ function StudentView() {
         <h2 className="text-4xl font-black font-headline max-w-2xl leading-tight">
           إيه اللي واقف معاك؟ <br/> اسأل وهتلاقي اللي يفهمك
         </h2>
-        <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-8 py-7 text-xl rounded-full shadow-lg transition-transform hover:scale-105 font-bold">
-          <PlusCircle className="ml-2 h-6 w-6" />
-          إنشاء طلب استفهام جديد
-        </Button>
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-8 py-7 text-xl rounded-full shadow-lg transition-transform hover:scale-105 font-bold">
+              <PlusCircle className="ml-2 h-6 w-6" />
+              إنشاء طلب استفهام جديد
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="text-right">ماذا تريد أن تتعلم؟</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">عنوان الطلب</Label>
+                <Input id="title" placeholder="مثلاً: شرح درس التفاضل" value={newRequest.title} onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">التصنيف</Label>
+                <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر التصنيف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="دراسة">دراسة</SelectItem>
+                    <SelectItem value="تقنية">تقنية</SelectItem>
+                    <SelectItem value="مهارات يدوية">مهارات يدوية</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">المبلغ المعروض (ج.م)</Label>
+                <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreateRequest} className="w-full py-6 text-lg font-bold">
+                <Send className="ml-2 h-5 w-5" /> إرسال الطلب
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="space-y-6">
-        <h3 className="text-xl font-bold font-headline">تصنيفات سريعة</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {categories.map((cat) => (
-            <Card key={cat.name} className="hover:border-primary transition-colors cursor-pointer group shadow-sm">
-              <CardContent className="flex items-center p-6 gap-4">
-                <div className={`${cat.color} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
-                  <cat.icon className="h-8 w-8" />
+        <h3 className="text-xl font-bold font-headline">طلباتك الأخيرة</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {myRequests && myRequests.map((req: any) => (
+            <Card key={req.id} className="shadow-sm border-2">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <Badge variant="secondary">{req.category}</Badge>
+                  <span className="text-sm font-bold text-primary">{req.amount} ج.م</span>
                 </div>
-                <span className="text-lg font-bold">{cat.name}</span>
+                <h4 className="font-bold">{req.title}</h4>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 ml-1" />
+                  {new Date(req.createdAt).toLocaleDateString('ar-EG')}
+                </div>
               </CardContent>
             </Card>
           ))}
+          {(!myRequests || myRequests.length === 0) && (
+            <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-xl">
+              لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن!
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -91,17 +184,6 @@ function StudentView() {
 }
 
 function TeacherView() {
-  const { firestore } = useFirebase();
-  
-  const allRequestsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    // For MVP, we fetch a few pending requests from all users or specific logic
-    // Since requests are nested, a production app would use collectionGroup
-    // For simplicity, we'll show a placeholder message if we can't do cross-user listing easily in path-based model
-    return null; 
-  }, [firestore]);
-
-  // Using mock for visual if listing all users' requests is restricted by path-based rules
   const mockRequests = [
     { id: "1", title: "مساعدة في حل مسائل تفاضل وتكامل", amount: 150, category: "دراسة", student: "ياسين محمد" },
     { id: "2", title: "تعلم أساسيات لغة React", amount: 250, category: "تقنية", student: "سارة محمود" },
@@ -132,7 +214,6 @@ function TeacherView() {
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center text-sm text-muted-foreground gap-2">
-                <Search className="h-4 w-4" />
                 <span>المستفهم: {req.student}</span>
               </div>
               <Button className="w-full bg-accent hover:bg-accent/90 py-6 font-bold text-lg rounded-xl">
@@ -145,5 +226,3 @@ function TeacherView() {
     </div>
   );
 }
-
-import { useFirebase } from "@/firebase";

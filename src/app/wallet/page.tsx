@@ -7,17 +7,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, ArrowUpRight, ArrowDownLeft, Plus, History, Banknote } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, orderBy, doc } from "firebase/firestore";
 
 export default function WalletPage() {
-  const [role, setRole] = useState<'teacher' | 'student'>('student');
-  const balance = 1250;
+  const { user } = useUser();
+  const { firestore } = useFirestore() ? { firestore: useFirestore() } : { firestore: null };
 
-  const transactions = [
-    { id: "1", type: "deposit", amount: 500, date: "2024-05-18", status: "completed", desc: "شحن رصيد - فودافون كاش" },
-    { id: "2", type: "payment", amount: -150, date: "2024-05-17", status: "completed", desc: "دفع قيمة جلسة كيمياء" },
-    { id: "3", type: "withdrawal", amount: -200, date: "2024-05-15", status: "pending", desc: "طلب سحب أرباح" },
-    { id: "4", type: "earning", amount: 400, date: "2024-05-14", status: "completed", desc: "أرباح جلسة برمجة" },
-  ];
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+
+  const { data: profile } = useDoc(userRef);
+
+  const transactionsRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, "users", user.uid, "transactions");
+  }, [firestore, user]);
+
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!transactionsRef) return null;
+    return query(transactionsRef, orderBy("timestamp", "desc"));
+  }, [transactionsRef]);
+
+  const { data: transactions, isLoading } = useCollection(transactionsQuery);
+
+  const balance = transactions?.reduce((acc: number, tx: any) => acc + (tx.type === 'deposit' || tx.type === 'earning' ? tx.amount : -tx.amount), 0) || 0;
+
+  if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل بيانات المحفظة...</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
@@ -26,9 +44,6 @@ export default function WalletPage() {
           <h1 className="text-3xl font-bold font-headline">المحفظة</h1>
           <p className="text-muted-foreground">إدارة أموالك وتتبع معاملاتك المالية</p>
         </div>
-        <Button variant="outline" onClick={() => setRole(role === 'student' ? 'teacher' : 'student')}>
-          تبديل (لمشاهدة واجهة المفهم/المستفهم)
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -42,7 +57,7 @@ export default function WalletPage() {
           <CardContent className="space-y-8">
             <div className="text-5xl font-black">{balance} <span className="text-2xl font-normal opacity-80">ج.م</span></div>
             <div className="flex gap-4">
-              {role === 'student' ? (
+              {profile?.role === 'mustafhem' ? (
                 <Button className="bg-white text-primary hover:bg-white/90 px-8 py-6 rounded-xl font-bold text-lg shadow-lg">
                   <Plus className="mr-2 h-6 w-6" /> إضافة رصيد
                 </Button>
@@ -59,16 +74,15 @@ export default function WalletPage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Banknote className="h-5 w-5 text-accent" />
-              {role === 'teacher' ? 'بيانات السحب' : 'بيانات الشحن'}
+              {profile?.role === 'mufhem' ? 'بيانات السحب' : 'بيانات الشحن'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 bg-muted/50 rounded-xl space-y-2 border border-dashed">
               <span className="text-xs text-muted-foreground uppercase font-bold">رقم المحفظة الإلكترونية</span>
-              <p className="font-mono text-lg font-bold">01012345678</p>
+              <p className="font-mono text-lg font-bold">{profile?.phoneNumber || "غير مسجل"}</p>
             </div>
             <p className="text-xs text-muted-foreground">يتم التحويل عبر فودافون كاش، اتصالات كاش، أو أورانج كاش.</p>
-            <Button variant="link" className="p-0 text-primary h-auto">تعديل بيانات التحويل</Button>
           </CardContent>
         </Card>
       </div>
@@ -88,27 +102,32 @@ export default function WalletPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx) => (
+              {transactions && transactions.map((tx: any) => (
                 <TableRow key={tx.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                        {tx.amount > 0 ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                      <div className={`p-2 rounded-full ${tx.type === 'deposit' || tx.type === 'earning' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                        {tx.type === 'deposit' || tx.type === 'earning' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                       </div>
-                      {tx.desc}
+                      {tx.details}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{tx.date}</TableCell>
-                  <TableCell className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {tx.amount > 0 ? `+${tx.amount}` : tx.amount} ج.م
+                  <TableCell className="text-muted-foreground">{new Date(tx.timestamp).toLocaleDateString('ar-EG')}</TableCell>
+                  <TableCell className={`font-bold ${tx.type === 'deposit' || tx.type === 'earning' ? 'text-green-600' : 'text-red-600'}`}>
+                    {tx.type === 'deposit' || tx.type === 'earning' ? `+${tx.amount}` : `-${tx.amount}`} ج.م
                   </TableCell>
                   <TableCell>
-                    <Badge variant={tx.status === 'completed' ? 'secondary' : 'outline'}>
-                      {tx.status === 'completed' ? 'مكتمل' : 'قيد المعالجة'}
-                    </Badge>
+                    <Badge variant="secondary">مكتمل</Badge>
                   </TableCell>
                 </TableRow>
               ))}
+              {(!transactions || transactions.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                    لا توجد معاملات مالية حتى الآن
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </Card>
