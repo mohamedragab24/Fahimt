@@ -2,32 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Function to check if user is signed in
+    // دالة للتحقق من تسجيل الدخول
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Requests collection rules
+    // قواعد مجموعة الطلبات العامة
     match /requests/{requestId} {
-      // Allow any signed-in user to read individual docs and list queries
+      // السماح بالقراءة الفردية والقوائم لجميع المستخدمين المسجلين
       allow get, list: if isSignedIn();
       
-      // Allow any signed-in user to create a request
+      // السماح بإنشاء طلب جديد لأي مستخدم مسجل
       allow create: if isSignedIn();
       
-      // Allow any signed-in user to update (needed for teachers accepting requests)
+      // السماح بالتحديث (لقبول الطلب من المدرس أو إلغائه من الطالب)
       allow update: if isSignedIn();
       
-      // Only the student who created it can delete it
+      // المسح فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
-    // User profiles rules
+    // قواعد ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == userId;
 
-      // Transactions sub-collection rules
+      // العمليات المالية الخاصة
       match /transactions/{transactionId} {
         allow read: if isSignedIn() && request.auth.uid == userId;
         allow write: if isSignedIn() && request.auth.uid == userId;
