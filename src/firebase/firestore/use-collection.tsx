@@ -86,7 +86,7 @@ export function useCollection<T = any>(
               if (isMounted) {
                 errorEmitter.emit('permission-error', contextualError);
               }
-            }, 250);
+            }, 500);
           } else {
             setError(err);
             setIsLoading(false);

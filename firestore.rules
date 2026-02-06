@@ -11,7 +11,7 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح لجميع المسجلين بالوصول للطلبات لضمان عمل الاستعلامات المشتركة
+    // السماح بالقراءة والكتابة لجميع المسجلين لضمان عمل الاستعلامات التشاركية
     match /requests/{requestId} {
       allow read, write: if isSignedIn();
     }
@@ -27,7 +27,7 @@ service cloud.firestore {
       }
     }
     
-    // تأمين القواعد العالمية لتجنب أخطاء SDK
+    // تأمين القواعد العالمية
     match /{document=**} {
       allow read: if isSignedIn();
     }
