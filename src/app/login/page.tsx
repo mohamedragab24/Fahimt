@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useFirebase, useUser } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Upload } from "lucide-react";
@@ -70,23 +70,40 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (user && !isLogin) {
+    if (user && firestore) {
       const userRef = doc(firestore, "users", user.uid);
+      const adminEmail = "mohamed76y@gmail.com";
+      const isTargetAdmin = user.email === adminEmail;
+
       getDoc(userRef).then((snap) => {
         if (!snap.exists()) {
-          setDoc(userRef, {
-            id: user.uid,
-            fullName,
-            email,
-            phoneNumber,
-            role,
-            birthDate: new Date(birthDate).toISOString(),
-            profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`
-          });
+          // فقط عند إنشاء حساب جديد (isLogin == false)
+          if (!isLogin) {
+            setDoc(userRef, {
+              id: user.uid,
+              fullName,
+              email: user.email,
+              phoneNumber,
+              role,
+              birthDate: birthDate ? new Date(birthDate).toISOString() : new Date().toISOString(),
+              profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`,
+              isAdmin: isTargetAdmin,
+              adminPermissions: isTargetAdmin ? ["superadmin"] : []
+            });
+          }
+        } else {
+          // إذا كان هذا هو البريد المطلوب ولم يكن أدمن بالفعل، قم بترقيته
+          const data = snap.data();
+          if (isTargetAdmin && !data.isAdmin) {
+            updateDoc(userRef, {
+              isAdmin: true,
+              adminPermissions: ["superadmin"]
+            });
+          }
         }
       });
     }
-  }, [user, isLogin, firestore, fullName, email, phoneNumber, role, profilePictureUrl, birthDate]);
+  }, [user, isLogin, firestore, fullName, phoneNumber, role, profilePictureUrl, birthDate]);
 
   if (isUserLoading) return <div className="flex h-screen items-center justify-center font-bold animate-pulse">جاري التحميل...</div>;
 
