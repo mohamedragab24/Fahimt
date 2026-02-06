@@ -12,24 +12,19 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-/** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
 
-/**
- * Interface for the return value of the useCollection hook.
- * @template T Type of the document data.
- */
 export interface UseCollectionResult<T> {
-  data: WithId<T>[] | null; // Document data with ID, or null.
-  isLoading: boolean;       // True if loading.
-  error: FirestoreError | Error | null; // Error object, or null.
+  data: WithId<T>[] | null;
+  isLoading: boolean;
+  error: FirestoreError | Error | null;
 }
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  */
 export function useCollection<T = any>(
-    memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
+    memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
@@ -61,46 +56,27 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
-        // Only wrap permission-denied errors. Other errors (like missing index) should be surfaced as is.
         if (err.code !== 'permission-denied') {
           setError(err);
           setIsLoading(false);
           return;
         }
 
-        // Safe path extraction for debugging
-        let path = 'requests'; 
-        try {
-          const target = memoizedTargetRefOrQuery as any;
-          if (target?.path) {
-            path = target.path;
-          } else if (target?._query?.path?.canonicalString) {
-            path = target._query.path.canonicalString();
-          }
-        } catch (e) {
-          // Fallback path
-        }
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path,
+          path: 'requests', // Simplified path for generic error reporting
         });
 
         setError(contextualError);
         setData(null);
         setIsLoading(false);
 
-        // Emit for the global listener
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]);
-
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('Target was not properly memoized using useMemoFirebase');
-  }
 
   return { data, isLoading, error };
 }

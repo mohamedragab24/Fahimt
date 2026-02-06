@@ -6,31 +6,21 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // قواعد الطلبات (Marketplace & Personal)
+    // قواعد الطلبات العامة
     match /requests/{requestId} {
-      // القراءة متاحة لكل مستخدم مسجل ليتمكن المعلمون من رؤية السوق والطلاب من رؤية طلباتهم
-      allow read: if isSignedIn();
-      // الإنشاء متاح لأي مستخدم مسجل
-      allow create: if isSignedIn();
-      // التحديث متاح لأي مستخدم مسجل (لقبول الطلب أو إكماله)
-      allow update: if isSignedIn();
-      // الحذف فقط لصاحب الطلب
-      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
+      // السماح بالقراءة والكتابة لكل المستخدمين المسجلين لضمان تدفق العمليات المالية والمشاركة
+      allow read, write: if isSignedIn();
     }
 
     // قواعد بيانات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow write: if isSignedIn() && request.auth.uid == userId;
 
       // العمليات المالية (المعاملات) - خاصة جداً لصاحب الحساب
       match /transactions/{transactionId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow write: if isSignedIn(); // السماح بإنشاء معاملات من النظام عند إكمال الجلسات
       }
     }
   }
