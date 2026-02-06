@@ -2,47 +2,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // دالة للتحقق من تسجيل الدخول
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // دالة للتحقق من ملكية البيانات
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // قواعد ملفات المستخدمين
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
-
-      // قواعد العمليات المالية (المحفظة)
-      match /transactions/{transactionId} {
-        allow read, write: if isOwner(userId);
-      }
-    }
-
-    // قواعد طلبات الاستفهام (Marketplace)
+    // قواعد مجموعة الطلبات (Requests) - Marketplace
     match /requests/{requestId} {
-      // السماح بالقراءة لجميع المستخدمين المسجلين بشكل صريح
-      allow read: if isSignedIn();
+      // السماح بالقراءة (get و list) لكل مستخدم مسجل دخول
+      allow read: if request.auth != null;
       
-      // السماح بالإنشاء فقط للطلاب المسجلين
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      // السماح بالإنشاء فقط إذا كان المعرف الخاص بالطالب يطابق المستخدم المسجل
+      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
       
       // السماح بالتحديث لصاحب الطلب أو المعلم الذي يقبله
-      allow update: if isSignedIn() && (
-        // صاحب الطلب (المستفهم)
-        (resource.data.studentId == request.auth.uid) ||
-        // المعلم الذي يقبل الطلب (المفهم)
-        (request.resource.data.teacherId == request.auth.uid) ||
-        // المعلم الذي قبل الطلب مسبقاً
-        (resource.data.teacherId == request.auth.uid)
+      allow update: if request.auth != null && (
+        resource.data.studentId == request.auth.uid ||
+        request.resource.data.teacherId == request.auth.uid ||
+        resource.data.teacherId == request.auth.uid
       );
       
       // السماح بالحذف فقط لصاحب الطلب
-      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
+    }
+
+    // قواعد ملفات المستخدمين (Users)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // العمليات المالية الخاصة (Transactions)
+      match /transactions/{transactionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }
