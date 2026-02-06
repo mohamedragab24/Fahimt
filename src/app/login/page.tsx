@@ -63,13 +63,13 @@ export default function LoginPage() {
       return;
     }
 
-    if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl) {
+    if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl || !email || !password) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال كافة البيانات" });
       return;
     }
 
     setShowVerification(true);
-    handleSendOTP('whatsapp'); // افتراضي واتساب
+    handleSendOTP('whatsapp');
   };
 
   const handleSendOTP = async (method: 'email' | 'whatsapp') => {
@@ -78,13 +78,17 @@ export default function LoginPage() {
     try {
       const result = await generateAndSendOTP({ recipient: target, method });
       if (result.success && firestore) {
-        // تخزين الكود في Firestore مؤقتاً للتحقق
         await addDoc(collection(firestore, "temp_otp"), {
           email,
           code: result.code,
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 دقائق صلاحية
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString()
         });
-        toast({ title: "تم إرسال الرمز", description: `تم إرسال رمز التحقق إلى ${target}` });
+        
+        // إظهار الكود في التنبيه لأغراض التجربة
+        toast({ 
+          title: "تم إرسال الرمز (محاكاة)", 
+          description: `الرمز هو: ${result.code} (سيتم إرساله حقيقة عند ربط API)` 
+        });
       }
     } catch (err) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال رمز التحقق" });
@@ -98,19 +102,21 @@ export default function LoginPage() {
     setIsVerifying(true);
     
     try {
-      const q = query(collection(firestore, "temp_otp"), where("email", "==", email), where("code", "==", otpCode));
+      const q = query(
+        collection(firestore, "temp_otp"), 
+        where("email", "==", email), 
+        where("code", "==", otpCode)
+      );
       const snap = await getDocs(q);
       
       if (!snap.empty) {
-        // الرمز صحيح، البدء في إنشاء الحساب
         initiateEmailSignUp(auth, email, password);
-        // حذف الرمز المؤقت
         await deleteDoc(snap.docs[0].ref);
       } else {
-        toast({ variant: "destructive", title: "خطأ", description: "رمز التحقق غير صحيح أو انتهت صلاحيته" });
+        toast({ variant: "destructive", title: "خطأ", description: "رمز التحقق غير صحيح" });
       }
     } catch (err) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل التحقق من الرمز" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل التحقق" });
     } finally {
       setIsVerifying(false);
     }
@@ -130,7 +136,7 @@ export default function LoginPage() {
             email: user.email,
             phoneNumber,
             role,
-            isVerified: true, // تم التحقق بالـ OTP
+            isVerified: true,
             birthDate: birthDate ? new Date(birthDate).toISOString() : new Date().toISOString(),
             profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`,
             isAdmin: isTargetAdmin,
@@ -158,7 +164,7 @@ export default function LoginPage() {
               {showVerification ? "تحقق من هويتك" : (isLogin ? "مرحباً بك مجدداً" : "انضم إلى مجتمعنا")}
             </CardTitle>
             <CardDescription className="text-lg">
-              {showVerification ? "أدخل الرمز الذي أرسلناه لك للبدء" : (isLogin ? "ادخل لمتابعة رحلة تعلمك" : "أنشئ حساباً لتبدأ التعليم أو التعلم")}
+              {showVerification ? "أدخل الرمز الذي ظهر لك في التنبيه" : (isLogin ? "ادخل لمتابعة رحلة تعلمك" : "أنشئ حساباً لتبدأ التعليم أو التعلم")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -168,7 +174,7 @@ export default function LoginPage() {
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
               <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-primary mx-auto" />
-                <p className="font-bold text-muted-foreground">أرسلنا رمزاً من 6 أرقام إلى هاتفك/بريدك</p>
+                <p className="font-bold text-muted-foreground">استخدم الكود الذي ظهر في التنبيه بالأعلى</p>
               </div>
               <div className="space-y-4">
                 <Input 
