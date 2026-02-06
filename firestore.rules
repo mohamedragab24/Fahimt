@@ -2,37 +2,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة للتحقق من أن المستخدم مسجل دخول
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // قواعد مجموعة الطلبات العامة (Marketplace)
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // قواعد الطلبات (Marketplace & Personal)
     match /requests/{requestId} {
-      // القراءة متاحة لكل مستخدم مسجل ليتمكن المعلمون من رؤية الطلبات والطلاب من متابعة طلباتهم
+      // القراءة متاحة لكل مستخدم مسجل ليتمكن المعلمون من رؤية السوق والطلاب من رؤية طلباتهم
       allow read: if isSignedIn();
-      
-      // السماح بإنشاء طلب جديد لأي مستخدم مسجل
+      // الإنشاء متاح لأي مستخدم مسجل
       allow create: if isSignedIn();
-      
-      // السماح بالتحديث لأي مستخدم مسجل (لقبول الطلب، إكماله، أو إلغائه)
+      // التحديث متاح لأي مستخدم مسجل (لقبول الطلب أو إكماله)
       allow update: if isSignedIn();
-      
       // الحذف فقط لصاحب الطلب
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
-    // قواعد ملفات المستخدمين
+    // قواعد بيانات المستخدمين
     match /users/{userId} {
-      // السماح بالقراءة لأي مستخدم مسجل (لرؤية ملفات المعلمين والطلاب عند التواصل)
       allow read: if isSignedIn();
-      // الكتابة فقط لصاحب الحساب
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isOwner(userId);
 
-      // العمليات المالية (المعاملات) - خاصة جداً
+      // العمليات المالية (المعاملات) - خاصة جداً لصاحب الحساب
       match /transactions/{transactionId} {
-        allow read: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn() && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
       }
     }
   }

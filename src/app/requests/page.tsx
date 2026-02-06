@@ -3,7 +3,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CheckCircle2, XCircle, Timer, Trash2, User, MessageCircle, BadgeCent } from "lucide-react";
+import { 
+  Calendar, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Timer, 
+  Trash2, 
+  User, 
+  MessageCircle, 
+  BadgeCent,
+  AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
@@ -19,50 +30,67 @@ export default function RequestsPage() {
     return collection(firestore, "requests");
   }, [firestore, user]);
 
-  const myRequestsAsStudent = useMemoFirebase(() => {
+  const studentQuery = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
     return query(requestsRef, where("studentId", "==", user.uid), orderBy("createdAt", "desc"));
   }, [requestsRef, user]);
 
-  const myRequestsAsTeacher = useMemoFirebase(() => {
+  const teacherQuery = useMemoFirebase(() => {
     if (!requestsRef || !user) return null;
     return query(requestsRef, where("teacherId", "==", user.uid), orderBy("createdAt", "desc"));
   }, [requestsRef, user]);
 
-  const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(myRequestsAsStudent);
-  const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(myRequestsAsTeacher);
+  const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(studentQuery);
+  const { data: teacherRequests, isLoading: isLoadingTeacher } = useCollection(teacherQuery);
 
   const allRequests = [...(studentRequests || []), ...(teacherRequests || [])].sort((a: any, b: any) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  // Remove duplicates that might occur if a user somehow is both (unlikely in this logic but safe)
   const uniqueRequests = Array.from(new Map(allRequests.map(item => [item.id, item])).values());
 
   if (isLoadingStudent || isLoadingTeacher) return <div className="p-10 text-center font-bold">جاري تحميل طلباتك...</div>;
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
-      <div className="space-y-2 border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline">إدارة طلباتي</h1>
-        <p className="text-muted-foreground text-lg">تتبع جلساتك التعليمية وحالة الطلبات التي قمت بها أو قبلتها.</p>
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6 bg-white/50 p-6 rounded-2xl shadow-sm">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black font-headline">إدارة الطلبات</h1>
+          <p className="text-muted-foreground text-lg">تتبع حالة طلباتك أو المهام التي قبلت العمل عليها.</p>
+        </div>
+        <div className="flex gap-4">
+          <div className="bg-primary/10 px-4 py-2 rounded-xl flex items-center gap-2">
+            <BadgeCent className="text-primary h-5 w-5" />
+            <span className="font-bold text-primary">{uniqueRequests.length} إجمالي</span>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="pending" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-4 h-16 p-2 bg-muted/50 rounded-2xl">
-          <TabsTrigger value="pending" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md text-lg">قيد الانتظار</TabsTrigger>
-          <TabsTrigger value="accepted" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md text-lg">المقبولة</TabsTrigger>
-          <TabsTrigger value="completed" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md text-lg">المكتملة</TabsTrigger>
-          <TabsTrigger value="canceled" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md text-lg">الملغية</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-20 p-2 bg-muted/40 rounded-[2rem] shadow-inner mb-8">
+          <TabsTrigger value="pending" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
+            <Timer className="h-5 w-5" /> قيد الانتظار
+          </TabsTrigger>
+          <TabsTrigger value="accepted" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
+            <AlertCircle className="h-5 w-5" /> المقبولة
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
+            <CheckCircle2 className="h-5 w-5" /> المكتملة
+          </TabsTrigger>
+          <TabsTrigger value="canceled" className="rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-lg font-bold flex gap-2 transition-all">
+            <XCircle className="h-5 w-5" /> الملغية
+          </TabsTrigger>
         </TabsList>
 
-        <div className="mt-8">
-          {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
-            <TabsContent key={status} value={status} className="space-y-6">
-              <RequestList requests={uniqueRequests.filter(r => r.status === status) || []} status={status} userId={user?.uid} />
-            </TabsContent>
-          ))}
-        </div>
+        {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
+          <TabsContent key={status} value={status} className="space-y-6 focus-visible:ring-0">
+            <RequestList 
+              requests={uniqueRequests.filter(r => r.status === status)} 
+              status={status} 
+              userId={user?.uid} 
+            />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
@@ -78,115 +106,140 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
     
     if (action === 'cancel') {
       updateDocumentNonBlocking(reqRef, { status: 'canceled' });
-      toast({ title: "تم إلغاء الطلب", description: "تم تحديث حالة الطلب إلى ملغي." });
+      toast({ title: "تم إلغاء الطلب", description: "تم تحديث حالة الطلب إلى ملغي بنجاح." });
     } else if (action === 'complete') {
-      // Logic for completion: update status and create transactions
       updateDocumentNonBlocking(reqRef, { status: 'completed' });
       
-      // Teacher earns money
+      // Teacher earns money (80% for example or full amount for MVP)
       createTransactionNonBlocking(firestore, req.teacherId, {
         amount: req.amount,
         type: 'earning',
-        details: `ربح من طلب: ${req.title}`,
+        details: `أرباح جلسة: ${req.title}`,
         requestId: req.id
       });
 
-      // Student pays money
+      // Student record of payment (already deducted or recorded here)
       createTransactionNonBlocking(firestore, req.studentId, {
         amount: req.amount,
         type: 'payment',
-        details: `دفع لطلب: ${req.title}`,
+        details: `دفع رسوم جلسة: ${req.title}`,
         requestId: req.id
       });
 
-      toast({ title: "مبروك! اكتملت الجلسة", description: "تم تحديث الطلب وإضافة الرصيد للمفهم." });
+      toast({ 
+        title: "تمت المهمة!", 
+        description: "تم إكمال الجلسة وتحويل المبالغ بنجاح.",
+        variant: "default"
+      });
     }
   };
 
   const openWhatsApp = (phone: string, title: string) => {
-    const message = encodeURIComponent(`أهلاً، بخصوص طلبك على تطبيق فهمني: "${title}"`);
+    if (!phone) return;
+    const message = encodeURIComponent(`أهلاً، أنا بخصوص طلبك على "فهمني": "${title}"`);
     window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   if (requests.length === 0) {
     return (
-      <div className="text-center py-24 bg-white rounded-3xl border-4 border-dashed border-muted-foreground/20">
-        <div className="mb-4 flex justify-center opacity-20"><Timer size={60} /></div>
-        <p className="text-muted-foreground text-xl">لا توجد طلبات في هذا القسم حالياً</p>
+      <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] border-4 border-dashed border-muted shadow-sm">
+        <div className="bg-muted/30 p-8 rounded-full mb-6">
+          <ClipboardList size={64} className="text-muted-foreground opacity-30" />
+        </div>
+        <p className="text-muted-foreground text-2xl font-black">لا توجد طلبات في هذا القسم حالياً</p>
+        <p className="text-muted-foreground mt-2">كل ما هو {status === 'pending' ? 'بانتظار المفهمين' : 'يخص هذا القسم'} سيظهر هنا.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       {requests.map((req) => (
-        <Card key={req.id} className="shadow-md border-2 overflow-hidden hover:border-primary/30 transition-all rounded-2xl">
+        <Card key={req.id} className="shadow-xl border-2 hover:border-primary/40 transition-all rounded-[2.5rem] overflow-hidden bg-white group">
           <CardContent className="p-0 flex flex-col md:flex-row">
-            <div className="p-8 flex-1 space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge variant="outline" className="mb-2">{req.category}</Badge>
-                  <CardTitle className="text-2xl font-bold">{req.title}</CardTitle>
+            <div className="p-10 flex-1 space-y-8">
+              <div className="flex flex-wrap justify-between items-start gap-4">
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Badge variant="secondary" className="px-4 py-1 text-md font-bold bg-primary/10 text-primary border-none">{req.category}</Badge>
+                    <Badge variant="outline" className="px-4 py-1 text-md font-bold text-muted-foreground">#{req.id.slice(-5)}</Badge>
+                  </div>
+                  <CardTitle className="text-3xl font-black leading-tight group-hover:text-primary transition-colors">{req.title}</CardTitle>
                 </div>
-                <Badge className={`px-4 py-1 text-md flex items-center gap-2 ${
-                  status === 'pending' ? 'bg-orange-100 text-orange-600' : 
-                  status === 'accepted' ? 'bg-blue-100 text-blue-600' :
-                  status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                }`}>
-                  {status === 'pending' && <Timer className="h-4 w-4" />}
-                  {status === 'accepted' && <CheckCircle2 className="h-4 w-4" />}
-                  {status === 'completed' && <CheckCircle2 className="h-4 w-4" />}
-                  {status === 'canceled' && <XCircle className="h-4 w-4" />}
-                  {status === 'pending' ? 'بانتظار الموافقة' : status === 'accepted' ? 'تم القبول' : status === 'completed' ? 'مكتمل' : 'ملغي'}
-                </Badge>
+                <div className="text-center bg-muted/20 p-4 rounded-2xl min-w-[120px]">
+                  <span className="text-sm font-bold text-muted-foreground block mb-1">المبلغ</span>
+                  <span className="text-3xl font-black text-primary tabular-nums">{req.amount}</span>
+                  <span className="text-xs font-bold text-primary mr-1">ج.م</span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-md text-muted-foreground bg-muted/20 p-4 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <span>{new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-6 bg-muted/10 rounded-3xl border border-dashed border-muted-foreground/20">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-3 rounded-xl shadow-sm"><Calendar className="h-6 w-6 text-primary" /></div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-bold block">التاريخ</span>
+                    <span className="font-bold">{new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-primary" />
-                  <span>{new Date(req.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-3 rounded-xl shadow-sm"><Clock className="h-6 w-6 text-primary" /></div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-bold block">الوقت</span>
+                    <span className="font-bold">{new Date(req.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 font-bold text-primary text-lg">
-                  <BadgeCent className="h-5 w-5" />
-                  <span>{req.amount} ج.م</span>
-                </div>
-                <div className="flex items-center gap-3 truncate">
-                  <User className="h-5 w-5 text-primary" />
-                  <span className="truncate">
-                    {req.studentId === userId ? `المدرس: ${req.teacherName || 'بانتظار قبول...'}` : `المستفهم: ${req.studentName}`}
-                  </span>
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المعلم" : "المستفهم"}</span>
+                    <span className="font-bold truncate max-w-[150px] block">
+                      {req.studentId === userId ? (req.teacherName || "بانتظار القبول...") : req.studentName}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="bg-muted/30 p-6 md:w-64 flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-r">
+
+            <div className="bg-muted/20 p-8 md:w-80 flex flex-col justify-center gap-4 border-t md:border-t-0 md:border-r border-dashed">
               {status === 'pending' && req.studentId === userId && (
-                <Button variant="destructive" className="w-full py-6 font-bold rounded-xl" onClick={() => handleAction(req, 'cancel')}>
-                  <Trash2 className="h-5 w-5 ml-2" /> إلغاء الطلب
+                <Button 
+                  variant="destructive" 
+                  className="w-full py-10 font-black text-xl rounded-2xl shadow-lg hover:scale-[1.02] transition-transform" 
+                  onClick={() => handleAction(req, 'cancel')}
+                >
+                  <Trash2 className="h-6 w-6 ml-3" /> إلغاء الطلب
                 </Button>
               )}
               {status === 'accepted' && (
                 <>
                   <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 py-6 font-bold rounded-xl shadow-lg"
+                    className="w-full bg-green-600 hover:bg-green-700 py-10 font-black text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                     onClick={() => openWhatsApp(req.studentId === userId ? req.teacherPhone : req.studentPhone, req.title)}
                   >
-                    <MessageCircle className="h-5 w-5 ml-2" /> تواصل واتساب
+                    <MessageCircle className="h-6 w-6 ml-3" /> تواصل واتساب
                   </Button>
                   {req.teacherId === userId && (
-                    <Button variant="outline" className="w-full py-6 font-bold rounded-xl border-primary text-primary" onClick={() => handleAction(req, 'complete')}>
-                      إتمام الجلسة بنجاح
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-10 font-black text-xl rounded-2xl border-primary text-primary bg-white hover:bg-primary/5 transition-all" 
+                      onClick={() => handleAction(req, 'complete')}
+                    >
+                      إتمام الجلسة الآن
                     </Button>
                   )}
                 </>
               )}
               {status === 'completed' && (
-                <Button variant="outline" className="w-full py-6 font-bold rounded-xl" disabled>
-                  شكراً لثقتكم
-                </Button>
+                <div className="flex flex-col items-center gap-3 text-green-600 font-black text-center">
+                  <CheckCircle2 size={48} />
+                  <span className="text-xl">تمت الجلسة بنجاح</span>
+                </div>
+              )}
+              {status === 'canceled' && (
+                <div className="flex flex-col items-center gap-3 text-muted-foreground font-black text-center">
+                  <XCircle size={48} />
+                  <span className="text-xl">طلب ملغي</span>
+                </div>
               )}
             </div>
           </CardContent>
