@@ -28,9 +28,9 @@ export default function HomePage() {
   }, [user, isUserLoading, router]);
 
   const userRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user?.uid) return null;
     return doc(firestore, "users", user.uid);
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userRef);
 
@@ -76,7 +76,12 @@ function StudentView({ profile }: { profile: any }) {
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
-    return query(requestsRef, where("studentId", "==", profile.id), limit(6), orderBy("createdAt", "desc"));
+    return query(
+      requestsRef, 
+      where("studentId", "==", profile.id), 
+      orderBy("createdAt", "desc"),
+      limit(6)
+    );
   }, [requestsRef, profile?.id]);
 
   const { data: myRequests } = useCollection(myRequestsQuery);
@@ -200,7 +205,12 @@ function TeacherView({ profile }: { profile: any }) {
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
-    return query(requestsRef, where("status", "==", "pending"), orderBy("createdAt", "desc"), limit(12));
+    return query(
+      requestsRef, 
+      where("status", "==", "pending"), 
+      orderBy("createdAt", "desc"), 
+      limit(12)
+    );
   }, [requestsRef]);
 
   const { data: requests, isLoading } = useCollection(availableRequestsQuery);
