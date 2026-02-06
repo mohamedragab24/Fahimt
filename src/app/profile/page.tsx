@@ -1,29 +1,81 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function ProfilePage() {
+  const { user, auth } = useFirebase();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+
+  const { data: profile, isLoading } = useDoc(userRef);
+
   const [formData, setFormData] = useState({
-    fullName: "أحمد علي",
-    email: "ahmed.ali@example.com",
-    phone: "01012345678",
-    birthDate: "1995-10-15",
-    role: "student" as "student" | "teacher"
+    fullName: "",
+    phone: "",
+    birthDate: ""
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        fullName: profile.fullName || "",
+        phone: profile.phoneNumber || "",
+        birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : ""
+      });
+    }
+  }, [profile]);
+
+  const handleSave = () => {
+    if (!userRef) return;
+    updateDocumentNonBlocking(userRef, {
+      fullName: formData.fullName,
+      phoneNumber: formData.phone,
+      birthDate: formData.birthDate
+    });
+    toast({
+      title: "تم الحفظ",
+      description: "تم تحديث بيانات ملفك الشخصي بنجاح.",
+    });
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
+
+  if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل الملف الشخصي...</div>;
+  if (!profile) return null;
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold font-headline">الملف الشخصي</h1>
-        <p className="text-muted-foreground">تعديل بياناتك الشخصية وإدارة حسابك</p>
+      <div className="flex justify-between items-end">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold font-headline">الملف الشخصي</h1>
+          <p className="text-muted-foreground">تعديل بياناتك الشخصية وإدارة حسابك</p>
+        </div>
+        <Button variant="destructive" onClick={handleLogout} className="rounded-xl">
+          <LogOut className="ml-2 h-4 w-4" /> تسجيل الخروج
+        </Button>
       </div>
 
       <Card className="shadow-sm border-2 overflow-hidden">
@@ -32,23 +84,23 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row items-end gap-6 -mt-16 mb-8">
             <div className="relative group">
               <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
-                <AvatarImage src="https://picsum.photos/seed/user123/200/200" />
-                <AvatarFallback>أ</AvatarFallback>
+                <AvatarImage src={profile.profilePictureUrl || `https://picsum.photos/seed/${profile.id}/200/200`} />
+                <AvatarFallback>{profile.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-10 w-10 shadow-lg border-2 border-white">
                 <Camera className="h-5 w-5" />
               </Button>
             </div>
             <div className="flex-1 space-y-1 text-center md:text-right">
-              <h2 className="text-2xl font-bold">{formData.fullName}</h2>
+              <h2 className="text-2xl font-bold">{profile.fullName}</h2>
               <div className="flex items-center justify-center md:justify-start gap-2">
-                <Badge className="bg-primary">{formData.role === 'student' ? 'مُستفهم' : 'مُفهم'}</Badge>
-                <span className="text-sm text-muted-foreground">عضو منذ مايو 2024</span>
+                <Badge className="bg-primary">{profile.role === 'mustafhem' ? 'مُستفهم' : 'مُفهم'}</Badge>
+                <span className="text-sm text-muted-foreground">معرف المستخدم: {profile.id.slice(0, 8)}...</span>
               </div>
             </div>
           </div>
 
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" dir="rtl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" dir="rtl">
             <div className="space-y-2">
               <Label htmlFor="fullName" className="font-bold">الاسم الكامل</Label>
               <div className="relative">
@@ -68,11 +120,10 @@ export default function ProfilePage() {
               </Label>
               <Input 
                 id="email" 
-                value={formData.email} 
+                value={profile.email} 
                 disabled 
                 className="bg-muted/50 cursor-not-allowed text-muted-foreground"
               />
-              <p className="text-[10px] text-muted-foreground">لا يمكن تغيير البريد الإلكتروني بعد إنشاء الحساب</p>
             </div>
 
             <div className="space-y-2">
@@ -94,25 +145,16 @@ export default function ProfilePage() {
               />
             </div>
 
-            {formData.role === 'teacher' && (
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="bio" className="font-bold">نبذة تعريفية (تظهر للمستفهمين)</Label>
-                <textarea 
-                  id="bio"
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="تحدث قليلاً عن خبراتك..."
-                ></textarea>
-              </div>
-            )}
-
             <div className="md:col-span-2 pt-6 flex justify-end">
-              <Button className="bg-primary px-8 py-6 rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition-transform">
+              <Button onClick={handleSave} className="bg-primary px-8 py-6 rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition-transform">
                 <Save className="ml-2 h-5 w-5" /> حفظ التعديلات
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+import { useFirebase } from "@/firebase";

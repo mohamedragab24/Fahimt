@@ -2,17 +2,15 @@
 "use client";
 
 import {
-  LayoutDashboard,
   Wallet,
   ClipboardList,
-  User,
   Settings,
   LogOut,
   HelpCircle,
   Home,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -24,23 +22,36 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
   { title: "طلباتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
-  { title: "الإعدادات", icon: Settings, href: "/profile" },
+  { title: "الملف الشخصي", icon: Settings, href: "/profile" },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, auth } = useFirebase();
+  const firestore = useFirestore();
 
-  // Mock user data - in real app, fetch from context/auth
-  const user = {
-    fullName: "أحمد علي",
-    role: "مُستفهم",
-    avatarUrl: "https://picsum.photos/seed/user123/200/200",
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+
+  const { data: profile } = useDoc(userRef);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
   };
+
+  if (!user) return null;
 
   return (
     <Sidebar side="right" collapsible="icon">
@@ -82,24 +93,24 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user.avatarUrl} />
-                <AvatarFallback>أ</AvatarFallback>
+                <AvatarImage src={profile?.profilePictureUrl} />
+                <AvatarFallback>{profile?.fullName?.charAt(0) || 'أ'}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-bold">{user.fullName}</span>
-                <span className="text-xs text-muted-foreground">{user.role}</span>
+                <span className="text-sm font-bold truncate max-w-[120px]">{profile?.fullName || 'جاري التحميل...'}</span>
+                <span className="text-xs text-muted-foreground">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
               </div>
             </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton className="text-destructive hover:text-destructive hover:bg-destructive/10">
+            <SidebarMenuButton onClick={handleLogout} className="text-destructive hover:text-destructive hover:bg-destructive/10">
               <LogOut className="h-5 w-5" />
               <span className="group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="الدعم الفني">
-              <Link href="https://wa.me/1234567890" target="_blank">
+              <Link href="https://wa.me/201234567890" target="_blank">
                 <HelpCircle className="h-5 w-5" />
                 <span className="group-data-[collapsible=icon]:hidden">الدعم الفني</span>
               </Link>
@@ -110,3 +121,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+import { useFirebase } from "@/firebase";
