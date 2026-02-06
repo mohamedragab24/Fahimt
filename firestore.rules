@@ -2,35 +2,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة للتحقق من تسجيل الدخول
+    // دالة للتحقق من أن المستخدم مسجل دخول
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // قواعد مجموعة الطلبات العامة
+    // دالة للتحقق من ملكية الملف الشخصي أو الطلب
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // قواعد مجموعة الطلبات العامة (Marketplace)
     match /requests/{requestId} {
-      // السماح بالقراءة الفردية والقوائم لجميع المستخدمين المسجلين
-      allow get, list: if isSignedIn();
+      // السماح بالقراءة (get) والقوائم (list) لكل المستخدمين المسجلين
+      // هذا ضروري للمدرسين لرؤية الطلبات المتاحة وللطلاب لرؤية طلباتهم
+      allow read: if isSignedIn();
       
       // السماح بإنشاء طلب جديد لأي مستخدم مسجل
       allow create: if isSignedIn();
       
-      // السماح بالتحديث (لقبول الطلب من المدرس أو إلغائه من الطالب)
+      // السماح بالتحديث (لقبول الطلب أو تغييره) لأي مستخدم مسجل
+      // المنطق التطبيقي يتحكم في من يمكنه تحديث ماذا
       allow update: if isSignedIn();
       
-      // المسح فقط لصاحب الطلب
+      // المسح فقط لصاحب الطلب (الطالب الذي أنشأه)
       allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
     }
 
     // قواعد ملفات المستخدمين
     match /users/{userId} {
+      // السماح بالقراءة لأي مستخدم مسجل (لرؤية أسماء المدرسين مثلاً)
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // الكتابة فقط لصاحب الحساب
+      allow write: if isOwner(userId);
 
-      // العمليات المالية الخاصة
+      // العمليات المالية (المعاملات)
       match /transactions/{transactionId} {
-        allow read: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn() && request.auth.uid == userId;
+        // الوصول فقط لصاحب الحساب
+        allow read: if isOwner(userId);
+        // الكتابة فقط لصاحب الحساب (أو عبر السيرفر/المنطق التطبيقي المؤمن)
+        allow write: if isOwner(userId);
       }
     }
   }

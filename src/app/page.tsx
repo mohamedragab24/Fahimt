@@ -199,12 +199,14 @@ function TeacherView({ profile }: { profile: any }) {
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
+    // ننتظر حتى يتوفر المعرف لضمان أننا في سياق مستخدم مسجل دخول
     if (!firestore || !profile?.id) return null;
     return collection(firestore, "requests");
   }, [firestore, profile?.id]);
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
+    // الاستعلام عن الطلبات المعلقة فقط
     return query(
       requestsRef, 
       where("status", "==", "pending"), 
@@ -216,7 +218,7 @@ function TeacherView({ profile }: { profile: any }) {
   const { data: requests, isLoading } = useCollection(availableRequestsQuery);
 
   const handleAcceptRequest = (req: any) => {
-    if (!firestore) return;
+    if (!firestore || !profile) return;
     const reqRef = doc(firestore, "requests", req.id);
     
     updateDocumentNonBlocking(reqRef, {
