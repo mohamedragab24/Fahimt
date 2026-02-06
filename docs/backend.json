@@ -25,6 +25,16 @@
       },
       "required": ["id", "fullName", "email", "phoneNumber", "birthDate", "role"]
     },
+    "Category": {
+      "title": "Category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "Request": {
       "title": "Request",
       "type": "object",
@@ -77,8 +87,8 @@
         "definition": { "entityName": "UserProfile", "description": "User profiles and their private data." }
       },
       {
-        "path": "/users/{userId}/transactions/{txId}",
-        "definition": { "schema": "Transaction", "description": "Wallet history sub-collection." }
+        "path": "/categories/{categoryId}",
+        "definition": { "entityName": "Category", "description": "Dynamic categories for learning requests." }
       },
       {
         "path": "/requests/{requestId}",

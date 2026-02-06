@@ -17,7 +17,8 @@ import {
   BadgeCent,
   MessageSquare,
   Lock,
-  ChevronDown
+  ChevronDown,
+  Layers
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -56,6 +57,7 @@ const adminItems = [
   { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
+  { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
   { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
 
@@ -73,7 +75,6 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
-  // الترقية التلقائية للأدمن الرئيسي
   useEffect(() => {
     if (user?.email === "mohamed76y@gmail.com" && profile && !profile.isAdmin && firestore) {
       const ref = doc(firestore, "users", user.uid);
@@ -104,7 +105,6 @@ export function AppSidebar() {
               <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">التعليم الذكي</span>
             </div>
           </div>
-          
           <Button 
             variant="ghost" 
             size="icon" 

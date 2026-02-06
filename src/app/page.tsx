@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { doc, collection, query, limit, where } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,13 +82,20 @@ export default function HomePage() {
 function StudentView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "دراسة", meetingTime: "" });
+  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "" });
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, "requests");
   }, [firestore]);
+
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
+  }, [firestore]);
+
+  const { data: categories } = useCollection(categoriesQuery);
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
@@ -106,8 +113,8 @@ function StudentView({ profile }: { profile: any }) {
     : [];
 
   const handleCreateRequest = () => {
-    if (!requestsRef || !newRequest.title || !newRequest.amount || !newRequest.meetingTime) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب بما في ذلك موعد المحاضرة." });
+    if (!requestsRef || !newRequest.title || !newRequest.amount || !newRequest.meetingTime || !newRequest.category) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب بما في ذلك موعد المحاضرة والقسم." });
       return;
     }
 
@@ -125,7 +132,7 @@ function StudentView({ profile }: { profile: any }) {
     });
 
     setIsDialogOpen(false);
-    setNewRequest({ title: "", amount: "", category: "دراسة", meetingTime: "" });
+    setNewRequest({ title: "", amount: "", category: "", meetingTime: "" });
     toast({
       title: "تم إرسال الطلب بنجاح",
       description: "سيتم إخطارك فور قبول أحد المفهمين لطلبك وإرسال رابط الاجتماع لبريدك.",
@@ -165,10 +172,12 @@ function StudentView({ profile }: { profile: any }) {
                       <SelectValue placeholder="اختر التصنيف" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="دراسة">📚 دراسة</SelectItem>
-                      <SelectItem value="تقنية">💻 تقنية</SelectItem>
-                      <SelectItem value="لغات">🗣️ لغات</SelectItem>
-                      <SelectItem value="مهارات يدوية">🛠️ مهارات يدوية</SelectItem>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
+                      ))}
+                      {(!categories || categories.length === 0) && (
+                        <SelectItem value="عام" disabled>لا توجد أقسام حالياً</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
