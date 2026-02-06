@@ -7,195 +7,86 @@
       "type": "object",
       "description": "Represents a user profile in the Fahmani application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user profile."
-        },
-        "fullName": {
-          "type": "string",
-          "description": "The full name of the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The user's phone number (WhatsApp)."
-        },
-        "birthDate": {
-          "type": "string",
-          "description": "The user's date of birth.",
-          "format": "date-time"
-        },
-        "role": {
-          "type": "string",
-          "description": "The user's role (either 'mufhem' or 'mustafhem')."
-        },
-        "profilePictureUrl": {
-          "type": "string",
-          "description": "URL of the user's profile picture.",
-          "format": "uri"
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phoneNumber": { "type": "string" },
+        "birthDate": { "type": "string", "format": "date-time" },
+        "role": { "type": "string", "enum": ["mufhem", "mustafhem", "admin"] },
+        "profilePictureUrl": { "type": "string", "format": "uri" },
+        "isVerified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "blocked"] },
+        "isAdmin": { "type": "boolean" },
+        "adminPermissions": { 
+          "type": "array", 
+          "items": { "type": "string", "enum": ["finance", "support", "moderator", "superadmin"] } 
         }
       },
-      "required": [
-        "id",
-        "fullName",
-        "email",
-        "phoneNumber",
-        "birthDate",
-        "role"
-      ]
+      "required": ["id", "fullName", "email", "phoneNumber", "birthDate", "role"]
     },
-    "Request": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Request",
+    "VerificationRequest": {
+      "title": "VerificationRequest",
       "type": "object",
-      "description": "Represents a learning request in the Fahmani application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the request."
-        },
-        "studentId": {
-          "type": "string",
-          "description": "Reference to UserProfile (Mustafhem)."
-        },
-        "studentName": {
-          "type": "string",
-          "description": "Name of the student for quick display."
-        },
-        "teacherId": {
-          "type": "string",
-          "description": "Reference to UserProfile (Mufhem). Can be null if pending."
-        },
-        "teacherName": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the request."
-        },
-        "amount": {
-          "type": "number",
-          "description": "The amount offered for the request."
-        },
-        "meetingTime": {
-          "type": "string",
-          "description": "The requested meeting time.",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the request (pending, accepted, completed, canceled)."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category (study, tech, skills)."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "studentJoined": {
-          "type": "boolean"
-        },
-        "teacherJoined": {
-          "type": "boolean"
-        },
-        "rating": {
-          "type": "number"
-        },
-        "review": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "studentId",
-        "title",
-        "amount",
-        "status",
-        "category",
-        "createdAt"
-      ]
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "idCardUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     },
-    "Transaction": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Transaction",
+    "SupportTicket": {
+      "title": "SupportTicket",
       "type": "object",
-      "description": "Represents a financial transaction.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the transaction."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to UserProfile."
-        },
-        "amount": {
-          "type": "number",
-          "description": "The amount of the transaction."
-        },
-        "type": {
-          "type": "string",
-          "description": "The type (deposit, withdrawal, earning, payment)."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "details": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "amount",
-        "type",
-        "timestamp"
-      ]
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AdminLog": {
+      "title": "AdminLog",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "adminName": { "type": "string" },
+        "action": { "type": "string" },
+        "targetUserId": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password"
-    ]
+    "providers": ["password"]
   },
   "firestore": {
     "structure": [
       {
         "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "User profile silos."
-        }
+        "definition": { "entityName": "UserProfile", "description": "User profile silos." }
       },
       {
         "path": "/requests/{requestId}",
-        "definition": {
-          "entityName": "Request",
-          "schema": {
-            "$ref": "#/backend/entities/Request"
-          },
-          "description": "Global requests collection for marketplace."
-        }
+        "definition": { "entityName": "Request", "description": "Global requests collection." }
       },
       {
-        "path": "/users/{userId}/transactions/{transactionId}",
-        "definition": {
-          "entityName": "Transaction",
-          "schema": {
-            "$ref": "#/backend/entities/Transaction"
-          },
-          "description": "Private financial records."
-        }
+        "path": "/verificationRequests/{requestId}",
+        "definition": { "entityName": "VerificationRequest", "description": "Verification center queue." }
+      },
+      {
+        "path": "/supportTickets/{ticketId}",
+        "definition": { "entityName": "SupportTicket", "description": "User support complaints." }
+      },
+      {
+        "path": "/adminLogs/{logId}",
+        "definition": { "entityName": "AdminLog", "description": "Audit trail for admin actions." }
       }
     ]
   }

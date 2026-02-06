@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -10,6 +11,12 @@ import {
   User as UserIcon,
   Sparkles,
   X,
+  LayoutDashboard,
+  Users,
+  ShieldCheck,
+  BadgeCent,
+  MessageSquare,
+  Lock
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -35,6 +42,16 @@ const menuItems = [
   { title: "طلباتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
+];
+
+const adminItems = [
+  { title: "لوحة التحكم", icon: LayoutDashboard, href: "/admin" },
+  { title: "إدارة المفهمين", icon: Users, href: "/admin/mufahems" },
+  { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
+  { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
+  { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
+  { title: "الدعم الفني", icon: MessageSquare, href: "/admin/support" },
+  { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
 
 export function AppSidebar() {
@@ -98,7 +115,7 @@ export function AppSidebar() {
             <div className="flex flex-col truncate">
               <span className="font-bold text-sm truncate">{profile?.fullName || 'جاري التحميل...'}</span>
               <span className="text-[10px] bg-primary/10 text-primary self-start px-2 py-0.5 rounded-full font-bold">
-                {profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}
+                {profile?.isAdmin ? 'مسؤول' : (profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم')}
               </span>
             </div>
           </div>
@@ -124,6 +141,34 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+
+          {profile?.isAdmin && (
+            <>
+              <SidebarSeparator className="my-4" />
+              <div className="px-4 mb-2 text-xs font-black text-muted-foreground uppercase tracking-widest group-data-[collapsible=icon]:hidden">
+                لوحة المسؤول
+              </div>
+              {adminItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    tooltip={item.title}
+                    className={`h-14 rounded-xl transition-all ${
+                      pathname === item.href 
+                        ? "bg-accent text-white shadow-lg" 
+                        : "hover:bg-accent/10 text-muted-foreground hover:text-accent"
+                    }`}
+                  >
+                    <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
+                      <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-accent"}`} />
+                      <span className="font-bold text-lg group-data-[collapsible=icon]:hidden whitespace-nowrap">{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </>
+          )}
         </SidebarMenu>
       </SidebarContent>
 
@@ -156,10 +201,6 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        
-        <div className="text-[10px] text-center text-muted-foreground font-medium pt-2 group-data-[collapsible=icon]:hidden opacity-60">
-          إصدار 1.0.0 &copy; 2024 فهمني
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
