@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -63,20 +62,24 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
-        let path = 'requests'; 
-        try {
-          if ('path' in (memoizedTargetRefOrQuery as any)) {
-            path = (memoizedTargetRefOrQuery as any).path;
-          } else if ((memoizedTargetRefOrQuery as any)._query?.path?.canonicalString) {
-             path = (memoizedTargetRefOrQuery as any)._query.path.canonicalString();
+        // Safely extract the path from the reference or query for debugging.
+        let path = 'unknown';
+        const target = memoizedTargetRefOrQuery as any;
+        if (target) {
+          if (target.path) {
+            path = target.path;
+          } else if (target._query && target._query.path) {
+            try {
+              path = target._query.path.canonicalString();
+            } catch (e) {
+              path = 'query-path-error';
+            }
           }
-        } catch (e) {
-          // Fallback path
         }
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path || 'requests',
+          path: path,
         });
 
         setError(contextualError);

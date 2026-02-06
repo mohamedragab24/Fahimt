@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,7 +25,7 @@ service cloud.firestore {
 
     // قواعد طلبات الاستفهام (Marketplace)
     match /requests/{requestId} {
-      // السماح بالقراءة (get و list) لجميع المستخدمين المسجلين
+      // السماح بالقراءة لجميع المستخدمين المسجلين بشكل صريح
       allow read: if isSignedIn();
       
       // السماح بالإنشاء فقط للطلاب المسجلين
