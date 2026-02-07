@@ -173,7 +173,7 @@ function StudentView({ profile }: { profile: any }) {
                     </SelectTrigger>
                     <SelectContent>
                       {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                       ))}
                       {(!categories || categories.length === 0) && (
                         <SelectItem value="عام" disabled>لا توجد أقسام حالياً</SelectItem>

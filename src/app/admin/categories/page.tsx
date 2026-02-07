@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Layers, BookOpen } from "lucide-react";
+import { Plus, Trash2, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCategories() {
@@ -31,7 +31,6 @@ export default function AdminCategories() {
     const categoriesRef = collection(firestore, "categories");
     addDocumentNonBlocking(categoriesRef, {
       name: newCategory.trim(),
-      icon: "📚", // أيقونة افتراضية للأقسام الجديدة
       createdAt: new Date().toISOString()
     });
     
@@ -70,7 +69,6 @@ export default function AdminCategories() {
                 onChange={(e) => setNewCategory(e.target.value)}
               />
             </div>
-            <p className="text-sm text-muted-foreground font-bold">سيتم إضافة أيقونة افتراضية للقسم تلقائياً.</p>
             <Button onClick={handleAddCategory} className="w-full h-14 rounded-xl font-black text-xl shadow-lg">
               إضافة الآن
             </Button>
@@ -81,19 +79,17 @@ export default function AdminCategories() {
           <Table>
             <TableHeader className="bg-muted/50 h-16">
               <TableRow>
-                <TableHead className="text-right px-8 font-black">الأيقونة</TableHead>
-                <TableHead className="text-right font-black">اسم القسم</TableHead>
+                <TableHead className="text-right px-8 font-black">اسم القسم</TableHead>
                 <TableHead className="text-right font-black">تاريخ الإضافة</TableHead>
                 <TableHead className="text-left px-8 font-black">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-20 animate-pulse font-bold">جاري تحميل الأقسام...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center py-20 animate-pulse font-bold">جاري تحميل الأقسام...</TableCell></TableRow>
               ) : categories?.map((c) => (
                 <TableRow key={c.id} className="h-20 hover:bg-muted/10 transition-colors">
-                  <TableCell className="px-8 text-2xl">{c.icon}</TableCell>
-                  <TableCell className="font-bold text-lg">{c.name}</TableCell>
+                  <TableCell className="px-8 font-bold text-lg">{c.name}</TableCell>
                   <TableCell className="text-muted-foreground text-sm font-bold">
                     {new Date(c.createdAt).toLocaleDateString('ar-EG')}
                   </TableCell>
@@ -111,7 +107,7 @@ export default function AdminCategories() {
               ))}
               {(!categories || categories.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-20 text-muted-foreground font-bold text-xl opacity-30">
+                  <TableCell colSpan={3} className="text-center py-20 text-muted-foreground font-bold text-xl opacity-30">
                     <div className="flex flex-col items-center gap-4">
                       <Layers size={64} />
                       لا توجد أقسام مضافة حالياً.
