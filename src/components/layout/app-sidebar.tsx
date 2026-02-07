@@ -17,7 +17,8 @@ import {
   Lock,
   ChevronDown,
   Layers,
-  Video
+  Video,
+  LifeBuoy
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
   { title: "طلباتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
+  { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
 ];
 
@@ -57,6 +59,7 @@ const adminItems = [
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
+  { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
   { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
@@ -199,12 +202,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
-              tooltip="الدعم الفني"
+              tooltip="اتصل بنا واتساب"
               className="h-14 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100"
             >
               <Link href="https://wa.me/201234567890" target="_blank" className="flex items-center gap-4 px-3 w-full">
                 <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">الدعم الفني</span>
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">اتصال مباشر</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -16,12 +16,12 @@
         "profilePictureUrl": { "type": "string", "format": "uri" },
         "isVerified": { "type": "boolean", "default": false },
         "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" },
-        "isAdmin": { "type": "boolean", "default": false, "description": "Global admin toggle" },
+        "isAdmin": { "type": "boolean", "default": false },
         "adminPermissions": { 
           "type": "array", 
-          "items": { "type": "string", "enum": ["finance", "support", "moderator", "superadmin"] },
-          "description": "Specific admin capabilities"
-        }
+          "items": { "type": "string", "enum": ["finance", "support", "moderator", "superadmin"] }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "fullName", "email", "phoneNumber", "birthDate", "role"]
     },
@@ -31,7 +31,6 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "icon": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
     },
@@ -51,29 +50,23 @@
         "meetingTime": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" },
         "rating": { "type": "number" },
-        "review": { "type": "string" }
+        "review": { "type": "string" },
+        "attachmentUrl": { "type": "string", "description": "Base64 or URL of attached file" }
       }
     },
-    "VerificationRequest": {
-      "title": "VerificationRequest",
+    "SupportTicket": {
+      "title": "SupportTicket",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "userId": { "type": "string" },
         "userName": { "type": "string" },
-        "userEmail": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "AdminLog": {
-      "title": "AdminLog",
-      "type": "object",
-      "properties": {
-        "adminId": { "type": "string" },
-        "action": { "type": "string" },
-        "targetUserId": { "type": "string" },
-        "details": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "replied", "closed"], "default": "open" },
+        "category": { "type": "string", "enum": ["finance", "technical", "other"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdate": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -84,23 +77,26 @@
     "structure": [
       {
         "path": "/users/{userId}",
-        "definition": { "entityName": "UserProfile", "description": "User profiles and their private data." }
+        "definition": { "entityName": "UserProfile", "description": "User profiles." }
       },
       {
         "path": "/categories/{categoryId}",
-        "definition": { "entityName": "Category", "description": "Dynamic categories for learning requests." }
+        "definition": { "entityName": "Category", "description": "Learning categories." }
       },
       {
         "path": "/requests/{requestId}",
         "definition": { "entityName": "Request", "description": "Learning session requests." }
       },
       {
-        "path": "/verificationRequests/{requestId}",
-        "definition": { "entityName": "VerificationRequest", "description": "Queue for verified badge requests." }
+        "path": "/supportTickets/{ticketId}",
+        "definition": { "entityName": "SupportTicket", "description": "Support tickets." }
       },
       {
-        "path": "/adminLogs/{logId}",
-        "definition": { "entityName": "AdminLog", "description": "Audit trail for admin actions." }
+        "path": "/supportTickets/{ticketId}/messages/{messageId}",
+        "definition": { 
+          "entityName": "SupportMessage", 
+          "description": "Conversation messages within a ticket." 
+        }
       }
     ]
   }

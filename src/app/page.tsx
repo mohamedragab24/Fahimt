@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays, ShieldCheck } from "lucide-react";
+import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays, ShieldCheck, Upload, FileText, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -82,7 +82,9 @@ export default function HomePage() {
 function StudentView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "" });
+  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const requestsRef = useMemoFirebase(() => {
@@ -112,9 +114,25 @@ function StudentView({ profile }: { profile: any }) {
     ? [...rawRequests].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6)
     : [];
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ variant: "destructive", title: "حجم كبير", description: "أقصى حجم للملف هو 2 ميجابايت." });
+        return;
+      }
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewRequest(prev => ({ ...prev, attachmentUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleCreateRequest = () => {
     if (!requestsRef || !newRequest.title || !newRequest.amount || !newRequest.meetingTime || !newRequest.category) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب بما في ذلك موعد المحاضرة والقسم." });
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب." });
       return;
     }
 
@@ -128,14 +146,16 @@ function StudentView({ profile }: { profile: any }) {
       studentEmail: profile.email || "",
       studentPhone: profile.phoneNumber || "",
       createdAt: new Date().toISOString(),
-      meetingTime: new Date(newRequest.meetingTime).toISOString()
+      meetingTime: new Date(newRequest.meetingTime).toISOString(),
+      attachmentUrl: newRequest.attachmentUrl || null
     });
 
     setIsDialogOpen(false);
-    setNewRequest({ title: "", amount: "", category: "", meetingTime: "" });
+    setNewRequest({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
+    setFileName("");
     toast({
       title: "تم إرسال الطلب بنجاح",
-      description: "سيتم إخطارك فور قبول أحد المفهمين لطلبك وإرسال رابط الاجتماع لبريدك.",
+      description: "سيتم إخطارك فور قبول أحد المفهمين لطلبك.",
     });
   };
 
@@ -154,10 +174,10 @@ function StudentView({ profile }: { profile: any }) {
               اطلب استفهام الآن
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]" dir="rtl">
+          <DialogContent className="sm:max-w-[650px]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="text-right text-3xl font-bold">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-              <DialogDescription className="text-right text-lg">حدد موعداً مناسباً ووصفاً دقيقاً ليتمكن المدرس من مساعدتك.</DialogDescription>
+              <DialogDescription className="text-right text-lg">أرفق صوراً للمسائل أو ملفات لتسهيل الشرح.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-6">
               <div className="space-y-2">
@@ -175,9 +195,6 @@ function StudentView({ profile }: { profile: any }) {
                       {categories?.map((cat) => (
                         <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                       ))}
-                      {(!categories || categories.length === 0) && (
-                        <SelectItem value="عام" disabled>لا توجد أقسام حالياً</SelectItem>
-                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -188,13 +205,29 @@ function StudentView({ profile }: { profile: any }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="meetingTime" className="text-lg font-bold">تاريخ ووقت المحاضرة المطلوب</Label>
-                <Input 
-                  id="meetingTime" 
-                  type="datetime-local" 
-                  value={newRequest.meetingTime} 
-                  onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} 
-                  className="h-12 rounded-xl font-bold"
-                />
+                <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-12 rounded-xl" />
+              </div>
+              
+              <div className="space-y-4">
+                <Label className="text-lg font-bold flex items-center gap-2">
+                  <Upload size={18} /> إرفاق ملفات أو صور (اختياري)
+                </Label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+                >
+                  {fileName ? (
+                    <div className="flex items-center justify-center gap-3 font-bold text-primary">
+                      <FileText /> {fileName}
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setFileName(""); setNewRequest({...newRequest, attachmentUrl: ""}); }}><X size={14} /></Button>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground">
+                      اضغط هنا لرفع صورة المسألة أو ملف PDF
+                    </div>
+                  )}
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf" onChange={handleFileChange} />
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -221,11 +254,10 @@ function StudentView({ profile }: { profile: any }) {
                   <CalendarDays className="h-5 w-5" />
                   <span className="text-sm">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 </div>
-                {req.teacherName && (
-                  <div className="flex items-center gap-2 pt-2 text-sm font-bold text-blue-600">
-                    <ShieldCheck className="h-4 w-4" />
-                    المُفهم: {req.teacherName}
-                  </div>
+                {req.attachmentUrl && (
+                  <Badge variant="outline" className="flex items-center gap-2 border-primary/20 text-primary bg-primary/5">
+                    <FileText size={14} /> مرفق موجود
+                  </Badge>
                 )}
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <div className="flex items-center text-md text-muted-foreground font-medium">
@@ -330,6 +362,11 @@ function TeacherView({ profile }: { profile: any }) {
                 </div>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
+                {req.attachmentUrl && (
+                  <div className="bg-primary/5 p-4 rounded-xl flex items-center gap-3 text-sm font-bold text-primary">
+                    <FileText size={18} /> الطالب أرفق ملفاً توضيحياً
+                  </div>
+                )}
                 <div className="flex flex-col gap-3">
                   <span className="text-muted-foreground text-sm font-bold">المستفهم:</span>
                   <div className="font-bold text-xl flex items-center gap-3">
@@ -350,7 +387,7 @@ function TeacherView({ profile }: { profile: any }) {
           ))}
           {(!requests || requests.length === 0) && (
             <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
-              لا توجد طلبات استفهام حالياً.. سنعلمك عند ظهور أي طلب جديد.
+              لا توجد طلبات استفهام حالياً.
             </div>
           )}
         </div>
