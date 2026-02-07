@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -15,7 +14,10 @@ import {
   Landmark,
   ShieldCheck,
   CreditCard,
-  Download
+  Download,
+  Clock,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
@@ -52,41 +54,64 @@ export default function WalletPage() {
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
-  // حساب الرصيد المتاح
-  const balance = transactions?.reduce((acc: number, tx: any) => 
-    acc + (tx.type === 'deposit' || tx.type === 'earning' ? tx.amount : -tx.amount), 0) || 0;
+  // حساب الرصيد المتاح: (شحن + أرباح) - (سحب مكتمل أو معلق) - (مدفوعات)
+  const balance = transactions?.reduce((acc: number, tx: any) => {
+    if (tx.status === 'rejected') return acc; // الرفض يعيد الرصيد
+    if (tx.type === 'deposit' || tx.type === 'earning') return acc + tx.amount;
+    return acc - tx.amount;
+  }, 0) || 0;
 
   const handleTransaction = async () => {
     if (!firestore || !user || !amount || !profile) return;
     
+    const numAmount = Number(amount);
+    if (numAmount <= 0) {
+      toast({ variant: "destructive", title: "خطأ", description: "يرجى إدخال مبلغ صحيح." });
+      return;
+    }
+
     const isTeacher = profile.role === 'mufhem';
     
     if (isTeacher) {
-      // طلب سحب - إنشاء سجل في مجموعة طلبات السحب لمراجعته من الأدمن
-      if (Number(amount) > balance) {
-        toast({ variant: "destructive", title: "خطأ", description: "رصيدك غير كافٍ لسحب هذا المبلغ." });
+      if (numAmount > balance) {
+        toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "لا يمكنك سحب مبلغ أكبر من رصيدك الحالي." });
         return;
       }
       
-      await addDoc(collection(firestore, "payoutRequests"), {
-        userId: user.uid,
-        userName: profile.fullName,
-        phoneNumber: profile.phoneNumber,
-        amount: Number(amount),
-        status: 'pending',
-        timestamp: new Date().toISOString()
-      });
+      try {
+        // 1. إنشاء المعاملة في حساب المستخدم بحالة معلقة لخصم الرصيد فوراً
+        const txRef = await addDoc(collection(firestore, "users", user.uid, "transactions"), {
+          amount: numAmount,
+          type: 'withdrawal',
+          details: 'طلب سحب أرباح',
+          status: 'pending',
+          timestamp: new Date().toISOString()
+        });
 
-      toast({
-        title: "تم استلام طلب السحب",
-        description: "سيتم مراجعة الطلب وتحويل المبلغ لرقمك خلال 24 ساعة.",
-      });
+        // 2. إنشاء طلب السحب للأدمن مع ربطه بالمعاملة
+        await addDoc(collection(firestore, "payoutRequests"), {
+          userId: user.uid,
+          userName: profile.fullName,
+          userEmail: profile.email,
+          phoneNumber: profile.phoneNumber,
+          amount: numAmount,
+          status: 'pending',
+          transactionId: txRef.id,
+          timestamp: new Date().toISOString()
+        });
+
+        toast({
+          title: "تم تقديم الطلب",
+          description: "تم خصم المبلغ من رصيدك مؤقتاً لحين مراجعة الطلب.",
+        });
+      } catch (e) {
+        toast({ variant: "destructive", title: "خطأ", description: "فشلت العملية، يرجى المحاولة لاحقاً." });
+      }
     } else {
-      // شحن رصيد - نفترض اكتمال الدفع أوتوماتيكياً في هذه النسخة
       createTransactionNonBlocking(firestore, user.uid, {
-        amount: Number(amount),
+        amount: numAmount,
         type: 'deposit',
-        details: 'شحن رصيد المحفظة (فودافون كاش)',
+        details: 'شحن رصيد المحفظة',
         status: 'completed'
       });
       toast({
@@ -99,7 +124,7 @@ export default function WalletPage() {
     setAmount("");
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold">جاري تحميل بيانات المحفظة...</div>;
+  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل بيانات المحفظة...</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12" dir="rtl">
@@ -115,7 +140,7 @@ export default function WalletPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <Card className="lg:col-span-2 bg-gradient-to-br from-primary via-primary/90 to-accent text-white border-none shadow-[0_30px_60px_rgba(0,0,0,0.15)] overflow-hidden relative rounded-[3rem] transition-transform hover:scale-[1.01]">
+        <Card className="lg:col-span-2 bg-gradient-to-br from-primary via-primary/90 to-accent text-white border-none shadow-[0_30px_60px_rgba(0,0,0,0.15)] overflow-hidden relative rounded-[3rem]">
           <div className="absolute top-0 right-0 p-16 opacity-10 pointer-events-none">
             <Wallet size={200} />
           </div>
@@ -163,13 +188,13 @@ export default function WalletPage() {
                         className="h-20 text-4xl font-black text-center rounded-3xl border-2 focus:border-primary transition-all"
                       />
                     </div>
-                    <div className="p-6 bg-primary/5 rounded-3xl border border-dashed border-primary/30">
-                      <p className="text-sm text-center text-primary font-bold">
-                        {profile?.role === 'mustafhem' 
-                          ? "سيتم توجيهك لصفحة الدفع الآمن بعد الضغط على تأكيد." 
-                          : "تأكد من أن رقم فودافون كاش المسجل في بروفايلك صحيح."}
-                      </p>
-                    </div>
+                    {profile?.role === 'mufhem' && (
+                      <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                        <p className="text-xs text-orange-700 font-bold leading-relaxed text-center">
+                          تأكد من صحة رقم المحفظة في ملفك الشخصي. سيتم خصم المبلغ من رصيدك فوراً لحين مراجعة الطلب.
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
                     <Button onClick={handleTransaction} className="w-full py-10 text-2xl font-black rounded-3xl shadow-xl">
@@ -178,10 +203,6 @@ export default function WalletPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              
-              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 px-10 py-10 rounded-3xl font-bold text-xl backdrop-blur-sm transition-all">
-                <Landmark className="ml-3 h-7 w-7" /> تفاصيل الحساب
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -237,19 +258,24 @@ export default function WalletPage() {
                       </div>
                       <div className="flex flex-col gap-1">
                         <span className="leading-none">{tx.details}</span>
-                        <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">REF: {tx.id.slice(0, 8)}</span>
+                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">REF: {tx.id.slice(0, 8)}</span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-lg font-bold">
-                    {new Date(tx.timestamp).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {new Date(tx.timestamp).toLocaleDateString('ar-EG')}
                   </TableCell>
                   <TableCell className={`font-black text-3xl tabular-nums ${tx.type === 'deposit' || tx.type === 'earning' ? 'text-green-600' : 'text-red-600'}`}>
                     {tx.type === 'deposit' || tx.type === 'earning' ? `+${tx.amount}` : `-${tx.amount}`}
                     <span className="text-sm mr-2">ج.م</span>
                   </TableCell>
                   <TableCell className="px-10">
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 px-6 py-2 text-md font-black rounded-xl">ناجحة</Badge>
+                    <Badge className={`px-6 py-2 text-md font-black rounded-xl border-none ${
+                      tx.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                      tx.status === 'pending' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {tx.status === 'completed' ? 'ناجحة' : tx.status === 'pending' ? 'قيد المراجعة' : 'مرفوضة'}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))}
