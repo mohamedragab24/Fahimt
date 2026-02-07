@@ -31,7 +31,8 @@ import {
   Check,
   Search,
   Wand2,
-  PieChart
+  PieChart,
+  Bot
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -114,7 +115,7 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
       const usersSnap = await getDocs(collection(firestore, "users"));
       const requestsSnap = await getDocs(query(collection(firestore, "requests"), where("status", "==", "completed")));
       setCounts({
-        users: usersSnap.size + 1500, // إضافة رقم افتراضي للبداية
+        users: usersSnap.size + 1500,
         hours: requestsSnap.size * 2 + 4500,
         experts: usersSnap.docs.filter(d => d.data().role === 'mufhem').length + 150
       });
@@ -124,7 +125,6 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/10 to-transparent">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
           <div className="absolute top-20 left-10 w-40 h-40 bg-primary rounded-full blur-3xl"></div>
@@ -149,7 +149,6 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
         </div>
       </section>
 
-      {/* How it works */}
       <section className="py-24 bg-white">
         <div className="container px-4 space-y-16">
           <div className="text-center space-y-4">
@@ -165,7 +164,6 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-24 container px-4 grid grid-cols-1 md:grid-cols-3 gap-10">
         <LandingFeature 
           icon={Video} 
@@ -184,7 +182,6 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
         />
       </section>
 
-      {/* FAQ */}
       <section className="py-24 bg-muted/30">
         <div className="container px-4 max-w-4xl space-y-12">
           <h2 className="text-4xl font-black text-center">الأسئلة الشائعة</h2>
@@ -211,7 +208,6 @@ function LandingPage({ router, firestore }: { router: any, firestore: any }) {
         </div>
       </section>
 
-      {/* Social Proof */}
       <section className="bg-zinc-900 text-white py-20">
         <div className="container px-4 flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="space-y-4 text-center md:text-right">
@@ -261,6 +257,7 @@ function LandingFeature({ icon: Icon, title, desc }: any) {
 
 function StudentView({ profile }: { profile: any }) {
   const firestore = useFirestore();
+  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
   const [fileName, setFileName] = useState("");
@@ -360,100 +357,115 @@ function StudentView({ profile }: { profile: any }) {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col items-center justify-center p-8 md:p-20 bg-gradient-to-br from-primary via-primary to-accent rounded-[2.5rem] md:rounded-[3.5rem] text-white shadow-2xl text-center space-y-8 relative overflow-hidden group">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://picsum.photos/seed/learn/1000/1000')] bg-cover transition-transform group-hover:scale-110 duration-1000"></div>
-        <h2 className="text-3xl md:text-6xl font-black font-headline max-w-4xl leading-tight relative z-10 drop-shadow-lg">
-          إيه اللي واقف معاك؟ <br/> اسأل وهتلاقي اللي يفهِّمك بجد
-        </h2>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-8 md:px-14 py-6 md:py-10 text-lg md:text-3xl rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all hover:scale-105 font-black relative z-10">
-              <PlusCircle className="ml-4 h-6 w-6 md:h-10 md:w-10" />
-              اطلب استفهام الآن
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[650px]" dir="rtl">
-            <DialogHeader>
-              <DialogTitle className="text-right text-3xl font-bold">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-              <DialogDescription className="text-right text-lg">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-6">
-              <div className="space-y-2 relative">
-                <Label htmlFor="title" className="text-lg font-bold">عنوان الطلب</Label>
-                <div className="relative">
-                  <Input 
-                    id="title" 
-                    placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" 
-                    value={newRequest.title} 
-                    onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} 
-                    className="h-14 rounded-xl pr-4 pl-12" 
-                  />
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleAiRefine}
-                    disabled={isAiRefining}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 text-primary hover:bg-primary/10 rounded-lg h-10 w-10"
-                  >
-                    <Wand2 className={`h-5 w-5 ${isAiRefining ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-lg font-bold">التصنيف</Label>
-                  <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
-                    <SelectTrigger className="h-12 rounded-xl">
-                      <SelectValue placeholder="اختر التصنيف" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-lg font-bold">المبلغ (ج.م)</Label>
-                  <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-12 rounded-xl" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="meetingTime" className="text-lg font-bold">تاريخ ووقت المحاضرة المطلوب</Label>
-                <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-12 rounded-xl" />
-              </div>
-              
-              <div className="space-y-4">
-                <Label className="text-lg font-bold flex items-center gap-2">
-                  <Upload size={18} /> إرفاق ملفات أو صور (اختياري)
-                </Label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
-                >
-                  {fileName ? (
-                    <div className="flex items-center justify-center gap-3 font-bold text-primary">
-                      <FileText /> {fileName}
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setFileName(""); setNewRequest({...newRequest, attachmentUrl: ""}); }}><X size={14} /></Button>
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground flex flex-col items-center gap-2">
-                      <Bot className="h-10 w-10 opacity-20" />
-                      اضغط هنا لرفع صورة المسألة للتحليل
-                    </div>
-                  )}
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf" onChange={handleFileChange} />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCreateRequest} className="w-full py-6 text-xl font-black rounded-xl">
-                <Send className="ml-3 h-6 w-6" /> إرسال الطلب الآن
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="flex flex-col items-center justify-center p-8 md:p-12 bg-gradient-to-br from-primary via-primary to-accent rounded-[2.5rem] text-white shadow-2xl text-center space-y-6 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://picsum.photos/seed/learn/1000/1000')] bg-cover transition-transform group-hover:scale-110 duration-1000"></div>
+          <h2 className="text-3xl md:text-4xl font-black font-headline max-w-4xl leading-tight relative z-10 drop-shadow-lg">
+            إيه اللي واقف معاك؟ <br/> اسأل وهتلاقي اللي يفهِّمك بجد
+          </h2>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg" className="bg-white text-primary hover:bg-gray-100 px-8 py-6 text-xl rounded-full shadow-xl transition-all hover:scale-105 font-black relative z-10">
+                <PlusCircle className="ml-3 h-6 w-6" />
+                اطلب استفهام الآن
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[650px]" dir="rtl">
+              <DialogHeader>
+                <DialogTitle className="text-right text-3xl font-bold">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
+                <DialogDescription className="text-right text-lg">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-6">
+                <div className="space-y-2 relative">
+                  <Label htmlFor="title" className="text-lg font-bold">عنوان الطلب</Label>
+                  <div className="relative">
+                    <Input 
+                      id="title" 
+                      placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" 
+                      value={newRequest.title} 
+                      onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} 
+                      className="h-14 rounded-xl pr-4 pl-12" 
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleAiRefine}
+                      disabled={isAiRefining}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 text-primary hover:bg-primary/10 rounded-lg h-10 w-10"
+                    >
+                      <Wand2 className={`h-5 w-5 ${isAiRefining ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-lg font-bold">التصنيف</Label>
+                    <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
+                      <SelectTrigger className="h-12 rounded-xl">
+                        <SelectValue placeholder="اختر التصنيف" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-lg font-bold">المبلغ (ج.م)</Label>
+                    <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-12 rounded-xl" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="meetingTime" className="text-lg font-bold">تاريخ ووقت المحاضرة المطلوب</Label>
+                  <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-12 rounded-xl" />
+                </div>
+                
+                <div className="space-y-4">
+                  <Label className="text-lg font-bold flex items-center gap-2">
+                    <Upload size={18} /> إرفاق ملفات أو صور (اختياري)
+                  </Label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+                  >
+                    {fileName ? (
+                      <div className="flex items-center justify-center gap-3 font-bold text-primary">
+                        <FileText /> {fileName}
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setFileName(""); setNewRequest({...newRequest, attachmentUrl: ""}); }}><X size={14} /></Button>
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground flex flex-col items-center gap-2">
+                        <Bot className="h-10 w-10 opacity-20" />
+                        اضغط هنا لرفع صورة المسألة للتحليل
+                      </div>
+                    )}
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf" onChange={handleFileChange} />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleCreateRequest} className="w-full py-6 text-xl font-black rounded-xl">
+                  <Send className="ml-3 h-6 w-6" /> إرسال الطلب الآن
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <Card className="rounded-[2.5rem] border-2 border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-8 text-center space-y-6">
+          <div className="bg-primary/10 p-4 rounded-3xl">
+            <Users2 className="h-12 w-12 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black">اكتشف أفضل المدرسين</h3>
+            <p className="text-muted-foreground font-medium">يمكنك الاطلاع على قائمة المدرسين الموثقين وتخصصاتهم قبل البدء.</p>
+          </div>
+          <Button onClick={() => router.push('/teachers')} className="h-14 px-8 rounded-2xl font-bold text-lg">
+            تصفح قائمة "المفهمين"
+          </Button>
+        </Card>
       </div>
 
       <div className="space-y-8">
@@ -502,6 +514,7 @@ function TeacherView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [filterCategory, setFilterCategory] = useState("all");
+  const [showReviews, setShowReviews] = useState(false);
 
   const transactionsRef = useMemoFirebase(() => {
     if (!firestore || !profile?.id) return null;
@@ -609,7 +622,10 @@ function TeacherView({ profile }: { profile: any }) {
           </div>
         </Card>
 
-        <Card className="bg-zinc-900 text-white rounded-3xl p-8 shadow-xl flex items-center gap-6">
+        <Card 
+          className="bg-zinc-900 text-white rounded-3xl p-8 shadow-xl flex items-center gap-6 cursor-pointer hover:bg-zinc-800 transition-colors"
+          onClick={() => setShowReviews(true)}
+        >
           <div className="bg-white/20 p-4 rounded-2xl text-yellow-400">
             <Star size={32} fill="currentColor" />
           </div>
@@ -619,6 +635,31 @@ function TeacherView({ profile }: { profile: any }) {
           </div>
         </Card>
       </div>
+
+      <Dialog open={showReviews} onOpenChange={setShowReviews}>
+        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right text-2xl font-black">مراجعات الطلاب</DialogTitle>
+            <DialogDescription className="text-right">ماذا يقول الطلاب عن محاضراتك.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[400px] overflow-y-auto p-2">
+            {completedRequests?.filter(r => r.review).map((r) => (
+              <div key={r.id} className="p-4 bg-muted/30 rounded-2xl space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-sm">{r.studentName}</span>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-3 w-3 ${r.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />)}
+                  </div>
+                </div>
+                <p className="text-sm italic text-muted-foreground leading-relaxed">"{r.review}"</p>
+              </div>
+            ))}
+            {(!completedRequests || completedRequests.filter(r => r.review).length === 0) && (
+              <div className="text-center py-10 text-muted-foreground font-bold">لا توجد تعليقات مكتوبة بعد.</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {activeRequests && activeRequests.length > 0 && (
         <div className="space-y-6">

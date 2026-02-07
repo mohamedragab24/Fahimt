@@ -15,7 +15,8 @@ import {
   Activity,
   ArrowUpRight,
   Wallet,
-  Users2
+  Users2,
+  PieChart
 } from "lucide-react";
 import { 
   BarChart, 
@@ -25,12 +26,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line,
   Cell
 } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -48,8 +46,8 @@ export default function AdminDashboard() {
     mufahems: 0,
     mustafhems: 0,
     pendingVerifications: 0,
-    totalVolume: 0, // إجمالي المبالغ المتداولة
-    platformRevenue: 0, // إيرادات التطبيق (العمولة)
+    totalVolume: 0,
+    platformRevenue: 0,
     totalUsers: 0
   });
 
@@ -72,15 +70,10 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       if (!firestore) return;
       try {
-        // 1. حساب أعداد المستخدمين
         const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
         const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
         const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
-        
-        // 2. حساب المبالغ من الطلبات المكتملة
         const completedRequestsQuery = query(collection(firestore, "requests"), where("status", "==", "completed"));
-        
-        // 3. جلب آخر الطلبات للجدول
         const lastRequestsQuery = query(collection(firestore, "requests"), orderBy("createdAt", "desc"), limit(5));
 
         const [mufSnap, musSnap, verSnap, completedSnap, lastSnap] = await Promise.all([
@@ -96,7 +89,6 @@ export default function AdminDashboard() {
           totalVolume += (doc.data().amount || 0);
         });
 
-        // افترضنا عمولة التطبيق 20% كما في كود المعاملات
         const platformRevenue = totalVolume * 0.2;
 
         setStats({
@@ -141,7 +133,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* بطاقات الإحصائيات الرئيسية */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="إجمالي المستخدمين" value={stats.totalUsers} icon={Users2} color="bg-blue-500" />
         <StatCard title="طلبات توثيق" value={stats.pendingVerifications} icon={ShieldCheck} color="bg-orange-500" />
@@ -150,7 +141,6 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* رسم بياني لتوزيع المبالغ */}
         <Card className="shadow-2xl rounded-[2.5rem] border-2 p-6 bg-white">
           <CardHeader>
             <CardTitle className="font-black text-2xl flex items-center gap-3">
@@ -177,7 +167,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* قائمة آخر العمليات */}
         <Card className="shadow-2xl rounded-[2.5rem] border-2 overflow-hidden bg-white">
           <CardHeader className="bg-muted/30 border-b p-6">
             <CardTitle className="font-black text-xl flex items-center gap-3">
@@ -221,9 +210,8 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* قسم تفصيلي لإيرادات المفهمين */}
       <div className="space-y-6">
-        <h3 className="text-2xl font-black border-r-8 border-accent pr-6">قائمة إيرادات المنصة والمفهمين</h3>
+        <h3 className="text-2xl font-black border-r-8 border-accent pr-6">توزيع القوى العاملة والسيولة</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card className="rounded-[2rem] border-2 shadow-lg p-8 bg-zinc-900 text-white">
             <div className="flex justify-between items-center mb-6">
@@ -254,18 +242,18 @@ export default function AdminDashboard() {
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground font-bold">توزع القوى العاملة</p>
+                <p className="text-sm text-muted-foreground font-bold">توزع المستخدمين</p>
                 <p className="text-2xl font-black">المفهمين: {stats.mufahems} | المستفهمين: {stats.mustafhems}</p>
               </div>
             </div>
             <div className="h-4 bg-muted rounded-full overflow-hidden flex">
               <div 
                 className="bg-blue-500 h-full transition-all duration-1000" 
-                style={{ width: `${(stats.mufahems / stats.totalUsers) * 100}%` }}
+                style={{ width: `${(stats.mufahems / (stats.totalUsers || 1)) * 100}%` }}
               ></div>
               <div 
                 className="bg-green-500 h-full transition-all duration-1000" 
-                style={{ width: `${(stats.mustafhems / stats.totalUsers) * 100}%` }}
+                style={{ width: `${(stats.mustafhems / (stats.totalUsers || 1)) * 100}%` }}
               ></div>
             </div>
             <p className="text-xs text-center font-bold text-muted-foreground">

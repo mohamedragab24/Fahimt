@@ -20,9 +20,8 @@ import {
   Video,
   LifeBuoy,
   History,
-  FileText,
   Smartphone,
-  Download
+  GraduationCap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -50,6 +49,7 @@ import { useEffect } from "react";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
+  { title: "المفهمين", icon: GraduationCap, href: "/teachers" },
   { title: "طلباتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
@@ -152,21 +152,23 @@ export function AppSidebar() {
         <SidebarMenu className="px-3 space-y-2 pt-4">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={item.title}
-                className={`h-14 rounded-xl transition-all ${
-                  pathname === item.href 
-                    ? "bg-primary text-white shadow-lg hover:bg-primary/90" 
-                    : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
-                }`}
-              >
-                <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
-                  <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
+              {item.title === "المفهمين" && profile?.role !== 'mustafhem' ? null : (
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  tooltip={item.title}
+                  className={`h-14 rounded-xl transition-all ${
+                    pathname === item.href 
+                      ? "bg-primary text-white shadow-lg hover:bg-primary/90" 
+                      : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
+                  }`}
+                >
+                  <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
+                    <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
+                    <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           ))}
 
