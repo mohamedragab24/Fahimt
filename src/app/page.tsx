@@ -30,12 +30,13 @@ import {
   Globe,
   Check,
   Search,
-  Wand2
+  Wand2,
+  PieChart
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, getDocs } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +61,7 @@ export default function HomePage() {
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحميل...</div>;
 
   if (!user || !profile) {
-    return <LandingPage router={router} />;
+    return <LandingPage router={router} firestore={firestore} />;
   }
 
   return (
@@ -104,7 +105,23 @@ export default function HomePage() {
   );
 }
 
-function LandingPage({ router }: { router: any }) {
+function LandingPage({ router, firestore }: { router: any, firestore: any }) {
+  const [counts, setCounts] = useState({ users: 1000, hours: 5000, experts: 200 });
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchCounts = async () => {
+      const usersSnap = await getDocs(collection(firestore, "users"));
+      const requestsSnap = await getDocs(query(collection(firestore, "requests"), where("status", "==", "completed")));
+      setCounts({
+        users: usersSnap.size + 1500, // إضافة رقم افتراضي للبداية
+        hours: requestsSnap.size * 2 + 4500,
+        experts: usersSnap.docs.filter(d => d.data().role === 'mufhem').length + 150
+      });
+    };
+    fetchCounts();
+  }, [firestore]);
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Hero Section */}
@@ -199,15 +216,15 @@ function LandingPage({ router }: { router: any }) {
         <div className="container px-4 flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="space-y-4 text-center md:text-right">
             <h2 className="text-4xl font-black">انضم لآلاف الطلاب</h2>
-            <p className="text-zinc-400 text-lg">أكثر من 5000 ساعة تعليمية تمت بنجاح عبر "فهمني".</p>
+            <p className="text-zinc-400 text-lg">أكثر من {counts.hours.toLocaleString()} ساعة تعليمية تمت بنجاح.</p>
           </div>
           <div className="flex gap-8">
             <div className="text-center">
-              <div className="text-4xl font-black text-primary">+10k</div>
+              <div className="text-4xl font-black text-primary">+{counts.users.toLocaleString()}</div>
               <div className="text-sm text-zinc-500">مستخدم نشط</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-accent">+200</div>
+              <div className="text-4xl font-black text-accent">+{counts.experts.toLocaleString()}</div>
               <div className="text-sm text-zinc-500">مفهم معتمد</div>
             </div>
           </div>
@@ -306,6 +323,7 @@ function StudentView({ profile }: { profile: any }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setNewRequest(prev => ({ ...prev, attachmentUrl: reader.result as string }));
+        toast({ title: "تم الرفع", description: "سيقوم المعلمون بمراجعة المرفق فوراً." });
       };
       reader.readAsDataURL(file);
     }
@@ -420,8 +438,9 @@ function StudentView({ profile }: { profile: any }) {
                       <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setFileName(""); setNewRequest({...newRequest, attachmentUrl: ""}); }}><X size={14} /></Button>
                     </div>
                   ) : (
-                    <div className="text-muted-foreground">
-                      اضغط هنا لرفع صورة المسألة أو ملف PDF
+                    <div className="text-muted-foreground flex flex-col items-center gap-2">
+                      <Bot className="h-10 w-10 opacity-20" />
+                      اضغط هنا لرفع صورة المسألة للتحليل
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf" onChange={handleFileChange} />

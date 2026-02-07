@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc, collection, addDoc } from "firebase/firestore";
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
@@ -43,7 +44,8 @@ export default function ProfilePage() {
     phone: "",
     birthDate: "",
     profilePictureUrl: "",
-    specialization: ""
+    specialization: "",
+    bio: ""
   });
 
   useEffect(() => {
@@ -53,7 +55,8 @@ export default function ProfilePage() {
         phone: profile.phoneNumber || "",
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
         profilePictureUrl: profile.profilePictureUrl || "",
-        specialization: profile.specialization || ""
+        specialization: profile.specialization || "",
+        bio: profile.bio || ""
       });
     }
   }, [profile]);
@@ -87,15 +90,6 @@ export default function ProfilePage() {
     }
   };
 
-  const copyProfileId = () => {
-    if (user?.uid) {
-      navigator.clipboard.writeText(user.uid);
-      setCopied(true);
-      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي (UID) للحافظة." });
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -114,7 +108,8 @@ export default function ProfilePage() {
       phoneNumber: formData.phone,
       birthDate: formData.birthDate,
       profilePictureUrl: formData.profilePictureUrl,
-      specialization: formData.specialization
+      specialization: formData.specialization,
+      bio: formData.bio
     });
     toast({
       title: "تم تحديث البيانات",
@@ -283,6 +278,21 @@ export default function ProfilePage() {
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary px-6 bg-muted/5 shadow-inner"
               />
             </div>
+
+            {profile.role === 'mufhem' && (
+              <div className="md:col-span-2 space-y-4">
+                <Label htmlFor="bio" className="text-xl font-black flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-primary" /> نبذة تعريفية (Portfolio)
+                </Label>
+                <Textarea 
+                  id="bio"
+                  placeholder="أخبر الطلاب عن خبراتك، سنوات عملك، وأسلوبك في الشرح..."
+                  value={formData.bio || ""}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                  className="min-h-[150px] text-lg rounded-2xl border-2 p-6"
+                />
+              </div>
+            )}
 
             {profile.role === 'mufhem' && !profile.isVerified && (
               <div className="md:col-span-2 p-6 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 flex flex-col md:flex-row items-center justify-between gap-6">

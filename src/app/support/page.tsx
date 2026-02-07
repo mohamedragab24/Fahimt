@@ -3,17 +3,18 @@
 
 import { useState } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, doc, addDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, addDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send, HelpCircle, History, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { MessageCircle, Send, HelpCircle, History, Clock, CheckCircle2, AlertCircle, Bot, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { askPlatformAssistant } from "@/ai/flows/platform-assistant-flow";
 
 export default function SupportPage() {
   const { user } = useUser();
@@ -21,6 +22,11 @@ export default function SupportPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({ subject: "", category: "technical", message: "" });
+  
+  // AI Assistant States
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const ticketsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -32,6 +38,20 @@ export default function SupportPage() {
   }, [firestore, user]);
 
   const { data: tickets, isLoading } = useCollection(ticketsQuery);
+
+  const handleAiAsk = async () => {
+    if (!aiQuery.trim()) return;
+    setIsAiLoading(true);
+    setAiResponse(null);
+    try {
+      const result = await askPlatformAssistant({ query: aiQuery });
+      setAiResponse(result.answer);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل الاتصال بالمساعد الذكي." });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const handleCreateTicket = async () => {
     if (!firestore || !user || !newTicket.subject || !newTicket.message) {
@@ -119,9 +139,42 @@ export default function SupportPage() {
         </Dialog>
       </div>
 
+      {/* AI Assistant Section */}
+      <Card className="rounded-[2.5rem] border-2 border-primary/20 bg-primary/5 overflow-hidden">
+        <CardHeader className="bg-primary p-8 text-white">
+          <CardTitle className="text-2xl font-black flex items-center gap-3">
+            <Bot className="h-8 w-8" /> اسأل مساعد "فهمني" الذكي
+          </CardTitle>
+          <CardDescription className="text-white/80 text-lg">احصل على إجابات فورية حول كيفية استخدام المنصة والسياسات المالية.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-8 space-y-6">
+          <div className="flex gap-4">
+            <Input 
+              placeholder="مثال: كيف يمكنني سحب أرباحي؟" 
+              className="h-14 rounded-xl text-lg bg-white shadow-sm border-2 focus:border-primary"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAiAsk()}
+            />
+            <Button onClick={handleAiAsk} disabled={isAiLoading} className="h-14 px-8 rounded-xl bg-primary text-white font-bold">
+              {isAiLoading ? <Sparkles className="animate-spin" /> : "اسأل"}
+            </Button>
+          </div>
+          {aiResponse && (
+            <div className="p-6 bg-white rounded-3xl border-2 border-dashed border-primary/30 animate-in fade-in slide-in-from-top-2">
+              <div className="flex gap-3 mb-4">
+                <Bot className="text-primary h-6 w-6" />
+                <span className="font-black text-primary">رد المساعد الذكي:</span>
+              </div>
+              <p className="text-lg leading-relaxed font-medium text-zinc-800">{aiResponse}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-8">
         <h3 className="text-2xl font-black flex items-center gap-3">
-          <History className="text-primary" /> تذاكرك السابقة
+          <History className="text-primary" /> تذاكرك السابقة المفتوحة
         </h3>
         
         {isLoading ? (
