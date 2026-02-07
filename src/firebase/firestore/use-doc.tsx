@@ -33,13 +33,15 @@ export function useDoc<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Standard robust cleanup
     if (unsubscribeRef.current) {
       try {
-        unsubscribeRef.current();
+        const unsub = unsubscribeRef.current;
+        unsubscribeRef.current = null;
+        unsub();
       } catch (e) {
         // Silent catch
       }
-      unsubscribeRef.current = null;
     }
 
     if (!memoizedDocRef) {
@@ -79,11 +81,12 @@ export function useDoc<T = any>(
             setData(null);
             setIsLoading(false);
 
+            // Delay for SDK stability
             setTimeout(() => {
               if (isMounted) {
                 errorEmitter.emit('permission-error', contextualError);
               }
-            }, 250);
+            }, 500);
           } else {
             setError(err);
             setIsLoading(false);

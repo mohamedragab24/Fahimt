@@ -34,14 +34,15 @@ export function useCollection<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Cleanup previous listener immediately
+    // Cleanup previous listener immediately and safely
     if (unsubscribeRef.current) {
       try {
-        unsubscribeRef.current();
+        const unsub = unsubscribeRef.current;
+        unsubscribeRef.current = null;
+        unsub();
       } catch (e) {
         // Silent catch for internal SDK cleanup errors
       }
-      unsubscribeRef.current = null;
     }
 
     if (!memoizedTargetRefOrQuery) {
@@ -73,7 +74,6 @@ export function useCollection<T = any>(
           if (!isMounted) return;
           
           if (err.code === 'permission-denied') {
-            // Try to extract a meaningful path if it's a collection reference
             const path = 'path' in memoizedTargetRefOrQuery 
               ? memoizedTargetRefOrQuery.path 
               : 'query-result';
@@ -87,6 +87,7 @@ export function useCollection<T = any>(
             setIsLoading(false);
             
             // Critical: Delay emission to let SDK finish its internal state cycle
+            // This prevents the "Unexpected state" assertion error in some versions
             setTimeout(() => {
               if (isMounted) {
                 errorEmitter.emit('permission-error', contextualError);
