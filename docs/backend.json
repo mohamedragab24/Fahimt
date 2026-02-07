@@ -14,6 +14,7 @@
         "birthDate": { "type": "string", "format": "date-time" },
         "role": { "type": "string", "enum": ["mufhem", "mustafhem"] },
         "profilePictureUrl": { "type": "string", "format": "uri" },
+        "specialization": { "type": "string", "description": "Teacher's specialization" },
         "isVerified": { "type": "boolean", "default": false },
         "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" },
         "isAdmin": { "type": "boolean", "default": false },
@@ -51,7 +52,19 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "rating": { "type": "number" },
         "review": { "type": "string" },
-        "attachmentUrl": { "type": "string", "description": "Base64 or URL of attached file" }
+        "attachmentUrl": { "type": "string" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "requestId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
       }
     },
     "SupportTicket": {
@@ -65,6 +78,7 @@
         "message": { "type": "string" },
         "status": { "type": "string", "enum": ["open", "replied", "closed"], "default": "open" },
         "category": { "type": "string", "enum": ["finance", "technical", "other"] },
+        "adminReply": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "lastUpdate": { "type": "string", "format": "date-time" }
       }
@@ -88,15 +102,12 @@
         "definition": { "entityName": "Request", "description": "Learning session requests." }
       },
       {
-        "path": "/supportTickets/{ticketId}",
-        "definition": { "entityName": "SupportTicket", "description": "Support tickets." }
+        "path": "/requests/{requestId}/messages/{messageId}",
+        "definition": { "entityName": "ChatMessage", "description": "Messages between student and teacher." }
       },
       {
-        "path": "/supportTickets/{ticketId}/messages/{messageId}",
-        "definition": { 
-          "entityName": "SupportMessage", 
-          "description": "Conversation messages within a ticket." 
-        }
+        "path": "/supportTickets/{ticketId}",
+        "definition": { "entityName": "SupportTicket", "description": "Support tickets." }
       }
     ]
   }

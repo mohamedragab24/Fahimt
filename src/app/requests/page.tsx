@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +19,19 @@ import {
   Copy,
   Check,
   Star,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, doc, limit } from "firebase/firestore";
+import { collection, query, where, doc, limit, orderBy, addDoc } from "firebase/firestore";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function RequestsPage() {
   const { user, isUserLoading } = useUser();
@@ -104,9 +109,11 @@ export default function RequestsPage() {
 
 function RequestList({ requests, status, userId }: { requests: any[], status: string, userId?: string }) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeChat, setActiveChat] = useState<any>(null);
 
   const handleAction = (req: any, action: 'cancel' | 'complete') => {
     if (!firestore) return;
@@ -243,10 +250,17 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
               {status === 'accepted' && (
                 <>
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 py-10 md:py-12 font-black text-xl md:text-2xl rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+                    className="w-full bg-blue-600 hover:bg-blue-700 py-6 font-black text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                     onClick={() => router.push(`/meeting/${req.id}`)}
                   >
-                    <Video className="h-8 w-8 ml-4" /> دخول المحاضرة
+                    <Video className="h-6 w-6 ml-3" /> دخول المحاضرة
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full py-6 font-black text-lg rounded-2xl border-2 hover:bg-primary/5 transition-all"
+                    onClick={() => setActiveChat(req)}
+                  >
+                    <MessageSquare className="h-6 w-6 ml-3 text-primary" /> المحادثة الفورية
                   </Button>
                 </>
               )}
@@ -266,6 +280,98 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
           </CardContent>
         </Card>
       ))}
+
+      {/* مودال المحادثة الفورية */}
+      {activeChat && (
+        <ChatDialog 
+          request={activeChat} 
+          onClose={() => setActiveChat(null)} 
+          userId={user?.uid}
+          userName={user?.displayName || "مستخدم"}
+        />
+      )}
     </div>
+  );
+}
+
+function ChatDialog({ request, onClose, userId, userName }: any) {
+  const firestore = useFirestore();
+  const [msg, setMsg] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messagesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, "requests", request.id, "messages"),
+      orderBy("timestamp", "asc")
+    );
+  }, [firestore, request.id]);
+
+  const { data: messages } = useCollection(messagesQuery);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!firestore || !msg.trim() || !userId) return;
+    try {
+      await addDoc(collection(firestore, "requests", request.id, "messages"), {
+        senderId: userId,
+        senderName: userName,
+        text: msg.trim(),
+        timestamp: new Date().toISOString()
+      });
+      setMsg("");
+    } catch (e) {
+      console.error("Chat send error:", e);
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden rounded-[2.5rem]" dir="rtl">
+        <DialogHeader className="p-6 bg-primary text-white">
+          <DialogTitle className="text-right text-2xl font-black">المحادثة الفورية</DialogTitle>
+          <DialogDescription className="text-right text-white/80">تنسيق ما قبل المحاضرة مع {userId === request.studentId ? request.teacherName : request.studentName}</DialogDescription>
+        </DialogHeader>
+        
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-50">
+          {messages?.map((m: any) => (
+            <div key={m.id} className={`flex flex-col ${m.senderId === userId ? 'items-start' : 'items-end'}`}>
+              <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm text-sm font-bold ${
+                m.senderId === userId ? 'bg-primary text-white rounded-br-none' : 'bg-white border-2 text-zinc-800 rounded-bl-none'
+              }`}>
+                {m.text}
+              </div>
+              <span className="text-[10px] mt-1 text-muted-foreground">{new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          ))}
+          {(!messages || messages.length === 0) && (
+            <div className="h-full flex flex-col items-center justify-center opacity-30 gap-3">
+              <MessageSquare size={48} />
+              <p className="font-bold">ابدأ المحادثة الآن لتنسيق التفاصيل</p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="p-4 bg-white border-t mt-auto">
+          <div className="flex gap-2 w-full">
+            <Input 
+              placeholder="اكتب رسالتك هنا..." 
+              value={msg} 
+              onChange={(e) => setMsg(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              className="h-12 rounded-xl flex-1 border-2"
+            />
+            <Button onClick={handleSend} className="h-12 w-12 rounded-xl p-0">
+              <Send className="h-6 w-6" />
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
