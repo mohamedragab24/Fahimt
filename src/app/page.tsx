@@ -1,14 +1,30 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, BadgeCent, Clock, Send, Users, Sparkles, TrendingUp, CalendarDays, ShieldCheck, Upload, FileText, X } from "lucide-react";
+import { 
+  PlusCircle, 
+  BookOpen, 
+  BadgeCent, 
+  Clock, 
+  Send, 
+  Sparkles, 
+  TrendingUp, 
+  CalendarDays, 
+  ShieldCheck, 
+  Upload, 
+  FileText, 
+  X,
+  ArrowLeft,
+  GraduationCap,
+  Users2,
+  Video
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,12 +38,6 @@ export default function HomePage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
-
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return doc(firestore, "users", user.uid);
@@ -36,7 +46,11 @@ export default function HomePage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc(userRef);
 
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحميل...</div>;
-  if (!user || !profile) return null;
+
+  // إذا كان المستخدم غير مسجل، نعرض صفحة الهبوط العامة
+  if (!user || !profile) {
+    return <LandingPage router={router} />;
+  }
 
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10">
@@ -76,6 +90,88 @@ export default function HomePage() {
 
       {profile.role === "mustafhem" ? <StudentView profile={profile} /> : <TeacherView profile={profile} />}
     </div>
+  );
+}
+
+function LandingPage({ router }: { router: any }) {
+  return (
+    <div className="min-h-screen bg-background" dir="rtl">
+      {/* Hero Section */}
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/10 to-transparent">
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <div className="absolute top-20 left-10 w-40 h-40 bg-primary rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-60 h-60 bg-accent rounded-full blur-3xl"></div>
+        </div>
+        <div className="container px-4 text-center space-y-10 relative z-10">
+          <Badge className="h-10 px-6 rounded-full text-lg font-bold mb-4 animate-bounce">مرحباً بك في مستقبل التعليم العربي 🚀</Badge>
+          <h1 className="text-5xl md:text-8xl font-black font-headline tracking-tighter leading-tight">
+            متشيلش هم.. <br/> <span className="text-primary">فهمني</span> هيفهمك
+          </h1>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
+            المنصة الأولى التي تجمع بين الطلاب والخبراء في بث مباشر فوري. تعلم، تواصل، وتفوق مع أفضل "المفهمين" الموثقين.
+          </p>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            <Button size="lg" onClick={() => router.push('/login')} className="h-16 px-12 rounded-2xl text-xl font-black shadow-2xl hover:scale-105 transition-all">
+              ابدأ رحلتك الآن <ArrowLeft className="mr-3" />
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => router.push('/login')} className="h-16 px-12 rounded-2xl text-xl font-bold border-2">
+              تسجيل دخول
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-24 container px-4 grid grid-cols-1 md:grid-cols-3 gap-10">
+        <LandingFeature 
+          icon={Video} 
+          title="بث مباشر فوري" 
+          desc="لا تنتظر ردوداً مسجلة، تواصل مع المدرس فوراً في غرفة فيديو خاصة وآمنة."
+        />
+        <LandingFeature 
+          icon={ShieldCheck} 
+          title="مفهمين موثقين" 
+          desc="كل المدرسين لدينا يمرون بعملية تدقيق لضمان جودة المعلومة التي تصلك."
+        />
+        <LandingFeature 
+          icon={BadgeCent} 
+          title="أسعار مرنة" 
+          desc="أنت من يحدد الميزانية، وهناك دائماً خبير مستعد لمساعدتك بالسعر المناسب."
+        />
+      </section>
+
+      {/* Social Proof */}
+      <section className="bg-zinc-900 text-white py-20">
+        <div className="container px-4 flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black">انضم لآلاف الطلاب</h2>
+            <p className="text-zinc-400 text-lg">أكثر من 5000 ساعة تعليمية تمت بنجاح عبر "فهمني".</p>
+          </div>
+          <div className="flex gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-black text-primary">+10k</div>
+              <div className="text-sm text-zinc-500">مستخدم نشط</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-black text-accent">+200</div>
+              <div className="text-sm text-zinc-500">مفهم معتمد</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function LandingFeature({ icon: Icon, title, desc }: any) {
+  return (
+    <Card className="rounded-[2.5rem] p-8 border-2 hover:border-primary transition-all text-center space-y-4">
+      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary">
+        <Icon size={32} />
+      </div>
+      <h3 className="text-2xl font-black">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{desc}</p>
+    </Card>
   );
 }
 
@@ -318,7 +414,8 @@ function TeacherView({ profile }: { profile: any }) {
       status: "accepted",
       teacherId: profile.id,
       teacherName: profile.fullName || "مفهم",
-      teacherPhone: profile.phoneNumber || ""
+      teacherPhone: profile.phoneNumber || "",
+      teacherSpecialization: profile.specialization || ""
     });
 
     toast({
@@ -395,3 +492,4 @@ function TeacherView({ profile }: { profile: any }) {
     </div>
   );
 }
+

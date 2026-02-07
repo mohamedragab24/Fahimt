@@ -2,29 +2,25 @@
 {
   "entities": {
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
       "description": "Represents a user profile in the Fahmani application.",
       "properties": {
-        "id": { "type": "string", "description": "Unique Firebase UID" },
+        "id": { "type": "string" },
         "fullName": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "phoneNumber": { "type": "string" },
         "birthDate": { "type": "string", "format": "date-time" },
         "role": { "type": "string", "enum": ["mufhem", "mustafhem"] },
         "profilePictureUrl": { "type": "string", "format": "uri" },
-        "specialization": { "type": "string", "description": "Teacher's specialization" },
-        "isVerified": { "type": "boolean", "default": false },
-        "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" },
-        "isAdmin": { "type": "boolean", "default": false },
-        "adminPermissions": { 
-          "type": "array", 
-          "items": { "type": "string", "enum": ["finance", "support", "moderator", "superadmin"] }
-        },
+        "specialization": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "blocked"] },
+        "isAdmin": { "type": "boolean" },
+        "adminPermissions": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "fullName", "email", "phoneNumber", "birthDate", "role"]
+      "required": ["id", "fullName", "email", "phoneNumber", "role"]
     },
     "Category": {
       "title": "Category",
@@ -48,11 +44,12 @@
         "studentName": { "type": "string" },
         "teacherId": { "type": "string" },
         "teacherName": { "type": "string" },
+        "teacherSpecialization": { "type": "string" },
         "meetingTime": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" },
+        "attachmentUrl": { "type": "string" },
         "rating": { "type": "number" },
-        "review": { "type": "string" },
-        "attachmentUrl": { "type": "string" }
+        "review": { "type": "string" }
       }
     },
     "ChatMessage": {
@@ -60,7 +57,6 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "requestId": { "type": "string" },
         "senderId": { "type": "string" },
         "senderName": { "type": "string" },
         "text": { "type": "string" },
@@ -76,8 +72,8 @@
         "userName": { "type": "string" },
         "subject": { "type": "string" },
         "message": { "type": "string" },
-        "status": { "type": "string", "enum": ["open", "replied", "closed"], "default": "open" },
-        "category": { "type": "string", "enum": ["finance", "technical", "other"] },
+        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
+        "category": { "type": "string" },
         "adminReply": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "lastUpdate": { "type": "string", "format": "date-time" }
@@ -88,27 +84,25 @@
     "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": { "entityName": "UserProfile", "description": "User profiles." }
-      },
-      {
-        "path": "/categories/{categoryId}",
-        "definition": { "entityName": "Category", "description": "Learning categories." }
-      },
-      {
-        "path": "/requests/{requestId}",
-        "definition": { "entityName": "Request", "description": "Learning session requests." }
-      },
-      {
-        "path": "/requests/{requestId}/messages/{messageId}",
-        "definition": { "entityName": "ChatMessage", "description": "Messages between student and teacher." }
-      },
-      {
-        "path": "/supportTickets/{ticketId}",
-        "definition": { "entityName": "SupportTicket", "description": "Support tickets." }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Learning categories."
+    },
+    "/requests/{requestId}": {
+      "schema": "Request",
+      "description": "Learning session requests."
+    },
+    "/requests/{requestId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Messages for a specific request."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "Support tickets for user issues."
+    }
   }
 }

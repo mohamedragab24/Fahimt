@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -35,7 +35,8 @@ export default function ProfilePage() {
     fullName: "",
     phone: "",
     birthDate: "",
-    profilePictureUrl: ""
+    profilePictureUrl: "",
+    specialization: ""
   });
 
   useEffect(() => {
@@ -44,7 +45,8 @@ export default function ProfilePage() {
         fullName: profile.fullName || "",
         phone: profile.phoneNumber || "",
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
-        profilePictureUrl: profile.profilePictureUrl || ""
+        profilePictureUrl: profile.profilePictureUrl || "",
+        specialization: profile.specialization || ""
       });
     }
   }, [profile]);
@@ -53,7 +55,7 @@ export default function ProfilePage() {
     if (user?.uid) {
       navigator.clipboard.writeText(user.uid);
       setCopied(true);
-      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي (UID) للحافظة لاستخدامه في Firebase." });
+      toast({ title: "تم النسخ!", description: "تم نسخ معرف الملف الشخصي (UID) للحافظة." });
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -75,7 +77,8 @@ export default function ProfilePage() {
       fullName: formData.fullName,
       phoneNumber: formData.phone,
       birthDate: formData.birthDate,
-      profilePictureUrl: formData.profilePictureUrl
+      profilePictureUrl: formData.profilePictureUrl,
+      specialization: formData.specialization
     });
     toast({
       title: "تم تحديث البيانات",
@@ -174,6 +177,21 @@ export default function ProfilePage() {
               />
             </div>
 
+            {profile.role === 'mufhem' && (
+              <div className="space-y-4">
+                <Label htmlFor="specialization" className="text-xl font-black flex items-center gap-3">
+                  <GraduationCap className="h-5 w-5 text-primary" /> التخصص التعليمي
+                </Label>
+                <Input 
+                  id="specialization" 
+                  placeholder="مثال: رياضيات، برمجة تطبيقات، لغة إنجليزية"
+                  value={formData.specialization || ""} 
+                  onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                  className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
+                />
+              </div>
+            )}
+
             <div className="space-y-4">
               <Label className="text-xl font-black flex items-center gap-3">
                 <Fingerprint className="h-5 w-5 text-primary" /> معرف الحساب (UID)
@@ -188,7 +206,6 @@ export default function ProfilePage() {
                   {copied ? <Check className="text-green-500" /> : <Copy />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mr-2 font-bold italic">استخدم هذا المعرف للبحث عن حسابك في Firebase Console.</p>
             </div>
 
             <div className="space-y-4">
@@ -202,7 +219,6 @@ export default function ProfilePage() {
                 disabled
                 className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-70"
               />
-              <p className="text-xs text-muted-foreground mr-2 font-bold">لا يمكن تعديل البريد الإلكتروني لدواعي الأمان.</p>
             </div>
 
             <div className="space-y-4">
@@ -250,7 +266,7 @@ export default function ProfilePage() {
         <div className="flex-1 space-y-2 text-center md:text-right">
           <h3 className="text-2xl font-black text-primary">أمان بياناتك هو أولويتنا</h3>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            بياناتك الشخصية ومعلومات الدخول مشفرة بالكامل. لا يمكن لأحد تعديل معلومات الدخول الخاصة بك سوى من خلال فريق الدعم الفني بعد التحقق من هويتك.
+            بياناتك الشخصية ومعلومات الدخول مشفرة بالكامل. لا يمكن لأحد تعديل معلومات الدخول الخاصة بك سوى من خلال فريق الدعم الفني.
           </p>
         </div>
       </div>
