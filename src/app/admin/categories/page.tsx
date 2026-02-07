@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Layers } from "lucide-react";
+import { Plus, Trash2, Layers, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCategories() {
@@ -89,7 +89,14 @@ export default function AdminCategories() {
                 <TableRow><TableCell colSpan={3} className="text-center py-20 animate-pulse font-bold">جاري تحميل الأقسام...</TableCell></TableRow>
               ) : categories?.map((c) => (
                 <TableRow key={c.id} className="h-20 hover:bg-muted/10 transition-colors">
-                  <TableCell className="px-8 font-bold text-lg">{c.name}</TableCell>
+                  <TableCell className="px-8 font-bold text-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-2 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      {c.name}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-sm font-bold">
                     {new Date(c.createdAt).toLocaleDateString('ar-EG')}
                   </TableCell>
