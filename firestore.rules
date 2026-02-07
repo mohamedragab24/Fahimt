@@ -27,25 +27,24 @@ service cloud.firestore {
       match /transactions/{transactionId} {
         allow read: if isOwner(userId);
         allow create: if isSignedIn();
-        allow update: if isAdmin();
       }
     }
 
     match /categories/{categoryId} {
-      allow read: if true; // متاح للجميع لرؤية الأقسام
+      allow read: if true; 
     }
 
     match /requests/{requestId} {
       allow create: if isSignedIn();
       allow read: if isSignedIn() && (
+        resource.data.status == "pending" ||
         resource.data.studentId == request.auth.uid || 
-        resource.data.teacherId == request.auth.uid || 
-        isAdmin()
+        resource.data.teacherId == request.auth.uid
       );
       allow update: if isSignedIn() && (
+        resource.data.status == "pending" ||
         resource.data.studentId == request.auth.uid || 
-        resource.data.teacherId == request.auth.uid || 
-        isAdmin()
+        resource.data.teacherId == request.auth.uid
       );
 
       match /messages/{messageId} {
@@ -58,19 +57,21 @@ service cloud.firestore {
 
     match /supportTickets/{ticketId} {
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow update: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
     
     match /payoutRequests/{payoutId} {
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow update: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /verificationRequests/{verId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /adminLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow read, write: if isAdmin();
     }
   }
 }

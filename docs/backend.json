@@ -52,31 +52,44 @@
         "review": { "type": "string" }
       }
     },
-    "ChatMessage": {
-      "title": "ChatMessage",
+    "Transaction": {
+      "title": "Transaction",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "senderId": { "type": "string" },
-        "senderName": { "type": "string" },
-        "text": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["deposit", "withdrawal", "payment", "earning"] },
+        "details": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     },
-    "SupportTicket": {
-      "title": "SupportTicket",
+    "PayoutRequest": {
+      "title": "PayoutRequest",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
         "userName": { "type": "string" },
-        "subject": { "type": "string" },
-        "message": { "type": "string" },
-        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
-        "category": { "type": "string" },
-        "adminReply": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "lastUpdate": { "type": "string", "format": "date-time" }
+        "userEmail": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "transactionId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "VerificationRequest": {
+      "title": "VerificationRequest",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "profilePictureUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "timestamp": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -87,6 +100,10 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profiles."
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions for a user."
     },
     "/categories/{categoryId}": {
       "schema": "Category",
@@ -103,6 +120,14 @@
     "/supportTickets/{ticketId}": {
       "schema": "SupportTicket",
       "description": "Support tickets for user issues."
+    },
+    "/payoutRequests/{payoutId}": {
+      "schema": "PayoutRequest",
+      "description": "Withdrawal requests from teachers."
+    },
+    "/verificationRequests/{verId}": {
+      "schema": "VerificationRequest",
+      "description": "Account verification requests."
     }
   }
 }
