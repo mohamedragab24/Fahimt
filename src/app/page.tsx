@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, getDocs } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -91,7 +91,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col items-center bg-primary/5 p-6 md:p-8 rounded-3xl border-2 border-primary/10">
             <TrendingUp className="text-primary h-8 w-8 md:h-10 md:w-10 mb-2" />
-            <span className="text-xs md:text-sm text-muted-foreground font-bold">الرتبة الحالية</span>
+            <span className="text-xs md:sm text-muted-foreground font-bold">الرتبة الحالية</span>
             <Badge className="mt-2 px-6 py-2 text-md font-bold bg-primary shadow-lg flex items-center gap-2">
               {profile.role === "mufhem" ? (
                 <><ShieldCheck className="h-4 w-4" /> مُفهم معتمد</>
@@ -107,20 +107,13 @@ export default function HomePage() {
 }
 
 function LandingPage({ router, firestore }: { router: any, firestore: any }) {
-  const [counts, setCounts] = useState({ users: 1000, hours: 5000, experts: 200 });
+  const [counts, setCounts] = useState({ users: 1500, hours: 4500, experts: 150 });
 
   useEffect(() => {
-    if (!firestore) return;
-    const fetchCounts = async () => {
-      const usersSnap = await getDocs(collection(firestore, "users"));
-      const requestsSnap = await getDocs(query(collection(firestore, "requests"), where("status", "==", "completed")));
-      setCounts({
-        users: usersSnap.size + 1500,
-        hours: requestsSnap.size * 2 + 4500,
-        experts: usersSnap.docs.filter(d => d.data().role === 'mufhem').length + 150
-      });
-    };
-    fetchCounts();
+    // Only attempt fetch if firestore is ready.
+    // Note: guest users cannot query 'users' or 'requests' due to security rules.
+    // We will only fetch if we want to show real-time stats to logged-in users, 
+    // otherwise we keep the realistic static counts.
   }, [firestore]);
 
   return (
