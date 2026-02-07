@@ -2,16 +2,17 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Sparkles, Bell, Video, MessageSquare, ShieldCheck } from "lucide-react";
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { Sparkles, Bell, Video, User, Settings, LogOut, ShieldCheck } from "lucide-react";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { doc, collection, query, where, limit } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
 
 export function Header() {
-  const { user } = useUser();
+  const { user, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -36,6 +37,11 @@ export function Header() {
 
   const { data: acceptedRequests } = useCollection(notificationsQuery);
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
+
   if (!user) return null;
 
   return (
@@ -52,6 +58,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          {/* Notifications Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/5 text-muted-foreground transition-all">
@@ -101,21 +108,49 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden md:flex flex-col text-left items-end mr-2">
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-bold leading-none">{profile?.fullName || "جاري التحميل..."}</span>
-              {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
-            </div>
-            <span className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-tighter">
-              {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
-            </span>
-          </div>
-          <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm">
-            <AvatarImage src={profile?.profilePictureUrl} />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-              {profile?.fullName?.charAt(0) || "ف"}
-            </AvatarFallback>
-          </Avatar>
+          {/* Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-3 h-12 px-2 rounded-2xl hover:bg-primary/5">
+                <div className="hidden md:flex flex-col text-left items-end">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold leading-none">{profile?.fullName || "جاري التحميل..."}</span>
+                    {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-tighter">
+                    {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
+                  </span>
+                </div>
+                <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm">
+                  <AvatarImage src={profile?.profilePictureUrl} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {profile?.fullName?.charAt(0) || "ف"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
+              <DropdownMenuLabel className="font-black p-3">حسابي</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer">
+                <User className="ml-2 h-4 w-4 text-primary" />
+                <span className="font-bold">الملف الشخصي</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer">
+                <Sparkles className="ml-2 h-4 w-4 text-primary" />
+                <span className="font-bold">المحفظة</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer">
+                <Settings className="ml-2 h-4 w-4 text-primary" />
+                <span className="font-bold">الإعدادات</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="p-3 rounded-xl cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="ml-2 h-4 w-4" />
+                <span className="font-bold">تسجيل الخروج</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

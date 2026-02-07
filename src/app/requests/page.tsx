@@ -248,16 +248,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   >
                     <Video className="h-8 w-8 ml-4" /> دخول المحاضرة
                   </Button>
-                  
-                  {req.teacherId === userId && (
-                    <Button 
-                      variant="ghost" 
-                      className="w-full py-6 font-black text-lg rounded-2xl text-primary hover:bg-primary/5 transition-all" 
-                      onClick={() => handleAction(req, 'complete')}
-                    >
-                      إتمام الجلسة يدوياً
-                    </Button>
-                  )}
                 </>
               )}
               {status === 'completed' && (

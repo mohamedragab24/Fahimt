@@ -10,14 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Layers } from "lucide-react";
+import { Plus, Trash2, Layers, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCategories() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [newCategory, setNewCategory] = useState("");
-  const [icon, setIcon] = useState("📚");
 
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -32,26 +31,26 @@ export default function AdminCategories() {
     const categoriesRef = collection(firestore, "categories");
     addDocumentNonBlocking(categoriesRef, {
       name: newCategory.trim(),
-      icon: icon,
+      icon: "📚", // أيقونة افتراضية للأقسام الجديدة
       createdAt: new Date().toISOString()
     });
     
     setNewCategory("");
-    toast({ title: "تم إرسال الطلب", description: "جاري إضافة القسم الجديد للمنصة." });
+    toast({ title: "تم الإضافة", description: `تم إضافة قسم ${newCategory} بنجاح.` });
   };
 
   const handleDeleteCategory = (id: string) => {
     if (!firestore) return;
     const categoryRef = doc(firestore, "categories", id);
     deleteDocumentNonBlocking(categoryRef);
-    toast({ title: "تم طلب الحذف", description: "سيتم إزالة القسم من القائمة فوراً." });
+    toast({ title: "تم حذف القسم", description: "تم إزالة القسم من القائمة بنجاح." });
   };
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline">إدارة الأقسام</h1>
-        <p className="text-muted-foreground text-lg">أضف أو احذف الأقسام التي تظهر للطلاب عند طلب محاضرة.</p>
+        <h1 className="text-4xl font-black font-headline">إدارة الأقسام الدراسية</h1>
+        <p className="text-muted-foreground text-lg">تحكم في التصنيفات المتاحة للطلاب عند طلب المحاضرات.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -63,24 +62,16 @@ export default function AdminCategories() {
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-2">
-              <Label className="font-bold">اسم القسم</Label>
+              <Label className="font-bold text-lg">اسم القسم</Label>
               <Input 
-                placeholder="مثال: لغات، برمجة..." 
-                className="h-14 rounded-xl text-lg"
+                placeholder="مثال: لغات، برمجة، دراسة..." 
+                className="h-14 rounded-xl text-lg border-2"
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label className="font-bold">الأيقونة (Emoji)</Label>
-              <Input 
-                placeholder="مثال: 💻" 
-                className="h-14 rounded-xl text-center text-2xl"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleAddCategory} className="w-full h-14 rounded-xl font-black text-xl">
+            <p className="text-sm text-muted-foreground font-bold">سيتم إضافة أيقونة افتراضية للقسم تلقائياً.</p>
+            <Button onClick={handleAddCategory} className="w-full h-14 rounded-xl font-black text-xl shadow-lg">
               إضافة الآن
             </Button>
           </CardContent>
@@ -98,12 +89,12 @@ export default function AdminCategories() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-20 animate-pulse font-bold">جاري التحميل...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-20 animate-pulse font-bold">جاري تحميل الأقسام...</TableCell></TableRow>
               ) : categories?.map((c) => (
-                <TableRow key={c.id} className="h-20">
+                <TableRow key={c.id} className="h-20 hover:bg-muted/10 transition-colors">
                   <TableCell className="px-8 text-2xl">{c.icon}</TableCell>
                   <TableCell className="font-bold text-lg">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="text-muted-foreground text-sm font-bold">
                     {new Date(c.createdAt).toLocaleDateString('ar-EG')}
                   </TableCell>
                   <TableCell className="px-8 text-left">
@@ -111,7 +102,7 @@ export default function AdminCategories() {
                       variant="destructive" 
                       size="icon" 
                       onClick={() => handleDeleteCategory(c.id)}
-                      className="rounded-xl h-10 w-10"
+                      className="rounded-xl h-10 w-10 shadow-md hover:scale-110 transition-transform"
                     >
                       <Trash2 className="h-5 w-5" />
                     </Button>
@@ -120,8 +111,11 @@ export default function AdminCategories() {
               ))}
               {(!categories || categories.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-20 text-muted-foreground font-bold">
-                    لا توجد أقسام مضافة حالياً.
+                  <TableCell colSpan={4} className="text-center py-20 text-muted-foreground font-bold text-xl opacity-30">
+                    <div className="flex flex-col items-center gap-4">
+                      <Layers size={64} />
+                      لا توجد أقسام مضافة حالياً.
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
