@@ -18,7 +18,8 @@ import {
   Download,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
@@ -28,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function WalletPage() {
   const { user } = useUser();
@@ -55,9 +57,8 @@ export default function WalletPage() {
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
-  // حساب الرصيد المتاح: (شحن + أرباح) - (سحب مكتمل أو معلق) - (مدفوعات)
   const balance = transactions?.reduce((acc: number, tx: any) => {
-    if (tx.status === 'rejected') return acc; // الرفض يعيد الرصيد
+    if (tx.status === 'rejected') return acc;
     if (tx.type === 'deposit' || tx.type === 'earning') return acc + tx.amount;
     return acc - tx.amount;
   }, 0) || 0;
@@ -84,7 +85,6 @@ export default function WalletPage() {
       }
       
       try {
-        // 1. إنشاء المعاملة في حساب المستخدم بحالة معلقة لخصم الرصيد فوراً
         const txRef = await addDoc(collection(firestore, "users", user.uid, "transactions"), {
           amount: numAmount,
           type: 'withdrawal',
@@ -93,7 +93,6 @@ export default function WalletPage() {
           timestamp: new Date().toISOString()
         });
 
-        // 2. إنشاء طلب السحب للأدمن مع ربطه بالمعاملة
         await addDoc(collection(firestore, "payoutRequests"), {
           userId: user.uid,
           userName: profile.fullName,
@@ -193,13 +192,6 @@ export default function WalletPage() {
                         className="h-20 text-4xl font-black text-center rounded-3xl border-2 focus:border-primary transition-all"
                       />
                     </div>
-                    {profile?.role === 'mufhem' && (
-                      <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
-                        <p className="text-xs text-orange-700 font-bold leading-relaxed">
-                          رصيدك الحالي: {balance} ج.م
-                        </p>
-                      </div>
-                    )}
                   </div>
                   <DialogFooter>
                     <Button onClick={handleTransaction} className="w-full py-10 text-2xl font-black rounded-3xl shadow-xl">
@@ -275,12 +267,26 @@ export default function WalletPage() {
                     <span className="text-sm mr-2">ج.م</span>
                   </TableCell>
                   <TableCell className="px-10">
-                    <Badge className={`px-6 py-2 text-md font-black rounded-xl border-none ${
-                      tx.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                      tx.status === 'pending' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {tx.status === 'completed' ? 'ناجحة' : tx.status === 'pending' ? 'قيد المراجعة' : 'مرفوضة'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`px-6 py-2 text-md font-black rounded-xl border-none ${
+                        tx.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                        tx.status === 'pending' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {tx.status === 'completed' ? 'ناجحة' : tx.status === 'pending' ? 'قيد المراجعة' : 'مرفوضة'}
+                      </Badge>
+                      {tx.status === 'rejected' && tx.details?.includes('مرفوض:') && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <AlertCircle className="h-5 w-5 text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="font-bold">{tx.details}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

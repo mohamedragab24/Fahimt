@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copied, setCopied] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -86,6 +87,26 @@ export default function ProfilePage() {
     });
   };
 
+  const handleRequestVerification = async () => {
+    if (!firestore || !user || !profile) return;
+    setIsVerifying(true);
+    try {
+      await addDoc(collection(firestore, "verificationRequests"), {
+        userId: user.uid,
+        userName: profile.fullName,
+        userEmail: profile.email,
+        profilePictureUrl: profile.profilePictureUrl,
+        status: "pending",
+        timestamp: new Date().toISOString()
+      });
+      toast({ title: "تم إرسال الطلب", description: "سيتم مراجعة بياناتك لتوثيق الحساب بالعلامة الزرقاء." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال طلب التوثيق." });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
@@ -144,14 +165,17 @@ export default function ProfilePage() {
               <div className="space-y-1">
                 <div className="flex items-center justify-center md:justify-start gap-3">
                   <h2 className="text-3xl md:text-4xl font-black tracking-tight">{formData.fullName}</h2>
-                  {profile.role === 'mufhem' && (
+                  {profile.isVerified && (
                     <ShieldCheck className="h-8 w-8 text-blue-500 fill-blue-500/20" />
                   )}
                 </div>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                   <Badge className="bg-primary text-white px-6 py-1.5 text-md font-black rounded-full shadow-lg flex items-center gap-2">
                     {profile.role === 'mustafhem' ? 'مُستفهم طموح' : (
-                      <><ShieldCheck className="h-4 w-4" /> مُفهم معتمد</>
+                      <>
+                        {profile.isVerified ? <ShieldCheck className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4 opacity-50" />}
+                        {profile.isVerified ? 'مُفهم معتمد' : 'مُفهم قيد التوثيق'}
+                      </>
                     )}
                   </Badge>
                   {profile.isAdmin && (
@@ -246,6 +270,27 @@ export default function ProfilePage() {
                 className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
               />
             </div>
+
+            {profile.role === 'mufhem' && !profile.isVerified && (
+              <div className="md:col-span-2 p-6 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-3 rounded-2xl shadow-sm">
+                    <ShieldCheck className="h-10 w-10 text-blue-500" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-black text-blue-900">توثيق الحساب (العلامة الزرقاء)</h4>
+                    <p className="text-blue-700 text-sm font-bold">احصل على ثقة الطلاب من خلال توثيق حسابك رسمياً.</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleRequestVerification} 
+                  disabled={isVerifying}
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-8 py-6 font-black"
+                >
+                  {isVerifying ? "جاري الإرسال..." : "طلب توثيق الآن"}
+                </Button>
+              </div>
+            )}
 
             <div className="md:col-span-2 pt-12 flex justify-center md:justify-end">
               <Button 

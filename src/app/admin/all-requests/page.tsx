@@ -2,16 +2,20 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, deleteDoc, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar, User, BadgeCent, Clock, Search } from "lucide-react";
+import { Video, Calendar, User, BadgeCent, Clock, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function AdminAllRequests() {
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
 
   const requestsQuery = useMemoFirebase(() => {
@@ -20,6 +24,16 @@ export default function AdminAllRequests() {
   }, [firestore]);
 
   const { data: requests, isLoading } = useCollection(requestsQuery);
+
+  const handleDelete = async (id: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, "requests", id));
+      toast({ title: "تم الحذف", description: "تم حذف الطلب بنجاح من النظام." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف الطلب." });
+    }
+  };
 
   const filteredRequests = requests?.filter(r => 
     r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,11 +69,12 @@ export default function AdminAllRequests() {
               <TableHead className="text-right font-black">الموعد</TableHead>
               <TableHead className="text-right font-black">المبلغ</TableHead>
               <TableHead className="text-right font-black">الحالة</TableHead>
+              <TableHead className="text-left px-8 font-black">الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-20 animate-pulse font-bold">جاري تحميل البيانات...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-20 animate-pulse font-bold">جاري تحميل البيانات...</TableCell></TableRow>
             ) : filteredRequests?.map((req) => (
               <TableRow key={req.id} className="h-24 hover:bg-blue-50/30 transition-colors">
                 <TableCell className="px-8">
@@ -98,15 +113,29 @@ export default function AdminAllRequests() {
                     {req.status === 'pending' ? 'بانتظار مدرس' : req.status === 'accepted' ? 'جاهزة' : req.status === 'completed' ? 'مكتملة' : 'ملغية'}
                   </Badge>
                 </TableCell>
-              </TableRow>
-            ))}
-            {(!filteredRequests || filteredRequests.length === 0) && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-bold">
-                  لا توجد طلبات مطابقة للبحث.
+                <TableCell className="px-8 text-left">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl">
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent dir="rtl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-right">هل أنت متأكد من الحذف؟</AlertDialogTitle>
+                        <AlertDialogDescription className="text-right">
+                          سيتم حذف هذا الطلب نهائياً من قاعدة البيانات، لا يمكن التراجع عن هذا الإجراء.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="flex-row-reverse gap-2">
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(req.id)} className="bg-red-600">حذف نهائي</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </Card>
