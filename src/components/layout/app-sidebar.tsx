@@ -20,7 +20,9 @@ import {
   Video,
   LifeBuoy,
   History,
-  FileText
+  FileText,
+  Smartphone,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -207,6 +209,22 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-4 space-y-4">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              isActive={pathname === "/download"}
+              tooltip="تحميل التطبيق"
+              className={`h-14 rounded-xl transition-all border-2 border-transparent ${
+                pathname === "/download" ? "bg-primary/10 text-primary border-primary/20" : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
+              }`}
+            >
+              <Link href="/download" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
+                <Smartphone className="h-6 w-6 shrink-0 text-primary" />
+                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">تطبيق الجوال</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
