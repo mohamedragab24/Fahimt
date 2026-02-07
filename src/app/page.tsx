@@ -20,7 +20,9 @@ import {
   ArrowLeft,
   GraduationCap,
   Users2,
-  Video
+  Video,
+  Wallet,
+  Star
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -386,6 +388,19 @@ function TeacherView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const transactionsRef = useMemoFirebase(() => {
+    if (!firestore || !profile?.id) return null;
+    return collection(firestore, "users", profile.id, "transactions");
+  }, [firestore, profile?.id]);
+
+  const { data: transactions } = useCollection(transactionsRef);
+
+  const balance = transactions?.reduce((acc: number, tx: any) => {
+    if (tx.status === 'rejected') return acc;
+    if (tx.type === 'deposit' || tx.type === 'earning') return acc + tx.amount;
+    return acc - tx.amount;
+  }, 0) || 0;
+
   const requestsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, "requests");
@@ -400,11 +415,18 @@ function TeacherView({ profile }: { profile: any }) {
     );
   }, [requestsRef]);
 
-  const { data: rawRequests, isLoading } = useCollection(availableRequestsQuery);
-  
-  const requests = rawRequests 
-    ? [...rawRequests].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    : [];
+  const myActiveRequestsQuery = useMemoFirebase(() => {
+    if (!requestsRef || !profile?.id) return null;
+    return query(
+      requestsRef,
+      where("teacherId", "==", profile.id),
+      where("status", "==", "accepted"),
+      limit(5)
+    );
+  }, [requestsRef, profile?.id]);
+
+  const { data: availableRequests, isLoading } = useCollection(availableRequestsQuery);
+  const { data: activeRequests } = useCollection(myActiveRequestsQuery);
 
   const handleAcceptRequest = (req: any) => {
     if (!firestore || !profile) return;
@@ -425,71 +447,125 @@ function TeacherView({ profile }: { profile: any }) {
   };
 
   return (
-    <div className="space-y-10">
-      <div className="flex justify-between items-center bg-accent/5 p-6 md:p-8 rounded-[2rem] border-2 border-accent/20 shadow-sm">
-        <h3 className="text-xl md:text-3xl font-black font-headline flex items-center gap-4">
-          <BookOpen className="text-accent h-6 w-6 md:h-10 md:w-10" /> الطلبات المتاحة
-        </h3>
-        <div className="flex items-center gap-3">
-          <div className="h-3 w-3 bg-accent rounded-full animate-pulse"></div>
-          <span className="text-sm md:text-lg font-bold text-accent">بانتظار المفهمين الموثقين</span>
-        </div>
+    <div className="space-y-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-primary text-white rounded-3xl p-8 shadow-xl flex items-center gap-6">
+          <div className="bg-white/20 p-4 rounded-2xl">
+            <Wallet size={32} />
+          </div>
+          <div>
+            <p className="text-sm font-bold opacity-80">الرصيد المتاح</p>
+            <h4 className="text-3xl font-black">{balance.toLocaleString()} ج.م</h4>
+          </div>
+        </Card>
+        
+        <Card className="bg-accent text-white rounded-3xl p-8 shadow-xl flex items-center gap-6">
+          <div className="bg-white/20 p-4 rounded-2xl">
+            <Video size={32} />
+          </div>
+          <div>
+            <p className="text-sm font-bold opacity-80">جلسات نشطة</p>
+            <h4 className="text-3xl font-black">{activeRequests?.length || 0}</h4>
+          </div>
+        </Card>
+
+        <Card className="bg-zinc-900 text-white rounded-3xl p-8 shadow-xl flex items-center gap-6">
+          <div className="bg-white/20 p-4 rounded-2xl text-yellow-400">
+            <Star size={32} fill="currentColor" />
+          </div>
+          <div>
+            <p className="text-sm font-bold opacity-80">التقييم العام</p>
+            <h4 className="text-3xl font-black">5.0</h4>
+          </div>
+        </Card>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-24 text-2xl font-black animate-pulse">جاري البحث عن طلبات...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {requests && requests.map((req) => (
-            <Card key={req.id} className="overflow-hidden border-2 hover:border-accent transition-all group shadow-xl hover:shadow-2xl rounded-[2.5rem] bg-white">
-              <CardHeader className="bg-muted/30 pb-6 px-8 pt-8">
-                <div className="flex justify-between items-start">
-                  <Badge className="bg-accent text-white px-4 py-1 text-md font-bold rounded-lg shadow-sm">{req.category}</Badge>
-                  <div className="flex items-center font-black text-accent text-3xl tabular-nums">
-                    <BadgeCent className="h-6 w-6 ml-2" />
-                    {req.amount}
-                  </div>
+      {activeRequests && activeRequests.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black flex items-center gap-3 border-r-8 border-primary pr-6">
+            <Activity className="text-primary" /> جلساتك النشطة حالياً
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {activeRequests.map((req) => (
+              <Card key={req.id} className="border-2 border-primary/20 rounded-3xl p-6 bg-white shadow-md flex justify-between items-center">
+                <div className="space-y-2">
+                  <h5 className="font-bold text-lg">{req.title}</h5>
+                  <p className="text-xs text-muted-foreground font-bold">مع الطالب: {req.studentName}</p>
                 </div>
-                <CardTitle className="text-2xl font-black mt-6 leading-tight group-hover:text-primary transition-colors h-16 line-clamp-2">
-                  {req.title}
-                </CardTitle>
-                <div className="flex items-center gap-2 text-accent font-bold mt-2">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-xs">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-8">
-                {req.attachmentUrl && (
-                  <div className="bg-primary/5 p-4 rounded-xl flex items-center gap-3 text-sm font-bold text-primary">
-                    <FileText size={18} /> الطالب أرفق ملفاً توضيحياً
-                  </div>
-                )}
-                <div className="flex flex-col gap-3">
-                  <span className="text-muted-foreground text-sm font-bold">المستفهم:</span>
-                  <div className="font-bold text-xl flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl font-black border-2 border-primary/20">
-                      {(req.studentName || "ف")?.charAt(0)}
-                    </div>
-                    {req.studentName || "مستفهم"}
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => handleAcceptRequest(req)}
-                  className="w-full bg-accent hover:bg-accent/90 py-8 md:py-10 font-black text-2xl rounded-2xl shadow-[0_15px_30px_rgba(0,0,0,0.1)] transition-transform hover:scale-[1.03]"
-                >
-                  أنا أقدر أفهِّمك
+                <Button onClick={() => window.location.href = `/meeting/${req.id}`} className="rounded-xl font-bold">
+                  دخول البث
                 </Button>
-              </CardContent>
-            </Card>
-          ))}
-          {(!requests || requests.length === 0) && (
-            <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
-              لا توجد طلبات استفهام حالياً.
-            </div>
-          )}
+              </Card>
+            ))}
+          </div>
         </div>
       )}
+
+      <div className="space-y-10">
+        <div className="flex justify-between items-center bg-accent/5 p-6 md:p-8 rounded-[2rem] border-2 border-accent/20 shadow-sm">
+          <h3 className="text-xl md:text-3xl font-black font-headline flex items-center gap-4">
+            <BookOpen className="text-accent h-6 w-6 md:h-10 md:w-10" /> الطلبات المتاحة للجميع
+          </h3>
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-3 bg-accent rounded-full animate-pulse"></div>
+            <span className="text-sm md:text-lg font-bold text-accent">بانتظار المفهمين الموثقين</span>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-24 text-2xl font-black animate-pulse">جاري البحث عن طلبات...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {availableRequests && availableRequests.map((req) => (
+              <Card key={req.id} className="overflow-hidden border-2 hover:border-accent transition-all group shadow-xl hover:shadow-2xl rounded-[2.5rem] bg-white">
+                <CardHeader className="bg-muted/30 pb-6 px-8 pt-8">
+                  <div className="flex justify-between items-start">
+                    <Badge className="bg-accent text-white px-4 py-1 text-md font-bold rounded-lg shadow-sm">{req.category}</Badge>
+                    <div className="flex items-center font-black text-accent text-3xl tabular-nums">
+                      <BadgeCent className="h-6 w-6 ml-2" />
+                      {req.amount}
+                    </div>
+                  </div>
+                  <CardTitle className="text-2xl font-black mt-6 leading-tight group-hover:text-primary transition-colors h-16 line-clamp-2">
+                    {req.title}
+                  </CardTitle>
+                  <div className="flex items-center gap-2 text-accent font-bold mt-2">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-xs">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8">
+                  {req.attachmentUrl && (
+                    <div className="bg-primary/5 p-4 rounded-xl flex items-center gap-3 text-sm font-bold text-primary">
+                      <FileText size={18} /> الطالب أرفق ملفاً توضيحياً
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-3">
+                    <span className="text-muted-foreground text-sm font-bold">المستفهم:</span>
+                    <div className="font-bold text-xl flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl font-black border-2 border-primary/20">
+                        {(req.studentName || "ف")?.charAt(0)}
+                      </div>
+                      {req.studentName || "مستفهم"}
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => handleAcceptRequest(req)}
+                    className="w-full bg-accent hover:bg-accent/90 py-8 md:py-10 font-black text-2xl rounded-2xl shadow-[0_15px_30px_rgba(0,0,0,0.1)] transition-transform hover:scale-[1.03]"
+                  >
+                    أنا أقدر أفهِّمك
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+            {(!availableRequests || availableRequests.length === 0) && (
+              <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
+                لا توجد طلبات استفهام حالياً.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-

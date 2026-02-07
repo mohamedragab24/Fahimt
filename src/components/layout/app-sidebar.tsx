@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Layers,
   Video,
-  LifeBuoy
+  LifeBuoy,
+  History
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,6 +62,7 @@ const adminItems = [
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
+  { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
   { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
 
