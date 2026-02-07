@@ -10,10 +10,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useFirebase, useUser } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -95,7 +95,8 @@ export default function LoginPage() {
             profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`,
             isAdmin: isTargetAdmin,
             adminPermissions: isTargetAdmin ? ["superadmin"] : [],
-            status: "active"
+            status: "active",
+            createdAt: new Date().toISOString()
           }).then(() => {
             router.push("/");
           });

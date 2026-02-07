@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -74,7 +75,11 @@ export default function WalletPage() {
     
     if (isTeacher) {
       if (numAmount > balance) {
-        toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "لا يمكنك سحب مبلغ أكبر من رصيدك الحالي." });
+        toast({ 
+          variant: "destructive", 
+          title: "المبلغ غير متوفر", 
+          description: "عذراً، رصيدك الحالي أقل من المبلغ الذي تحاول سحبه." 
+        });
         return;
       }
       
@@ -102,7 +107,7 @@ export default function WalletPage() {
 
         toast({
           title: "تم تقديم الطلب",
-          description: "تم خصم المبلغ من رصيدك مؤقتاً لحين مراجعة الطلب.",
+          description: `تم خصم ${numAmount} ج.م من رصيدك مؤقتاً لحين مراجعة التحويل.`,
         });
       } catch (e) {
         toast({ variant: "destructive", title: "خطأ", description: "فشلت العملية، يرجى المحاولة لاحقاً." });
@@ -116,7 +121,7 @@ export default function WalletPage() {
       });
       toast({
         title: "تم شحن الرصيد",
-        description: "تم إضافة المبلغ لمحفظتك بنجاح.",
+        description: `تم إضافة ${numAmount} ج.م لمحفظتك بنجاح وتظهر الآن في سجل المعاملات.`,
       });
     }
 
@@ -189,9 +194,9 @@ export default function WalletPage() {
                       />
                     </div>
                     {profile?.role === 'mufhem' && (
-                      <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                        <p className="text-xs text-orange-700 font-bold leading-relaxed text-center">
-                          تأكد من صحة رقم المحفظة في ملفك الشخصي. سيتم خصم المبلغ من رصيدك فوراً لحين مراجعة الطلب.
+                      <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
+                        <p className="text-xs text-orange-700 font-bold leading-relaxed">
+                          رصيدك الحالي: {balance} ج.م
                         </p>
                       </div>
                     )}
