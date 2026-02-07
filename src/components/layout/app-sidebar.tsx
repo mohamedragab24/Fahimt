@@ -71,7 +71,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, setOpenMobile } = useSidebar();
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -92,7 +92,12 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await signOut(auth);
+    setOpenMobile(false);
     router.push("/login");
+  };
+
+  const closeSidebar = () => {
+    setOpenMobile(false);
   };
 
   if (!user) return null;
@@ -154,7 +159,7 @@ export function AppSidebar() {
                     : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
                 }`}
               >
-                <Link href={item.href} className="flex items-center gap-4 px-3 w-full">
+                <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
                   <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
                   <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
                 </Link>
@@ -184,7 +189,7 @@ export function AppSidebar() {
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href}>
-                          <Link href={item.href} className="flex items-center gap-3 py-2">
+                          <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-3 py-2">
                             <item.icon className="h-4 w-4" />
                             <span className="font-bold">{item.title}</span>
                           </Link>
@@ -207,7 +212,7 @@ export function AppSidebar() {
               tooltip="اتصل بنا واتساب"
               className="h-14 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100"
             >
-              <Link href="https://wa.me/201234567890" target="_blank" className="flex items-center gap-4 px-3 w-full">
+              <Link href="https://wa.me/201234567890" target="_blank" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
                 <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
                 <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">اتصال مباشر</span>
               </Link>
