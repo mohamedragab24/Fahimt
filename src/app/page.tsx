@@ -28,7 +28,9 @@ import {
   HelpCircle,
   Zap,
   Globe,
-  Check
+  Check,
+  Search,
+  Wand2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -41,6 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { refineRequest } from "@/ai/flows/refine-request-flow";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -244,6 +247,7 @@ function StudentView({ profile }: { profile: any }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
   const [fileName, setFileName] = useState("");
+  const [isAiRefining, setIsAiRefining] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -274,6 +278,23 @@ function StudentView({ profile }: { profile: any }) {
     ? [...rawRequests].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6)
     : [];
 
+  const handleAiRefine = async () => {
+    if (!newRequest.title) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى كتابة فكرة الموضوع أولاً." });
+      return;
+    }
+    setIsAiRefining(true);
+    try {
+      const result = await refineRequest({ text: newRequest.title });
+      setNewRequest({ ...newRequest, title: result.refinedTitle });
+      toast({ title: "تم تحسين الطلب", description: "لقد قام الذكاء الاصطناعي بصياغة طلبك بشكل أفضل." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل استخدام الذكاء الاصطناعي." });
+    } finally {
+      setIsAiRefining(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -296,7 +317,7 @@ function StudentView({ profile }: { profile: any }) {
       return;
     }
 
-    addDoc(requestsRef, {
+    addDocumentNonBlocking(requestsRef, {
       title: newRequest.title,
       amount: Number(newRequest.amount),
       category: newRequest.category,
@@ -308,8 +329,6 @@ function StudentView({ profile }: { profile: any }) {
       createdAt: new Date().toISOString(),
       meetingTime: new Date(newRequest.meetingTime).toISOString(),
       attachmentUrl: newRequest.attachmentUrl || null
-    }).catch(e => {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الطلب." });
     });
 
     setIsDialogOpen(false);
@@ -339,12 +358,29 @@ function StudentView({ profile }: { profile: any }) {
           <DialogContent className="sm:max-w-[650px]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="text-right text-3xl font-bold">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-              <DialogDescription className="text-right text-lg">أرفق صوراً للمسائل أو ملفات لتسهيل الشرح.</DialogDescription>
+              <DialogDescription className="text-right text-lg">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-6">
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="title" className="text-lg font-bold">عنوان الطلب</Label>
-                <Input id="title" placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" value={newRequest.title} onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} className="h-12 rounded-xl" />
+                <div className="relative">
+                  <Input 
+                    id="title" 
+                    placeholder="مثلاً: شرح درس التفاضل للصف الثالث الثانوي" 
+                    value={newRequest.title} 
+                    onChange={(e) => setNewRequest({...newRequest, title: e.target.value})} 
+                    className="h-14 rounded-xl pr-4 pl-12" 
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleAiRefine}
+                    disabled={isAiRefining}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 text-primary hover:bg-primary/10 rounded-lg h-10 w-10"
+                  >
+                    <Wand2 className={`h-5 w-5 ${isAiRefining ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -446,6 +482,7 @@ function StudentView({ profile }: { profile: any }) {
 function TeacherView({ profile }: { profile: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [filterCategory, setFilterCategory] = useState("all");
 
   const transactionsRef = useMemoFirebase(() => {
     if (!firestore || !profile?.id) return null;
@@ -465,12 +502,19 @@ function TeacherView({ profile }: { profile: any }) {
     return collection(firestore, "requests");
   }, [firestore]);
 
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
+  }, [firestore]);
+
+  const { data: categories } = useCollection(categoriesQuery);
+
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
     return query(
       requestsRef, 
       where("status", "==", "pending"),
-      limit(20)
+      limit(50)
     );
   }, [requestsRef]);
 
@@ -484,8 +528,26 @@ function TeacherView({ profile }: { profile: any }) {
     );
   }, [requestsRef, profile?.id]);
 
+  const myCompletedRequestsQuery = useMemoFirebase(() => {
+    if (!requestsRef || !profile?.id) return null;
+    return query(
+      requestsRef,
+      where("teacherId", "==", profile.id),
+      where("status", "==", "completed")
+    );
+  }, [requestsRef, profile?.id]);
+
   const { data: availableRequests, isLoading } = useCollection(availableRequestsQuery);
   const { data: activeRequests } = useCollection(myActiveRequestsQuery);
+  const { data: completedRequests } = useCollection(myCompletedRequestsQuery);
+
+  const filteredAvailable = availableRequests?.filter(r => 
+    filterCategory === "all" || r.category === filterCategory
+  );
+
+  const avgRating = completedRequests?.length 
+    ? (completedRequests.reduce((acc, r) => acc + (r.rating || 0), 0) / completedRequests.length).toFixed(1)
+    : "5.0";
 
   const handleAcceptRequest = (req: any) => {
     if (!firestore || !profile) return;
@@ -534,7 +596,7 @@ function TeacherView({ profile }: { profile: any }) {
           </div>
           <div>
             <p className="text-sm font-bold opacity-80">التقييم العام</p>
-            <h4 className="text-3xl font-black">5.0</h4>
+            <h4 className="text-3xl font-black">{avgRating}</h4>
           </div>
         </Card>
       </div>
@@ -561,13 +623,24 @@ function TeacherView({ profile }: { profile: any }) {
       )}
 
       <div className="space-y-10">
-        <div className="flex justify-between items-center bg-accent/5 p-6 md:p-8 rounded-[2rem] border-2 border-accent/20 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-accent/5 p-6 md:p-8 rounded-[2rem] border-2 border-accent/20 shadow-sm">
           <h3 className="text-xl md:text-3xl font-black font-headline flex items-center gap-4">
             <BookOpen className="text-accent h-6 w-6 md:h-10 md:w-10" /> الطلبات المتاحة للجميع
           </h3>
-          <div className="flex items-center gap-3">
-            <div className="h-3 w-3 bg-accent rounded-full animate-pulse"></div>
-            <span className="text-sm md:text-lg font-bold text-accent">بانتظار المفهمين الموثقين</span>
+          
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-full md:w-64 h-12 rounded-xl border-2">
+                <Search className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="تصفية حسب التخصص" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">كل التخصصات</SelectItem>
+                {categories?.map(c => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -575,7 +648,7 @@ function TeacherView({ profile }: { profile: any }) {
           <div className="text-center py-24 text-2xl font-black animate-pulse">جاري البحث عن طلبات...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {availableRequests && availableRequests.map((req) => (
+            {filteredAvailable?.map((req) => (
               <Card key={req.id} className="overflow-hidden border-2 hover:border-accent transition-all group shadow-xl hover:shadow-2xl rounded-[2.5rem] bg-white">
                 <CardHeader className="bg-muted/30 pb-6 px-8 pt-8">
                   <div className="flex justify-between items-start">
@@ -617,9 +690,9 @@ function TeacherView({ profile }: { profile: any }) {
                 </CardContent>
               </Card>
             ))}
-            {(!availableRequests || availableRequests.length === 0) && (
+            {(!filteredAvailable || filteredAvailable.length === 0) && (
               <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
-                لا توجد طلبات استفهام حالياً.
+                لا توجد طلبات استفهام متاحة حالياً في هذا القسم.
               </div>
             )}
           </div>
