@@ -22,7 +22,8 @@ import {
   Users2,
   Video,
   Wallet,
-  Star
+  Star,
+  Activity
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -340,7 +341,7 @@ function StudentView({ profile }: { profile: any }) {
       <div className="space-y-8">
         <h3 className="text-2xl md:text-3xl font-black font-headline border-r-8 border-primary pr-6">طلباتك الأخيرة</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {myRequests && myRequests.map((req: any) => (
+          {rawRequests && rawRequests.map((req: any) => (
             <Card key={req.id} className="shadow-lg border-2 hover:border-primary/50 hover:shadow-2xl transition-all rounded-[2rem] overflow-hidden group">
               <CardContent className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
@@ -373,7 +374,7 @@ function StudentView({ profile }: { profile: any }) {
               </CardContent>
             </Card>
           ))}
-          {(!myRequests || myRequests.length === 0) && (
+          {(!rawRequests || rawRequests.length === 0) && (
             <div className="col-span-full py-24 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
               لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن!
             </div>
