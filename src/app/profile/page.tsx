@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc, collection, addDoc } from "firebase/firestore";
@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
@@ -24,6 +26,10 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copied, setCopied] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [showOtpDialog, setShowOtpDialog] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -51,6 +57,35 @@ export default function ProfilePage() {
       });
     }
   }, [profile]);
+
+  const handleSendOTP = async () => {
+    if (!user?.email) return;
+    setIsSendingOtp(true);
+    try {
+      const result = await generateAndSendOTP({ recipient: user.email, method: 'email' });
+      if (result.success) {
+        setGeneratedCode(result.code);
+        setShowOtpDialog(true);
+        toast({ title: "تم إرسال الرمز", description: "يرجى التحقق من بريدك الإلكتروني." });
+      } else {
+        toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الرمز." });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ غير متوقع." });
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOTP = () => {
+    if (otpCode === generatedCode && userRef) {
+      updateDocumentNonBlocking(userRef, { emailVerified: true });
+      setShowOtpDialog(false);
+      toast({ title: "تم التوثيق!", description: "تم التحقق من بريدك الإلكتروني بنجاح." });
+    } else {
+      toast({ variant: "destructive", title: "رمز خاطئ", description: "يرجى المحاولة مرة أخرى." });
+    }
+  };
 
   const copyProfileId = () => {
     if (user?.uid) {
@@ -178,9 +213,9 @@ export default function ProfilePage() {
                       </>
                     )}
                   </Badge>
-                  {profile.isAdmin && (
-                    <Badge variant="destructive" className="px-6 py-1.5 text-md font-black rounded-full shadow-lg">
-                      مسؤول النظام
+                  {profile.emailVerified && (
+                    <Badge className="bg-green-600 text-white px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1">
+                      <Check className="h-3 w-3" /> بريد موثق
                     </Badge>
                   )}
                 </div>
@@ -197,7 +232,7 @@ export default function ProfilePage() {
                 id="fullName" 
                 value={formData.fullName || ""} 
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
+                className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary px-6 bg-muted/5 shadow-inner"
               />
             </div>
 
@@ -211,38 +246,29 @@ export default function ProfilePage() {
                   placeholder="مثال: رياضيات، برمجة تطبيقات، لغة إنجليزية"
                   value={formData.specialization || ""} 
                   onChange={(e) => setFormData({...formData, specialization: e.target.value})}
-                  className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
+                  className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary px-6 bg-muted/5 shadow-inner"
                 />
               </div>
             )}
 
             <div className="space-y-4">
-              <Label className="text-xl font-black flex items-center gap-3">
-                <Fingerprint className="h-5 w-5 text-primary" /> معرف الحساب (UID)
+              <Label className="text-xl font-black flex items-center gap-3 text-muted-foreground/60">
+                <Mail className="h-5 w-5" /> البريد الإلكتروني <Lock className="h-4 w-4" />
               </Label>
               <div className="flex gap-2">
                 <Input 
-                  value={user?.uid || ""} 
+                  id="email" 
+                  value={profile.email || ""} 
                   readOnly 
-                  className="h-16 text-sm font-mono font-bold rounded-2xl bg-muted/40 border-none px-6"
+                  disabled
+                  className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none px-6 opacity-70"
                 />
-                <Button onClick={copyProfileId} variant="outline" className="h-16 rounded-2xl px-6 border-2">
-                  {copied ? <Check className="text-green-500" /> : <Copy />}
-                </Button>
+                {!profile.emailVerified && (
+                  <Button onClick={handleSendOTP} disabled={isSendingOtp} className="h-16 rounded-2xl bg-orange-500 font-bold px-4">
+                    {isSendingOtp ? "جاري الإرسال" : "توثيق البريد"}
+                  </Button>
+                )}
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <Label htmlFor="email" className="text-xl font-black flex items-center gap-3 text-muted-foreground/60">
-                <Mail className="h-5 w-5" /> البريد الإلكتروني <Lock className="h-4 w-4" />
-              </Label>
-              <Input 
-                id="email" 
-                value={profile.email || ""} 
-                readOnly 
-                disabled
-                className="h-16 text-xl font-bold rounded-2xl bg-muted/40 border-none cursor-not-allowed text-muted-foreground/60 px-6 shadow-inner opacity-70"
-              />
             </div>
 
             <div className="space-y-4">
@@ -254,20 +280,7 @@ export default function ProfilePage() {
                 value={formData.phone || ""}
                 placeholder="01xxxxxxxxx"
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Label htmlFor="birthDate" className="text-xl font-black flex items-center gap-3">
-                <CalendarIcon className="h-5 w-5 text-primary" /> تاريخ الميلاد
-              </Label>
-              <Input 
-                id="birthDate" 
-                type="date"
-                value={formData.birthDate || ""}
-                onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary transition-all px-6 bg-muted/5 shadow-inner"
+                className="h-16 text-xl font-bold rounded-2xl border-2 focus:border-primary px-6 bg-muted/5 shadow-inner"
               />
             </div>
 
@@ -295,7 +308,7 @@ export default function ProfilePage() {
             <div className="md:col-span-2 pt-12 flex justify-center md:justify-end">
               <Button 
                 onClick={handleSave} 
-                className="bg-primary w-full md:w-auto px-16 py-10 rounded-[2rem] font-black text-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:scale-105 transition-all active:scale-95 group"
+                className="bg-primary w-full md:w-auto px-16 py-10 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 active:scale-95 group"
               >
                 <Save className="ml-4 h-8 w-8 group-hover:animate-bounce" /> حفظ التعديلات الآن
               </Button>
@@ -303,18 +316,27 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-      
-      <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-dashed border-primary/20 flex flex-col md:flex-row items-center gap-8 shadow-inner">
-        <div className="bg-primary/10 p-6 rounded-3xl">
-          <ShieldCheck className="h-12 w-12 text-primary" />
-        </div>
-        <div className="flex-1 space-y-2 text-center md:text-right">
-          <h3 className="text-2xl font-black text-primary">أمان بياناتك هو أولويتنا</h3>
-          <p className="text-muted-foreground text-lg leading-relaxed">
-            بياناتك الشخصية ومعلومات الدخول مشفرة بالكامل. لا يمكن لأحد تعديل معلومات الدخول الخاصة بك سوى من خلال فريق الدعم الفني.
-          </p>
-        </div>
-      </div>
+
+      <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
+        <DialogContent className="rounded-[2rem]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right text-2xl font-black">تحقق من بريدك</DialogTitle>
+            <DialogDescription className="text-right">أدخل الرمز المكون من 6 أرقام الذي أرسلناه لبريدك الإلكتروني.</DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <Label className="font-bold">رمز التحقق</Label>
+            <Input 
+              maxLength={6} 
+              className="h-16 text-3xl font-black tracking-[1em] text-center rounded-2xl" 
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={handleVerifyOTP} className="w-full h-14 text-xl font-bold rounded-xl">تحقق الآن</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

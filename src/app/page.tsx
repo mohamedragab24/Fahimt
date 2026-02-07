@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   PlusCircle, 
   BookOpen, 
@@ -23,18 +23,24 @@ import {
   Video,
   Wallet,
   Star,
-  Activity
+  Activity,
+  ArrowRight,
+  HelpCircle,
+  Zap,
+  Globe,
+  Check
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -50,7 +56,6 @@ export default function HomePage() {
 
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحميل...</div>;
 
-  // إذا كان المستخدم غير مسجل، نعرض صفحة الهبوط العامة
   if (!user || !profile) {
     return <LandingPage router={router} />;
   }
@@ -124,6 +129,22 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
+      {/* How it works */}
+      <section className="py-24 bg-white">
+        <div className="container px-4 space-y-16">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl md:text-5xl font-black">كيف يعمل "فهمني"؟</h2>
+            <p className="text-muted-foreground text-xl">خطوات بسيطة تبدأ بها رحلتك التعليمية</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <Step icon={PlusCircle} number="1" title="اطلب استفهام" desc="حدد المادة والميزانية والموعد." />
+            <Step icon={Users2} number="2" title="اختر خبيراً" desc="يقوم المدرسون بقبول طلبك فوراً." />
+            <Step icon={Video} number="3" title="ابدأ التعلم" desc="ادخل غرفة البث المباشر وابدأ الفهم." />
+            <Step icon={Check} number="4" title="قيم التجربة" desc="ساعدنا على التحسين بتقييم المدرس." />
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-24 container px-4 grid grid-cols-1 md:grid-cols-3 gap-10">
         <LandingFeature 
@@ -143,10 +164,37 @@ function LandingPage({ router }: { router: any }) {
         />
       </section>
 
+      {/* FAQ */}
+      <section className="py-24 bg-muted/30">
+        <div className="container px-4 max-w-4xl space-y-12">
+          <h2 className="text-4xl font-black text-center">الأسئلة الشائعة</h2>
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            <AccordionItem value="item-1" className="bg-white px-6 rounded-2xl border-none shadow-sm">
+              <AccordionTrigger className="text-xl font-bold hover:no-underline">هل أحتاج لجهاز كمبيوتر؟</AccordionTrigger>
+              <AccordionContent className="text-lg text-muted-foreground leading-relaxed">
+                لا، يمكنك استخدام "فهمني" من أي هاتف ذكي أو تابلت عبر المتصفح أو تطبيقنا الرسمي بكل سهولة.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2" className="bg-white px-6 rounded-2xl border-none shadow-sm">
+              <AccordionTrigger className="text-xl font-bold hover:no-underline">كيف يتم الدفع للمدرس؟</AccordionTrigger>
+              <AccordionContent className="text-lg text-muted-foreground leading-relaxed">
+                يتم خصم المبلغ من محفظتك عند اكتمال المحاضرة، ويقوم التطبيق بتحويل الأرباح للمدرس تلقائياً.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3" className="bg-white px-6 rounded-2xl border-none shadow-sm">
+              <AccordionTrigger className="text-xl font-bold hover:no-underline">ماذا لو لم يلتزم المدرس بالموعد؟</AccordionTrigger>
+              <AccordionContent className="text-lg text-muted-foreground leading-relaxed">
+                يمكنك رفع تذكرة دعم وسيقوم فريقنا بمراجعة الحالة وإعادة المبلغ لمحفظتك فوراً إذا ثبت عدم الالتزام.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
       {/* Social Proof */}
       <section className="bg-zinc-900 text-white py-20">
         <div className="container px-4 flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="space-y-4">
+          <div className="space-y-4 text-center md:text-right">
             <h2 className="text-4xl font-black">انضم لآلاف الطلاب</h2>
             <p className="text-zinc-400 text-lg">أكثر من 5000 ساعة تعليمية تمت بنجاح عبر "فهمني".</p>
           </div>
@@ -162,6 +210,19 @@ function LandingPage({ router }: { router: any }) {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function Step({ icon: Icon, number, title, desc }: any) {
+  return (
+    <div className="text-center space-y-4 relative">
+      <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-2xl font-black shadow-xl relative z-10">
+        <Icon size={32} />
+        <span className="absolute -top-2 -right-2 bg-accent w-8 h-8 rounded-full border-4 border-white text-xs flex items-center justify-center">{number}</span>
+      </div>
+      <h3 className="text-xl font-black">{title}</h3>
+      <p className="text-muted-foreground text-sm font-medium">{desc}</p>
     </div>
   );
 }
@@ -235,7 +296,7 @@ function StudentView({ profile }: { profile: any }) {
       return;
     }
 
-    addDocumentNonBlocking(requestsRef, {
+    addDoc(requestsRef, {
       title: newRequest.title,
       amount: Number(newRequest.amount),
       category: newRequest.category,
@@ -247,6 +308,8 @@ function StudentView({ profile }: { profile: any }) {
       createdAt: new Date().toISOString(),
       meetingTime: new Date(newRequest.meetingTime).toISOString(),
       attachmentUrl: newRequest.attachmentUrl || null
+    }).catch(e => {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الطلب." });
     });
 
     setIsDialogOpen(false);
@@ -341,7 +404,7 @@ function StudentView({ profile }: { profile: any }) {
       <div className="space-y-8">
         <h3 className="text-2xl md:text-3xl font-black font-headline border-r-8 border-primary pr-6">طلباتك الأخيرة</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {rawRequests && rawRequests.map((req: any) => (
+          {myRequests.map((req: any) => (
             <Card key={req.id} className="shadow-lg border-2 hover:border-primary/50 hover:shadow-2xl transition-all rounded-[2rem] overflow-hidden group">
               <CardContent className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
@@ -353,11 +416,6 @@ function StudentView({ profile }: { profile: any }) {
                   <CalendarDays className="h-5 w-5" />
                   <span className="text-sm">{new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 </div>
-                {req.attachmentUrl && (
-                  <Badge variant="outline" className="flex items-center gap-2 border-primary/20 text-primary bg-primary/5">
-                    <FileText size={14} /> مرفق موجود
-                  </Badge>
-                )}
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <div className="flex items-center text-md text-muted-foreground font-medium">
                     <Clock className="h-5 w-5 ml-2 text-primary/60" />
@@ -374,7 +432,7 @@ function StudentView({ profile }: { profile: any }) {
               </CardContent>
             </Card>
           ))}
-          {(!rawRequests || rawRequests.length === 0) && (
+          {myRequests.length === 0 && (
             <div className="col-span-full py-24 text-center text-muted-foreground border-4 border-dashed rounded-[3rem] text-xl md:text-2xl font-bold bg-muted/5">
               لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن!
             </div>
