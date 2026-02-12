@@ -28,7 +28,10 @@ import {
   Wand2,
   Search,
   Headset,
-  SearchCode
+  SearchCode,
+  Filter,
+  Layers,
+  Settings2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -64,7 +67,6 @@ export default function HomePage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  // جلب إعدادات الموقع العامة (للصور وغيرها)
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, "settings", "general");
@@ -170,7 +172,11 @@ function LandingPage({ router, settings }: { router: any, settings: any }) {
             <span className="text-5xl font-black font-headline text-[#29B6F6] leading-none tracking-tighter drop-shadow-sm">فهمني</span>
           </div>
           <div className="relative w-12 h-12 flex items-center justify-center bg-[#29B6F6] rounded-2xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform">
-            <span className="text-white font-black text-3xl">ف</span>
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="F" className="h-10 w-auto" />
+            ) : (
+              <span className="text-white font-black text-3xl">ف</span>
+            )}
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF7043] rounded-full border-2 border-white shadow-md"></div>
           </div>
         </div>
@@ -507,7 +513,12 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
 function TeacherView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [filterCategory, setFilterCategory] = useState("all");
+  
+  // فلاتر الأقسام الثلاثة
+  const [filterMain, setFilterMain] = useState("all");
+  const [filterSub, setFilterSub] = useState("all");
+  const [filterOption, setFilterOption] = useState("all");
+  
   const [showReviews, setShowReviews] = useState(false);
 
   const transactionsRef = useMemoFirebase(() => {
@@ -567,9 +578,16 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
   const { data: activeRequests } = useCollection(myActiveRequestsQuery);
   const { data: completedRequests } = useCollection(myCompletedRequestsQuery);
 
-  const filteredAvailable = availableRequests?.filter(r => 
-    filterCategory === "all" || r.category === filterCategory
-  );
+  // منطق التصفية المجمع
+  const filteredAvailable = availableRequests?.filter(r => {
+    const activeFilters = [];
+    if (filterMain !== "all") activeFilters.push(filterMain);
+    if (filterSub !== "all") activeFilters.push(filterSub);
+    if (filterOption !== "all") activeFilters.push(filterOption);
+
+    if (activeFilters.length === 0) return true;
+    return activeFilters.includes(r.category);
+  });
 
   const avgRating = completedRequests?.length 
     ? (completedRequests.reduce((acc, r) => acc + (r.rating || 0), 0) / completedRequests.length).toFixed(1)
@@ -683,19 +701,45 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
             <div className="bg-primary/10 p-4 rounded-[2rem]">
               <BookOpen className="text-primary h-10 w-10 md:h-14 md:w-14" />
             </div>
-            الطلبات المتاحة للجميع
+            الطلبات المتاحة
           </h3>
           
-          <div className="flex items-center gap-6 w-full lg:w-auto relative z-10">
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full lg:w-80 h-16 rounded-2xl border-4 border-primary/10 font-black text-xl px-8 shadow-sm">
-                <Search className="h-6 w-6 ml-4 text-primary" />
-                <SelectValue placeholder="تصفية التخصص" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full lg:w-auto relative z-10">
+            <Select value={filterMain} onValueChange={setFilterMain}>
+              <SelectTrigger className="h-14 rounded-xl border-2 font-black text-sm px-4">
+                <Layers className="h-4 w-4 ml-2 text-primary" />
+                <SelectValue placeholder="قسم رئيسي" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl">
-                <SelectItem value="all" className="font-black py-4">كل التخصصات</SelectItem>
-                {categories?.map(c => (
-                  <SelectItem key={c.id} value={c.name} className="font-black py-4">{c.name}</SelectItem>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="font-black">كل الأقسام الرئيسية</SelectItem>
+                {categories?.filter(c => c.type === 'main' || !c.type).map(c => (
+                  <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterSub} onValueChange={setFilterSub}>
+              <SelectTrigger className="h-14 rounded-xl border-2 font-black text-sm px-4">
+                <Filter className="h-4 w-4 ml-2 text-accent" />
+                <SelectValue placeholder="قسم فرعي" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="font-black">كل الأقسام الفرعية</SelectItem>
+                {categories?.filter(c => c.type === 'sub').map(c => (
+                  <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterOption} onValueChange={setFilterOption}>
+              <SelectTrigger className="h-14 rounded-xl border-2 font-black text-sm px-4">
+                <Settings2 className="h-4 w-4 ml-2 text-purple-500" />
+                <SelectValue placeholder="خيارات" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="font-black">كل الخيارات</SelectItem>
+                {categories?.filter(c => c.type === 'option').map(c => (
+                  <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
