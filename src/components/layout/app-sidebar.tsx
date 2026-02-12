@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -109,15 +108,16 @@ export function AppSidebar() {
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-4 md:p-6">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-4 overflow-hidden">
-            <div className="bg-primary w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg">
-              <Sparkles className="text-white h-6 w-6" />
+          <Link href="/" onClick={closeSidebar} className="flex items-center gap-3 overflow-hidden group">
+            <div className="relative w-10 h-10 min-w-[40px] flex items-center justify-center bg-primary rounded-xl shadow-lg transition-transform group-hover:scale-110">
+              <span className="text-white font-black text-2xl">ف</span>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white"></div>
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
-              <span className="font-black text-2xl font-headline leading-tight">فهمني</span>
-              <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">التعليم الذكي</span>
+              <span className="font-black text-3xl font-headline leading-tight text-primary">فهمني</span>
+              <span className="text-[10px] text-accent font-black tracking-widest uppercase">التعليم الذكي</span>
             </div>
-          </div>
+          </Link>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -133,16 +133,16 @@ export function AppSidebar() {
 
       <SidebarContent>
         <div className="p-4 group-data-[collapsible=icon]:hidden">
-          <div className="bg-muted/30 p-4 rounded-2xl flex items-center gap-3 border border-dashed border-primary/20">
-            <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/20 shadow-sm">
+          <div className="bg-primary/5 p-4 rounded-3xl flex items-center gap-3 border-2 border-dashed border-primary/20 shadow-inner">
+            <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/30 shadow-md">
               <AvatarImage src={profile?.profilePictureUrl} />
-              <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              <AvatarFallback className="bg-primary/10 text-primary font-black">
                 {profile?.fullName?.charAt(0) || 'ف'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate">
-              <span className="font-bold text-sm truncate">{profile?.fullName || 'جاري التحميل...'}</span>
-              <span className="text-[10px] bg-primary/10 text-primary self-start px-2 py-0.5 rounded-full font-bold">
+              <span className="font-black text-sm truncate">{profile?.fullName || 'جاري التحميل...'}</span>
+              <span className="text-[10px] bg-primary text-white self-start px-2 py-0.5 rounded-full font-black mt-1">
                 {profile?.isAdmin ? 'مسؤول' : (profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم')}
               </span>
             </div>
@@ -157,15 +157,15 @@ export function AppSidebar() {
                   asChild
                   isActive={pathname === item.href}
                   tooltip={item.title}
-                  className={`h-14 rounded-xl transition-all ${
+                  className={`h-14 rounded-2xl transition-all ${
                     pathname === item.href 
-                      ? "bg-primary text-white shadow-lg hover:bg-primary/90" 
-                      : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
+                      ? "bg-primary text-white shadow-xl hover:bg-primary/90" 
+                      : "hover:bg-primary/10 text-muted-foreground hover:text-primary"
                   }`}
                 >
                   <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
                     <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                    <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
+                    <span className="font-black text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -178,14 +178,14 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton 
                     tooltip="لوحة المسؤول" 
-                    className={`h-14 rounded-xl transition-all ${
+                    className={`h-14 rounded-2xl transition-all ${
                       pathname.startsWith('/admin') 
-                        ? "bg-accent text-white shadow-lg" 
+                        ? "bg-zinc-900 text-white shadow-xl" 
                         : "hover:bg-accent/10 text-muted-foreground hover:text-accent"
                     }`}
                   >
                     <LayoutDashboard className={`h-6 w-6 shrink-0 ${pathname.startsWith('/admin') ? "text-white" : "text-accent"}`} />
-                    <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">لوحة المسؤول</span>
+                    <span className="font-black text-lg group-data-[collapsible=icon]:hidden">لوحة المسؤول</span>
                     <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180 group-data-[collapsible=icon]:hidden" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -196,7 +196,7 @@ export function AppSidebar() {
                         <SidebarMenuSubButton asChild isActive={pathname === item.href}>
                           <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-3 py-2">
                             <item.icon className="h-4 w-4" />
-                            <span className="font-bold">{item.title}</span>
+                            <span className="font-black">{item.title}</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -216,13 +216,13 @@ export function AppSidebar() {
               asChild 
               isActive={pathname === "/download"}
               tooltip="تحميل التطبيق"
-              className={`h-14 rounded-xl transition-all border-2 border-transparent ${
-                pathname === "/download" ? "bg-primary/10 text-primary border-primary/20" : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
+              className={`h-14 rounded-2xl transition-all border-2 border-transparent ${
+                pathname === "/download" ? "bg-accent/10 text-accent border-accent/20" : "hover:bg-accent/5 text-muted-foreground hover:text-accent"
               }`}
             >
               <Link href="/download" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
-                <Smartphone className="h-6 w-6 shrink-0 text-primary" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">تطبيق الجوال</span>
+                <Smartphone className="h-6 w-6 shrink-0 text-accent" />
+                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تطبيق الجوال</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -231,11 +231,11 @@ export function AppSidebar() {
             <SidebarMenuButton 
               asChild 
               tooltip="اتصل بنا واتساب"
-              className="h-14 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100"
+              className="h-14 rounded-2xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100 shadow-sm bg-white"
             >
               <Link href="https://wa.me/201234567890" target="_blank" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
                 <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">اتصال مباشر</span>
+                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">اتصال مباشر</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -245,11 +245,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               onClick={handleLogout} 
-              className="h-14 rounded-xl text-destructive hover:bg-destructive/5 hover:text-destructive transition-colors"
+              className="h-14 rounded-2xl text-destructive hover:bg-destructive/5 hover:text-destructive transition-colors"
             >
               <div className="flex items-center gap-4 px-3 w-full">
                 <LogOut className="h-6 w-6 shrink-0" />
-                <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
+                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -10,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
+import Link from "next/link";
 
 export function Header() {
   const { user, auth } = useFirebase();
@@ -65,12 +65,13 @@ export function Header() {
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="h-10 w-10 text-primary" />
-          <div className="flex items-center gap-2 mr-2 cursor-pointer" onClick={() => router.push("/")}>
-            <div className="bg-primary p-1.5 rounded-lg shadow-sm">
-              <Sparkles className="h-5 w-5 text-white" />
+          <Link href="/" className="flex items-center gap-2 mr-2 group">
+            <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
+              <span className="text-white font-black text-sm">ف</span>
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full border border-white"></div>
             </div>
-            <span className="font-black text-xl font-headline hidden sm:inline-block">فهمني</span>
-          </div>
+            <span className="font-black text-2xl font-headline hidden sm:inline-block text-primary">فهمني</span>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -80,8 +81,8 @@ export function Header() {
                 <Bell className="h-6 w-6" />
                 {totalNotifications > 0 && (
                   <span className="absolute top-2 right-2 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
                   </span>
                 )}
               </Button>
@@ -99,11 +100,11 @@ export function Header() {
                         onClick={() => router.push(`/meeting/${req.id}`)}
                       >
                         <div className="flex gap-4">
-                          <div className="bg-blue-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                            <Video className="text-blue-600 h-6 w-6" />
+                          <div className="bg-primary/10 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
+                            <Video className="text-primary h-6 w-6" />
                           </div>
                           <div className="space-y-1">
-                            <p className="font-bold text-sm leading-tight">محاضرة بانتظارك: {req.title}</p>
+                            <p className="font-black text-sm leading-tight">محاضرة بانتظارك: {req.title}</p>
                             <p className="text-[10px] text-muted-foreground">اضغط لدخول البث الآن</p>
                           </div>
                         </div>
@@ -112,15 +113,15 @@ export function Header() {
                     {supportReplies?.map((ticket: any) => (
                       <DropdownMenuItem 
                         key={ticket.id} 
-                        className="p-4 rounded-xl cursor-pointer hover:bg-orange-50 border-b last:border-0"
+                        className="p-4 rounded-xl cursor-pointer hover:bg-accent/5 border-b last:border-0"
                         onClick={() => router.push(`/support`)}
                       >
                         <div className="flex gap-4">
-                          <div className="bg-orange-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                            <LifeBuoy className="text-orange-600 h-6 w-6" />
+                          <div className="bg-accent/10 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
+                            <LifeBuoy className="text-accent h-6 w-6" />
                           </div>
                           <div className="space-y-1">
-                            <p className="font-bold text-sm leading-tight">رد جديد على تذكرتك: {ticket.subject}</p>
+                            <p className="font-black text-sm leading-tight">رد جديد على تذكرتك: {ticket.subject}</p>
                             <p className="text-[10px] text-muted-foreground">اضغط لمشاهدة رد الإدارة</p>
                           </div>
                         </div>
@@ -134,25 +135,25 @@ export function Header() {
                 )}
               </div>
               <DropdownMenuSeparator />
-              <Button variant="ghost" onClick={() => router.push('/requests')} className="w-full font-bold text-primary hover:text-primary py-2 text-sm">عرض كل الطلبات</Button>
+              <Button variant="ghost" onClick={() => router.push('/requests')} className="w-full font-black text-primary hover:text-primary py-2 text-sm">عرض كل الطلبات</Button>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 h-12 px-2 rounded-2xl hover:bg-primary/5">
+              <Button variant="ghost" className="flex items-center gap-3 h-12 px-2 rounded-2xl hover:bg-primary/5 group">
                 <div className="hidden md:flex flex-col text-left items-end">
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold leading-none">{profile?.fullName || "جاري التحميل..."}</span>
-                    {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+                    <span className="text-sm font-black leading-none group-hover:text-primary transition-colors">{profile?.fullName || "جاري التحميل..."}</span>
+                    {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-primary" />}
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-tighter">
+                  <span className="text-[10px] text-accent font-black mt-1 uppercase tracking-tighter">
                     {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
                   </span>
                 </div>
-                <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm">
+                <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm transition-transform group-hover:scale-105">
                   <AvatarImage src={profile?.profilePictureUrl} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  <AvatarFallback className="bg-primary/10 text-primary font-black">
                     {profile?.fullName?.charAt(0) || "ف"}
                   </AvatarFallback>
                 </Avatar>
@@ -162,20 +163,20 @@ export function Header() {
               <DropdownMenuLabel className="font-black p-3 text-right">حسابي</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end">
-                <span className="font-bold">الملف الشخصي</span>
+                <span className="font-black">الملف الشخصي</span>
                 <User className="mr-2 h-4 w-4 text-primary" />
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer flex justify-end">
-                <span className="font-bold">المحفظة</span>
-                <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                <span className="font-black">المحفظة</span>
+                <Sparkles className="mr-2 h-4 w-4 text-accent" />
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end">
-                <span className="font-bold">الإعدادات</span>
+                <span className="font-black">الإعدادات</span>
                 <Settings className="mr-2 h-4 w-4 text-primary" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="p-3 rounded-xl cursor-pointer text-destructive focus:text-destructive flex justify-end">
-                <span className="font-bold">تسجيل الخروج</span>
+                <span className="font-black">تسجيل الخروج</span>
                 <LogOut className="mr-2 h-4 w-4" />
               </DropdownMenuItem>
             </DropdownMenuContent>
