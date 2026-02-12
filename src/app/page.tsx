@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as UIDialogDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as UICardDescription } from "@/components/ui/card";
 import { 
   PlusCircle, 
   BookOpen, 
@@ -34,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription as UIDialogDescriptionAlias } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription as UIDialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,9 +42,22 @@ import { useToast } from "@/hooks/use-toast";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-// Alias for DialogDescription to avoid any conflicts
-const DialogDescription = UIDialogDescriptionAlias;
+// Single definition for LandingFeature to avoid duplication error
+function LandingFeature({ icon: Icon, title, desc }: any) {
+  return (
+    <Card className="rounded-[2.5rem] p-10 border-2 hover:border-primary transition-all text-center space-y-6 bg-white shadow-xl group cursor-default">
+      <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary transition-transform group-hover:scale-110">
+        <Icon size={40} />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-2xl font-black text-zinc-900">{title}</h3>
+        <p className="text-zinc-500 text-lg leading-relaxed font-bold">{desc}</p>
+      </div>
+    </Card>
+  );
+}
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -113,50 +125,50 @@ export default function HomePage() {
 
 function LandingPage({ router }: { router: any }) {
   const [searchValue, setSearchValue] = useState("");
-  const bgImage = "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920";
+  const landingImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      {/* Header Matching the Design */}
-      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/10 backdrop-blur-md border-b border-white/10">
+      {/* Header Matching the Image Exactly */}
+      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-16 py-8 flex items-center justify-between bg-transparent">
         {/* Left Side: Auth Buttons */}
-        <div className="flex items-center gap-3 order-1">
+        <div className="flex items-center gap-4 order-1">
           <Button 
             onClick={() => router.push('/login')} 
-            className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black rounded-full px-8 py-6 text-lg shadow-lg transition-all"
+            className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black rounded-full px-10 py-7 text-xl shadow-xl transition-all hover:scale-105"
           >
             حساب جديد
           </Button>
           <Button 
             variant="ghost" 
             onClick={() => router.push('/login')} 
-            className="bg-[#E0E0E0]/20 hover:bg-[#E0E0E0]/40 text-white font-black rounded-full px-8 py-6 text-lg transition-all"
+            className="bg-white/10 hover:bg-white/20 text-white font-black rounded-full px-10 py-7 text-xl backdrop-blur-md transition-all"
           >
             دخول
           </Button>
         </div>
 
         {/* Middle Side: Nav Links with Icons */}
-        <nav className="hidden lg:flex items-center gap-8 text-white font-black text-lg order-2">
-          <Link href="/requests" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
-            تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
+        <nav className="hidden lg:flex items-center gap-12 text-white font-black text-xl order-2">
+          <Link href="/requests" className="hover:text-[#29B6F6] transition-all flex items-center gap-3 group">
+            تصفح الاستفهامات <MessageSquare className="h-6 w-6 group-hover:scale-110" />
           </Link>
-          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
-            أعمال المفهمين <Headset className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-3 group">
+            أعمال المفهمين <Headset className="h-6 w-6 group-hover:scale-110" />
           </Link>
-          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
-            المفهمين <Users2 className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-3 group">
+            المفهمين <Users2 className="h-6 w-6 group-hover:scale-110" />
           </Link>
         </nav>
 
         {/* Right Side: Logo exactly like image */}
-        <div className="flex items-center gap-2 order-3">
+        <div className="flex items-center gap-3 order-3">
           <div className="flex flex-col items-end">
-            <span className="text-4xl font-black font-headline text-[#29B6F6] leading-none tracking-tighter">فهمني</span>
+            <span className="text-5xl font-black font-headline text-[#29B6F6] leading-none tracking-tighter drop-shadow-sm">فهمني</span>
           </div>
-          <div className="relative w-10 h-10 flex items-center justify-center bg-[#29B6F6] rounded-xl shadow-md transform rotate-3">
-            <span className="text-white font-black text-2xl">ف</span>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF7043] rounded-full border border-white shadow-sm"></div>
+          <div className="relative w-12 h-12 flex items-center justify-center bg-[#29B6F6] rounded-2xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform">
+            <span className="text-white font-black text-3xl">ف</span>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF7043] rounded-full border-2 border-white shadow-md"></div>
           </div>
         </div>
       </header>
@@ -165,7 +177,7 @@ function LandingPage({ router }: { router: any }) {
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
-            src={bgImage}
+            src={landingImage}
             alt="Fahmani Background"
             fill
             priority
@@ -174,29 +186,29 @@ function LandingPage({ router }: { router: any }) {
           />
         </div>
 
-        <div className="relative z-10 space-y-12 max-w-6xl px-4">
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-8xl font-black font-headline text-white tracking-tight drop-shadow-2xl">
+        <div className="relative z-10 space-y-16 max-w-7xl px-4">
+          <div className="space-y-6">
+            <h1 className="text-6xl md:text-9xl font-black font-headline text-white tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
               اول منصة عربية لخدمات الشرح الفوري
             </h1>
-            <p className="text-2xl md:text-4xl text-zinc-100 font-bold drop-shadow-lg opacity-90">
+            <p className="text-3xl md:text-5xl text-zinc-100 font-bold drop-shadow-lg opacity-90 tracking-wide">
               شروحات مباشرة تُقدَّم خصيصاً من أجلك
             </p>
           </div>
 
-          {/* Search Bar exactly like image */}
-          <div className="mt-16 w-full max-w-5xl mx-auto flex items-center bg-white rounded-xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.4)] p-3">
+          {/* Search Bar exactly like image - perfectly balanced */}
+          <div className="mt-20 w-full max-w-6xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-4 group transition-all hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)]">
             <Button 
               size="lg" 
               onClick={() => router.push('/login')}
-              className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black text-3xl h-20 px-14 rounded-lg transition-all active:scale-95"
+              className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black text-4xl h-24 px-20 rounded-xl transition-all active:scale-95 shadow-lg"
             >
               استفهم الآن
             </Button>
             <div className="flex-1">
               <Input 
                 placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
-                className="w-full h-20 border-none shadow-none text-2xl font-bold text-zinc-800 px-10 text-right focus-visible:ring-0 placeholder:text-zinc-400 bg-transparent"
+                className="w-full h-24 border-none shadow-none text-3xl font-black text-zinc-800 px-12 text-right focus-visible:ring-0 placeholder:text-zinc-400 bg-transparent"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />
@@ -206,8 +218,8 @@ function LandingPage({ router }: { router: any }) {
       </section>
 
       {/* Simple Features for Completion */}
-      <section className="py-24 bg-zinc-50 relative">
-        <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
+      <section className="py-32 bg-zinc-50 relative">
+        <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
           <LandingFeature 
             icon={Video} 
             title="بث مباشر فوري" 
@@ -226,20 +238,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
     </div>
-  );
-}
-
-function LandingFeature({ icon: Icon, title, desc }: any) {
-  return (
-    <Card className="rounded-[2.5rem] p-10 border-2 hover:border-primary transition-all text-center space-y-6 bg-white shadow-xl group cursor-default">
-      <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary transition-transform group-hover:scale-110">
-        <Icon size={40} />
-      </div>
-      <div className="space-y-2">
-        <h3 className="text-2xl font-black text-zinc-900">{title}</h3>
-        <p className="text-zinc-500 text-lg leading-relaxed font-bold">{desc}</p>
-      </div>
-    </Card>
   );
 }
 
@@ -362,7 +360,7 @@ function StudentView({ profile }: { profile: any }) {
             <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black text-primary">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-                <DialogDescription className="text-right text-xl font-bold text-muted-foreground">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</DialogDescription>
+                <UIDialogDescription className="text-right text-xl font-bold text-muted-foreground">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</UIDialogDescription>
               </DialogHeader>
               <div className="grid gap-8 py-8">
                 <div className="space-y-3 relative">
@@ -631,7 +629,7 @@ function TeacherView({ profile }: { profile: any }) {
         <DialogContent className="sm:max-w-[500px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-3xl font-black text-primary">مراجعات الطلاب</DialogTitle>
-            <DialogDescription className="text-right text-lg font-bold text-muted-foreground">ماذا يقول الطلاب عن محاضراتك وتأثيرك.</DialogDescription>
+            <UIDialogDescription className="text-right text-lg font-bold text-muted-foreground">ماذا يقول الطلاب عن محاضراتك وتأثيرك.</UIDialogDescription>
           </DialogHeader>
           <div className="space-y-6 max-h-[450px] overflow-y-auto p-4 custom-scrollbar">
             {completedRequests?.filter(r => r.review).map((r) => (
