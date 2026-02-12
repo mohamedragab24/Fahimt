@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as UIDialogDescription } from "@/components/ui/card";
 import { 
   PlusCircle, 
   BookOpen, 
@@ -26,13 +26,15 @@ import {
   Bot,
   MessageSquare,
   Wand2,
-  Search
+  Search,
+  Headset,
+  SearchCode
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription as UIDialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription as UIDialogDescriptionAlias } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,10 +43,9 @@ import { useToast } from "@/hooks/use-toast";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
 import Link from "next/link";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 // Alias for DialogDescription to avoid any conflicts
-const DialogDescription = UIDialogDescription;
+const DialogDescription = UIDialogDescriptionAlias;
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -116,49 +117,51 @@ function LandingPage({ router }: { router: any }) {
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-8 flex items-center justify-between">
+      {/* Header Matching the Design */}
+      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/10 backdrop-blur-md border-b border-white/10">
         {/* Left Side: Auth Buttons */}
-        <div className="flex items-center gap-4 order-1">
+        <div className="flex items-center gap-3 order-1">
           <Button 
             onClick={() => router.push('/login')} 
-            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 py-6 text-xl shadow-2xl transition-all hover:scale-105 active:scale-95"
+            className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black rounded-full px-8 py-6 text-lg shadow-lg transition-all"
           >
             حساب جديد
           </Button>
           <Button 
             variant="ghost" 
             onClick={() => router.push('/login')} 
-            className="text-white/80 hover:text-white font-black rounded-full px-8 py-6 text-xl transition-all"
+            className="bg-[#E0E0E0]/20 hover:bg-[#E0E0E0]/40 text-white font-black rounded-full px-8 py-6 text-lg transition-all"
           >
             دخول
           </Button>
         </div>
 
-        {/* Middle Side: Nav Links */}
-        <nav className="hidden lg:flex items-center gap-8 text-white font-black text-xl order-2">
-          <Link href="/requests" className="hover:text-primary transition-all flex items-center gap-2">
+        {/* Middle Side: Nav Links with Icons */}
+        <nav className="hidden lg:flex items-center gap-8 text-white font-black text-lg order-2">
+          <Link href="/requests" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
             تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-2">
-            أعمال المفهمين <Users2 className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
+            أعمال المفهمين <Headset className="h-5 w-5" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-2">
-            المفهمين <GraduationCap className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-[#29B6F6] transition-all flex items-center gap-2">
+            المفهمين <Users2 className="h-5 w-5" />
           </Link>
         </nav>
 
-        {/* Right Side: Logo */}
-        <div className="flex items-center gap-4 order-3">
+        {/* Right Side: Logo exactly like image */}
+        <div className="flex items-center gap-2 order-3">
           <div className="flex flex-col items-end">
-            <span className="text-4xl font-black font-headline text-white leading-tight tracking-tighter drop-shadow-lg">فهمني</span>
+            <span className="text-4xl font-black font-headline text-[#29B6F6] leading-none tracking-tighter">فهمني</span>
           </div>
-          <div className="relative w-12 h-12 flex items-center justify-center bg-primary rounded-2xl shadow-xl border-2 border-white/30 transform rotate-3">
-            <span className="text-white font-black text-3xl">ف</span>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border border-white shadow-md"></div>
+          <div className="relative w-10 h-10 flex items-center justify-center bg-[#29B6F6] rounded-xl shadow-md transform rotate-3">
+            <span className="text-white font-black text-2xl">ف</span>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF7043] rounded-full border border-white shadow-sm"></div>
           </div>
         </div>
       </header>
 
+      {/* Hero Section exactly like image */}
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
@@ -166,34 +169,34 @@ function LandingPage({ router }: { router: any }) {
             alt="Fahmani Background"
             fill
             priority
-            className="object-cover object-center brightness-[0.5]"
+            className="object-cover object-center brightness-[0.4]"
             data-ai-hint="book lightbulb"
           />
-          <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
-        <div className="relative z-10 space-y-10 max-w-6xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+        <div className="relative z-10 space-y-12 max-w-6xl px-4">
           <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-black font-headline text-white tracking-tight drop-shadow-2xl">
+            <h1 className="text-5xl md:text-8xl font-black font-headline text-white tracking-tight drop-shadow-2xl">
               اول منصة عربية لخدمات الشرح الفوري
             </h1>
-            <p className="text-2xl md:text-4xl text-zinc-100 font-bold drop-shadow-xl">
+            <p className="text-2xl md:text-4xl text-zinc-100 font-bold drop-shadow-lg opacity-90">
               شروحات مباشرة تُقدَّم خصيصاً من أجلك
             </p>
           </div>
 
-          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-2">
+          {/* Search Bar exactly like image */}
+          <div className="mt-16 w-full max-w-5xl mx-auto flex items-center bg-white rounded-xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.4)] p-3">
             <Button 
               size="lg" 
               onClick={() => router.push('/login')}
-              className="bg-primary hover:bg-primary/90 text-white font-black text-2xl h-16 px-12 rounded-xl transition-all active:scale-95"
+              className="bg-[#29B6F6] hover:bg-[#29B6F6]/90 text-white font-black text-3xl h-20 px-14 rounded-lg transition-all active:scale-95"
             >
               استفهم الآن
             </Button>
             <div className="flex-1">
               <Input 
                 placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
-                className="w-full h-16 border-none shadow-none text-xl font-bold text-zinc-800 px-8 text-right focus-visible:ring-0 placeholder:text-zinc-400 bg-transparent"
+                className="w-full h-20 border-none shadow-none text-2xl font-bold text-zinc-800 px-10 text-right focus-visible:ring-0 placeholder:text-zinc-400 bg-transparent"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />
@@ -202,6 +205,7 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
+      {/* Simple Features for Completion */}
       <section className="py-24 bg-zinc-50 relative">
         <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
           <LandingFeature 
@@ -434,7 +438,7 @@ function StudentView({ profile }: { profile: any }) {
               </div>
               <DialogFooter>
                 <Button onClick={handleCreateRequest} className="w-full py-10 text-3xl font-black rounded-3xl shadow-2xl bg-primary hover:bg-primary/90">
-                  <Send className="ml-4 h-10 w-10" /> إرسال الطلب الآن
+                  <span className="ml-4 h-10 w-10">إرسال</span>
                 </Button>
               </DialogFooter>
             </DialogContent>
