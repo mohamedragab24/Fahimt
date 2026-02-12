@@ -1,20 +1,22 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, Save, RefreshCw, Globe, Image as LucideImage } from "lucide-react";
+import { ImageIcon, Save, RefreshCw, Globe, Image as LucideImage, Upload, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 
 export default function AdminAssets() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -41,6 +43,18 @@ export default function AdminAssets() {
     }
   }, [settings]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activeKey) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, [activeKey]: reader.result as string }));
+        toast({ title: "تم تجهيز الصورة", description: "اضغط على حفظ لاعتماد التغيير نهائياً." });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     if (!firestore) return;
     try {
@@ -49,7 +63,7 @@ export default function AdminAssets() {
         updatedAt: new Date().toISOString()
       }, { merge: true });
       
-      toast({ title: "تم الحفظ", description: "تم تحديث روابط الصور في النظام بنجاح." });
+      toast({ title: "تم الحفظ", description: "تم تحديث كافة الصور في النظام بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث الإعدادات." });
     }
@@ -61,50 +75,46 @@ export default function AdminAssets() {
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6">
         <h1 className="text-4xl font-black font-headline">إدارة أصول الموقع</h1>
-        <p className="text-muted-foreground text-lg">تحكم في الصور والخلفيات التي يراها المستخدمون عبر Firebase.</p>
+        <p className="text-muted-foreground text-lg">ارفع الصور مباشرة أو ضع روابط لتحديث مظهر المنصة فوراً.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="shadow-xl rounded-[2.5rem] border-2">
-          <CardHeader className="bg-primary text-white p-8">
-            <CardTitle className="text-2xl font-black flex items-center gap-3">
-              <Globe className="h-6 w-6" /> روابط الصور الحية
-            </CardTitle>
-            <CardDescription className="text-white/80 font-bold">ضع روابط الصور المرفوعة (Firebase Storage أو Unsplash)</CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 space-y-6">
-            <div className="space-y-4">
-              <AssetInput 
-                label="خلفية صفحة الهبوط (Landing Page)" 
-                value={formData.landingBg} 
-                onChange={(v) => setFormData({...formData, landingBg: v})} 
-              />
-              <AssetInput 
-                label="صورة الطالب (Student Hero)" 
-                value={formData.studentHero} 
-                onChange={(v) => setFormData({...formData, studentHero: v})} 
-              />
-              <AssetInput 
-                label="صورة المعلم (Teacher Hero)" 
-                value={formData.teacherHero} 
-                onChange={(v) => setFormData({...formData, teacherHero: v})} 
-              />
-            </div>
-            <Button onClick={handleSave} className="w-full h-16 rounded-2xl font-black text-xl shadow-lg mt-6">
-              <Save className="ml-2 h-6 w-6" /> حفظ التغييرات الآن
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <AssetCard 
+            title="خلفية صفحة الهبوط" 
+            value={formData.landingBg} 
+            onUpload={() => { setActiveKey('landingBg'); fileInputRef.current?.click(); }}
+            onLinkChange={(v) => setFormData({...formData, landingBg: v})}
+          />
+          <AssetCard 
+            title="صورة واجهة الطلاب" 
+            value={formData.studentHero} 
+            onUpload={() => { setActiveKey('studentHero'); fileInputRef.current?.click(); }}
+            onLinkChange={(v) => setFormData({...formData, studentHero: v})}
+          />
+          <AssetCard 
+            title="صورة واجهة المعلمين" 
+            value={formData.teacherHero} 
+            onUpload={() => { setActiveKey('teacherHero'); fileInputRef.current?.click(); }}
+            onLinkChange={(v) => setFormData({...formData, teacherHero: v})}
+          />
+          
+          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+          
+          <Button onClick={handleSave} className="w-full h-20 rounded-3xl font-black text-2xl shadow-2xl bg-primary hover:bg-primary/90 mt-10">
+            <Save className="ml-3 h-8 w-8" /> حفظ كافة التغييرات
+          </Button>
+        </div>
 
         <div className="space-y-8">
           <h3 className="text-2xl font-black flex items-center gap-2">
-            <LucideImage className="text-primary" /> معاينة مباشرة
+            <LucideImage className="text-primary" /> معاينة الأصول الحالية
           </h3>
           <div className="grid gap-6">
-            <PreviewCard label="خلفية الهبوط الحالية" url={formData.landingBg} />
+            <PreviewCard label="خلفية الهبوط" url={formData.landingBg} />
             <div className="grid grid-cols-2 gap-4">
-              <PreviewCard label="صورة الطالب" url={formData.studentHero} />
-              <PreviewCard label="صورة المعلم" url={formData.teacherHero} />
+              <PreviewCard label="للطلاب" url={formData.studentHero} />
+              <PreviewCard label="للمعلمين" url={formData.teacherHero} />
             </div>
           </div>
         </div>
@@ -113,33 +123,43 @@ export default function AdminAssets() {
   );
 }
 
-function AssetInput({ label, value, onChange }: any) {
+function AssetCard({ title, value, onUpload, onLinkChange }: any) {
   return (
-    <div className="space-y-2">
-      <Label className="font-bold text-lg">{label}</Label>
-      <Input 
-        placeholder="https://example.com/image.jpg" 
-        className="h-14 rounded-xl border-2"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
+    <Card className="shadow-lg rounded-[2rem] border-2 overflow-hidden bg-white">
+      <CardHeader className="bg-muted/30 pb-4">
+        <CardTitle className="text-xl font-black">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex gap-2">
+          <Input 
+            placeholder="أو ضع رابط مباشر للصورة هنا..." 
+            className="h-12 rounded-xl border-2"
+            value={value?.startsWith('data:') ? 'صورة مرفوعة يدوياً' : value}
+            onChange={(e) => onLinkChange(e.target.value)}
+          />
+          <Button onClick={onUpload} variant="secondary" className="h-12 rounded-xl font-bold">
+            <Upload className="ml-2 h-4 w-4" /> رفع ملف
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function PreviewCard({ label, url }: any) {
   return (
-    <Card className="overflow-hidden rounded-[2rem] border-2 bg-muted/5">
-      <div className="p-4 bg-muted/30 border-b">
+    <Card className="overflow-hidden rounded-[2rem] border-2 bg-muted/5 group">
+      <div className="p-3 bg-muted/30 border-b flex justify-between items-center">
         <span className="font-black text-xs uppercase tracking-widest">{label}</span>
+        {url && <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>}
       </div>
-      <div className="relative aspect-video w-full">
+      <div className="relative aspect-video w-full bg-zinc-100 flex items-center justify-center">
         {url ? (
-          <img src={url} alt={label} className="object-cover w-full h-full" />
+          <img src={url} alt={label} className="object-cover w-full h-full transition-transform group-hover:scale-105" />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
+          <div className="flex flex-col items-center text-muted-foreground opacity-20">
             <ImageIcon size={48} />
-            <p className="font-bold mt-2">لا يوجد رابط مضاف</p>
+            <p className="font-bold mt-2">فارغ</p>
           </div>
         )}
       </div>

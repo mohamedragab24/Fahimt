@@ -22,7 +22,8 @@ import {
   History,
   Smartphone,
   GraduationCap,
-  ImageIcon
+  ImageIcon,
+  Wand2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -59,6 +60,7 @@ const menuItems = [
 
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+  { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "إدارة المفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
