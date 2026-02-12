@@ -20,8 +20,8 @@
     },
     {
       "id": "landing-bg",
-      "description": "Person reading book with lightbulb mood",
-      "imageUrl": "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=1920",
+      "description": "Person lying down reading book with glowing lightbulb",
+      "imageUrl": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920",
       "imageHint": "book lightbulb"
     }
   ]

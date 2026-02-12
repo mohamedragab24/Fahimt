@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -62,7 +61,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10">
+    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-6 md:p-12 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] border-2 border-primary/5">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-48 -mt-48 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
@@ -109,94 +108,96 @@ export default function HomePage() {
 
 function LandingPage({ router }: { router: any }) {
   const [searchValue, setSearchValue] = useState("");
-  const bgImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=1920";
+  const bgImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920";
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      {/* Header - Fixed & Balanced */}
-      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-6 flex items-center justify-between">
-        {/* Left Side: Buttons */}
-        <div className="flex items-center gap-2 md:gap-4 order-3 md:order-1">
+      {/* Header - Transparent & Balanced */}
+      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-8 flex items-center justify-between">
+        <div className="flex items-center gap-4 md:gap-6 order-3 md:order-1">
           <Button 
             onClick={() => router.push('/login')} 
-            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-8 py-4 md:py-6 text-sm md:text-lg shadow-lg transition-transform hover:scale-105"
+            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-10 py-6 text-sm md:text-xl shadow-2xl transition-all hover:scale-105 active:scale-95"
           >
             حساب جديد
           </Button>
           <Button 
             variant="ghost" 
             onClick={() => router.push('/login')} 
-            className="bg-white/10 hover:bg-white/20 text-white font-black rounded-full px-4 md:px-8 py-4 md:py-6 text-sm md:text-lg backdrop-blur-md"
+            className="bg-white/10 hover:bg-white/20 text-white font-black rounded-full px-6 md:px-10 py-6 text-sm md:text-xl backdrop-blur-xl border border-white/10 shadow-lg"
           >
             دخول
           </Button>
         </div>
 
-        {/* Center: Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-8 text-white/90 font-bold text-lg order-2">
-          <Link href="/requests" className="hover:text-primary transition-colors flex items-center gap-2">
-            تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
+        <nav className="hidden lg:flex items-center gap-10 text-white/90 font-black text-xl order-2">
+          <Link href="/requests" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
+            تصفح الاستفهامات <MessageSquare className="h-6 w-6" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-colors flex items-center gap-2">
-            أعمال المفهمين <Users2 className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
+            أعمال المفهمين <Users2 className="h-6 w-6" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-colors flex items-center gap-2">
-            المفهمين <GraduationCap className="h-5 w-5" />
+          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
+            المفهمين <GraduationCap className="h-6 w-6" />
           </Link>
         </nav>
 
-        {/* Right Side: Logo */}
-        <div className="flex items-center gap-3 order-1 md:order-3">
+        <div className="flex items-center gap-4 order-1 md:order-3">
           <div className="flex flex-col items-end">
-            <span className="text-2xl md:text-3xl font-black font-headline text-white leading-tight">فهمني</span>
-            <div className="flex gap-0.5">
-              <span className="w-1 h-1 bg-accent rounded-full"></span>
-              <span className="w-1 h-1 bg-accent rounded-full"></span>
-              <span className="w-1 h-1 bg-accent rounded-full"></span>
+            <span className="text-3xl md:text-4xl font-black font-headline text-white leading-tight tracking-tighter drop-shadow-lg">فهمني</span>
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></span>
+              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse delay-75"></span>
+              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse delay-150"></span>
             </div>
           </div>
-          <div className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-primary rounded-2xl shadow-xl border-2 border-white/20">
-            <span className="text-white font-black text-2xl md:text-3xl">ف</span>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white shadow-sm"></div>
+          <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-primary rounded-2xl shadow-[0_10px_30px_rgba(41,182,246,0.4)] border-2 border-white/30 transform rotate-3">
+            <span className="text-white font-black text-3xl md:text-4xl">ف</span>
+            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent rounded-full border-2 border-white shadow-md"></div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - Optimized for Desktop Full Image */}
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
             src={bgImage}
-            alt="Fahmani Hero"
+            alt="Fahmani Background"
             fill
             priority
-            className="object-cover object-center brightness-[0.35]"
-            data-ai-hint="book lightbulb"
+            className="object-cover object-center brightness-[0.4]"
+            data-ai-hint="person reading"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
         </div>
 
-        <div className="relative z-10 space-y-10 max-w-5xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-          <h1 className="text-4xl md:text-[5.5rem] font-black font-headline text-white tracking-tight drop-shadow-2xl leading-tight">
-            اول منصة عربية لخدمات <br className="hidden md:block" />
-            <span className="text-primary">الشرح الفوري</span>
-          </h1>
-          <p className="text-xl md:text-3xl text-zinc-200 font-bold drop-shadow-lg max-w-3xl mx-auto">
-            شروحات مباشرة تُقدَّم خصيصاً من أجلك، في أي وقت ومن أي مكان.
-          </p>
+        <div className="relative z-10 space-y-12 max-w-6xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          <div className="space-y-6">
+            <h1 className="text-5xl md:text-[6.5rem] font-black font-headline text-white tracking-tighter drop-shadow-[0_10px_50px_rgba(0,0,0,0.5)] leading-[1.1]">
+              اول منصة عربية لخدمات <br className="hidden md:block" />
+              <span className="text-primary text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent drop-shadow-none">الشرح الفوري</span>
+            </h1>
+            <p className="text-2xl md:text-4xl text-zinc-200 font-bold drop-shadow-xl max-w-4xl mx-auto leading-relaxed">
+              شروحات مباشرة تُقدَّم خصيصاً من أجلك، في أي وقت ومن أي مكان.
+            </p>
+          </div>
 
-          {/* Search Bar - Balanced Layout */}
-          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-3xl overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.3)] p-2 border-4 border-white/10 backdrop-blur-sm transition-transform hover:scale-[1.01]">
-            <Input 
-              placeholder="أدخل عنوان الموضوع الذي تريد فهمه..." 
-              className="flex-1 h-16 border-none shadow-none text-lg md:text-2xl font-bold text-zinc-700 px-4 md:px-10 text-right focus-visible:ring-0 placeholder:text-zinc-400"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-            />
+          {/* Centered Search Bar */}
+          <div className="mt-16 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center bg-white/90 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] p-3 border-4 border-white/20 transition-all hover:scale-[1.01] group">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute right-8 top-1/2 -translate-y-1/2 text-primary h-8 w-8 group-hover:scale-110 transition-transform" />
+              <Input 
+                placeholder="أدخل عنوان الموضوع الذي تريد فهمه الآن..." 
+                className="w-full h-20 border-none shadow-none text-xl md:text-3xl font-black text-zinc-800 pr-20 pl-8 text-right focus-visible:ring-0 placeholder:text-zinc-400 placeholder:font-bold bg-transparent"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+            </div>
             <Button 
               size="lg" 
               onClick={() => router.push('/login')}
-              className="bg-primary hover:bg-primary/90 text-white font-black text-lg md:text-2xl h-14 md:h-16 px-6 md:px-12 rounded-2xl shadow-lg transition-all active:scale-95 ml-1"
+              className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-black text-2xl md:text-3xl h-20 px-16 rounded-[2rem] shadow-2xl transition-all active:scale-95 mt-4 md:mt-0"
             >
               استفهم الآن
             </Button>
@@ -204,25 +205,26 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 bg-zinc-50">
-        <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
+      {/* Basic Features Section */}
+      <section className="py-32 bg-zinc-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+        <div className="container relative z-10 px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
           <LandingFeature 
             icon={Video} 
             title="بث مباشر فوري" 
-            desc="تواصل صوت وصورة مع المدرس في غرف مشفرة وخاصة لضمان أقصى استفادة."
+            desc="تواصل صوت وصورة مع المدرس في غرف مشفرة وخاصة لضمان أقصى استفادة تعليمية."
             color="primary"
           />
           <LandingFeature 
             icon={ShieldCheck} 
             title="مفهمين موثقين" 
-            desc="نحن نختار النخبة؛ كل مدرس يمر بعملية تدقيق صارمة قبل الانضمام لنا."
+            desc="نحن نختار النخبة؛ كل مدرس يمر بعملية تدقيق صارمة ومراجعة شاملة قبل الانضمام لنا."
             color="accent"
           />
           <LandingFeature 
             icon={BadgeCent} 
             title="نظام مالي آمن" 
-            desc="أنت المتحكم في الميزانية؛ ادفع فقط مقابل ما تفهمه وبكل سهولة."
+            desc="أنت المتحكم في الميزانية؛ ادفع فقط مقابل ما تفهمه وبكل سهولة عبر محفظتك الإلكترونية."
             color="primary"
           />
         </div>
@@ -236,12 +238,14 @@ function LandingFeature({ icon: Icon, title, desc, color }: any) {
   const hoverClass = color === 'primary' ? 'hover:border-primary shadow-primary/5' : 'hover:border-accent shadow-accent/5';
   
   return (
-    <Card className={`rounded-[3rem] p-10 border-2 transition-all text-center space-y-6 bg-white shadow-xl ${hoverClass} group cursor-default`}>
-      <div className={`w-20 h-20 ${colorClass} rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:scale-110`}>
-        <Icon size={40} />
+    <Card className={`rounded-[3.5rem] p-12 border-2 transition-all text-center space-y-8 bg-white shadow-2xl ${hoverClass} group cursor-default hover:-translate-y-2`}>
+      <div className={`w-24 h-24 ${colorClass} rounded-[2rem] flex items-center justify-center mx-auto transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg`}>
+        <Icon size={48} />
       </div>
-      <h3 className="text-3xl font-black text-zinc-900">{title}</h3>
-      <p className="text-muted-foreground text-lg leading-relaxed font-bold">{desc}</p>
+      <div className="space-y-4">
+        <h3 className="text-3xl font-black text-zinc-900 tracking-tight">{title}</h3>
+        <p className="text-zinc-500 text-xl leading-relaxed font-bold">{desc}</p>
+      </div>
     </Card>
   );
 }
