@@ -112,24 +112,27 @@ function LandingPage({ router }: { router: any }) {
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      <header className="absolute top-0 left-0 w-full z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* Header - Fixed & Balanced */}
+      <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-6 flex items-center justify-between">
+        {/* Left Side: Buttons */}
+        <div className="flex items-center gap-2 md:gap-4 order-3 md:order-1">
           <Button 
             onClick={() => router.push('/login')} 
-            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 py-6 text-lg shadow-lg"
+            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-8 py-4 md:py-6 text-sm md:text-lg shadow-lg transition-transform hover:scale-105"
           >
             حساب جديد
           </Button>
           <Button 
             variant="ghost" 
             onClick={() => router.push('/login')} 
-            className="bg-zinc-200/50 hover:bg-zinc-200 text-zinc-600 font-black rounded-full px-8 py-6 text-lg"
+            className="bg-white/10 hover:bg-white/20 text-white font-black rounded-full px-4 md:px-8 py-4 md:py-6 text-sm md:text-lg backdrop-blur-md"
           >
             دخول
           </Button>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-white font-bold text-lg">
+        {/* Center: Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-8 text-white/90 font-bold text-lg order-2">
           <Link href="/requests" className="hover:text-primary transition-colors flex items-center gap-2">
             تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
           </Link>
@@ -141,59 +144,66 @@ function LandingPage({ router }: { router: any }) {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        {/* Right Side: Logo */}
+        <div className="flex items-center gap-3 order-1 md:order-3">
           <div className="flex flex-col items-end">
-            <span className="text-3xl font-black font-headline text-primary leading-tight">فهمني</span>
+            <span className="text-2xl md:text-3xl font-black font-headline text-white leading-tight">فهمني</span>
             <div className="flex gap-0.5">
               <span className="w-1 h-1 bg-accent rounded-full"></span>
               <span className="w-1 h-1 bg-accent rounded-full"></span>
               <span className="w-1 h-1 bg-accent rounded-full"></span>
             </div>
           </div>
-          <div className="relative w-10 h-10 flex items-center justify-center bg-primary rounded-xl shadow-md">
-            <span className="text-white font-black text-2xl">ف</span>
+          <div className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-primary rounded-2xl shadow-xl border-2 border-white/20">
+            <span className="text-white font-black text-2xl md:text-3xl">ف</span>
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white shadow-sm"></div>
           </div>
         </div>
       </header>
 
-      <section className="relative h-screen flex flex-col items-center justify-center text-center px-4">
+      {/* Hero Section */}
+      <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
             src={bgImage}
             alt="Fahmani Hero"
             fill
-            className="object-cover brightness-[0.4]"
+            priority
+            className="object-cover object-center brightness-[0.35]"
             data-ai-hint="book lightbulb"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
         </div>
 
-        <div className="relative z-10 space-y-8 max-w-5xl">
-          <h1 className="text-5xl md:text-[5.5rem] font-black font-headline text-white tracking-tight drop-shadow-2xl leading-tight">
-            اول منصة عربية لخدمات الشرح الفوري
+        <div className="relative z-10 space-y-10 max-w-5xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          <h1 className="text-4xl md:text-[5.5rem] font-black font-headline text-white tracking-tight drop-shadow-2xl leading-tight">
+            اول منصة عربية لخدمات <br className="hidden md:block" />
+            <span className="text-primary">الشرح الفوري</span>
           </h1>
-          <p className="text-2xl md:text-4xl text-zinc-200 font-bold drop-shadow-lg">
-            شروحات مباشرة تُقدَّم خصيصاً من أجلك
+          <p className="text-xl md:text-3xl text-zinc-200 font-bold drop-shadow-lg max-w-3xl mx-auto">
+            شروحات مباشرة تُقدَّم خصيصاً من أجلك، في أي وقت ومن أي مكان.
           </p>
 
-          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-2xl p-2 border-4 border-white/20 backdrop-blur-md">
-            <Button 
-              size="lg" 
-              onClick={() => router.push('/login')}
-              className="bg-primary hover:bg-primary/90 text-white font-black text-2xl h-16 px-10 rounded-xl shadow-inner transition-transform active:scale-95"
-            >
-              استفهم الآن
-            </Button>
+          {/* Search Bar - Balanced Layout */}
+          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-3xl overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.3)] p-2 border-4 border-white/10 backdrop-blur-sm transition-transform hover:scale-[1.01]">
             <Input 
-              placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
-              className="flex-1 h-16 border-none shadow-none text-2xl font-bold text-zinc-700 px-8 text-right focus-visible:ring-0 placeholder:text-zinc-400"
+              placeholder="أدخل عنوان الموضوع الذي تريد فهمه..." 
+              className="flex-1 h-16 border-none shadow-none text-lg md:text-2xl font-bold text-zinc-700 px-4 md:px-10 text-right focus-visible:ring-0 placeholder:text-zinc-400"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
             />
+            <Button 
+              size="lg" 
+              onClick={() => router.push('/login')}
+              className="bg-primary hover:bg-primary/90 text-white font-black text-lg md:text-2xl h-14 md:h-16 px-6 md:px-12 rounded-2xl shadow-lg transition-all active:scale-95 ml-1"
+            >
+              استفهم الآن
+            </Button>
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
       <section className="py-24 bg-zinc-50">
         <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
           <LandingFeature 
