@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -31,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription as UIDialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,6 +42,9 @@ import { refineRequest } from "@/ai/flows/refine-request-flow";
 import Link from "next/link";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+
+// Alias for DialogDescription to avoid any conflicts
+const DialogDescription = UIDialogDescription;
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -108,51 +112,49 @@ export default function HomePage() {
 
 function LandingPage({ router }: { router: any }) {
   const [searchValue, setSearchValue] = useState("");
-  const bgImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920";
+  const bgImage = "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920";
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
       <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-4 md:gap-6 order-3 md:order-1">
+        {/* Left Side: Auth Buttons */}
+        <div className="flex items-center gap-4 order-1">
           <Button 
             onClick={() => router.push('/login')} 
-            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-10 py-6 text-sm md:text-xl shadow-2xl transition-all hover:scale-105 active:scale-95"
+            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 py-6 text-xl shadow-2xl transition-all hover:scale-105 active:scale-95"
           >
             حساب جديد
           </Button>
           <Button 
             variant="ghost" 
             onClick={() => router.push('/login')} 
-            className="bg-white/10 hover:bg-white/20 text-white font-black rounded-full px-6 md:px-10 py-6 text-sm md:text-xl backdrop-blur-xl border border-white/10 shadow-lg"
+            className="text-white/80 hover:text-white font-black rounded-full px-8 py-6 text-xl transition-all"
           >
             دخول
           </Button>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-10 text-white/90 font-black text-xl order-2">
-          <Link href="/requests" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
-            تصفح الاستفهامات <MessageSquare className="h-6 w-6" />
+        {/* Middle Side: Nav Links */}
+        <nav className="hidden lg:flex items-center gap-8 text-white font-black text-xl order-2">
+          <Link href="/requests" className="hover:text-primary transition-all flex items-center gap-2">
+            تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
-            أعمال المفهمين <Users2 className="h-6 w-6" />
+          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-2">
+            أعمال المفهمين <Users2 className="h-5 w-5" />
           </Link>
-          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-3 drop-shadow-md">
-            المفهمين <GraduationCap className="h-6 w-6" />
+          <Link href="/teachers" className="hover:text-primary transition-all flex items-center gap-2">
+            المفهمين <GraduationCap className="h-5 w-5" />
           </Link>
         </nav>
 
-        <div className="flex items-center gap-4 order-1 md:order-3">
+        {/* Right Side: Logo */}
+        <div className="flex items-center gap-4 order-3">
           <div className="flex flex-col items-end">
-            <span className="text-3xl md:text-4xl font-black font-headline text-white leading-tight tracking-tighter drop-shadow-lg">فهمني</span>
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></span>
-              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse delay-75"></span>
-              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse delay-150"></span>
-            </div>
+            <span className="text-4xl font-black font-headline text-white leading-tight tracking-tighter drop-shadow-lg">فهمني</span>
           </div>
-          <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-primary rounded-2xl shadow-[0_10px_30px_rgba(41,182,246,0.4)] border-2 border-white/30 transform rotate-3">
-            <span className="text-white font-black text-3xl md:text-4xl">ف</span>
-            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent rounded-full border-2 border-white shadow-md"></div>
+          <div className="relative w-12 h-12 flex items-center justify-center bg-primary rounded-2xl shadow-xl border-2 border-white/30 transform rotate-3">
+            <span className="text-white font-black text-3xl">ف</span>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border border-white shadow-md"></div>
           </div>
         </div>
       </header>
@@ -164,64 +166,58 @@ function LandingPage({ router }: { router: any }) {
             alt="Fahmani Background"
             fill
             priority
-            className="object-cover object-center brightness-[0.4]"
+            className="object-cover object-center brightness-[0.5]"
             data-ai-hint="book lightbulb"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
-        <div className="relative z-10 space-y-12 max-w-6xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-[6.5rem] font-black font-headline text-white tracking-tighter drop-shadow-[0_10px_50px_rgba(0,0,0,0.5)] leading-[1.1]">
-              اول منصة عربية لخدمات <br className="hidden md:block" />
-              <span className="text-primary text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent drop-shadow-none">الشرح الفوري</span>
+        <div className="relative z-10 space-y-10 max-w-6xl px-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          <div className="space-y-4">
+            <h1 className="text-5xl md:text-7xl font-black font-headline text-white tracking-tight drop-shadow-2xl">
+              اول منصة عربية لخدمات الشرح الفوري
             </h1>
-            <p className="text-2xl md:text-4xl text-zinc-200 font-bold drop-shadow-xl max-w-4xl mx-auto leading-relaxed">
-              شروحات مباشرة تُقدَّم خصيصاً من أجلك، في أي وقت ومن أي مكان.
+            <p className="text-2xl md:text-4xl text-zinc-100 font-bold drop-shadow-xl">
+              شروحات مباشرة تُقدَّم خصيصاً من أجلك
             </p>
           </div>
 
-          <div className="mt-16 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center bg-white/90 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] p-3 border-4 border-white/20 transition-all hover:scale-[1.01] group">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute right-8 top-1/2 -translate-y-1/2 text-primary h-8 w-8 group-hover:scale-110 transition-transform" />
+          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-2">
+            <Button 
+              size="lg" 
+              onClick={() => router.push('/login')}
+              className="bg-primary hover:bg-primary/90 text-white font-black text-2xl h-16 px-12 rounded-xl transition-all active:scale-95"
+            >
+              استفهم الآن
+            </Button>
+            <div className="flex-1">
               <Input 
-                placeholder="أدخل عنوان الموضوع الذي تريد فهمه الآن..." 
-                className="w-full h-20 border-none shadow-none text-xl md:text-3xl font-black text-zinc-800 pr-20 pl-8 text-right focus-visible:ring-0 placeholder:text-zinc-400 placeholder:font-bold bg-transparent"
+                placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
+                className="w-full h-16 border-none shadow-none text-xl font-bold text-zinc-800 px-8 text-right focus-visible:ring-0 placeholder:text-zinc-400 bg-transparent"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />
             </div>
-            <Button 
-              size="lg" 
-              onClick={() => router.push('/login')}
-              className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-black text-2xl md:text-3xl h-20 px-16 rounded-[2rem] shadow-2xl transition-all active:scale-95 mt-4 md:mt-0"
-            >
-              استفهم الآن
-            </Button>
           </div>
         </div>
       </section>
 
-      <section className="py-32 bg-zinc-50 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-        <div className="container relative z-10 px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
+      <section className="py-24 bg-zinc-50 relative">
+        <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
           <LandingFeature 
             icon={Video} 
             title="بث مباشر فوري" 
             desc="تواصل صوت وصورة مع المدرس في غرف مشفرة وخاصة لضمان أقصى استفادة تعليمية."
-            color="primary"
           />
           <LandingFeature 
             icon={ShieldCheck} 
             title="مفهمين موثقين" 
             desc="نحن نختار النخبة؛ كل مدرس يمر بعملية تدقيق صارمة ومراجعة شاملة قبل الانضمام لنا."
-            color="accent"
           />
           <LandingFeature 
             icon={BadgeCent} 
             title="نظام مالي آمن" 
             desc="أنت المتحكم في الميزانية؛ ادفع فقط مقابل ما تفهمه وبكل سهولة عبر محفظتك الإلكترونية."
-            color="primary"
           />
         </div>
       </section>
@@ -229,18 +225,15 @@ function LandingPage({ router }: { router: any }) {
   );
 }
 
-function LandingFeature({ icon: Icon, title, desc, color }: any) {
-  const colorClass = color === 'primary' ? 'bg-primary/10 text-primary border-primary/10' : 'bg-accent/10 text-accent border-accent/10';
-  const hoverClass = color === 'primary' ? 'hover:border-primary shadow-primary/5' : 'hover:border-accent shadow-accent/5';
-  
+function LandingFeature({ icon: Icon, title, desc }: any) {
   return (
-    <Card className={`rounded-[3.5rem] p-12 border-2 transition-all text-center space-y-8 bg-white shadow-2xl ${hoverClass} group cursor-default hover:-translate-y-2`}>
-      <div className={`w-24 h-24 ${colorClass} rounded-[2rem] flex items-center justify-center mx-auto transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg`}>
-        <Icon size={48} />
+    <Card className="rounded-[2.5rem] p-10 border-2 hover:border-primary transition-all text-center space-y-6 bg-white shadow-xl group cursor-default">
+      <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary transition-transform group-hover:scale-110">
+        <Icon size={40} />
       </div>
-      <div className="space-y-4">
-        <h3 className="text-3xl font-black text-zinc-900 tracking-tight">{title}</h3>
-        <p className="text-zinc-500 text-xl leading-relaxed font-bold">{desc}</p>
+      <div className="space-y-2">
+        <h3 className="text-2xl font-black text-zinc-900">{title}</h3>
+        <p className="text-zinc-500 text-lg leading-relaxed font-bold">{desc}</p>
       </div>
     </Card>
   );
