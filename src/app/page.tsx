@@ -64,6 +64,13 @@ export default function HomePage() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  // جلب إعدادات الموقع العامة (للصور وغيرها)
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return doc(firestore, "users", user.uid);
@@ -74,11 +81,11 @@ export default function HomePage() {
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-black animate-pulse text-primary text-2xl">جاري التحميل...</div>;
 
   if (!user || !profile) {
-    return <LandingPage router={router} />;
+    return <LandingPage router={router} settings={settings} />;
   }
 
   return (
-    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
+    <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-6 md:p-12 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] border-2 border-primary/5">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-48 -mt-48 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
@@ -118,23 +125,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      {profile.role === "mustafhem" ? <StudentView profile={profile} /> : <TeacherView profile={profile} />}
+      {profile.role === "mustafhem" ? <StudentView profile={profile} settings={settings} /> : <TeacherView profile={profile} settings={settings} />}
     </div>
   );
 }
 
-function LandingPage({ router }: { router: any }) {
+function LandingPage({ router, settings }: { router: any, settings: any }) {
   const [searchValue, setSearchValue] = useState("");
-  const firestore = useFirestore();
-  
-  // جلب روابط الصور من Firebase ديناميكياً
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, "settings", "general");
-  }, [firestore]);
-  
-  const { data: settings } = useDoc(settingsRef);
-
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
 
   return (
@@ -244,7 +241,7 @@ function LandingPage({ router }: { router: any }) {
   );
 }
 
-function StudentView({ profile }: { profile: any }) {
+function StudentView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -344,11 +341,16 @@ function StudentView({ profile }: { profile: any }) {
     });
   };
 
+  const heroImage = settings?.studentHero || "https://picsum.photos/seed/learn/1000/1000";
+
   return (
     <div className="space-y-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="flex flex-col items-center justify-center p-10 md:p-16 bg-gradient-to-br from-primary via-primary to-accent rounded-[3.5rem] text-white shadow-2xl text-center space-y-8 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://picsum.photos/seed/learn/1000/1000')] bg-cover transition-transform group-hover:scale-110 duration-1000"></div>
+          <div 
+            className="absolute top-0 left-0 w-full h-full opacity-10 bg-cover transition-transform group-hover:scale-110 duration-1000"
+            style={{ backgroundImage: `url('${heroImage}')` }}
+          ></div>
           <h2 className="text-4xl md:text-5xl font-black font-headline max-w-4xl leading-tight relative z-10 drop-shadow-xl">
             إيه اللي واقف معاك؟ <br/> اسأل وهتلاقي اللي يفهِّمك بجد
           </h2>
@@ -502,7 +504,7 @@ function StudentView({ profile }: { profile: any }) {
   );
 }
 
-function TeacherView({ profile }: { profile: any }) {
+function TeacherView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [filterCategory, setFilterCategory] = useState("all");
