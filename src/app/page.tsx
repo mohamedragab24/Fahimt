@@ -16,38 +16,31 @@ import {
   Upload, 
   FileText, 
   X,
-  ArrowLeft,
   GraduationCap,
   Users2,
   Video,
   Wallet,
   Star,
   Activity,
-  ArrowRight,
-  HelpCircle,
-  Zap,
-  Globe,
-  Check,
-  Search,
-  Wand2,
-  PieChart,
   Bot,
-  MessageSquare
+  MessageSquare,
+  Wand2,
+  Search
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, getDocs } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -115,10 +108,10 @@ export default function HomePage() {
 
 function LandingPage({ router }: { router: any }) {
   const [searchValue, setSearchValue] = useState("");
+  const bgImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=1920";
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      {/* Custom Header from the design */}
       <header className="absolute top-0 left-0 w-full z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button 
@@ -136,7 +129,7 @@ function LandingPage({ router }: { router: any }) {
           </Button>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-zinc-800 font-bold text-lg">
+        <nav className="hidden md:flex items-center gap-8 text-white font-bold text-lg">
           <Link href="/requests" className="hover:text-primary transition-colors flex items-center gap-2">
             تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
           </Link>
@@ -164,16 +157,14 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </header>
 
-      {/* Hero Section based on the image */}
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4">
-        {/* Background Image Placeholder - using a suitable study/reading image */}
         <div className="absolute inset-0 z-0">
           <Image 
-            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1920" 
+            src={bgImage}
             alt="Fahmani Hero"
             fill
             className="object-cover brightness-[0.4]"
-            data-ai-hint="student studying"
+            data-ai-hint="book lightbulb"
           />
         </div>
 
@@ -203,7 +194,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
-      {/* Additional Features Section (simplified) */}
       <section className="py-24 bg-zinc-50">
         <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
           <LandingFeature 
@@ -226,19 +216,6 @@ function LandingPage({ router }: { router: any }) {
           />
         </div>
       </section>
-    </div>
-  );
-}
-
-function Step({ icon: Icon, number, title, desc, color }: any) {
-  return (
-    <div className="text-center space-y-6 relative group">
-      <div className={`w-24 h-24 ${color} text-white rounded-[2rem] flex items-center justify-center mx-auto text-3xl font-black shadow-2xl relative z-10 transition-transform group-hover:scale-110 group-hover:rotate-3`}>
-        <Icon size={40} />
-        <span className="absolute -top-3 -right-3 bg-white text-zinc-900 w-10 h-10 rounded-full border-4 border-primary text-sm flex items-center justify-center font-black shadow-lg">{number}</span>
-      </div>
-      <h3 className="text-2xl font-black text-zinc-900">{title}</h3>
-      <p className="text-muted-foreground text-lg font-bold leading-relaxed">{desc}</p>
     </div>
   );
 }
