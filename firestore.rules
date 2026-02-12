@@ -70,6 +70,12 @@ service cloud.firestore {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
+    match /settings/{settingId} {
+      // السماح بقراءة الإعدادات العامة للجميع لعرض الخلفية واللوجو
+      allow read: if settingId == "general" || isAdmin();
+      allow write: if isAdmin();
+    }
+
     match /adminLogs/{logId} {
       allow read, write: if isAdmin();
     }
