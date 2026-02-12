@@ -112,7 +112,6 @@ function LandingPage({ router }: { router: any }) {
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      {/* Header - Transparent & Balanced */}
       <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-12 py-8 flex items-center justify-between">
         <div className="flex items-center gap-4 md:gap-6 order-3 md:order-1">
           <Button 
@@ -158,7 +157,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </header>
 
-      {/* Hero Section - Optimized for Desktop Full Image */}
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
@@ -167,7 +165,7 @@ function LandingPage({ router }: { router: any }) {
             fill
             priority
             className="object-cover object-center brightness-[0.4]"
-            data-ai-hint="person reading"
+            data-ai-hint="book lightbulb"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
         </div>
@@ -183,7 +181,6 @@ function LandingPage({ router }: { router: any }) {
             </p>
           </div>
 
-          {/* Centered Search Bar */}
           <div className="mt-16 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center bg-white/90 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] p-3 border-4 border-white/20 transition-all hover:scale-[1.01] group">
             <div className="relative flex-1 w-full">
               <Search className="absolute right-8 top-1/2 -translate-y-1/2 text-primary h-8 w-8 group-hover:scale-110 transition-transform" />
@@ -205,7 +202,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
-      {/* Basic Features Section */}
       <section className="py-32 bg-zinc-50 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
         <div className="container relative z-10 px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
