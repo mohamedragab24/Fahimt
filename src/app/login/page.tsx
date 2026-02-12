@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useFirebase, useUser } from "@/firebase";
+import { useFirebase, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -30,6 +31,12 @@ export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
     if (user && !isUserLoading) {
@@ -111,9 +118,15 @@ export default function LoginPage() {
       <Card className="w-full max-w-lg shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-t-[12px] border-primary rounded-[3rem] bg-white overflow-hidden relative">
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
         <CardHeader className="text-center space-y-4 pt-12 relative z-10">
-          <div className="mx-auto bg-primary w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl relative group transition-transform hover:scale-110">
-            <span className="text-white font-black text-4xl">ف</span>
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full border-4 border-white shadow-md group-hover:animate-bounce"></div>
+          <div className="mx-auto flex flex-col items-center gap-4">
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="h-20 w-auto object-contain animate-in zoom-in" />
+            ) : (
+              <div className="bg-primary w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl relative group transition-transform hover:scale-110">
+                <span className="text-white font-black text-4xl">ف</span>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full border-4 border-white shadow-md"></div>
+              </div>
+            )}
           </div>
           <div>
             <CardTitle className="text-4xl font-black font-headline text-primary tracking-tight">

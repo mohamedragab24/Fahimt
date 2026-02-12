@@ -8,7 +8,6 @@ import {
   LogOut,
   HelpCircle,
   Home,
-  Sparkles,
   X,
   LayoutDashboard,
   Users,
@@ -80,6 +79,12 @@ export function AppSidebar() {
   const firestore = useFirestore();
   const { toggleSidebar, setOpenMobile } = useSidebar();
 
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -114,10 +119,14 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 md:p-6">
         <div className="flex items-center justify-between w-full">
           <Link href="/" onClick={closeSidebar} className="flex items-center gap-3 overflow-hidden group">
-            <div className="relative w-10 h-10 min-w-[40px] flex items-center justify-center bg-primary rounded-xl shadow-lg transition-transform group-hover:scale-110">
-              <span className="text-white font-black text-2xl">ف</span>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white"></div>
-            </div>
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="h-10 w-auto object-contain transition-transform group-hover:scale-110" />
+            ) : (
+              <div className="relative w-10 h-10 min-w-[40px] flex items-center justify-center bg-primary rounded-xl shadow-lg transition-transform group-hover:scale-110">
+                <span className="text-white font-black text-2xl">ف</span>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white"></div>
+              </div>
+            )}
             <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
               <span className="font-black text-3xl font-headline leading-tight text-primary">فهمني</span>
               <span className="text-[10px] text-accent font-black tracking-widest uppercase">التعليم الذكي</span>
@@ -232,19 +241,6 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              asChild 
-              tooltip="اتصل بنا واتساب"
-              className="h-14 rounded-2xl hover:bg-green-50 hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-100 shadow-sm bg-white"
-            >
-              <Link href="https://wa.me/201234567890" target="_blank" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
-                <HelpCircle className="h-6 w-6 shrink-0 text-green-500" />
-                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">اتصال مباشر</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
           <SidebarSeparator className="my-2" />
           
           <SidebarMenuItem>

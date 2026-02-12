@@ -1,9 +1,10 @@
+
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Sparkles, Bell, Video, User, Settings, LogOut, ShieldCheck, LifeBuoy } from "lucide-react";
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
-import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
+import { Bell, Video, User, Settings, LogOut, ShieldCheck, LifeBuoy } from "lucide-react";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
+import { doc, collection, query, where, limit } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,13 @@ export function Header() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  // جلب إعدادات الموقع ديناميكياً (للشعار)
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -23,7 +31,6 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // إشعارات المحاضرات المقبولة
   const notificationsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     const requestsRef = collection(firestore, "requests");
@@ -38,7 +45,6 @@ export function Header() {
 
   const { data: acceptedRequests } = useCollection(notificationsQuery);
 
-  // إشعارات تذاكر الدعم التي تم الرد عليها
   const supportQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -66,10 +72,14 @@ export function Header() {
         <div className="flex items-center gap-4">
           <SidebarTrigger className="h-10 w-10 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
-            <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
-              <span className="text-white font-black text-sm">ف</span>
-              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full border border-white"></div>
-            </div>
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="h-10 w-auto transition-transform group-hover:scale-110" />
+            ) : (
+              <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
+                <span className="text-white font-black text-sm">ف</span>
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full border border-white"></div>
+              </div>
+            )}
             <span className="font-black text-2xl font-headline hidden sm:inline-block text-primary">فهمني</span>
           </Link>
         </div>
@@ -168,11 +178,7 @@ export function Header() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer flex justify-end">
                 <span className="font-black">المحفظة</span>
-                <Sparkles className="mr-2 h-4 w-4 text-accent" />
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end">
-                <span className="font-black">الإعدادات</span>
-                <Settings className="mr-2 h-4 w-4 text-primary" />
+                <Settings className="mr-2 h-4 w-4 text-accent" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="p-3 rounded-xl cursor-pointer text-destructive focus:text-destructive flex justify-end">
