@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -44,7 +45,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-// Single definition for LandingFeature to avoid duplication error
 function LandingFeature({ icon: Icon, title, desc }: any) {
   return (
     <Card className="rounded-[2.5rem] p-10 border-2 hover:border-primary transition-all text-center space-y-6 bg-white shadow-xl group cursor-default">
@@ -125,13 +125,21 @@ export default function HomePage() {
 
 function LandingPage({ router }: { router: any }) {
   const [searchValue, setSearchValue] = useState("");
-  const landingImage = PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
+  const firestore = useFirestore();
+  
+  // جلب روابط الصور من Firebase ديناميكياً
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  
+  const { data: settings } = useDoc(settingsRef);
+
+  const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
 
   return (
     <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
-      {/* Header Matching the Image Exactly */}
       <header className="absolute top-0 left-0 w-full z-50 px-4 md:px-16 py-8 flex items-center justify-between bg-transparent">
-        {/* Left Side: Auth Buttons */}
         <div className="flex items-center gap-4 order-1">
           <Button 
             onClick={() => router.push('/login')} 
@@ -148,7 +156,6 @@ function LandingPage({ router }: { router: any }) {
           </Button>
         </div>
 
-        {/* Middle Side: Nav Links with Icons */}
         <nav className="hidden lg:flex items-center gap-12 text-white font-black text-xl order-2">
           <Link href="/requests" className="hover:text-[#29B6F6] transition-all flex items-center gap-3 group">
             تصفح الاستفهامات <MessageSquare className="h-6 w-6 group-hover:scale-110" />
@@ -161,7 +168,6 @@ function LandingPage({ router }: { router: any }) {
           </Link>
         </nav>
 
-        {/* Right Side: Logo exactly like image */}
         <div className="flex items-center gap-3 order-3">
           <div className="flex flex-col items-end">
             <span className="text-5xl font-black font-headline text-[#29B6F6] leading-none tracking-tighter drop-shadow-sm">فهمني</span>
@@ -173,7 +179,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </header>
 
-      {/* Hero Section exactly like image */}
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
@@ -196,7 +201,6 @@ function LandingPage({ router }: { router: any }) {
             </p>
           </div>
 
-          {/* Search Bar exactly like image - perfectly balanced */}
           <div className="mt-20 w-full max-w-6xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-4 group transition-all hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)]">
             <Button 
               size="lg" 
@@ -217,7 +221,6 @@ function LandingPage({ router }: { router: any }) {
         </div>
       </section>
 
-      {/* Simple Features for Completion */}
       <section className="py-32 bg-zinc-50 relative">
         <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
           <LandingFeature 
@@ -460,7 +463,7 @@ function StudentView({ profile }: { profile: any }) {
       <div className="space-y-10 pt-6">
         <h3 className="text-3xl md:text-4xl font-black font-headline border-r-[12px] border-primary pr-8 text-zinc-900">طلباتك الأخيرة</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {myRequests.map((req: any) => (
+          {rawRequests?.map((req: any) => (
             <Card key={req.id} className="shadow-xl border-2 border-primary/5 hover:border-primary/40 hover:shadow-2xl transition-all rounded-[3rem] overflow-hidden bg-white group cursor-pointer" onClick={() => router.push('/requests')}>
               <CardContent className="p-10 space-y-8">
                 <div className="flex justify-between items-start">
@@ -488,7 +491,7 @@ function StudentView({ profile }: { profile: any }) {
               </CardContent>
             </Card>
           ))}
-          {myRequests.length === 0 && (
+          {(!rawRequests || rawRequests.length === 0) && (
             <div className="col-span-full py-32 text-center text-muted-foreground border-4 border-dashed rounded-[4rem] text-2xl md:text-3xl font-black bg-primary/5 opacity-40">
               لا توجد طلبات سابقة.. ابدأ بطلبك الأول الآن!
             </div>

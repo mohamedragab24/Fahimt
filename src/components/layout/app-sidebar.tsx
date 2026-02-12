@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -20,7 +21,8 @@ import {
   LifeBuoy,
   History,
   Smartphone,
-  GraduationCap
+  GraduationCap,
+  ImageIcon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,6 +66,7 @@ const adminItems = [
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
+  { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
   { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
   { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];

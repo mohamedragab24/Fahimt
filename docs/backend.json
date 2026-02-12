@@ -83,6 +83,18 @@
         "createdAt": { "type": "string" },
         "lastUpdate": { "type": "string" }
       }
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "landingBg": { "type": "string", "format": "uri" },
+        "logoUrl": { "type": "string", "format": "uri" },
+        "studentHero": { "type": "string", "format": "uri" },
+        "teacherHero": { "type": "string", "format": "uri" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -112,6 +124,10 @@
     "/supportTickets/{ticketId}": {
       "schema": "SupportTicket",
       "description": "Support tickets for user issues."
+    },
+    "/settings/{settingId}": {
+      "schema": "AppSettings",
+      "description": "Global application settings and asset links."
     }
   }
 }
