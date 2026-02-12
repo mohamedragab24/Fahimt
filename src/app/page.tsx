@@ -31,7 +31,8 @@ import {
   Search,
   Wand2,
   PieChart,
-  Bot
+  Bot,
+  MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -45,6 +46,8 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -61,7 +64,7 @@ export default function HomePage() {
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-black animate-pulse text-primary text-2xl">جاري التحميل...</div>;
 
   if (!user || !profile) {
-    return <LandingPage router={router} firestore={firestore} />;
+    return <LandingPage router={router} />;
   }
 
   return (
@@ -110,120 +113,117 @@ export default function HomePage() {
   );
 }
 
-function LandingPage({ router, firestore }: { router: any, firestore: any }) {
-  const [counts, setCounts] = useState({ users: 1500, hours: 4500, experts: 150 });
+function LandingPage({ router }: { router: any }) {
+  const [searchValue, setSearchValue] = useState("");
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-transparent">
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-20 right-10 w-80 h-80 bg-accent rounded-full blur-[120px]"></div>
+    <div className="min-h-screen bg-white font-body overflow-x-hidden" dir="rtl">
+      {/* Custom Header from the design */}
+      <header className="absolute top-0 left-0 w-full z-50 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button 
+            onClick={() => router.push('/login')} 
+            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 py-6 text-lg shadow-lg"
+          >
+            حساب جديد
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/login')} 
+            className="bg-zinc-200/50 hover:bg-zinc-200 text-zinc-600 font-black rounded-full px-8 py-6 text-lg"
+          >
+            دخول
+          </Button>
         </div>
-        <div className="container px-4 text-center space-y-12 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white px-6 py-2 rounded-full shadow-xl border-2 border-primary/10 mb-4 animate-bounce">
-            <span className="bg-accent w-2 h-2 rounded-full"></span>
-            <span className="font-black text-primary text-lg">منصة فهمني: التعليم كما يجب أن يكون</span>
+
+        <nav className="hidden md:flex items-center gap-8 text-zinc-800 font-bold text-lg">
+          <Link href="/requests" className="hover:text-primary transition-colors flex items-center gap-2">
+            تصفح الاستفهامات <MessageSquare className="h-5 w-5" />
+          </Link>
+          <Link href="/teachers" className="hover:text-primary transition-colors flex items-center gap-2">
+            أعمال المفهمين <Users2 className="h-5 w-5" />
+          </Link>
+          <Link href="/teachers" className="hover:text-primary transition-colors flex items-center gap-2">
+            المفهمين <GraduationCap className="h-5 w-5" />
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end">
+            <span className="text-3xl font-black font-headline text-primary leading-tight">فهمني</span>
+            <div className="flex gap-0.5">
+              <span className="w-1 h-1 bg-accent rounded-full"></span>
+              <span className="w-1 h-1 bg-accent rounded-full"></span>
+              <span className="w-1 h-1 bg-accent rounded-full"></span>
+            </div>
           </div>
-          <h1 className="text-6xl md:text-[9rem] font-black font-headline tracking-tighter leading-[0.9] text-zinc-900">
-            متشيلش هم.. <br/> <span className="text-primary">فهمني</span> هيفهمك
+          <div className="relative w-10 h-10 flex items-center justify-center bg-primary rounded-xl shadow-md">
+            <span className="text-white font-black text-2xl">ف</span>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white shadow-sm"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section based on the image */}
+      <section className="relative h-screen flex flex-col items-center justify-center text-center px-4">
+        {/* Background Image Placeholder - using a suitable study/reading image */}
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1920" 
+            alt="Fahmani Hero"
+            fill
+            className="object-cover brightness-[0.4]"
+            data-ai-hint="student studying"
+          />
+        </div>
+
+        <div className="relative z-10 space-y-8 max-w-5xl">
+          <h1 className="text-5xl md:text-[5.5rem] font-black font-headline text-white tracking-tight drop-shadow-2xl leading-tight">
+            اول منصة عربية لخدمات الشرح الفوري
           </h1>
-          <p className="text-2xl md:text-3xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-bold">
-            أول منصة عربية تربطك بأفضل "المفهمين" الموثقين في بث مباشر فوري. اسأل، افهم، وتفوق.
+          <p className="text-2xl md:text-4xl text-zinc-200 font-bold drop-shadow-lg">
+            شروحات مباشرة تُقدَّم خصيصاً من أجلك
           </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 pt-6">
-            <Button size="lg" onClick={() => router.push('/login')} className="h-20 px-16 rounded-[2rem] text-2xl font-black shadow-[0_20px_50px_rgba(41,182,246,0.3)] hover:scale-105 transition-all bg-primary hover:bg-primary/90">
-              ابدأ رحلتك الآن <ArrowLeft className="mr-4 h-8 w-8" />
+
+          <div className="mt-12 w-full max-w-4xl mx-auto flex items-center bg-white rounded-2xl overflow-hidden shadow-2xl p-2 border-4 border-white/20 backdrop-blur-md">
+            <Button 
+              size="lg" 
+              onClick={() => router.push('/login')}
+              className="bg-primary hover:bg-primary/90 text-white font-black text-2xl h-16 px-10 rounded-xl shadow-inner transition-transform active:scale-95"
+            >
+              استفهم الآن
             </Button>
-            <Button variant="outline" size="lg" onClick={() => router.push('/login')} className="h-20 px-16 rounded-[2rem] text-2xl font-black border-4 border-primary/20 hover:border-primary/40 hover:bg-white transition-all">
-              تسجيل دخول
-            </Button>
+            <Input 
+              placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
+              className="flex-1 h-16 border-none shadow-none text-2xl font-bold text-zinc-700 px-8 text-right focus-visible:ring-0 placeholder:text-zinc-400"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
           </div>
         </div>
       </section>
 
-      <section className="py-32 bg-white">
-        <div className="container px-4 space-y-24">
-          <div className="text-center space-y-6">
-            <h2 className="text-5xl md:text-7xl font-black text-zinc-900">كيف يعمل "فهمني"؟</h2>
-            <p className="text-muted-foreground text-2xl font-bold">4 خطوات بسيطة تفصلك عن النجاح</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <Step icon={PlusCircle} number="1" title="اطلب استفهام" desc="حدد المادة، الميزانية، وصورة المسألة." color="bg-primary" />
-            <Step icon={Users2} number="2" title="اختر مُفهماً" desc="مدرسون موثقون يتنافسون لمساعدتك." color="bg-accent" />
-            <Step icon={Video} number="3" title="ابدأ الفهم" desc="ادخل غرفة البث المباشر فوراً وبأمان." color="bg-primary" />
-            <Step icon={Check} number="4" title="قيم التجربة" desc="رأيك يهمنا لبناء مجتمع تعليمي أفضل." color="bg-accent" />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-32 container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
-        <LandingFeature 
-          icon={Video} 
-          title="بث مباشر فوري" 
-          desc="تواصل صوت وصورة مع المدرس في غرف مشفرة وخاصة لضمان أقصى استفادة."
-          color="primary"
-        />
-        <LandingFeature 
-          icon={ShieldCheck} 
-          title="مفهمين موثقين" 
-          desc="نحن نختار النخبة؛ كل مدرس يمر بعملية تدقيق صارمة قبل الانضمام لنا."
-          color="accent"
-        />
-        <LandingFeature 
-          icon={BadgeCent} 
-          title="نظام مالي آمن" 
-          desc="أنت المتحكم في الميزانية؛ ادفع فقط مقابل ما تفهمه وبكل سهولة."
-          color="primary"
-        />
-      </section>
-
-      <section className="py-32 bg-primary/5">
-        <div className="container px-4 max-w-5xl space-y-16">
-          <h2 className="text-5xl font-black text-center text-zinc-900">أسئلة قد تدور بذهنك</h2>
-          <Accordion type="single" collapsible className="w-full space-y-6">
-            <AccordionItem value="item-1" className="bg-white px-8 py-2 rounded-[2rem] border-2 border-primary/5 shadow-sm overflow-hidden">
-              <AccordionTrigger className="text-2xl font-black hover:no-underline text-primary">هل أحتاج لجهاز كمبيوتر؟</AccordionTrigger>
-              <AccordionContent className="text-xl text-muted-foreground leading-relaxed font-bold pt-4">
-                بالتأكيد لا! يمكنك استخدام "فهمني" من أي هاتف ذكي عبر المتصفح أو تطبيقنا الرسمي، الواجهة مصممة لتكون سلسة على كافة الأحجام.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2" className="bg-white px-8 py-2 rounded-[2rem] border-2 border-primary/5 shadow-sm overflow-hidden">
-              <AccordionTrigger className="text-2xl font-black hover:no-underline text-primary">كيف يتم ضمان حقي المالي؟</AccordionTrigger>
-              <AccordionContent className="text-xl text-muted-foreground leading-relaxed font-bold pt-4">
-                المبلغ يبقى معلقاً في النظام ولا يصل للمدرس إلا بعد انتهاء المحاضرة وتقييمك لها. في حال وجود أي مشكلة، فريق الدعم يعيد لك حقك فوراً.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3" className="bg-white px-8 py-2 rounded-[2rem] border-2 border-primary/5 shadow-sm overflow-hidden">
-              <AccordionTrigger className="text-2xl font-black hover:no-underline text-primary">ما هو الفرق بين المفهم والمدرس العادي؟</AccordionTrigger>
-              <AccordionContent className="text-xl text-muted-foreground leading-relaxed font-bold pt-4">
-                المفهم هو خبير متخصص لديه القدرة على تبسيط المعلومة المعقدة في وقت قياسي وبأحدث الوسائل التقنية التفاعلية.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      <section className="bg-zinc-900 text-white py-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-full h-full opacity-5 pointer-events-none">
-          <Sparkles className="absolute top-10 left-10 w-40 h-40" />
-          <Sparkles className="absolute bottom-10 right-10 w-60 h-60" />
-        </div>
-        <div className="container px-4 flex flex-col md:flex-row items-center justify-between gap-16 relative z-10">
-          <div className="space-y-6 text-center md:text-right">
-            <h2 className="text-5xl md:text-7xl font-black font-headline leading-tight">انضم لمجتمع <br/><span className="text-primary">الفهم الذكي</span></h2>
-            <p className="text-zinc-400 text-2xl font-bold">نحن نبني مستقبلاً تعليمياً يعتمد على الكفاءة والذكاء.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-12">
-            <div className="text-center p-8 bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-sm">
-              <div className="text-5xl font-black text-primary mb-2">+{counts.users.toLocaleString()}</div>
-              <div className="text-lg text-zinc-500 font-black">مستخدم نشط</div>
-            </div>
-            <div className="text-center p-8 bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-sm">
-              <div className="text-5xl font-black text-accent mb-2">+{counts.experts.toLocaleString()}</div>
-              <div className="text-lg text-zinc-500 font-black">مُفهم معتمد</div>
-            </div>
-          </div>
+      {/* Additional Features Section (simplified) */}
+      <section className="py-24 bg-zinc-50">
+        <div className="container px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <LandingFeature 
+            icon={Video} 
+            title="بث مباشر فوري" 
+            desc="تواصل صوت وصورة مع المدرس في غرف مشفرة وخاصة لضمان أقصى استفادة."
+            color="primary"
+          />
+          <LandingFeature 
+            icon={ShieldCheck} 
+            title="مفهمين موثقين" 
+            desc="نحن نختار النخبة؛ كل مدرس يمر بعملية تدقيق صارمة قبل الانضمام لنا."
+            color="accent"
+          />
+          <LandingFeature 
+            icon={BadgeCent} 
+            title="نظام مالي آمن" 
+            desc="أنت المتحكم في الميزانية؛ ادفع فقط مقابل ما تفهمه وبكل سهولة."
+            color="primary"
+          />
         </div>
       </section>
     </div>
