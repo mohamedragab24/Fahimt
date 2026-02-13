@@ -2,7 +2,7 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, doc, orderBy } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +27,12 @@ export default function AdminPendingRequests() {
   const { toast } = useToast();
   const [selectedIstifham, setSelectedIstifham] = useState<any>(null);
 
+  // تم تبسيط الاستعلام لضمان جلب كافة النتائج
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
       collection(firestore, "istifhams"), 
-      where("status", "==", "pending_approval"), 
-      orderBy("createdAt", "desc")
+      where("status", "==", "pending_approval")
     );
   }, [firestore]);
 
@@ -41,7 +41,6 @@ export default function AdminPendingRequests() {
   const handleApprove = (id: string) => {
     if (!firestore) return;
     const reqRef = doc(firestore, "istifhams", id);
-    // استخدام التحديث غير المعطل لضمان السرعة ومعالجة الأذونات
     updateDocumentNonBlocking(reqRef, { 
       status: "active",
       approvedAt: new Date().toISOString()

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
-import { collection, query, where, doc, updateDoc, addDoc, orderBy } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,8 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
   XCircle, 
-  ShieldCheck, 
-  MessageSquare, 
   User, 
   Clock, 
   Eye, 
@@ -48,14 +46,16 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
+  // جلب كافة المستخدمين غير المعتمدين بغض النظر عن الحالة لضمان الظهور
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
-    return query(collection(firestore, "users"), where("isProfileApproved", "==", false), where("status", "==", "active"));
+    return query(collection(firestore, "users"), where("isProfileApproved", "==", false));
   }, [firestore, canReadApprovals]);
 
+  // جلب كافة الاستفهامات التي تنتظر الموافقة
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
-    return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
   }, [firestore, canReadApprovals]);
 
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
@@ -64,7 +64,7 @@ export default function AdminApprovals() {
   const handleApproveProfile = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
-    updateDocumentNonBlocking(uRef, { isProfileApproved: true });
+    updateDocumentNonBlocking(uRef, { isProfileApproved: true, status: 'active' });
     
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: u.id,
@@ -247,7 +247,7 @@ export default function AdminApprovals() {
                 <DetailBox icon={BadgeCent} label="الميزانية المقترحة" value={`${selectedIstifham.amount} ج.م`} />
                 <DetailBox icon={Calendar} label="موعد المحاضرة" value={new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')} />
                 <DetailBox icon={User} label="المُستفهم" value={selectedIstifham.mustafhemName} />
-                <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.subCategory || 'عام'}`} />
+                <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.categorySub || 'عام'}`} />
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl shadow-lg text-white">اعتماد ونشر فوراً</Button>
