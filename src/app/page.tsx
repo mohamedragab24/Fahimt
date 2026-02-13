@@ -280,8 +280,10 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
   const { data: allCategories } = useCollection(categoriesQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
-  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === (allCategories?.find(m => m.name === newRequest.category)?.id)) || [];
-  const optionCategories = allCategories?.filter(c => c.type === 'option' && c.parentId === (allCategories?.find(s => s.name === newRequest.categorySub)?.id)) || [];
+  const selectedMainId = allCategories?.find(m => m.name === newRequest.category)?.id;
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === selectedMainId) || [];
+  const selectedSubId = allCategories?.find(s => s.name === newRequest.categorySub)?.id;
+  const optionCategories = allCategories?.filter(c => c.type === 'option' && c.parentId === selectedSubId) || [];
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
@@ -384,7 +386,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                 اطلب استفهام الآن
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
+            <DialogContent className="sm:max-w-[700px] rounded-[3rem] max-h-[90vh] overflow-y-auto" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black text-primary">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
                 <UIDialogDescription className="text-right text-xl font-bold text-muted-foreground">أكمل البيانات ليقوم النظام بربطك بالمفهم المناسب.</UIDialogDescription>
@@ -412,12 +414,14 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-6">
                   <div className="space-y-3">
-                    <Label className="text-sm font-black pr-2 text-primary">القسم الرئيسي</Label>
+                    <Label className="text-lg font-black pr-2 text-primary flex items-center gap-2">
+                      <Layers className="h-5 w-5" /> القسم الرئيسي
+                    </Label>
                     <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v, categorySub: "", categoryOption: ""})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
-                        <SelectValue placeholder="اختر القسم" />
+                      <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
+                        <SelectValue placeholder="اختر القسم الأساسي" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
                         {mainCategories.map((cat) => (
@@ -427,45 +431,52 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                     </Select>
                   </div>
                   
-                  <div className={`space-y-3 transition-all ${!newRequest.category ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                    <Label className="text-sm font-black pr-2 text-accent">التخصص (فرعي)</Label>
-                    <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v, categoryOption: ""})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
-                        <SelectValue placeholder="اختر التخصص" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
-                        {subCategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
-                        ))}
-                        {subCategories.length === 0 && <SelectItem value="none" disabled>لا توجد تخصصات متاحة</SelectItem>}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {newRequest.category && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                      <Label className="text-lg font-black pr-2 text-accent flex items-center gap-2">
+                        <Filter className="h-5 w-5" /> التخصص الفرعي
+                      </Label>
+                      <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v, categoryOption: ""})}>
+                        <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
+                          <SelectValue placeholder="اختر التخصص" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {subCategories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
+                          ))}
+                          {subCategories.length === 0 && <SelectItem value="none" disabled>لا توجد تخصصات متاحة</SelectItem>}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
-                  <div className={`space-y-3 transition-all ${!newRequest.categorySub ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                    <Label className="text-sm font-black pr-2 text-purple-500">تفاصيل إضافية</Label>
-                    <Select value={newRequest.categoryOption} onValueChange={(v) => setNewRequest({...newRequest, categoryOption: v})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
-                        <SelectValue placeholder="تخصص دقيق" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
-                        {optionCategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
-                        ))}
-                        {optionCategories.length === 0 && <SelectItem value="none" disabled>لا توجد خيارات</SelectItem>}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {newRequest.categorySub && optionCategories.length > 0 && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                      <Label className="text-lg font-black pr-2 text-purple-500 flex items-center gap-2">
+                        <Settings2 className="h-5 w-5" /> خيارات دقيقة
+                      </Label>
+                      <Select value={newRequest.categoryOption} onValueChange={(v) => setNewRequest({...newRequest, categoryOption: v})}>
+                        <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
+                          <SelectValue placeholder="حدد تخصصاً أدق" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {optionCategories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label htmlFor="meetingTime" className="text-xl font-black pr-2">توقيت المحاضرة</Label>
-                    <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2 focus:border-primary text-lg font-bold px-6" />
+                    <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-16 rounded-2xl border-2 focus:border-primary text-lg font-bold px-6" />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="amount" className="text-xl font-black pr-2 text-accent">الميزانية (ج.م)</Label>
-                    <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-14 rounded-2xl border-2 focus:border-accent text-lg font-bold px-6" />
+                    <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-16 rounded-2xl border-2 focus:border-accent text-lg font-bold px-6" />
                   </div>
                 </div>
                 
@@ -495,7 +506,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                   </div>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="sticky bottom-0 bg-white pt-4">
                 <Button onClick={handleCreateRequest} className="w-full py-10 text-3xl font-black rounded-3xl shadow-2xl bg-primary hover:bg-primary/90">
                   <span className="ml-4">إرسال الطلب الآن</span>
                 </Button>
