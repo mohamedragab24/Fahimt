@@ -5,13 +5,16 @@ import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function AdminSessionsReview() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [selectedRecording, setSelectedRecording] = useState<string | null>(null);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -91,7 +94,12 @@ export default function AdminSessionsReview() {
                   ) : <span className="text-muted-foreground italic text-xs font-bold">بانتظار التقييم</span>}
                 </TableCell>
                 <TableCell className="px-8 text-left">
-                  <Button variant="outline" size="sm" className="rounded-xl border-2 gap-2 font-black hover:bg-blue-50 text-blue-600 border-blue-100" onClick={() => window.open(session.recordingUrl || '#', '_blank')}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-xl border-2 gap-2 font-black hover:bg-blue-50 text-blue-600 border-blue-100" 
+                    onClick={() => setSelectedRecording(session.recordingUrl || null)}
+                  >
                     <Video size={16} /> مراجعة التسجيل
                   </Button>
                 </TableCell>
@@ -105,6 +113,32 @@ export default function AdminSessionsReview() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* مودال مراجعة التسجيل داخل المنصة */}
+      <Dialog open={!!selectedRecording} onOpenChange={() => setSelectedRecording(null)}>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[85vw] lg:max-w-[1100px] h-[85vh] p-0 overflow-hidden bg-black border-none rounded-[2.5rem] shadow-2xl" dir="rtl">
+          <DialogHeader className="p-6 bg-zinc-900 text-white border-b border-zinc-800 flex flex-row justify-between items-center space-y-0">
+            <DialogTitle className="text-2xl font-black flex items-center gap-3">
+              <Video className="text-blue-500" /> مراجعة تسجيل المحاضرة (صوت وصورة)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full bg-zinc-950 relative">
+            {selectedRecording ? (
+              <iframe 
+                src={selectedRecording} 
+                className="absolute inset-0 w-full h-full border-none"
+                allow="autoplay; fullscreen; microphone; camera; display-capture"
+                title="Recording Preview"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-4">
+                <ShieldAlert size={64} />
+                <p className="text-xl font-bold">عذراً، لا يتوفر رابط تسجيل لهذه المحاضرة حالياً.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="p-8 bg-zinc-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
         <div className="bg-blue-500/20 p-6 rounded-full">
