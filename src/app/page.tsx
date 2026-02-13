@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -178,9 +179,12 @@ function LandingPage({ router, settings }: any) {
           <Link href="/requests">الاستفهامات</Link>
           <Link href="/teachers">المفهمين</Link>
         </nav>
-        <div className="flex items-center gap-3">
-          <span className="text-4xl font-black text-white font-headline">{settings?.siteTitle || "فهمني"}</span>
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black">ف</div>
+        <div className="flex items-center">
+          {settings?.logoUrl ? (
+            <img src={settings.logoUrl} className="h-20 w-auto object-contain" alt="Logo" />
+          ) : (
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl">ف</div>
+          )}
         </div>
       </header>
 

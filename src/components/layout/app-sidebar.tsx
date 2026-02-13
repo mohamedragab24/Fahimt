@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -108,10 +109,23 @@ export function AppSidebar() {
       <SidebarHeader className="p-6">
         <div className="flex items-center justify-between w-full">
           <Link href="/" className="flex items-center gap-3 group">
-            {settings?.logoUrl ? <img src={settings.logoUrl} className="h-10 w-auto" /> : <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black">ف</div>}
-            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="font-black text-2xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
-              <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
+            {/* استبدال اللوجو بالصورة المصغرة في البداية */}
+            {settings?.miniIconUrl ? (
+              <img src={settings.miniIconUrl} className="h-8 w-8 object-contain" alt="Mini Icon" />
+            ) : (
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black shrink-0">ف</div>
+            )}
+            
+            {/* وضع اللوجو مكان الاسم فهمني للتعليم الذكي */}
+            <div className="flex items-center group-data-[collapsible=icon]:hidden">
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} className="h-12 w-auto object-contain" alt="Site Logo" />
+              ) : (
+                <div className="flex flex-col">
+                  <span className="font-black text-2xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
+                  <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
+                </div>
+              )}
             </div>
           </Link>
         </div>

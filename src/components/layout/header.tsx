@@ -75,14 +75,14 @@ export function Header() {
           <SidebarTrigger className="h-10 w-10 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-10 w-auto transition-transform group-hover:scale-110" />
+              <img src={settings.logoUrl} alt="Logo" className="h-14 w-auto transition-transform group-hover:scale-110 object-contain" />
             ) : (
               <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
                 <span className="text-white font-black text-sm">ف</span>
                 <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full border border-white"></div>
               </div>
             )}
-            <span className="font-black text-2xl font-headline hidden sm:inline-block text-primary">فهمني</span>
+            {!settings?.logoUrl && <span className="font-black text-2xl font-headline hidden sm:inline-block text-primary">فهمني</span>}
           </Link>
         </div>
 
