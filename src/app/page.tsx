@@ -109,7 +109,7 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-            <p className="text-muted-foreground text-xl md:text-2xl max-w-2xl font-bold leading-relaxed">
+            <p className="text-muted-foreground text-xl md:text-2xl font-bold leading-relaxed">
               {profile.role === "mufhem" 
                 ? "خبرتك هي رأسمالك؛ شاركها اليوم وحقق أرباحاً فورية." 
                 : "كل سؤال له جواب، وكل مسألة لها حل مع أفضل المفهمين."}
@@ -251,7 +251,15 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRequest, setNewRequest] = useState({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
+  const [newRequest, setNewRequest] = useState({ 
+    title: "", 
+    amount: "", 
+    category: "", 
+    categorySub: "", 
+    categoryOption: "", 
+    meetingTime: "", 
+    attachmentUrl: "" 
+  });
   const [fileName, setFileName] = useState("");
   const [isAiRefining, setIsAiRefining] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -320,7 +328,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
 
   const handleCreateRequest = () => {
     if (!requestsRef || !newRequest.title || !newRequest.amount || !newRequest.meetingTime || !newRequest.category) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب." });
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال جميع بيانات الطلب الأساسية." });
       return;
     }
 
@@ -328,6 +336,8 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
       title: newRequest.title,
       amount: Number(newRequest.amount),
       category: newRequest.category,
+      categorySub: newRequest.categorySub,
+      categoryOption: newRequest.categoryOption,
       status: "pending",
       studentId: profile.id,
       studentName: profile.fullName || "مستفهم",
@@ -339,7 +349,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
     });
 
     setIsDialogOpen(false);
-    setNewRequest({ title: "", amount: "", category: "", meetingTime: "", attachmentUrl: "" });
+    setNewRequest({ title: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
     setFileName("");
     toast({
       title: "تم إرسال الطلب بنجاح",
@@ -368,7 +378,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                 اطلب استفهام الآن
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
+            <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black text-primary">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
                 <UIDialogDescription className="text-right text-xl font-bold text-muted-foreground">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</UIDialogDescription>
@@ -395,28 +405,58 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-3">
-                    <Label htmlFor="category" className="text-xl font-black pr-2 text-primary">التصنيف</Label>
+                    <Label className="text-sm font-black pr-2 text-primary">قسم رئيسي</Label>
                     <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold text-lg">
-                        <SelectValue placeholder="اختر التصنيف" />
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
+                        <SelectValue placeholder="اختر القسم" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {categories?.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.name} className="font-bold text-lg py-3">{cat.name}</SelectItem>
+                        {categories?.filter(c => c.type === 'main' || !c.type).map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-3">
+                    <Label className="text-sm font-black pr-2 text-accent">قسم فرعي</Label>
+                    <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
+                        <SelectValue placeholder="اختر الفرع" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {categories?.filter(c => c.type === 'sub').map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-black pr-2 text-purple-500">خيارات</Label>
+                    <Select value={newRequest.categoryOption} onValueChange={(v) => setNewRequest({...newRequest, categoryOption: v})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
+                        <SelectValue placeholder="تخصص دقيق" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {categories?.filter(c => c.type === 'option').map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="meetingTime" className="text-xl font-black pr-2">توقيت المحاضرة</Label>
+                    <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2 focus:border-primary text-lg font-bold px-6" />
+                  </div>
+                  <div className="space-y-3">
                     <Label htmlFor="amount" className="text-xl font-black pr-2 text-accent">الميزانية (ج.م)</Label>
                     <Input id="amount" type="number" placeholder="100" value={newRequest.amount} onChange={(e) => setNewRequest({...newRequest, amount: e.target.value})} className="h-14 rounded-2xl border-2 focus:border-accent text-lg font-bold px-6" />
                   </div>
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="meetingTime" className="text-xl font-black pr-2">توقيت المحاضرة</Label>
-                  <Input id="meetingTime" type="datetime-local" value={newRequest.meetingTime} onChange={(e) => setNewRequest({...newRequest, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2 focus:border-primary text-lg font-bold px-6" />
                 </div>
                 
                 <div className="space-y-4">
@@ -586,7 +626,11 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
     if (filterOption !== "all") activeFilters.push(filterOption);
 
     if (activeFilters.length === 0) return true;
-    return activeFilters.includes(r.category);
+    
+    // التحقق من مطابقة أي من مستويات التصنيف للفلتر المختار
+    return activeFilters.every(f => 
+      r.category === f || r.categorySub === f || r.categoryOption === f
+    );
   });
 
   const avgRating = completedRequests?.length 
