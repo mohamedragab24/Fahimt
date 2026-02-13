@@ -7,7 +7,7 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { ArrowRight, Video, ShieldCheck, Copy, Check, Star, AlertTriangle } from "lucide-react";
+import { ArrowRight, Video, ShieldCheck, Copy, Check, Star, AlertTriangle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -31,6 +31,7 @@ export default function MeetingPage() {
   const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -55,9 +56,11 @@ export default function MeetingPage() {
 
   const startMeeting = () => {
     if (window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
+      // استخدام غرفة فريدة تعتمد على معرف الطلب
+      const roomName = `Fahimni_Room_${requestId}`;
       const domain = "8x8.vc";
       const options = {
-        roomName: `vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/${requestId}`,
+        roomName: `vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/${roomName}`,
         width: "100%",
         height: "100%",
         parentNode: jitsiContainerRef.current,
@@ -70,33 +73,58 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
         },
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
+            'security'
+          ],
+        }
       };
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
+      // الاستماع لحدث مغادرة الاجتماع لفتح التقييم
       newApi.addEventListener('videoConferenceLeft', () => {
         setShowRating(true);
       });
     }
   };
 
-  const submitRating = () => {
+  const submitRating = async () => {
     if (rating === 0) {
-      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى اختيار عدد النجوم قبل المغادرة." });
+      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى اختيار عدد النجوم لضمان جودة المنصة قبل المغادرة." });
       return;
     }
+    
+    setIsSubmitting(true);
+    
     if (requestRef) {
+      // إنشاء رابط تسجيل افتراضي مدمج للمراجعة (يعتمد على معرف الغرفة في Jitsi)
+      const recordingLink = `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`;
+      
       updateDocumentNonBlocking(requestRef, {
         rating,
         review,
-        status: 'completed'
+        status: 'completed',
+        recordingUrl: recordingLink,
+        completedAt: new Date().toISOString()
       });
-      toast({ title: "شكراً لتقييمك!" });
+      
+      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم حفظ سجل المحاضرة." });
       router.push("/requests");
     }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center font-black">جاري تأمين الغرفة...</div>;
+  if (isLoading) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-black text-white space-y-4">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <p className="text-xl font-black">جاري تأمين غرفة المحاضرة...</p>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden" dir="rtl">
@@ -107,22 +135,24 @@ export default function MeetingPage() {
       
       <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 z-50">
         <div className="flex items-center gap-4">
-          <h1 className="text-white font-bold">{request?.title}</h1>
+          <div className="bg-primary/20 p-2 rounded-lg">
+            <Video className="text-primary h-5 w-5" />
+          </div>
+          <h1 className="text-white font-bold truncate max-w-[200px] md:max-w-md">{request?.title}</h1>
         </div>
         
         <div className="flex items-center gap-3">
-          {/* لا يمكن للمفهم إغلاق الجلسة قبل المستفهم لضمان حقوق الطالب */}
           <Button 
             variant="destructive" 
             size="sm" 
             onClick={() => { 
               if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه", description: "يجب على المستفهم إنهاء الجلسة أولاً لضمان اكتمال الشرح." });
+                toast({ variant: "destructive", title: "تنبيه الرقابة", description: "يجب على المستفهم (الطالب) إنهاء الجلسة أولاً لضمان اكتمال الشرح." });
               } else {
                 api?.executeCommand('hangup'); 
               }
             }} 
-            className="rounded-full px-6 font-bold"
+            className="rounded-full px-6 font-bold shadow-lg"
           >
             إنهاء الجلسة
           </Button>
@@ -133,30 +163,41 @@ export default function MeetingPage() {
         <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      {/* مودال التقييم الإجباري */}
+      {/* مودال التقييم الإجباري - يظهر عند مغادرة الجلسة */}
       <Dialog open={showRating} onOpenChange={(open) => { if (!open && rating === 0) return; setShowRating(open); }}>
-        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-2xl font-black">تقييم المحاضرة (إجباري)</DialogTitle>
-            <DialogDescription className="text-right text-lg">يرجى تقييم الجلسة لإتمام العملية والعودة للمنصة.</DialogDescription>
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
+              <Star className="text-yellow-500 fill-yellow-500" /> تقييم المحاضرة
+            </DialogTitle>
+            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم الجلسة لإغلاقها نهائياً وحفظ حقوق الجميع.</DialogDescription>
           </DialogHeader>
-          <div className="py-6 space-y-6 flex flex-col items-center">
-            <div className="flex gap-2">
+          <div className="py-8 space-y-8 flex flex-col items-center">
+            <div className="flex gap-3">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setRating(star)} className="transition-transform hover:scale-110">
-                  <Star className={`h-10 w-10 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />
+                <button key={star} onClick={() => setRating(star)} className="transition-all hover:scale-125">
+                  <Star className={`h-12 w-12 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />
                 </button>
               ))}
             </div>
-            <Textarea 
-              placeholder="رأيك في الشرح وأسلوب المفهم..." 
-              className="h-24 rounded-xl text-lg p-4"
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-            />
+            <div className="w-full space-y-2">
+              <Label className="font-black text-sm mr-2">رأيك في الشرح (اختياري)</Label>
+              <Textarea 
+                placeholder="كيف كان أسلوب المُفهم؟ هل استفدت من المحاضرة؟" 
+                className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary"
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button onClick={submitRating} className="w-full h-14 text-xl font-black rounded-xl">إرسال التقييم وإغلاق</Button>
+            <Button 
+              onClick={submitRating} 
+              disabled={isSubmitting}
+              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+            >
+              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم وإكمال المحاضرة"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

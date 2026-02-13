@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X, PlayCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 export default function AdminSessionsReview() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [selectedRecording, setSelectedRecording] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -23,12 +23,13 @@ export default function AdminSessionsReview() {
 
   const { data: adminProfile } = useDoc(userRef);
 
+  // التأكد من شمول كافة حسابات الأدمن الماستر
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadSessions = adminProfile?.isAdmin || isMasterAdmin;
 
   const sessionsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadSessions) return null;
-    // جلب الجلسات التي بدأت بالفعل أو انتهت
+    // جلب الجلسات المقبولة أو المكتملة
     return query(
       collection(firestore, "istifhams"), 
       where("status", "in", ["accepted", "completed"])
@@ -37,7 +38,6 @@ export default function AdminSessionsReview() {
 
   const { data: rawSessions, isLoading } = useCollection(sessionsQuery);
 
-  // ترتيب يدوي في الواجهة لضمان جودة العرض دون خطأ فهرس
   const sessions = rawSessions?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   if (!canReadSessions && adminProfile) {
@@ -46,14 +46,14 @@ export default function AdminSessionsReview() {
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="border-r-8 border-blue-600 pr-6 flex justify-between items-center">
+      <div className="border-r-8 border-blue-600 pr-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-4xl font-black font-headline text-zinc-900">مركز رقابة المحاضرات</h1>
           <p className="text-muted-foreground text-lg">مراجعة الجلسات المباشرة لضمان أمان وخصوصية المستخدمين وحل النزاعات.</p>
         </div>
         <div className="bg-blue-50 p-4 rounded-2xl border-2 border-dashed border-blue-200 flex items-center gap-3 text-blue-700">
           <ShieldCheck />
-          <span className="font-black">نظام حماية الطرفين (صوت وصورة)</span>
+          <span className="font-black">نظام حماية الطرفين (مراجعة داخلية)</span>
         </div>
       </div>
 
@@ -63,9 +63,9 @@ export default function AdminSessionsReview() {
             <TableRow>
               <TableHead className="text-right px-8 font-black text-zinc-900">المحاضرة</TableHead>
               <TableHead className="text-right font-black text-zinc-900">الأطراف</TableHead>
-              <TableHead className="text-right font-black text-zinc-900">التاريخ والمبلغ</TableHead>
+              <TableHead className="text-right font-black text-zinc-900">الموعد والمبلغ</TableHead>
               <TableHead className="text-right font-black text-zinc-900">التقييم</TableHead>
-              <TableHead className="text-left px-8 font-black text-zinc-900">الأرشيف (صوت وصورة)</TableHead>
+              <TableHead className="text-left px-8 font-black text-zinc-900">الإجراء</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -73,7 +73,12 @@ export default function AdminSessionsReview() {
               <TableRow><TableCell colSpan={5} className="text-center py-20 font-bold animate-pulse">جاري تحميل البيانات...</TableCell></TableRow>
             ) : sessions?.map((session) => (
               <TableRow key={session.id} className="h-24 hover:bg-muted/5 transition-colors">
-                <TableCell className="px-8 font-bold text-lg text-zinc-800">{session.title}</TableCell>
+                <TableCell className="px-8">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg text-zinc-800">{session.title}</span>
+                    <Badge variant="outline" className="w-fit text-[10px] mt-1">ID: {session.id.slice(-6)}</Badge>
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-col text-sm space-y-1">
                     <span className="font-bold text-primary flex items-center gap-1"><User size={14}/> {session.mustafhemName}</span>
@@ -95,12 +100,12 @@ export default function AdminSessionsReview() {
                 </TableCell>
                 <TableCell className="px-8 text-left">
                   <Button 
-                    variant="outline" 
+                    variant="default" 
                     size="sm" 
-                    className="rounded-xl border-2 gap-2 font-black hover:bg-blue-50 text-blue-600 border-blue-100" 
-                    onClick={() => setSelectedRecording(session.recordingUrl || null)}
+                    className="rounded-xl gap-2 font-black shadow-lg bg-blue-600 hover:bg-blue-700" 
+                    onClick={() => setSelectedSession(session)}
                   >
-                    <Video size={16} /> مراجعة التسجيل
+                    <PlayCircle size={16} /> مراجعة المحاضرة
                   </Button>
                 </TableCell>
               </TableRow>
@@ -115,25 +120,31 @@ export default function AdminSessionsReview() {
       </Card>
 
       {/* مودال مراجعة التسجيل داخل المنصة */}
-      <Dialog open={!!selectedRecording} onOpenChange={() => setSelectedRecording(null)}>
+      <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[85vw] lg:max-w-[1100px] h-[85vh] p-0 overflow-hidden bg-black border-none rounded-[2.5rem] shadow-2xl" dir="rtl">
           <DialogHeader className="p-6 bg-zinc-900 text-white border-b border-zinc-800 flex flex-row justify-between items-center space-y-0">
             <DialogTitle className="text-2xl font-black flex items-center gap-3">
-              <Video className="text-blue-500" /> مراجعة تسجيل المحاضرة (صوت وصورة)
+              <Video className="text-blue-500" /> مراجعة محتوى المحاضرة: {selectedSession?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 w-full h-full bg-zinc-950 relative">
-            {selectedRecording ? (
+          <div className="flex-1 w-full h-full bg-zinc-950 relative flex items-center justify-center">
+            {selectedSession?.recordingUrl ? (
               <iframe 
-                src={selectedRecording} 
+                src={selectedSession.recordingUrl} 
                 className="absolute inset-0 w-full h-full border-none"
                 allow="autoplay; fullscreen; microphone; camera; display-capture"
                 title="Recording Preview"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-4">
-                <ShieldAlert size={64} />
-                <p className="text-xl font-bold">عذراً، لا يتوفر رابط تسجيل لهذه المحاضرة حالياً.</p>
+              <div className="flex flex-col items-center justify-center p-10 text-center space-y-6">
+                <div className="bg-zinc-900 p-8 rounded-full border-2 border-dashed border-zinc-700">
+                  <ShieldAlert size={80} className="text-zinc-600" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-white">رابط التسجيل غير متوفر</h3>
+                  <p className="text-zinc-400 font-bold text-lg max-w-md">عذراً، لم يتم إنشاء رابط تسجيل لهذه المحاضرة بعد أو أنها لا تزال جارية.</p>
+                </div>
+                <Button variant="outline" onClick={() => setSelectedSession(null)} className="rounded-xl border-zinc-700 text-white hover:bg-white hover:text-black font-black px-10">إغلاق المعاينة</Button>
               </div>
             )}
           </div>
@@ -141,13 +152,13 @@ export default function AdminSessionsReview() {
       </Dialog>
 
       <div className="p-8 bg-zinc-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-        <div className="bg-blue-500/20 p-6 rounded-full">
+        <div className="bg-blue-500/20 p-6 rounded-full shrink-0">
           <ShieldAlert size={48} className="text-blue-400" />
         </div>
         <div className="space-y-2">
           <h3 className="text-2xl font-black">إرشادات الرقابة الإدارية</h3>
           <p className="text-zinc-400 font-medium leading-relaxed max-w-3xl text-sm">
-            يتم تخزين روابط التسجيل لكل محاضرة مكتملة بشكل تلقائي. في حال وجود نزاع، يجب على المسؤول مراجعة التسجيل الصوتي والمرئي بالكامل للتحقق من جودة الشرح والالتزام بالقواعد الأخلاقية والمهنية قبل اتخاذ أي إجراء إداري أو مالي.
+            يتم حفظ المحاضرات صوت وصورة لضمان حق الطالب في الفهم وحق المعلم في الأجر. في حال وجود أي نزاع مالي أو شكوى فنية، سيقوم النظام بعرض التسجيل كاملاً لمراجعته واتخاذ القرار المناسب.
           </p>
         </div>
       </div>
