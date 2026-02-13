@@ -170,12 +170,10 @@ export default function LoginPage() {
             )}
             
             <div className="space-y-2">
-              {!isLogin && <Label className="font-black text-xs mr-2">البريد الإلكتروني</Label>}
               <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-12 rounded-xl border-2" />
             </div>
 
             <div className="space-y-2">
-              {!isLogin && <Label className="font-black text-xs mr-2">كلمة المرور</Label>}
               <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-12 rounded-xl border-2" />
             </div>
 

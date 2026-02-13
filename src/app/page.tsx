@@ -202,13 +202,24 @@ function MustafhemView({ profile }: any) {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label className="font-black flex items-center gap-2"><Filter size={14}/> التخصص (إجباري)</Label>
+                    <Select disabled={!newIstifham.category} onValueChange={(v)=>setNewIstifham({...newIstifham, subCategory: v})}>
+                      <SelectTrigger className="h-12 rounded-xl border-2"><SelectValue placeholder="اختر التخصص"/></SelectTrigger>
+                      <SelectContent>
+                        {categories?.filter(c => c.type === 'sub' && c.parentId === categories.find(main => main.name === newIstifham.category)?.id).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label className="font-black">الميزانية (ج.م) (إجباري)</Label>
                     <Input type="number" placeholder="100" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-12 border-2 rounded-xl" />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-black">توقيت المحاضرة المقترح (إجباري)</Label>
-                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-12 border-2 rounded-xl" />
+                  <div className="space-y-2">
+                    <Label className="font-black">توقيت المحاضرة المقترح (إجباري)</Label>
+                    <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-12 border-2 rounded-xl" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, query, where, doc, updateDoc, addDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,29 +23,38 @@ import {
   UserCircle,
   HelpCircle,
   BadgeCent,
-  MapPin
+  MapPin,
+  FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
 export default function AdminApprovals() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedIstifham, setSelectedIstifham] = useState<any>(null);
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: adminProfile } = useDoc(userRef);
+
   // جلب الملفات الشخصية التي لم تُعتمد بعد
   const profilesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminProfile?.isAdmin) return null;
     return query(collection(firestore, "users"), where("isProfileApproved", "==", false), where("status", "==", "active"));
-  }, [firestore]);
+  }, [firestore, adminProfile?.isAdmin]);
 
   // جلب الاستفهامات التي تنتظر المراجعة
   const istifhamsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminProfile?.isAdmin) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
-  }, [firestore]);
+  }, [firestore, adminProfile?.isAdmin]);
 
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
@@ -97,6 +106,10 @@ export default function AdminApprovals() {
       toast({ variant: "destructive", title: "خطأ" });
     }
   };
+
+  if (!adminProfile?.isAdmin && user?.email !== "mohamed76y@gmail.com") {
+    return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</div>;
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
@@ -226,13 +239,16 @@ export default function AdminApprovals() {
             <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
               <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 space-y-4">
                 <h4 className="text-2xl font-black text-primary leading-tight">{selectedIstifham.title}</h4>
-                <p className="text-zinc-700 leading-relaxed font-medium">{selectedIstifham.description}</p>
+                <div className="flex items-start gap-2">
+                  <FileText className="text-muted-foreground shrink-0 mt-1" size={18} />
+                  <p className="text-zinc-700 leading-relaxed font-medium">{selectedIstifham.description}</p>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DetailBox icon={BadgeCent} label="الميزانية المقترحة" value={`${selectedIstifham.amount} ج.م`} />
                 <DetailBox icon={Calendar} label="موعد المحاضرة" value={new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')} />
                 <DetailBox icon={User} label="المستفهم" value={selectedIstifham.mustafhemName} />
-                <DetailBox icon={MapPin} label="التصنيف" value={selectedIstifham.category} />
+                <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.subCategory || 'عام'}`} />
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl shadow-lg">اعتماد ونشر فوراً</Button>
