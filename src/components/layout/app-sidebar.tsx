@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -23,7 +22,8 @@ import {
   ImageIcon,
   Wand2,
   CheckSquare,
-  Scale
+  Scale,
+  Palette
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,8 +61,9 @@ const menuItems = [
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
-  { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
+  { title: "تخصيص المنصة", icon: Palette, href: "/admin/customize" },
   { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
+  { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
   { title: "إدارة المُفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المُستفهمين", icon: Users, href: "/admin/mustafhems" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
@@ -109,7 +110,7 @@ export function AppSidebar() {
           <Link href="/" className="flex items-center gap-3 group">
             {settings?.logoUrl ? <img src={settings.logoUrl} className="h-10 w-auto" /> : <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black">ف</div>}
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="font-black text-2xl font-headline text-primary">فهمني</span>
+              <span className="font-black text-2xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
               <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
             </div>
           </Link>

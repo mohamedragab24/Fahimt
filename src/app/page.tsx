@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -180,7 +179,7 @@ function LandingPage({ router, settings }: any) {
           <Link href="/teachers">المفهمين</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <span className="text-4xl font-black text-white font-headline">فهمني</span>
+          <span className="text-4xl font-black text-white font-headline">{settings?.siteTitle || "فهمني"}</span>
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black">ف</div>
         </div>
       </header>
@@ -188,8 +187,8 @@ function LandingPage({ router, settings }: any) {
       <section className="relative h-screen flex flex-col items-center justify-center text-center overflow-hidden">
         <Image src={landingImage} alt="Bg" fill className="object-cover brightness-[0.3]" priority />
         <div className="relative z-10 space-y-8 max-w-5xl px-4">
-          <h1 className="text-6xl md:text-8xl font-black text-white leading-tight">أول منصة عربية لخدمات الشرح الفوري</h1>
-          <p className="text-2xl md:text-4xl text-zinc-200 font-bold opacity-90">مُفهمين خبراء لخدمة كل مُستفهم طموح</p>
+          <h1 className="text-6xl md:text-8xl font-black text-white leading-tight">{settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}</h1>
+          <p className="text-2xl md:text-4xl text-zinc-200 font-bold opacity-90">{settings?.heroSubtitle || "مُفهمين خبراء لخدمة كل مُستفهم طموح"}</p>
           
           <div className="mt-12 w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center bg-white rounded-3xl overflow-hidden shadow-2xl p-3">
             <div className="flex-1 w-full">
