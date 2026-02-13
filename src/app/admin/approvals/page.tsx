@@ -149,9 +149,12 @@ export default function AdminApprovals() {
                 </CardContent>
               </Card>
             ))}
-            {profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات جديدة للمراجعة حالياً.</div>}
+            {profiles?.length === 0 && (
+              <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">
+                لا توجد حسابات جديدة للمراجعة حالياً.
+              </div>
+            )}
           </div>
-        </ProfilesList>
         </TabsContent>
 
         <TabsContent value="istifhams">
