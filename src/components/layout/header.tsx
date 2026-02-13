@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -30,9 +29,8 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // إشعارات الاستفهامات المقبولة (استخدام جدول istifhams الموحد)
+  // إشعارات الاستفهامات المقبولة
   const notificationsQuery = useMemoFirebase(() => {
-    // لا تشغل الاستعلام إذا كان الحساب محظوراً لتجنب خطأ الأذونات
     if (!firestore || !user || !profile?.role || profile?.status === 'blocked') return null;
     const istifhamsRef = collection(firestore, "istifhams");
     const field = profile?.role === "mufhem" ? "mufhemId" : "mustafhemId";
@@ -46,7 +44,7 @@ export function Header() {
 
   const { data: acceptedRequests } = useCollection(notificationsQuery);
 
-  // إشعارات النظام (اعتماد الحسابات)
+  // إشعارات النظام
   const systemNotifsQuery = useMemoFirebase(() => {
     if (!firestore || !user || profile?.status === 'blocked') return null;
     return query(
@@ -75,7 +73,7 @@ export function Header() {
           <SidebarTrigger className="h-10 w-10 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-14 w-auto transition-transform group-hover:scale-110 object-contain" />
+              <img src={settings.logoUrl} alt="Logo" className="h-20 w-auto transition-transform group-hover:scale-110 object-contain" />
             ) : (
               <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
                 <span className="text-white font-black text-sm">ف</span>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -111,7 +110,7 @@ export function AppSidebar() {
           <Link href="/" className="flex items-center gap-3 group">
             {/* استبدال اللوجو بالصورة المصغرة في البداية */}
             {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="h-8 w-8 object-contain" alt="Mini Icon" />
+              <img src={settings.miniIconUrl} className="h-10 w-10 object-contain" alt="Mini Icon" />
             ) : (
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black shrink-0">ف</div>
             )}
@@ -119,7 +118,7 @@ export function AppSidebar() {
             {/* وضع اللوجو مكان الاسم فهمني للتعليم الذكي */}
             <div className="flex items-center group-data-[collapsible=icon]:hidden">
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} className="h-12 w-auto object-contain" alt="Site Logo" />
+                <img src={settings.logoUrl} className="h-16 w-auto object-contain" alt="Site Logo" />
               ) : (
                 <div className="flex flex-col">
                   <span className="font-black text-2xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>

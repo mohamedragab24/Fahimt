@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Sparkles, Wand2, ShieldAlert, CheckCircle2, Loader2, Zap } from "lucide-react";
 import { useFirestore } from "@/firebase";
-import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { processAdminInstruction } from "@/ai/flows/admin-brain-flow";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminAI() {
   const [instruction, setInstruction] = useState("");
@@ -23,12 +24,12 @@ export default function AdminAI() {
     setLastAction(null);
 
     try {
-      // استدعاء تدفق الذكاء الاصطناعي الحقيقي
       const result = await processAdminInstruction({ instruction });
       
       if (result.updates && Object.keys(result.updates).length > 0) {
-        // تنفيذ التحديثات في Firestore مباشرة
-        await setDoc(doc(firestore, "settings", "general"), {
+        // تنفيذ التحديثات في Firestore بشكل غير معطل للواجهة
+        const settingsRef = doc(firestore, "settings", "general");
+        setDocumentNonBlocking(settingsRef, {
           ...result.updates,
           updatedAt: new Date().toISOString()
         }, { merge: true });

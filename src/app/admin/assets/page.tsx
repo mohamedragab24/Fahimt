@@ -1,13 +1,14 @@
-
 "use client";
 
 import { useState, useRef } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function AdminAssets() {
   const firestore = useFirestore();
@@ -31,8 +32,8 @@ export default function AdminAssets() {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         try {
-          // استخدام setDoc مع merge لضمان وجود المستند وتحديثه
-          await setDoc(doc(firestore, "settings", "general"), {
+          const settingsRef = doc(firestore, "settings", "general");
+          setDocumentNonBlocking(settingsRef, {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
@@ -45,6 +46,14 @@ export default function AdminAssets() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const getFallbackImage = (key: string) => {
+    if (key === 'logoUrl') return "";
+    if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
+    if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
+    if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
+    return "";
   };
 
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري جلب مركز التحكم بالأصول...</div>;
@@ -73,70 +82,73 @@ export default function AdminAssets() {
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
 
       <div className="grid gap-10">
-        {assetItems.map((item) => (
-          <Card key={item.key} className="shadow-2xl rounded-[3rem] border-2 border-primary/5 overflow-hidden bg-white hover:border-primary/20 transition-all group">
-            <CardHeader className="bg-muted/20 p-8 border-b">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-4 rounded-3xl text-primary group-hover:scale-110 transition-transform">
-                    <item.icon size={32} />
+        {assetItems.map((item) => {
+          const currentImage = settings?.[item.key] || getFallbackImage(item.key);
+          return (
+            <Card key={item.key} className="shadow-2xl rounded-[3rem] border-2 border-primary/5 overflow-hidden bg-white hover:border-primary/20 transition-all group">
+              <CardHeader className="bg-muted/20 p-8 border-b">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-4 rounded-3xl text-primary group-hover:scale-110 transition-transform">
+                      <item.icon size={32} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl font-black text-zinc-800">{item.label}</CardTitle>
+                      <CardDescription className="text-lg font-bold text-muted-foreground">{item.desc}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl font-black text-zinc-800">{item.label}</CardTitle>
-                    <CardDescription className="text-lg font-bold text-muted-foreground">{item.desc}</CardDescription>
-                  </div>
+                  <Button 
+                    onClick={() => { setActiveKey(item.key); fileInputRef.current?.click(); }}
+                    disabled={uploadingKey === item.key}
+                    className="h-16 px-10 rounded-[1.5rem] font-black text-xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all hover:scale-105"
+                  >
+                    {uploadingKey === item.key ? <RefreshCw className="animate-spin ml-2" /> : <Upload className="ml-2 h-6 w-6" />}
+                    تغيير الصورة
+                  </Button>
                 </div>
-                <Button 
-                  onClick={() => { setActiveKey(item.key); fileInputRef.current?.click(); }}
-                  disabled={uploadingKey === item.key}
-                  className="h-16 px-10 rounded-[1.5rem] font-black text-xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all hover:scale-105"
-                >
-                  {uploadingKey === item.key ? <RefreshCw className="animate-spin ml-2" /> : <Upload className="ml-2 h-6 w-6" />}
-                  تغيير الصورة
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
-                    <AlertCircle size={14} /> المعاينة الحالية (المنشورة الآن)
+              </CardHeader>
+              <CardContent className="p-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
+                      <AlertCircle size={14} /> المعاينة الحالية (المنشورة الآن)
+                    </div>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'h-48' : 'aspect-video'}`}>
+                      {currentImage ? (
+                        <img 
+                          src={currentImage} 
+                          alt={item.label} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-32 object-contain' : 'object-cover w-full h-full'}`} 
+                        />
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
+                          <ImageIcon size={64} />
+                          <p className="font-black mt-2 text-xl">لا توجد صورة</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'h-48' : 'aspect-video'}`}>
-                    {settings?.[item.key] ? (
-                      <img 
-                        src={settings[item.key]} 
-                        alt={item.label} 
-                        className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-32 object-contain' : 'object-cover w-full h-full'}`} 
-                      />
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
-                        <ImageIcon size={64} />
-                        <p className="font-black mt-2 text-xl">لا توجد صورة</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl text-primary">
-                    <CheckCircle2 size={40} className="animate-bounce" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-2xl font-black text-primary">تزامن فوري</h4>
-                    <p className="text-zinc-600 font-bold leading-relaxed">
-                      بمجرد رفع الصورة، سيتم استبدالها في كافة أرجاء المنصة لكل المستخدمين فوراً.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 bg-white px-6 py-2 rounded-full shadow-sm text-green-600 font-black">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
-                    قاعدة البيانات متصلة ومباشرة
+                  <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center text-center space-y-6">
+                    <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl text-primary">
+                      <CheckCircle2 size={40} className="animate-bounce" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-2xl font-black text-primary">تزامن فوري</h4>
+                      <p className="text-zinc-600 font-bold leading-relaxed">
+                        بمجرد رفع الصورة، سيتم استبدالها في كافة أرجاء المنصة لكل المستخدمين فوراً.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white px-6 py-2 rounded-full shadow-sm text-green-600 font-black">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
+                      قاعدة البيانات متصلة ومباشرة
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

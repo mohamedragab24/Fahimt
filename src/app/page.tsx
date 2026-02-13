@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -181,9 +180,9 @@ function LandingPage({ router, settings }: any) {
         </nav>
         <div className="flex items-center">
           {settings?.logoUrl ? (
-            <img src={settings.logoUrl} className="h-20 w-auto object-contain" alt="Logo" />
+            <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Logo" />
           ) : (
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl">ف</div>
+            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center text-white text-4xl font-black shadow-xl">ف</div>
           )}
         </div>
       </header>

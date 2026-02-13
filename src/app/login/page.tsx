@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -114,9 +113,9 @@ export default function LoginPage() {
         <CardHeader className="text-center pt-10">
           <div className="mx-auto mb-6">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-24 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 mx-auto object-contain" alt="Logo" />
             ) : (
-              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center text-white text-4xl font-black mx-auto shadow-xl">ف</div>
+              <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center text-white text-5xl font-black mx-auto shadow-xl">ف</div>
             )}
           </div>
           <CardTitle className="text-3xl font-black text-primary">{isLogin ? "مرحباً بك مجدداً" : "انضم لعائلة فهمني"}</CardTitle>
