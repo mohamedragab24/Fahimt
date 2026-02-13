@@ -50,7 +50,7 @@ export default function AdminAssets() {
   };
 
   const getFallbackImage = (key: string) => {
-    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://placehold.co/400x400/29B6F6/white?text=LOGO";
+    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400";
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
@@ -119,7 +119,7 @@ export default function AdminAssets() {
                         <img 
                           src={currentImage} 
                           alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-32 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
