@@ -6,10 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, collection, addDoc } from "firebase/firestore";
 import { Video, Star, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -94,7 +94,6 @@ export default function MeetingPage() {
       setApi(newApi);
 
       newApi.on('videoConferenceJoined', () => {
-        // محاولة بدء التسجيل برمجياً عند دخول الطرفين
         newApi.executeCommand('startRecording', { mode: 'file' });
       });
 
@@ -125,15 +124,36 @@ export default function MeetingPage() {
     
     setIsSubmitting(true);
     
-    if (requestRef) {
+    if (requestRef && request && firestore) {
+      // 1. تحديث حالة الاستفهام
       updateDocumentNonBlocking(requestRef, {
         rating,
         review,
         status: 'completed',
         completedAt: new Date().toISOString()
       });
+
+      // 2. معالجة الأموال (أتمتة الدفع)
+      const commission = request.amount * 0.2;
+      const teacherEarning = request.amount * 0.8;
+
+      // خصم من الطالب (إذا لم يخصم مسبقاً، هنا نعتبره دفعة نهائية)
+      createTransactionNonBlocking(firestore, request.mustafhemId, {
+        amount: request.amount,
+        type: 'withdrawal',
+        details: `رسوم محاضرة: ${request.title}`,
+        status: 'completed'
+      });
+
+      // إضافة للمعلم
+      createTransactionNonBlocking(firestore, request.mufhemId, {
+        amount: teacherEarning,
+        type: 'earning',
+        details: `أرباح محاضرة: ${request.title} (بعد خصم عمولة 20%)`,
+        status: 'completed'
+      });
       
-      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم حفظ سجل المحاضرة." });
+      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم تحويل الأرباح للمفهم وحفظ سجل الرقابة." });
       router.push("/requests");
     }
   };
@@ -171,7 +191,7 @@ export default function MeetingPage() {
             size="sm" 
             onClick={() => { 
               if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم." });
+                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم وتحويل أرباحك." });
               } else {
                 api?.executeCommand('hangup'); 
               }
@@ -193,7 +213,7 @@ export default function MeetingPage() {
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
               <Star className="text-yellow-500 fill-yellow-500" /> تقييم المحاضرة
             </DialogTitle>
-            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم أداء المفهم لإغلاق المحاضرة وحفظ حقك.</DialogDescription>
+            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم أداء المفهم لإغلاق المحاضرة وضمان حقه في الأرباح.</DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-8 flex flex-col items-center">
             <div className="flex gap-3">
