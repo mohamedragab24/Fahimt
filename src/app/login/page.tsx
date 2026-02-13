@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, UserCircle, AlertCircle } from "lucide-react";
+import { Upload, UserCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -66,7 +66,6 @@ export default function LoginPage() {
         setIsProcessing(false);
       });
     } else {
-      // التحقق الصارم من كافة الحقول
       if (!fullName || !phoneNumber || !birthDate || !email || !password || !profilePictureUrl) {
         toast({ 
           variant: "destructive", 
@@ -136,17 +135,17 @@ export default function LoginPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="font-black text-xs mr-2">الاسم الكامل</Label>
+                  <Label className="font-black text-xs mr-2">الاسم الكامل (إجباري)</Label>
                   <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-12 rounded-xl border-2" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="font-black text-xs mr-2">رقم الهاتف</Label>
+                    <Label className="font-black text-xs mr-2">رقم الهاتف (إجباري)</Label>
                     <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-12 rounded-xl border-2" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-xs mr-2">تاريخ الميلاد</Label>
+                    <Label className="font-black text-xs mr-2">تاريخ الميلاد (إجباري)</Label>
                     <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-12 rounded-xl border-2" />
                   </div>
                 </div>

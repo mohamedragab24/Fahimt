@@ -44,13 +44,11 @@ export default function AdminApprovals() {
 
   const { data: adminProfile } = useDoc(userRef);
 
-  // جلب الملفات الشخصية التي لم تُعتمد بعد
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !adminProfile?.isAdmin) return null;
     return query(collection(firestore, "users"), where("isProfileApproved", "==", false), where("status", "==", "active"));
   }, [firestore, adminProfile?.isAdmin]);
 
-  // جلب الاستفهامات التي تنتظر المراجعة
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !adminProfile?.isAdmin) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
@@ -107,7 +105,8 @@ export default function AdminApprovals() {
     }
   };
 
-  if (!adminProfile?.isAdmin && user?.email !== "mohamed76y@gmail.com") {
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+  if (!adminProfile?.isAdmin && !isMasterAdmin) {
     return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</div>;
   }
 
@@ -147,7 +146,7 @@ export default function AdminApprovals() {
                     <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل</Button>
                     <div className="flex gap-2">
                       <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12"><CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد</Button>
-                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> رفض وحظر</Button>
+                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> حظر</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -171,8 +170,8 @@ export default function AdminApprovals() {
                     <p className="font-bold text-muted-foreground">بواسطة المستفهم: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
-                    <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> مراجعة التفاصيل</Button>
-                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg">نشر</Button>
+                    <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> تفاصيل الاستفهام</Button>
+                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg">نشر الآن</Button>
                   </div>
                 </Card>
               ))

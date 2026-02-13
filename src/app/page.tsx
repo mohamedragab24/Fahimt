@@ -11,7 +11,8 @@ import {
   ShieldCheck, 
   ShieldAlert,
   Layers,
-  Filter
+  Filter,
+  Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -57,13 +58,13 @@ export default function HomePage() {
         {!profile.isProfileApproved && (
           <div className="mb-6 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl flex items-center gap-4 text-orange-700 animate-pulse">
             <ShieldAlert />
-            <span className="font-bold text-sm">ملفك الشخصي قيد المراجعة؛ صورتك وبياناتك ستظهر للعامة فور اعتمادها من الإدارة.</span>
+            <span className="font-bold text-sm">ملفك الشخصي قيد المراجعة؛ صورتك وبياناتك ستظهر للمُفهمين فور اعتمادها من الإدارة.</span>
           </div>
         )}
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="space-y-4">
+          <div className="space-y-4 text-right">
             <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك يا {profile.role === "mufhem" ? "مُفهم" : "مُستفهم"}!</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {profile.isVerified && <ShieldCheck className="text-blue-500 h-10 w-10" />}
             </div>
@@ -73,7 +74,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col items-center bg-muted/20 p-8 rounded-3xl">
             <TrendingUp className="text-accent mb-2" />
-            <span className="text-xs font-black uppercase text-muted-foreground">الرتبة الحالية</span>
+            <span className="text-xs font-black uppercase text-muted-foreground">الحالة الحالية</span>
             <Badge className="mt-2 px-6 py-2 text-md font-black">{profile.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}</Badge>
           </div>
         </div>
@@ -134,13 +135,18 @@ function MustafhemView({ profile }: any) {
   }, [firestore]);
   const { data: categories } = useCollection(categoriesQuery);
 
+  const pendingIstifhamsQuery = useMemoFirebase(() => {
+    if (!firestore || !profile.id) return null;
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(5));
+  }, [firestore, profile.id]);
+  const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
+
   const handleCreate = async () => {
-    // تحقق صارم من كافة الحقول
-    if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
+    if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.subCategory || !newIstifham.amount || !newIstifham.meetingTime) {
       toast({ 
         variant: "destructive", 
         title: "بيانات ناقصة", 
-        description: "يرجى تعبئة كافة حقول الاستفهام بما في ذلك الوصف والميزانية والموعد." 
+        description: "كافة الحقول إجبارية لضمان قبول استفهامك." 
       });
       return;
     }
@@ -157,14 +163,14 @@ function MustafhemView({ profile }: any) {
 
       setIsDialogOpen(false);
       setNewIstifham({ title: "", description: "", amount: "", category: "", subCategory: "", meetingTime: "" });
-      toast({ title: "تم إرسال الاستفهام", description: "سيتم مراجعته من قبل الإدارة ونشره فوراً." });
+      toast({ title: "تم الإرسال للمراجعة", description: "سيتم إشعارك فور اعتماد الاستفهام ونشره للمُفهمين." });
     }
   };
 
   return (
     <div className="space-y-10">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
-        <div className="space-y-4">
+        <div className="space-y-4 text-right">
           <h2 className="text-4xl font-black text-zinc-800">عندك سؤال؟ <br/> اطرح استفهامك الآن</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -179,7 +185,7 @@ function MustafhemView({ profile }: any) {
               </DialogHeader>
               <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
                 <div className="space-y-2">
-                  <Label className="font-black flex items-center gap-2"><PlusCircle size={14}/> عنوان الاستفهام (إجباري)</Label>
+                  <Label className="font-black flex items-center gap-2">عنوان الاستفهام (إجباري)</Label>
                   <Input placeholder="مثال: شرح أساسيات الكيمياء العضوية" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-12 border-2 rounded-xl" />
                 </div>
                 <div className="space-y-2">
@@ -194,7 +200,7 @@ function MustafhemView({ profile }: any) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-black flex items-center gap-2"><Layers size={14}/> القسم (إجباري)</Label>
-                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, subCategory: ""})}>
                       <SelectTrigger className="h-12 rounded-xl border-2"><SelectValue placeholder="اختر القسم"/></SelectTrigger>
                       <SelectContent>
                         {categories?.filter(c => c.type === 'main' || !c.type).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -232,6 +238,24 @@ function MustafhemView({ profile }: any) {
           <BookOpen size={120} className="text-primary opacity-20" />
         </div>
       </div>
+
+      {pendingIstifhams && pendingIstifhams.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6">استفهاماتك قيد المراجعة</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pendingIstifhams.map(ist => (
+              <Card key={ist.id} className="p-6 rounded-[2rem] border-2 border-orange-100 bg-orange-50/30">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge className="bg-orange-100 text-orange-600 border-none font-bold">بانتظار الإدارة</Badge>
+                  <Clock className="text-orange-400 h-4 w-4" />
+                </div>
+                <h4 className="text-lg font-black truncate">{ist.title}</h4>
+                <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{ist.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -271,8 +295,8 @@ function MufhemView({ profile }: any) {
                   <Badge variant="secondary" className="px-3 py-1 font-bold">{ist.category}</Badge>
                   <span className="text-xs font-bold text-muted-foreground">{new Date(ist.createdAt).toLocaleDateString('ar-EG')}</span>
                 </div>
-                <h4 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors">{ist.title}</h4>
-                <p className="text-muted-foreground text-sm line-clamp-2 mb-6 font-medium">{ist.description}</p>
+                <h4 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
+                <p className="text-muted-foreground text-sm line-clamp-2 mb-6 font-medium text-right">{ist.description}</p>
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <span className="font-black text-primary text-2xl">{ist.amount} <span className="text-xs">ج.م</span></span>
                   <Button className="rounded-xl font-black px-6">أنا أفهمك</Button>

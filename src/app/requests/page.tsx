@@ -21,7 +21,8 @@ import {
   Star,
   ShieldCheck,
   MessageSquare,
-  Send
+  Send,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -39,17 +40,17 @@ export default function RequestsPage() {
 
   const requestsRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return collection(firestore, "requests");
+    return collection(firestore, "istifhams");
   }, [firestore, user]);
 
   const studentQuery = useMemoFirebase(() => {
     if (!requestsRef || !user?.uid) return null;
-    return query(requestsRef, where("studentId", "==", user.uid), limit(50));
+    return query(requestsRef, where("mustafhemId", "==", user.uid), limit(50));
   }, [requestsRef, user?.uid]);
 
   const teacherQuery = useMemoFirebase(() => {
     if (!requestsRef || !user?.uid) return null;
-    return query(requestsRef, where("teacherId", "==", user.uid), limit(50));
+    return query(requestsRef, where("mufhemId", "==", user.uid), limit(50));
   }, [requestsRef, user?.uid]);
 
   const { data: studentRequests, isLoading: isLoadingStudent } = useCollection(studentQuery);
@@ -61,25 +62,28 @@ export default function RequestsPage() {
     .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   if (isUserLoading || isLoadingStudent || isLoadingTeacher) {
-    return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل طلباتك...</div>;
+    return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل استفهاماتك...</div>;
   }
 
   return (
     <div className="p-4 md:p-10 max-w-6xl mx-auto space-y-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6 bg-white/50 p-6 rounded-2xl shadow-sm">
         <div className="space-y-1 text-right">
-          <h1 className="text-3xl md:text-4xl font-black font-headline">إدارة الطلبات</h1>
-          <p className="text-muted-foreground text-lg">تتبع حالة طلباتك والوصول للمحاضرات المباشرة.</p>
+          <h1 className="text-3xl md:text-4xl font-black font-headline">إدارة الاستفهامات</h1>
+          <p className="text-muted-foreground text-lg">تتبع حالة استفهاماتك والوصول للمحاضرات المباشرة.</p>
         </div>
         <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
           <BadgeCent className="text-primary h-6 w-6" />
-          <span className="font-bold text-primary text-xl">{uniqueRequests.length} طلب إجمالي</span>
+          <span className="font-bold text-primary text-xl">{uniqueRequests.length} استفهام إجمالي</span>
         </div>
       </div>
 
       <Tabs defaultValue="pending" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto md:h-20 p-2 bg-muted/40 rounded-[1.5rem] md:rounded-[2rem] shadow-inner mb-10 gap-2">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto md:h-20 p-2 bg-muted/40 rounded-[1.5rem] md:rounded-[2rem] shadow-inner mb-10 gap-2">
           <TabsTrigger value="pending" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
+            <Eye className="h-4 w-4 md:h-5 md:w-5" /> المراجعة
+          </TabsTrigger>
+          <TabsTrigger value="active" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
             <Timer className="h-4 w-4 md:h-5 md:w-5" /> الانتظار
           </TabsTrigger>
           <TabsTrigger value="accepted" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
@@ -93,8 +97,8 @@ export default function RequestsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {['pending', 'accepted', 'completed', 'canceled'].map((status) => (
-          <TabsContent key={status} value={status} className="space-y-8 focus-visible:ring-0">
+        {['pending_approval', 'active', 'accepted', 'completed', 'canceled'].map((status) => (
+          <TabsContent key={status} value={status === 'pending_approval' ? 'pending' : status} className="space-y-8 focus-visible:ring-0">
             <RequestList 
               requests={uniqueRequests.filter((r: any) => r.status === status)} 
               status={status} 
@@ -109,50 +113,18 @@ export default function RequestsPage() {
 
 function RequestList({ requests, status, userId }: { requests: any[], status: string, userId?: string }) {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [activeChat, setActiveChat] = useState<any>(null);
 
   const handleAction = (req: any, action: 'cancel' | 'complete') => {
     if (!firestore) return;
-    const reqRef = doc(firestore, "requests", req.id);
+    const reqRef = doc(firestore, "istifhams", req.id);
     
     if (action === 'cancel') {
       updateDocumentNonBlocking(reqRef, { status: 'canceled' });
-      toast({ title: "تم إلغاء الطلب", description: "تم تحديث حالة الطلب إلى ملغي بنجاح." });
-    } else if (action === 'complete') {
-      updateDocumentNonBlocking(reqRef, { status: 'completed' });
-      
-      createTransactionNonBlocking(firestore, req.teacherId, {
-        amount: req.amount * 0.8,
-        type: 'earning',
-        details: `أرباح جلسة: ${req.title}`,
-        requestId: req.id,
-        status: 'completed'
-      });
-
-      createTransactionNonBlocking(firestore, req.studentId, {
-        amount: req.amount,
-        type: 'payment',
-        details: `دفع رسوم جلسة: ${req.title}`,
-        requestId: req.id,
-        status: 'completed'
-      });
-
-      toast({ 
-        title: "تمت المهمة!", 
-        description: "تم إكمال الجلسة وتحويل المبالغ بنجاح.",
-      });
+      toast({ title: "تم إلغاء الاستفهام", description: "تم تحديث الحالة بنجاح." });
     }
-  };
-
-  const copyId = (id: string) => {
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    toast({ title: "تم النسخ", description: "تم نسخ معرف الطلب." });
-    setTimeout(() => setCopiedId(null), 2000);
   };
 
   if (requests.length === 0) {
@@ -161,7 +133,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
         <div className="bg-muted/30 p-6 md:p-8 rounded-full mb-6">
           <ClipboardList size={48} className="text-muted-foreground opacity-30" />
         </div>
-        <p className="text-muted-foreground text-xl md:text-2xl font-black">لا توجد طلبات في هذا القسم حالياً</p>
+        <p className="text-muted-foreground text-xl md:text-2xl font-black">لا توجد استفهامات في هذا القسم حالياً</p>
       </div>
     );
   }
@@ -176,14 +148,7 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                 <div className="space-y-3">
                   <div className="flex gap-2 justify-end md:justify-start">
                     <Badge variant="secondary" className="px-4 py-1 text-md font-bold bg-primary/10 text-primary border-none">{req.category}</Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="px-4 py-1 text-md font-bold text-muted-foreground cursor-pointer hover:bg-muted"
-                      onClick={() => copyId(req.id)}
-                    >
-                      {copiedId === req.id ? <Check className="h-3 w-3 ml-2 text-green-500" /> : <Copy className="h-3 w-3 ml-2" />}
-                      ID: {req.id.slice(-5)}
-                    </Badge>
+                    <Badge variant="outline" className="px-4 py-1 text-md font-bold text-muted-foreground">ID: {req.id.slice(-5)}</Badge>
                   </div>
                   <CardTitle className="text-2xl md:text-3xl font-black leading-tight group-hover:text-primary transition-colors">{req.title}</CardTitle>
                 </div>
@@ -193,17 +158,6 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                   <span className="text-xs font-bold text-primary mr-1">ج.م</span>
                 </div>
               </div>
-
-              {req.status === 'completed' && req.rating && (
-                <div className="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-center justify-between">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className={`h-5 w-5 ${req.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />
-                    ))}
-                  </div>
-                  <span className="text-yellow-700 font-bold italic">"{req.review || "تجربة رائعة!"}"</span>
-                </div>
-              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-6 bg-muted/10 rounded-3xl border border-dashed border-muted-foreground/20">
                 <div className="flex items-center gap-4 justify-end md:justify-start">
@@ -216,162 +170,53 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
                 <div className="flex items-center gap-4 justify-end md:justify-start">
                   <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
                   <div className="text-right">
-                    <span className="text-xs text-muted-foreground font-bold block">{req.studentId === userId ? "المُفهم (المدرس)" : "المُستفهم (الطالب)"}</span>
-                    <span className="font-bold truncate max-w-[150px] flex items-center gap-2">
-                      {req.studentId === userId ? (
-                        <>
-                          {req.teacherName || "بانتظار قبول مدرس..."}
-                          {req.teacherName && <ShieldCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />}
-                        </>
-                      ) : (req.studentName || "مستفهم")}
-                    </span>
+                    <span className="text-xs text-muted-foreground font-bold block">{req.mustafhemId === userId ? "المُفهم (الخبير)" : "المُستفهم (الطالب)"}</span>
+                    <span className="font-bold">{req.mustafhemId === userId ? (req.mufhemName || "بانتظار قبول مُفهم...") : (req.mustafhemName || "مستفهم")}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 justify-end md:justify-start">
                   <div className="bg-white p-3 rounded-xl shadow-sm"><BadgeCent className="h-6 w-6 text-primary" /></div>
                   <div className="text-right">
                     <span className="text-xs text-muted-foreground font-bold block">الحالة</span>
-                    <span className="font-bold">{status === 'pending' ? 'قيد البحث' : status === 'accepted' ? 'جاهز للبث' : status === 'completed' ? 'تم بنجاح' : 'ملغي'}</span>
+                    <span className="font-bold">
+                      {status === 'pending_approval' ? 'قيد المراجعة' : 
+                       status === 'active' ? 'بانتظار مُفهم' : 
+                       status === 'accepted' ? 'جاهز للبث' : 
+                       status === 'completed' ? 'تم بنجاح' : 'ملغي'}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="bg-muted/20 p-6 md:p-8 md:w-80 flex flex-col justify-center gap-4 border-t md:border-t-0 md:border-r border-dashed">
-              {status === 'pending' && req.studentId === userId && (
+              {(status === 'pending_approval' || status === 'active') && req.mustafhemId === userId && (
                 <Button 
                   variant="destructive" 
                   className="w-full py-8 md:py-10 font-black text-xl rounded-2xl shadow-lg hover:scale-[1.02] transition-transform" 
                   onClick={() => handleAction(req, 'cancel')}
                 >
-                  <Trash2 className="h-6 w-6 ml-3" /> إلغاء الطلب
+                  <Trash2 className="h-6 w-6 ml-3" /> إلغاء الاستفهام
                 </Button>
               )}
               {status === 'accepted' && (
-                <>
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 py-6 font-black text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
-                    onClick={() => router.push(`/meeting/${req.id}`)}
-                  >
-                    <Video className="h-6 w-6 ml-3" /> دخول المحاضرة
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full py-6 font-black text-lg rounded-2xl border-2 hover:bg-primary/5 transition-all"
-                    onClick={() => setActiveChat(req)}
-                  >
-                    <MessageSquare className="h-6 w-6 ml-3 text-primary" /> المحادثة الفورية
-                  </Button>
-                </>
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 py-6 font-black text-lg rounded-2xl shadow-xl"
+                  onClick={() => router.push(`/meeting/${req.id}`)}
+                >
+                  <Video className="h-6 w-6 ml-3" /> دخول المحاضرة
+                </Button>
               )}
               {status === 'completed' && (
                 <div className="flex flex-col items-center gap-3 text-green-600 font-black text-center">
                   <CheckCircle2 size={48} />
-                  <span className="text-xl">تمت المحاضرة بنجاح</span>
-                </div>
-              )}
-              {status === 'canceled' && (
-                <div className="flex flex-col items-center gap-3 text-muted-foreground font-black text-center">
-                  <XCircle size={48} />
-                  <span className="text-xl">تم إلغاء الطلب</span>
+                  <span className="text-xl">تمت بنجاح</span>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
       ))}
-
-      {/* مودال المحادثة الفورية */}
-      {activeChat && (
-        <ChatDialog 
-          request={activeChat} 
-          onClose={() => setActiveChat(null)} 
-          userId={user?.uid}
-          userName={user?.displayName || "مستخدم"}
-        />
-      )}
     </div>
-  );
-}
-
-function ChatDialog({ request, onClose, userId, userName }: any) {
-  const firestore = useFirestore();
-  const [msg, setMsg] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const messagesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(
-      collection(firestore, "requests", request.id, "messages"),
-      orderBy("timestamp", "asc")
-    );
-  }, [firestore, request.id]);
-
-  const { data: messages } = useCollection(messagesQuery);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!firestore || !msg.trim() || !userId) return;
-    try {
-      await addDoc(collection(firestore, "requests", request.id, "messages"), {
-        senderId: userId,
-        senderName: userName,
-        text: msg.trim(),
-        timestamp: new Date().toISOString()
-      });
-      setMsg("");
-    } catch (e) {
-      console.error("Chat send error:", e);
-    }
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden rounded-[2.5rem]" dir="rtl">
-        <DialogHeader className="p-6 bg-primary text-white">
-          <DialogTitle className="text-right text-2xl font-black">المحادثة الفورية</DialogTitle>
-          <DialogDescription className="text-right text-white/80">تنسيق ما قبل المحاضرة مع {userId === request.studentId ? request.teacherName : request.studentName}</DialogDescription>
-        </DialogHeader>
-        
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-50">
-          {messages?.map((m: any) => (
-            <div key={m.id} className={`flex flex-col ${m.senderId === userId ? 'items-start' : 'items-end'}`}>
-              <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm text-sm font-bold ${
-                m.senderId === userId ? 'bg-primary text-white rounded-br-none' : 'bg-white border-2 text-zinc-800 rounded-bl-none'
-              }`}>
-                {m.text}
-              </div>
-              <span className="text-[10px] mt-1 text-muted-foreground">{new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          ))}
-          {(!messages || messages.length === 0) && (
-            <div className="h-full flex flex-col items-center justify-center opacity-30 gap-3">
-              <MessageSquare size={48} />
-              <p className="font-bold">ابدأ المحادثة الآن لتنسيق التفاصيل</p>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter className="p-4 bg-white border-t mt-auto">
-          <div className="flex gap-2 w-full">
-            <Input 
-              placeholder="اكتب رسالتك هنا..." 
-              value={msg} 
-              onChange={(e) => setMsg(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="h-12 rounded-xl flex-1 border-2"
-            />
-            <Button onClick={handleSend} className="h-12 w-12 rounded-xl p-0">
-              <Send className="h-6 w-6" />
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
