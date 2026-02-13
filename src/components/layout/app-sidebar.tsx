@@ -22,7 +22,8 @@ import {
   GraduationCap,
   ImageIcon,
   Wand2,
-  CheckSquare
+  CheckSquare,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -60,6 +61,7 @@ const menuItems = [
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
+  { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
   { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "إدارة المُفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المُستفهمين", icon: Users, href: "/admin/mustafhems" },

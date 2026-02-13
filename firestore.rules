@@ -45,6 +45,12 @@ service cloud.firestore {
       }
     }
 
+    // الطعون (Appeals)
+    match /appeals/{appealId} {
+      allow create: if isSignedIn(); // السماح للمحظور بتقديم طعن
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
     // الأقسام والتخصصات (متاحة للجميع للقراءة لملء النماذج)
     match /categories/{categoryId} {
       allow read: if true; 
@@ -74,27 +80,10 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
 
-    // طلبات التوثيق
-    match /verificationRequests/{verId} {
-      allow create: if isNotBlocked();
-      allow read: if isNotBlocked() && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    // طلبات السحب المالي
-    match /payoutRequests/{payoutId} {
-      allow create: if isNotBlocked();
-      allow read: if isNotBlocked() && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-
     // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
-    }
-
-    // سجلات الإدارة
-    match /adminLogs/{logId} {
-      allow read, write: if isAdmin();
     }
   }
 }

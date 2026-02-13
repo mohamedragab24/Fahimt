@@ -14,16 +14,19 @@ import {
   Filter,
   Clock,
   XCircle,
-  LogOut
+  LogOut,
+  Send,
+  Scale
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +38,7 @@ export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -49,30 +53,79 @@ export default function HomePage() {
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userRef);
 
+  const [appealReason, setAppealReason] = useState("");
+  const [isSendingAppeal, setIsSendingAppeal] = useState(false);
+
+  const handleSendAppeal = async () => {
+    if (!appealReason.trim() || !firestore || !user) return;
+    setIsSendingAppeal(true);
+    try {
+      await addDoc(collection(firestore, "appeals"), {
+        userId: user.uid,
+        userName: profile?.fullName || "مستخدم",
+        userEmail: user.email,
+        reason: appealReason,
+        status: "pending",
+        createdAt: new Date().toISOString()
+      });
+      toast({ title: "تم إرسال الطعن", description: "سيتم مراجعة طلبك من قبل الإدارة والرد عليك قريباً." });
+      setAppealReason("");
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الطعن." });
+    } finally {
+      setIsSendingAppeal(false);
+    }
+  };
+
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-black animate-pulse text-primary text-2xl">جاري تحميل منصة فهمني...</div>;
 
   if (!user || !profile) {
     return <LandingPage router={router} settings={settings} />;
   }
 
-  // معالجة حالة الحظر (لمنع استعلامات Firebase اللاحقة وتجنب خطأ الأذونات)
+  // واجهة المستخدم المحظور مع نظام الطعون
   if (profile.status === 'blocked') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 text-center space-y-6 bg-white rounded-[3rem] shadow-xl m-4 md:m-10" dir="rtl">
-        <div className="bg-red-100 p-8 rounded-full text-red-600 animate-bounce">
-          <XCircle size={80} />
-        </div>
-        <h1 className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك</h1>
-        <p className="text-xl text-muted-foreground max-w-md font-bold leading-relaxed">
-          لقد تم مراجعة حسابك من قبل الإدارة وتقرر حظره لعدم استيفاء شروط المنصة أو انتهاك السياسات. يرجى التواصل مع الدعم الفني إذا كنت تعتقد أن هناك خطأ.
-        </p>
-        <Button 
-          variant="destructive" 
-          onClick={() => signOut(auth).then(() => router.push("/login"))} 
-          className="rounded-2xl px-10 py-8 text-xl font-black shadow-xl hover:scale-105 transition-all"
-        >
-          <LogOut className="ml-3 h-6 w-6" /> تسجيل الخروج
-        </Button>
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
+        <Card className="w-full max-w-2xl shadow-2xl rounded-[3rem] border-t-8 border-red-600 overflow-hidden bg-white">
+          <CardHeader className="text-center p-10 bg-red-50">
+            <div className="bg-red-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-red-600 mb-6">
+              <XCircle size={60} />
+            </div>
+            <CardTitle className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك</CardTitle>
+            <CardDescription className="text-xl text-zinc-600 font-bold mt-4">
+              لقد تم تعطيل وصولك للمنصة لانتهاك السياسات أو عدم استيفاء الشروط.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-10 space-y-8">
+            <div className="p-6 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-4">
+              <h4 className="text-xl font-black flex items-center gap-2">
+                <Scale className="text-red-600" /> تقديم طعن للإدارة
+              </h4>
+              <p className="text-sm text-muted-foreground font-bold">إذا كنت تعتقد أن هذا الحظر تم عن طريق الخطأ، يرجى كتابة سبب فك الحظر وسيقوم فريقنا بمراجعته.</p>
+              <Textarea 
+                placeholder="اكتب رسالتك هنا بالتفصيل..." 
+                className="h-40 rounded-xl text-lg p-4 border-2" 
+                value={appealReason}
+                onChange={(e) => setAppealReason(e.target.value)}
+              />
+              <Button 
+                onClick={handleSendAppeal} 
+                disabled={isSendingAppeal || !appealReason.trim()}
+                className="w-full h-14 text-xl font-black rounded-xl bg-red-600 hover:bg-red-700 shadow-lg"
+              >
+                {isSendingAppeal ? "جاري الإرسال..." : <><Send className="ml-2 h-5 w-5" /> إرسال طلب الطعن</>}
+              </Button>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => signOut(auth).then(() => router.push("/login"))} 
+              className="w-full h-14 rounded-xl text-lg font-black border-2"
+            >
+              <LogOut className="ml-2 h-5 w-5" /> تسجيل الخروج
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -157,7 +210,6 @@ function MustafhemView({ profile }: any) {
   const { toast } = useToast();
 
   const categoriesQuery = useMemoFirebase(() => {
-    // لا تشغل الاستعلام إذا كان الحساب محظوراً لتجنب خطأ الأذونات
     if (!firestore || profile?.status === 'blocked') return null;
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
   }, [firestore, profile?.status]);

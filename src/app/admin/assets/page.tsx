@@ -3,7 +3,7 @@
 
 import { useState, useRef } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle } from "lucide-react";
@@ -31,10 +31,11 @@ export default function AdminAssets() {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         try {
-          await updateDoc(doc(firestore, "settings", "general"), {
+          // استخدام setDoc مع merge لضمان وجود المستند وتحديثه
+          await setDoc(doc(firestore, "settings", "general"), {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
-          });
+          }, { merge: true });
           toast({ title: "تم التحديث!", description: "تم رفع الصورة الجديدة بنجاح وتحديث الموقع بالكامل." });
         } catch (err) {
           toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث الصورة في قاعدة البيانات." });
@@ -99,7 +100,7 @@ export default function AdminAssets() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
-                    <AlertCircle size={14} /> المعاينة الحالية (القديمة)
+                    <AlertCircle size={14} /> المعاينة الحالية (المنشورة الآن)
                   </div>
                   <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'h-48' : 'aspect-video'}`}>
                     {settings?.[item.key] ? (
@@ -122,14 +123,14 @@ export default function AdminAssets() {
                     <CheckCircle2 size={40} className="animate-bounce" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-2xl font-black text-primary">سيتم التحديث تلقائياً</h4>
+                    <h4 className="text-2xl font-black text-primary">تزامن فوري</h4>
                     <p className="text-zinc-600 font-bold leading-relaxed">
-                      بمجرد اختيار ملف جديد، سيتم استبدال هذه الصورة وتحديث {item.label} في كافة أجزاء الموقع فوراً دون الحاجة لإعادة التحميل.
+                      بمجرد رفع الصورة، سيتم استبدالها في كافة أرجاء المنصة لكل المستخدمين فوراً.
                     </p>
                   </div>
                   <div className="flex items-center gap-3 bg-white px-6 py-2 rounded-full shadow-sm text-green-600 font-black">
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
-                    متصل بـ Cloud Realtime
+                    قاعدة البيانات متصلة ومباشرة
                   </div>
                 </div>
               </div>
