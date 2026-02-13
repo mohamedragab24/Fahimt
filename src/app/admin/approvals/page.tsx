@@ -29,6 +29,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminApprovals() {
   const { user } = useUser();
@@ -44,8 +45,8 @@ export default function AdminApprovals() {
 
   const { data: adminProfile } = useDoc(userRef);
 
-  // التأكد من أن المستخدم أدمن قبل تشغيل الاستعلامات لتجنب Permission Denied
-  const canReadApprovals = adminProfile?.isAdmin || user?.email === "mohamed76y@gmail.com";
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+  const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
@@ -60,52 +61,49 @@ export default function AdminApprovals() {
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
 
-  const handleApproveProfile = async (u: any) => {
-    try {
-      await updateDoc(doc(firestore!, "users", u.id), { isProfileApproved: true });
-      await addDoc(collection(firestore!, "notifications"), {
-        userId: u.id,
-        title: "تم اعتماد حسابك!",
-        message: "تهانينا، تم مراجعة ملفك الشخصي بنجاح. يمكنك الآن استخدام كافة مميزات المنصة.",
-        type: "approval",
-        read: false,
-        createdAt: new Date().toISOString()
-      });
-      toast({ title: "تم الاعتماد", description: "تم تفعيل الملف وإرسال إشعار للمستخدم." });
-      setSelectedUser(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الاعتماد" });
-    }
+  const handleApproveProfile = (u: any) => {
+    if (!firestore) return;
+    const uRef = doc(firestore, "users", u.id);
+    updateDocumentNonBlocking(uRef, { isProfileApproved: true });
+    
+    addDocumentNonBlocking(collection(firestore, "notifications"), {
+      userId: u.id,
+      title: "تم اعتماد حسابك!",
+      message: "تهانينا، تم مراجعة ملفك الشخصي بنجاح. يمكنك الآن استخدام كافة مميزات المنصة.",
+      type: "approval",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    toast({ title: "تم الاعتماد", description: "تم تفعيل الملف وإرسال إشعار للمستخدم." });
+    setSelectedUser(null);
   };
 
-  const handleRejectProfile = async (u: any) => {
-    try {
-      await updateDoc(doc(firestore!, "users", u.id), { status: "blocked" });
-      toast({ variant: "destructive", title: "تم الرفض والحظر", description: "تم حظر الحساب لعدم استيفاء الشروط." });
-      setSelectedUser(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في العملية" });
-    }
+  const handleRejectProfile = (u: any) => {
+    if (!firestore) return;
+    const uRef = doc(firestore, "users", u.id);
+    updateDocumentNonBlocking(uRef, { status: "blocked" });
+    toast({ variant: "destructive", title: "تم الرفض والحظر", description: "تم حظر الحساب لعدم استيفاء الشروط." });
+    setSelectedUser(null);
   };
 
-  const handleApproveIstifham = async (ist: any) => {
-    try {
-      await updateDoc(doc(firestore!, "istifhams", ist.id), { status: "active" });
-      toast({ title: "تم النشر بنجاح", description: "الاستفهام متاح الآن لكافة المُفهمين." });
-      setSelectedIstifham(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في النشر" });
-    }
+  const handleApproveIstifham = (ist: any) => {
+    if (!firestore) return;
+    const istRef = doc(firestore, "istifhams", ist.id);
+    updateDocumentNonBlocking(istRef, { 
+      status: "active",
+      approvedAt: new Date().toISOString()
+    });
+    toast({ title: "تم النشر بنجاح", description: "الاستفهام متاح الآن لكافة المُفهمين." });
+    setSelectedIstifham(null);
   };
 
-  const handleRejectIstifham = async (id: string) => {
-    try {
-      await updateDoc(doc(firestore!, "istifhams", id), { status: "canceled" });
-      toast({ variant: "destructive", title: "تم رفض الاستفهام", description: "تم إلغاء الطلب ولن يظهر للعامة." });
-      setSelectedIstifham(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
-    }
+  const handleRejectIstifham = (id: string) => {
+    if (!firestore) return;
+    const istRef = doc(firestore, "istifhams", id);
+    updateDocumentNonBlocking(istRef, { status: "canceled" });
+    toast({ variant: "destructive", title: "تم رفض الاستفهام", description: "تم إلغاء الطلب ولن يظهر للعامة." });
+    setSelectedIstifham(null);
   };
 
   if (!canReadApprovals && adminProfile) {
@@ -147,7 +145,7 @@ export default function AdminApprovals() {
                   <CardContent className="p-6 space-y-4">
                     <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل الكاملة</Button>
                     <div className="flex gap-2">
-                      <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12"><CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد</Button>
+                      <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12 text-white"><CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد</Button>
                       <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> رفض</Button>
                     </div>
                   </CardContent>
@@ -173,7 +171,7 @@ export default function AdminApprovals() {
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
                     <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> تفاصيل الاستفهام</Button>
-                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg">نشر الآن</Button>
+                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg text-white">نشر الآن</Button>
                   </div>
                 </Card>
               ))
@@ -221,7 +219,7 @@ export default function AdminApprovals() {
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl">اعتماد الحساب</Button>
+                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white">اعتماد الحساب</Button>
                 <Button onClick={() => handleRejectProfile(selectedUser)} variant="destructive" className="h-16 rounded-2xl font-black text-xl">رفض وحظر</Button>
               </div>
             </div>
@@ -252,8 +250,8 @@ export default function AdminApprovals() {
                 <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.subCategory || 'عام'}`} />
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl shadow-lg">اعتماد ونشر فوراً</Button>
-                <Button onClick={() => handleRejectIstifham(selectedIstifham.id)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-lg">رفض الاستفهام</Button>
+                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl shadow-lg text-white">اعتماد ونشر فوراً</Button>
+                <Button onClick={() => handleRejectIstifham(selectedIstifham.id)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-lg text-white">رفض الاستفهام</Button>
               </div>
             </div>
           )}
