@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent } from "lucide-react";
@@ -10,21 +10,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 
 export default function AdminSessionsReview() {
+  const { user } = useUser();
   const firestore = useFirestore();
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: adminProfile } = useDoc(userRef);
+
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
+  const canReadSessions = adminProfile?.isAdmin || isMasterAdmin;
+
   const sessionsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    // تبسيط الاستعلام لضمان الظهور دون الحاجة لفهارس مركبة فورية
+    if (!firestore || !canReadSessions) return null;
+    // جلب الجلسات التي بدأت بالفعل أو انتهت
     return query(
       collection(firestore, "istifhams"), 
       where("status", "in", ["accepted", "completed"])
     );
-  }, [firestore]);
+  }, [firestore, canReadSessions]);
 
   const { data: rawSessions, isLoading } = useCollection(sessionsQuery);
 
   // ترتيب يدوي في الواجهة لضمان جودة العرض دون خطأ فهرس
   const sessions = rawSessions?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  if (!canReadSessions && adminProfile) {
+    return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لمركز الرقابة.</div>;
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
