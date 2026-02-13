@@ -68,9 +68,11 @@ service cloud.firestore {
         resource.data.mufhemId == request.auth.uid ||
         isAdmin()
       );
+      // السماح بالتحديث إذا كان المستخدم هو صاحب الطلب، أو المفهم المرتبط به، أو مفهم جديد يحاول قبول طلب نشط متوافق مع جنسه
       allow update: if isNotBlocked() && (
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
+        (resource.data.status == "active" && getUserData().role == "mufhem" && resource.data.mustafhemGender == getUserData().gender) ||
         isAdmin()
       );
       allow delete: if isAdmin();
@@ -86,7 +88,7 @@ service cloud.firestore {
     // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isMasterAdmin();
     }
 
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }

@@ -156,7 +156,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
+    <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
@@ -191,7 +191,7 @@ function LandingPage({ router, settings }: any) {
         </div>
         <div className="flex items-center">
           {settings?.logoUrl && (
-            <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Logo" />
+            <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Logo" style={{ maxHeight: '120px' }} />
           )}
         </div>
       </header>
@@ -247,7 +247,7 @@ function MustafhemView({ profile }: any) {
     }
 
     if (firestore) {
-      await addDocumentNonBlocking(collection(firestore, "istifhams"), {
+      await addDoc(collection(firestore, "istifhams"), {
         ...newIstifham,
         amount: Number(newIstifham.amount),
         status: "pending_approval",
@@ -374,16 +374,19 @@ function MufhemView({ profile }: any) {
   const { toast } = useToast();
 
   const istifhamsQuery = useMemoFirebase(() => {
-    if (!firestore || profile?.status === 'blocked' || !profile?.gender) return null;
+    // تبسيط الاستعلام لتجنب الحاجة لفهارس مركبة خلال مرحلة التطوير الأولي
+    if (!firestore || profile?.status === 'blocked') return null;
     return query(
       collection(firestore, "istifhams"), 
       where("status", "==", "active"),
-      where("mustafhemGender", "==", profile.gender),
-      limit(20)
+      limit(50)
     );
-  }, [firestore, profile?.status, profile?.gender]);
+  }, [firestore, profile?.status]);
   
-  const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
+  const { data: allActiveIstifhams, isLoading } = useCollection(istifhamsQuery);
+
+  // فلترة الطلبات برمجياً حسب الجنس لضمان الخصوصية والاحترافية
+  const istifhams = allActiveIstifhams?.filter(ist => ist.mustafhemGender === profile.gender);
 
   const handleAccept = (ist: any) => {
     if (!firestore) return;
