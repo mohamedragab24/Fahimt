@@ -282,12 +282,12 @@ function MustafhemView({ profile }: any) {
               <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
                 <div className="space-y-2">
                   <Label className="font-black mr-2">عنوان الاستفهام</Label>
-                  <Input placeholder="مثال: شرح درس المصفوفات" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2" />
+                  <Input placeholder="مثال: شرح درس المصفوفات" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} required className="h-14 rounded-2xl border-2" />
                 </div>
                 
                 <div className="space-y-2">
                   <Label className="font-black mr-2">وصف الطلب</Label>
-                  <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-2xl border-2 p-4" />
+                  <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} required className="h-32 rounded-2xl border-2 p-4" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -325,13 +325,13 @@ function MustafhemView({ profile }: any) {
 
                   <div className="space-y-2">
                     <Label className="font-black mr-2">الميزانية (ج.م)</Label>
-                    <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
+                    <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} required className="h-14 rounded-2xl border-2 font-bold" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="font-black mr-2">موعد المحاضرة المفضل</Label>
-                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" />
+                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} required className="h-14 rounded-2xl border-2" />
                 </div>
               </div>
               <DialogFooter>
@@ -374,7 +374,6 @@ function MufhemView({ profile }: any) {
   const { toast } = useToast();
 
   const istifhamsQuery = useMemoFirebase(() => {
-    // جلب الاستفهامات النشطة التي تطابق جنس المفهم لتوفر الخصوصية
     if (!firestore || !profile?.gender) return null;
     return query(
       collection(firestore, "istifhams"), 

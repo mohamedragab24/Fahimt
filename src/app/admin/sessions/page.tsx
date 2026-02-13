@@ -121,6 +121,11 @@ export default function AdminSessionsReview() {
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="p-0">
+            <DialogTitle className="sr-only">مراجعة المحاضرة</DialogTitle>
+            <DialogDescription className="sr-only">تقرير كامل صوت وصورة للمحاضرة المختارة.</DialogDescription>
+          </DialogHeader>
+          
           <div className="bg-zinc-900 p-8 text-white flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-black">{selectedSession?.title}</h2>
@@ -157,20 +162,19 @@ export default function AdminSessionsReview() {
 
             <div className="space-y-4">
               <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
-              {selectedSession?.recordingUrl && !selectedSession.recordingUrl.includes('Fahimni_Room') ? (
+              {selectedSession?.recordingUrl ? (
                 <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
-                  {/* استخدام فيديو مدمج إذا كان الرابط مباشر، أو iframe إذا كان من خدمة خارجية */}
-                  {selectedSession.recordingUrl.endsWith('.mp4') ? (
-                    <video controls className="w-full h-full">
-                      <source src={selectedSession.recordingUrl} type="video/mp4" />
-                      متصفحك لا يدعم تشغيل الفيديو.
-                    </video>
-                  ) : (
+                  {selectedSession.recordingUrl.includes('Fahimni_Room') ? (
                     <iframe 
                       src={selectedSession.recordingUrl} 
                       className="w-full h-full border-none"
                       allow="autoplay; fullscreen"
                     />
+                  ) : (
+                    <video controls className="w-full h-full">
+                      <source src={selectedSession.recordingUrl} type="video/mp4" />
+                      متصفحك لا يدعم تشغيل الفيديو.
+                    </video>
                   )}
                 </div>
               ) : (
@@ -178,11 +182,8 @@ export default function AdminSessionsReview() {
                   <ShieldAlert className="h-16 w-16 text-orange-400" />
                   <div>
                     <p className="text-orange-900 font-black text-xl">الفيديو قيد المعالجة والرفع</p>
-                    <p className="text-orange-700 font-bold max-w-md mt-2">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف. يمكنك استخدام المعاينة المباشرة للغرفة بالأسفل.</p>
+                    <p className="text-orange-700 font-bold max-w-md mt-2">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف.</p>
                   </div>
-                  <Button variant="outline" className="rounded-xl border-orange-200 mt-4" onClick={() => window.open(`https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`, '_blank')}>
-                    <LinkIcon className="ml-2 h-4 w-4" /> معاينة مباشرة لغرفة الاجتماع
-                  </Button>
                 </div>
               )}
             </div>
