@@ -1,23 +1,25 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
-  PlusCircle, 
   BookOpen, 
-  TrendingUp, 
   ShieldCheck, 
   ShieldAlert,
-  Layers,
-  Filter,
   Clock,
   XCircle,
   LogOut,
-  Send,
   Scale,
-  Zap
+  Zap,
+  CheckCircle2,
+  FileText,
+  BadgeCent,
+  Calendar as CalendarIcon,
+  Layers,
+  Filter,
+  CheckCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -31,7 +33,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -84,6 +85,7 @@ export default function HomePage() {
     return <LandingPage router={router} settings={settings} />;
   }
 
+  // حالة الحساب المحظور
   if (profile.status === 'blocked') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
@@ -117,18 +119,48 @@ export default function HomePage() {
     );
   }
 
+  // حالة الحساب قيد المراجعة (صفحة كاملة)
+  if (!profile.isProfileApproved && !profile.isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
+        <Card className="w-full max-w-2xl shadow-2xl rounded-[4rem] border-t-8 border-orange-500 overflow-hidden bg-white text-center">
+          <CardHeader className="pt-16 pb-10 space-y-6">
+            <div className="bg-orange-100 w-32 h-32 rounded-[2.5rem] flex items-center justify-center mx-auto text-orange-600 shadow-inner">
+              <ShieldAlert size={80} className="animate-pulse" />
+            </div>
+            <CardTitle className="text-5xl font-black text-zinc-900">حسابك قيد المراجعة</CardTitle>
+            <CardDescription className="text-2xl text-zinc-600 font-bold max-w-md mx-auto">
+              أهلاً بك في فهمني. يقوم فريق الإدارة حالياً بمراجعة بياناتك وصورتك لضمان جودة المنصة.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-12 pb-16 space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed space-y-2">
+                <Clock className="mx-auto text-orange-500" />
+                <p className="font-bold">مدة الانتظار</p>
+                <p className="text-sm text-muted-foreground">عادة ما يتم تفعيل الحساب خلال 2-12 ساعة عمل.</p>
+              </div>
+              <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed space-y-2">
+                <CheckCircle2 className="mx-auto text-green-500" />
+                <p className="font-bold">ماذا بعد التفعيل؟</p>
+                <p className="text-sm text-muted-foreground">ستتمكن من إنشاء الاستفهامات أو قبولها مباشرة.</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-16 rounded-2xl text-xl font-bold border-2">
+              <LogOut className="ml-2 h-6 w-6" /> تسجيل الخروج والعودة لاحقاً
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
-        {!profile.isProfileApproved && (
-          <div className="mb-6 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl flex items-center gap-4 text-orange-700 animate-pulse">
-            <ShieldAlert />
-            <span className="font-bold text-sm">ملفك الشخصي قيد المراجعة؛ سيتم إخطارك فور اعتماده.</span>
-          </div>
-        )}
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
-            <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك يا {profile.role === "mufhem" ? "مُفهم" : "مُستفهم"}!</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {profile.isVerified && <ShieldCheck className="text-blue-500 h-10 w-10" />}
@@ -158,16 +190,16 @@ function LandingPage({ router, settings }: any) {
           <Button variant="ghost" onClick={() => router.push('/login')} className="text-white font-black text-lg">دخول</Button>
         </div>
         <div className="flex items-center">
-          {settings?.logoUrl ? (
+          {settings?.logoUrl && (
             <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Logo" />
-          ) : (
-            <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white text-5xl font-black">ف</div>
           )}
         </div>
       </header>
 
       <section className="relative h-screen flex flex-col items-center justify-center text-center overflow-hidden">
-        <Image src={landingImage} alt="Bg" fill className="object-cover brightness-[0.3]" priority />
+        <div className="absolute inset-0">
+          <img src={landingImage} alt="Bg" className="w-full h-full object-cover brightness-[0.3]" />
+        </div>
         <div className="relative z-10 space-y-8 max-w-5xl px-4">
           <h1 className="text-6xl md:text-8xl font-black text-white leading-tight">{settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}</h1>
           <p className="text-2xl md:text-4xl text-zinc-200 font-bold opacity-90">{settings?.heroSubtitle || "مُفهمين خبراء لخدمة كل مُستفهم طموح"}</p>
@@ -181,24 +213,36 @@ function LandingPage({ router, settings }: any) {
 function MustafhemView({ profile }: any) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newIstifham, setNewIstifham] = useState({ title: "", description: "", amount: "", category: "", subCategory: "", meetingTime: "" });
+  const [newIstifham, setNewIstifham] = useState({ 
+    title: "", 
+    description: "", 
+    amount: "", 
+    category: "", 
+    categorySub: "", 
+    categoryOption: "", 
+    meetingTime: "" 
+  });
   const { toast } = useToast();
 
   const categoriesQuery = useMemoFirebase(() => {
-    if (!firestore || profile?.status === 'blocked') return null;
+    if (!firestore) return null;
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
-  }, [firestore, profile?.status]);
-  const { data: categories } = useCollection(categoriesQuery);
+  }, [firestore]);
+  const { data: allCategories } = useCollection(categoriesQuery);
 
   const pendingIstifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !profile.id) return null;
-    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(5));
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(10));
   }, [firestore, profile.id]);
   const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
+  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
+  const filteredOptions = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === newIstifham.categorySub)?.id) || [];
+
   const handleCreate = async () => {
     if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
-      toast({ variant: "destructive", title: "بيانات ناقصة" });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة الحقول الأساسية للاستفهام." });
       return;
     }
 
@@ -214,8 +258,8 @@ function MustafhemView({ profile }: any) {
       });
 
       setIsDialogOpen(false);
-      setNewIstifham({ title: "", description: "", amount: "", category: "", subCategory: "", meetingTime: "" });
-      toast({ title: "تم الإرسال للمراجعة", description: "سيتم إخطارك فور النشر." });
+      setNewIstifham({ title: "", description: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "" });
+      toast({ title: "تم الإرسال للمراجعة", description: "سيتم مراجعة استفهامك ونشره خلال دقائق." });
     }
   };
 
@@ -226,27 +270,73 @@ function MustafhemView({ profile }: any) {
           <h2 className="text-4xl font-black text-zinc-800">عندك سؤال؟ <br/> اطرح استفهامك الآن</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">طلب استفهام جديد</Button>
+              <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-lg hover:scale-105 transition-all">طلب استفهام جديد</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] rounded-[2.5rem]" dir="rtl">
+            <DialogContent className="sm:max-w-[650px] rounded-[3rem] border-none shadow-2xl" dir="rtl">
               <DialogHeader>
-                <DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle>
+                <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
+                  <Zap className="text-primary fill-primary/10" /> تفاصيل الاستفهام
+                </DialogTitle>
+                <DialogDescription className="text-right font-bold">اشرح ما تريد فهمه لنصلك بالخبير المناسب.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-6 py-6">
-                <Input placeholder="عنوان الاستفهام" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-xl" />
-                <Textarea placeholder="اشرح ما تود فهمه..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-xl" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}>
-                    <SelectTrigger className="h-14 rounded-xl"><SelectValue placeholder="القسم" /></SelectTrigger>
-                    <SelectContent>
-                      {categories?.filter(c => c.type === 'main' || !c.type).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" placeholder="الميزانية (ج.م)" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-xl" />
+              <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
+                <div className="space-y-2">
+                  <Label className="font-black mr-2">عنوان الاستفهام</Label>
+                  <Input placeholder="مثال: شرح درس المصفوفات" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2" />
                 </div>
-                <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-xl" />
+                
+                <div className="space-y-2">
+                  <Label className="font-black mr-2">وصف الطلب</Label>
+                  <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-2xl border-2 p-4" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="font-black mr-2">القسم الرئيسي</Label>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: "", categoryOption: ""})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                      <SelectContent>
+                        {mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-black mr-2">التخصص</Label>
+                    <Select disabled={!newIstifham.category} onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v, categoryOption: ""})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredSubs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="font-black mr-2">خيارات إضافية</Label>
+                    <Select disabled={!newIstifham.categorySub} onValueChange={(v)=>setNewIstifham({...newIstifham, categoryOption: v})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold"><SelectValue placeholder="اختر (اختياري)" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredOptions.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-black mr-2">الميزانية (ج.م)</Label>
+                    <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-black mr-2">موعد المحاضرة المفضل</Label>
+                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" />
+                </div>
               </div>
-              <DialogFooter><Button onClick={handleCreate} className="w-full h-14 font-black">إرسال للمراجعة</Button></DialogFooter>
+              <DialogFooter>
+                <Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl shadow-xl">تأكيد وإرسال للمراجعة</Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
@@ -258,10 +348,18 @@ function MustafhemView({ profile }: any) {
           <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6">استفهاماتك قيد المراجعة</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingIstifhams.map(ist => (
-              <Card key={ist.id} className="p-6 rounded-[2rem] border-2 border-orange-100 bg-orange-50/30">
-                <Badge className="bg-orange-100 text-orange-600 mb-2">قيد المراجعة</Badge>
-                <h4 className="text-lg font-black truncate">{ist.title}</h4>
-                <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{ist.description}</p>
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-orange-100 bg-white shadow-lg overflow-hidden group">
+                <div className="p-6 space-y-4">
+                  <Badge className="bg-orange-100 text-orange-600 border-none font-bold">بانتظار موافقة الإدارة</Badge>
+                  <h4 className="text-xl font-black text-zinc-800 line-clamp-1">{ist.title}</h4>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-bold">
+                    <Layers size={14} /> <span>{ist.category} › {ist.categorySub}</span>
+                  </div>
+                  <div className="pt-4 border-t border-dashed flex justify-between items-center">
+                    <span className="font-black text-primary">{ist.amount} ج.م</span>
+                    <span className="text-xs text-muted-foreground font-bold">{new Date(ist.createdAt).toLocaleDateString('ar-EG')}</span>
+                  </div>
+                </div>
               </Card>
             ))}
           </div>
@@ -326,13 +424,13 @@ function MufhemView({ profile }: any) {
       </div>
 
       <div className="space-y-6">
-        <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات معتمدة متاحة الآن</h3>
+        <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات متاحة لك</h3>
         {isLoading ? <div className="text-center py-20 animate-pulse font-black">جاري جلب البيانات...</div> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {istifhams?.map(ist => (
               <Card key={ist.id} className="p-8 rounded-[2.5rem] border-2 shadow-lg hover:border-primary transition-all bg-white group">
                 <div className="flex justify-between items-start mb-4">
-                  <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary">{ist.category}</Badge>
+                  <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary">{ist.categorySub || ist.category}</Badge>
                   <span className="text-xs font-bold text-muted-foreground">{new Date(ist.createdAt).toLocaleDateString('ar-EG')}</span>
                 </div>
                 <h4 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
@@ -345,7 +443,7 @@ function MufhemView({ profile }: any) {
             ))}
             {istifhams?.length === 0 && (
               <div className="col-span-full py-20 text-center bg-muted/10 rounded-[2rem] border-4 border-dashed border-muted-foreground/20">
-                <p className="text-muted-foreground font-black text-xl opacity-40">لا توجد استفهامات متاحة حالياً وفقاً لجنسك.</p>
+                <p className="text-muted-foreground font-black text-xl opacity-40">لا توجد استفهامات جديدة حالياً.</p>
               </div>
             )}
           </div>

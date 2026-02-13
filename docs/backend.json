@@ -31,6 +31,7 @@
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string" },
+        "description": { "type": "string" },
         "amount": { "type": "number" },
         "category": { "type": "string" },
         "categorySub": { "type": "string" },
@@ -38,10 +39,14 @@
         "status": { "type": "string", "enum": ["pending_approval", "active", "accepted", "completed", "canceled"] },
         "mustafhemId": { "type": "string" },
         "mustafhemName": { "type": "string" },
+        "mustafhemGender": { "type": "string" },
         "mufhemId": { "type": "string" },
         "mufhemName": { "type": "string" },
         "meetingTime": { "type": "string", "format": "date-time" },
         "attachmentUrl": { "type": "string" },
+        "recordingUrl": { "type": "string", "description": "رابط تسجيل المحاضرة صوت وصورة." },
+        "rating": { "type": "number" },
+        "review": { "type": "string" },
         "createdAt": { "type": "string" }
       }
     },
