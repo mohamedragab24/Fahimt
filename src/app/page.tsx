@@ -374,15 +374,15 @@ function MufhemView({ profile }: any) {
   const { toast } = useToast();
 
   const istifhamsQuery = useMemoFirebase(() => {
-    // جلب الاستفهامات النشطة التي تطابق جنس المفهم لتوافق قواعد الأمان
-    if (!firestore || !profile?.gender || profile?.status === 'blocked') return null;
+    // جلب الاستفهامات النشطة التي تطابق جنس المفهم لتوفر الخصوصية
+    if (!firestore || !profile?.gender) return null;
     return query(
       collection(firestore, "istifhams"), 
       where("status", "==", "active"),
       where("mustafhemGender", "==", profile.gender),
       limit(50)
     );
-  }, [firestore, profile?.gender, profile?.status]);
+  }, [firestore, profile?.gender]);
   
   const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
 

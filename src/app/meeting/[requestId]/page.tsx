@@ -111,7 +111,7 @@ export default function MeetingPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          {/* لا يمكن للمفهم إغلاق الجلسة قبل المستفهم (تعطيل الزر للمفهم في بعض الحالات أو تركه للمستفهم فقط) */}
+          {/* لا يمكن للمفهم إغلاق الجلسة قبل المستفهم لضمان حقوق الطالب */}
           <Button 
             variant="destructive" 
             size="sm" 
@@ -138,7 +138,7 @@ export default function MeetingPage() {
         <DialogContent className="sm:max-w-[500px]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-2xl font-black">تقييم المحاضرة (إجباري)</DialogTitle>
-            <DialogDescription className="text-right">يرجى تقييم الجلسة لإتمام العملية.</DialogDescription>
+            <DialogDescription className="text-right text-lg">يرجى تقييم الجلسة لإتمام العملية والعودة للمنصة.</DialogDescription>
           </DialogHeader>
           <div className="py-6 space-y-6 flex flex-col items-center">
             <div className="flex gap-2">
@@ -149,14 +149,14 @@ export default function MeetingPage() {
               ))}
             </div>
             <Textarea 
-              placeholder="رأيك في الشرح..." 
-              className="h-24 rounded-xl text-lg"
+              placeholder="رأيك في الشرح وأسلوب المفهم..." 
+              className="h-24 rounded-xl text-lg p-4"
               value={review}
               onChange={(e) => setReview(e.target.value)}
             />
           </div>
           <DialogFooter>
-            <Button onClick={submitRating} className="w-full h-14 text-xl font-black">إرسال التقييم وإغلاق</Button>
+            <Button onClick={submitRating} className="w-full h-14 text-xl font-black rounded-xl">إرسال التقييم وإغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

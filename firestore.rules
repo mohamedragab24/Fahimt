@@ -30,7 +30,7 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // السماح للأدمن الماستر والأدمن المساعد بكل شيء في النظام
+    // السماح للأدمن الماستر والأدمن المساعد بكل شيء في النظام لضمان الرقابة الكاملة
     match /{document=**} {
       allow read, write: if isMasterAdmin() || isAdmin();
     }
@@ -64,7 +64,7 @@ service cloud.firestore {
       allow create: if isNotBlocked();
       
       // يسمح بالقراءة إذا كان المستخدم أدمن، أو صاحب الطلب، أو المفهم المرتبط، 
-      // أو إذا كان الطلب نشطاً ويطابق جنس المستخدم (للمفهمين)
+      // أو إذا كان الطلب نشطاً ويطابق جنس المستخدم لضمان الخصوصية
       allow read: if isNotBlocked() && (
         isAdmin() ||
         resource.data.mustafhemId == request.auth.uid || 
