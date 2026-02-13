@@ -2,9 +2,9 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, Video, User, Settings, LogOut, ShieldCheck, LifeBuoy } from "lucide-react";
+import { Bell, Video, User, Settings, LogOut, ShieldCheck, LifeBuoy, CheckCircle2, XCircle } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
-import { doc, collection, query, where, limit } from "firebase/firestore";
+import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ export function Header() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  // جلب إعدادات الموقع ديناميكياً (للشعار)
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, "settings", "general");
@@ -31,6 +30,7 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
+  // إشعارات الاستفهامات المقبولة
   const notificationsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     const requestsRef = collection(firestore, "requests");
@@ -45,19 +45,20 @@ export function Header() {
 
   const { data: acceptedRequests } = useCollection(notificationsQuery);
 
-  const supportQuery = useMemoFirebase(() => {
+  // إشعارات النظام (اعتماد الحسابات)
+  const systemNotifsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
-      collection(firestore, "supportTickets"),
+      collection(firestore, "notifications"),
       where("userId", "==", user.uid),
-      where("status", "==", "replied"),
-      limit(5)
+      orderBy("createdAt", "desc"),
+      limit(10)
     );
   }, [firestore, user]);
 
-  const { data: supportReplies } = useCollection(supportQuery);
+  const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
-  const totalNotifications = (acceptedRequests?.length || 0) + (supportReplies?.length || 0);
+  const totalNotifications = (acceptedRequests?.length || 0) + (systemNotifs?.filter(n => !n.read).length || 0);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -98,11 +99,27 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
-              <DropdownMenuLabel className="text-lg font-black p-3">مركز الإشعارات</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-lg font-black p-3 text-right">مركز الإشعارات</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-96 overflow-y-auto">
                 {totalNotifications > 0 ? (
                   <>
+                    {systemNotifs?.map((n: any) => (
+                      <DropdownMenuItem 
+                        key={n.id} 
+                        className="p-4 rounded-xl cursor-pointer hover:bg-muted border-b last:border-0"
+                      >
+                        <div className="flex gap-4">
+                          <div className={`p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0 ${n.type === 'approval' ? 'bg-green-100 text-green-600' : 'bg-primary/10 text-primary'}`}>
+                            {n.type === 'approval' ? <CheckCircle2 size={24} /> : <Bell size={24} />}
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-black text-sm leading-tight text-right">{n.title}</p>
+                            <p className="text-[10px] text-muted-foreground text-right">{n.message}</p>
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
                     {acceptedRequests?.map((req: any) => (
                       <DropdownMenuItem 
                         key={req.id} 
@@ -114,25 +131,8 @@ export function Header() {
                             <Video className="text-primary h-6 w-6" />
                           </div>
                           <div className="space-y-1">
-                            <p className="font-black text-sm leading-tight">محاضرة بانتظارك: {req.title}</p>
-                            <p className="text-[10px] text-muted-foreground">اضغط لدخول البث الآن</p>
-                          </div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    {supportReplies?.map((ticket: any) => (
-                      <DropdownMenuItem 
-                        key={ticket.id} 
-                        className="p-4 rounded-xl cursor-pointer hover:bg-accent/5 border-b last:border-0"
-                        onClick={() => router.push(`/support`)}
-                      >
-                        <div className="flex gap-4">
-                          <div className="bg-accent/10 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                            <LifeBuoy className="text-accent h-6 w-6" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="font-black text-sm leading-tight">رد جديد على تذكرتك: {ticket.subject}</p>
-                            <p className="text-[10px] text-muted-foreground">اضغط لمشاهدة رد الإدارة</p>
+                            <p className="font-black text-sm leading-tight text-right">محاضرة بانتظارك: {req.title}</p>
+                            <p className="text-[10px] text-muted-foreground text-right">اضغط لدخول البث الآن</p>
                           </div>
                         </div>
                       </DropdownMenuItem>
@@ -145,7 +145,7 @@ export function Header() {
                 )}
               </div>
               <DropdownMenuSeparator />
-              <Button variant="ghost" onClick={() => router.push('/requests')} className="w-full font-black text-primary hover:text-primary py-2 text-sm">عرض كل الطلبات</Button>
+              <Button variant="ghost" onClick={() => router.push('/requests')} className="w-full font-black text-primary hover:text-primary py-2 text-sm">عرض كل الاستفهامات</Button>
             </DropdownMenuContent>
           </DropdownMenu>
 
