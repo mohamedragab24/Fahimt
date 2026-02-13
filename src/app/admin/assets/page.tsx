@@ -57,7 +57,7 @@ export default function AdminAssets() {
     return "https://placehold.co/600x400?text=Placeholder";
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري جلب مركز التحكم بالأصول...</div>;
+  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري تحميل مركز التحكم بالأصول...</div>;
 
   const assetItems = [
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر، القائمة الجانبية، وصفحة الدخول.', icon: Flower2 },

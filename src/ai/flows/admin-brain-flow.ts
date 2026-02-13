@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview محرك الذكاء الاصطناعي للتحكم في إعدادات المنصة.
@@ -20,7 +21,7 @@ const AdminBrainOutputSchema = z.object({
     accentColor: z.string().optional().describe('كود لون التمييز Hex'),
     backgroundColor: z.string().optional().describe('كود لون الخلفية Hex'),
     footerText: z.string().optional().describe('نص التذييل'),
-  }).describe('كائن يحتوي على الحقول المراد تحديثها في settings/general.'),
+  }).describe('كائن يحتوي على الحقول المراد تحديثها في settings/general. لا تترك هذا الكائن فارغاً إذا كان هناك تعديل مطلوب.'),
   feedback: z.string().describe('رسالة توضح ما قام به الذكاء الاصطناعي.'),
 });
 
@@ -38,12 +39,14 @@ const adminBrainFlow = ai.defineFlow(
     const { output } = await ai.generate({
       system: `أنت مدير تقني لمنصة "فهمني". مهمتك هي تحويل طلبات المسؤول النصية إلى تحديثات تقنية في مستند الإعدادات.
       يجب أن تعيد كائناً يحتوي فقط على الحقول التي طلب المسؤول تغييرها.
+      تأكد من أن الكائن "updates" يحتوي على الأقل على حقل واحد إذا طلب المسؤول أي تغيير.
       مثال: إذا قال "غير لون الموقع للأخضر"، ابحث عن كود الأخضر المناسب وضعه في primaryColor.
       إذا قال "سمي الموقع فهمني بلس"، غير siteTitle.`,
       prompt: input.instruction,
       output: { schema: AdminBrainOutputSchema }
     });
 
-    return output!;
+    if (!output) throw new Error("فشل الذكاء الاصطناعي في إنتاج استجابة صالحة.");
+    return output;
   }
 );

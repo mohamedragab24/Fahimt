@@ -112,11 +112,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#f8fafc]" dir="rtl">
       <Card className="w-full max-w-lg shadow-2xl border-t-8 border-primary rounded-[2.5rem] bg-white overflow-hidden">
         <CardHeader className="text-center pt-10">
-          <div className="mx-auto mb-6">
+          <div className="mx-auto mb-8">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-40 md:h-48 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-56 md:h-64 mx-auto object-contain" alt="Logo" />
             ) : (
-              <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center text-white text-5xl font-black mx-auto shadow-xl">ف</div>
+              <div className="w-32 h-32 bg-primary rounded-3xl flex items-center justify-center text-white text-6xl font-black mx-auto shadow-xl">ف</div>
             )}
           </div>
           <CardTitle className="text-3xl font-black text-primary">{isLogin ? "مرحباً بك مجدداً" : "انضم لعائلة فهمني"}</CardTitle>

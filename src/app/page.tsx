@@ -181,9 +181,9 @@ function LandingPage({ router, settings }: any) {
         </nav>
         <div className="flex items-center">
           {settings?.logoUrl ? (
-            <img src={settings.logoUrl} className="h-36 w-auto object-contain" alt="Logo" />
+            <img src={settings.logoUrl} className="h-56 w-auto object-contain" alt="Logo" />
           ) : (
-            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center text-white text-4xl font-black shadow-xl">ف</div>
+            <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white text-5xl font-black shadow-xl">ف</div>
           )}
         </div>
       </header>

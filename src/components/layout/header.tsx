@@ -69,27 +69,27 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-20 items-center justify-between px-4 md:px-8">
+      <div className="flex h-24 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-4">
-          <SidebarTrigger className="h-10 w-10 text-primary" />
+          <SidebarTrigger className="h-12 w-12 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-16 md:h-20 w-auto transition-transform group-hover:scale-110 object-contain" />
+              <img src={settings.logoUrl} alt="Logo" className="h-20 md:h-24 w-auto transition-transform group-hover:scale-110 object-contain" />
             ) : (
-              <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
-                <span className="text-white font-black text-sm">ف</span>
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full border border-white"></div>
+              <div className="relative bg-primary p-2 rounded-xl shadow-md transition-transform group-hover:scale-110">
+                <span className="text-white font-black text-xl">ف</span>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full border-2 border-white"></div>
               </div>
             )}
-            {!settings?.logoUrl && <span className="font-black text-2xl font-headline hidden sm:inline-block text-primary">فهمني</span>}
+            {!settings?.logoUrl && <span className="font-black text-3xl font-headline hidden sm:inline-block text-primary">فهمني</span>}
           </Link>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/5 text-muted-foreground transition-all">
-                <Bell className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-full hover:bg-primary/5 text-muted-foreground transition-all">
+                <Bell className="h-7 w-7" />
                 {totalNotifications > 0 && (
                   <span className="absolute top-2 right-2 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -151,7 +151,7 @@ export function Header() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 h-12 px-2 rounded-2xl hover:bg-primary/5 group">
+              <Button variant="ghost" className="flex items-center gap-3 h-14 px-2 rounded-2xl hover:bg-primary/5 group">
                 <div className="hidden md:flex flex-col text-left items-end">
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-black leading-none group-hover:text-primary transition-colors">{profile?.fullName || "جاري التحميل..."}</span>
@@ -161,7 +161,7 @@ export function Header() {
                     {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
                   </span>
                 </div>
-                <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm transition-transform group-hover:scale-105">
+                <Avatar className="h-12 w-12 border-2 border-primary/20 shadow-sm transition-transform group-hover:scale-105">
                   <AvatarImage src={profile?.profilePictureUrl} />
                   <AvatarFallback className="bg-primary/10 text-primary font-black">
                     {profile?.fullName?.charAt(0) || "ف"}

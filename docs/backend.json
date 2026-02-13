@@ -58,6 +58,25 @@
         "isApproved": { "type": "boolean" },
         "createdAt": { "type": "string" }
       }
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "type": "object",
+      "description": "إعدادات المنصة والهوية البصرية.",
+      "properties": {
+        "siteTitle": { "type": "string" },
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "footerText": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "backgroundColor": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "miniIconUrl": { "type": "string" },
+        "landingBg": { "type": "string" },
+        "studentHero": { "type": "string" },
+        "teacherHero": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -74,7 +93,7 @@
     },
     "/portfolio/{itemId}": {
       "schema": "PortfolioItem",
-      "description": "أعمال المفهمين."
+      "description": "أأعمال المفهمين."
     },
     "/settings/{settingId}": {
       "schema": "AppSettings",

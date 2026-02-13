@@ -110,17 +110,17 @@ export function AppSidebar() {
         <div className="flex items-center justify-between w-full">
           <Link href="/" className="flex items-center gap-3 group">
             {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="h-12 w-12 object-contain" alt="Mini Icon" />
+              <img src={settings.miniIconUrl} className="h-14 w-14 object-contain" alt="Mini Icon" />
             ) : (
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black shrink-0">ف</div>
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0">ف</div>
             )}
             
             <div className="flex items-center group-data-[collapsible=icon]:hidden">
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} className="h-20 w-auto object-contain" alt="Site Logo" />
+                <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Site Logo" />
               ) : (
                 <div className="flex flex-col">
-                  <span className="font-black text-2xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
+                  <span className="font-black text-3xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
                   <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
                 </div>
               )}
@@ -134,12 +134,12 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="p-4 group-data-[collapsible=icon]:hidden">
           <div className="bg-primary/5 p-4 rounded-3xl flex items-center gap-3 border-2 border-dashed border-primary/20">
-            <Avatar className="h-12 w-12 border-2 border-primary/30">
+            <Avatar className="h-14 w-14 border-2 border-primary/30">
               <AvatarImage src={profile?.profilePictureUrl} />
               <AvatarFallback className="bg-primary/10 text-primary font-black">{profile?.fullName?.charAt(0) || 'ف'}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate">
-              <span className="font-black text-sm truncate">{profile?.fullName || 'جاري التحميل...'}</span>
+              <span className="font-black text-base truncate">{profile?.fullName || 'جاري التحميل...'}</span>
               <span className="text-[10px] bg-primary text-white self-start px-2 py-0.5 rounded-full font-black mt-1">
                 {profile?.isAdmin ? 'مسؤول' : (profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم')}
               </span>
