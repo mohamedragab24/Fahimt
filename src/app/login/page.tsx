@@ -114,7 +114,7 @@ export default function LoginPage() {
         <CardHeader className="text-center pt-10">
           <div className="mx-auto mb-8">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-56 md:h-64 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 md:h-48 mx-auto object-contain" alt="Logo" />
             ) : (
               <div className="w-32 h-32 bg-primary rounded-3xl flex items-center justify-center text-white text-6xl font-black mx-auto shadow-xl">ف</div>
             )}

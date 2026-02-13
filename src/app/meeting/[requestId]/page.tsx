@@ -7,7 +7,7 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { ArrowRight, Video, ShieldCheck, Copy, Check, Star, MessageCircle, Send } from "lucide-react";
+import { ArrowRight, Video, ShieldCheck, Copy, Check, Star, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -28,9 +28,8 @@ export default function MeetingPage() {
   const { toast } = useToast();
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
   const [api, setApi] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
   const [showRating, setShowRating] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
 
   const requestRef = useMemoFirebase(() => {
@@ -47,24 +46,12 @@ export default function MeetingPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  // تحديث حالة "الدخول" للتنبيه
   useEffect(() => {
     if (requestRef && profile) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
       updateDocumentNonBlocking(requestRef, { [field]: true });
     }
   }, [requestRef, profile]);
-
-  // التنبيه عند دخول الطرف الآخر
-  useEffect(() => {
-    if (request && profile) {
-      if (profile.role === 'mufhem' && request.studentJoined) {
-        toast({ title: "وصل المستفهم!", description: `${request.mustafhemName} دخل المحاضرة الآن.` });
-      } else if (profile.role === 'mustafhem' && request.teacherJoined) {
-        toast({ title: "وصل المفهم!", description: `${request.mufhemName || "المفهم"} دخل المحاضرة الآن.` });
-      }
-    }
-  }, [request?.studentJoined, request?.teacherJoined]);
 
   const startMeeting = () => {
     if (window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
@@ -83,53 +70,33 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
         },
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS: [
-            'microphone', 'camera', 'desktop', 'chat', 'raisehand',
-            'tileview', 'hangup', 'videoquality', 'settings'
-          ],
-        },
       };
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
       newApi.addEventListener('videoConferenceLeft', () => {
-        if (profile.role === 'mustafhem') {
-          setShowRating(true);
-        } else {
-          router.push("/requests");
-        }
+        setShowRating(true);
       });
     }
   };
 
-  const copyId = () => {
-    navigator.clipboard.writeText(requestId as string);
-    setCopied(true);
-    toast({ title: "تم النسخ!", description: "تم نسخ معرف الاستفهام للحافظة." });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const submitRating = () => {
+    if (rating === 0) {
+      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى اختيار عدد النجوم قبل المغادرة." });
+      return;
+    }
     if (requestRef) {
       updateDocumentNonBlocking(requestRef, {
         rating,
         review,
         status: 'completed'
       });
-      toast({ title: "شكراً لتقييمك!", description: "رأيك يساعدنا على تحسين الخدمة." });
+      toast({ title: "شكراً لتقييمك!" });
       router.push("/requests");
     }
   };
 
-  if (isLoading) return <div className="h-screen flex flex-col items-center justify-center font-black text-2xl animate-pulse bg-zinc-950 text-white">
-    <div className="w-20 h-20 bg-primary rounded-3xl mb-6 animate-bounce flex items-center justify-center">
-      <Video className="h-10 w-10" />
-    </div>
-    جاري تأمين الغرفة...
-  </div>;
-
-  if (!request) return <div className="h-screen flex items-center justify-center font-black text-2xl">عذراً، الرابط غير صالح</div>;
+  if (isLoading) return <div className="h-screen flex items-center justify-center font-black">جاري تأمين الغرفة...</div>;
 
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden" dir="rtl">
@@ -138,31 +105,24 @@ export default function MeetingPage() {
         onLoad={startMeeting}
       />
       
-      <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 relative z-50 shadow-2xl">
+      <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 z-50">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/requests")} className="text-white hover:bg-white/10 rounded-full">
-            <ArrowRight className="h-6 w-6" />
-          </Button>
-          <div>
-            <h1 className="text-white font-bold text-lg leading-tight flex items-center gap-2">
-              {request.title}
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-500 hover:text-white" onClick={copyId}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </h1>
-            <div className="flex items-center gap-2 text-zinc-500 text-xs">
-              <ShieldCheck className="h-3 w-3 text-green-500" />
-              اتصال مشفر وآمن | معرف الاستفهام: {requestId?.slice(0, 8)}...
-            </div>
-          </div>
+          <h1 className="text-white font-bold">{request?.title}</h1>
         </div>
         
         <div className="flex items-center gap-3">
+          {/* لا يمكن للمفهم إغلاق الجلسة قبل المستفهم (تعطيل الزر للمفهم في بعض الحالات أو تركه للمستفهم فقط) */}
           <Button 
             variant="destructive" 
             size="sm" 
-            onClick={() => { api?.executeCommand('hangup'); }} 
-            className="rounded-full px-6 font-bold shadow-lg shadow-red-500/20"
+            onClick={() => { 
+              if (profile?.role === 'mufhem') {
+                toast({ variant: "destructive", title: "تنبيه", description: "يجب على المستفهم إنهاء الجلسة أولاً لضمان اكتمال الشرح." });
+              } else {
+                api?.executeCommand('hangup'); 
+              }
+            }} 
+            className="rounded-full px-6 font-bold"
           >
             إنهاء الجلسة
           </Button>
@@ -173,34 +133,30 @@ export default function MeetingPage() {
         <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      <Dialog open={showRating} onOpenChange={setShowRating}>
+      {/* مودال التقييم الإجباري */}
+      <Dialog open={showRating} onOpenChange={(open) => { if (!open && rating === 0) return; setShowRating(open); }}>
         <DialogContent className="sm:max-w-[500px]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black">كيف كانت المحاضرة؟</DialogTitle>
-            <DialogDescription className="text-right text-lg">تقييمك يساعد المفهمين على التطور ويساعد الطلاب الآخرين.</DialogDescription>
+            <DialogTitle className="text-right text-2xl font-black">تقييم المحاضرة (إجباري)</DialogTitle>
+            <DialogDescription className="text-right">يرجى تقييم الجلسة لإتمام العملية.</DialogDescription>
           </DialogHeader>
-          <div className="py-10 space-y-8 flex flex-col items-center">
-            <div className="flex gap-4">
+          <div className="py-6 space-y-6 flex flex-col items-center">
+            <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setRating(star)} className="transition-transform hover:scale-125">
-                  <Star className={`h-12 w-12 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />
+                <button key={star} onClick={() => setRating(star)} className="transition-transform hover:scale-110">
+                  <Star className={`h-10 w-10 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300'}`} />
                 </button>
               ))}
             </div>
-            <div className="w-full space-y-3">
-              <Label className="text-xl font-bold">رأيك بالتفصيل (اختياري)</Label>
-              <Textarea 
-                placeholder="أخبرنا المزيد عن تجربتك..." 
-                className="h-32 rounded-2xl p-4 text-lg border-2 focus:border-primary"
-                value={review}
-                onChange={(e) => setReview(e.target.value)}
-              />
-            </div>
+            <Textarea 
+              placeholder="رأيك في الشرح..." 
+              className="h-24 rounded-xl text-lg"
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+            />
           </div>
           <DialogFooter>
-            <Button onClick={submitRating} className="w-full py-8 text-2xl font-black rounded-2xl shadow-xl">
-              إرسال التقييم
-            </Button>
+            <Button onClick={submitRating} className="w-full h-14 text-xl font-black">إرسال التقييم وإغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -7,12 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isMasterAdmin() {
+      return isSignedIn() && request.auth.token.email == "mohamed76y@gmail.com";
+    }
+
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == "mohamed76y@gmail.com" ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
-      );
+      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
     }
 
     function isNotBlocked() {
@@ -26,68 +26,71 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح للأدمن الماستر أو من يملك صلاحية isAdmin بكل شيء
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // السماح للأدمن الماستر بكل شيء
     match /{document=**} {
-      allow read, write: if isSignedIn() && (request.auth.token.email == "mohamed76y@gmail.com" || isAdmin());
+      allow read, write: if isMasterAdmin() || isAdmin();
     }
 
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) && (isAdmin() || request.auth.token.email == "mohamed76y@gmail.com" || (exists(/databases/$(database)/documents/users/$(userId)) && get(/databases/$(database)/documents/users/$(userId)).data.status != "blocked"));
+      allow write: if isOwner(userId) && isNotBlocked();
 
       match /transactions/{transactionId} {
         allow read: if isOwner(userId) && isNotBlocked();
         allow create: if isNotBlocked();
-        allow update, delete: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com";
+        allow update, delete: if isAdmin();
       }
     }
 
     // الطعون (Appeals)
     match /appeals/{appealId} {
       allow create: if isSignedIn();
-      allow read: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com" || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     // الأقسام والتخصصات
     match /categories/{categoryId} {
       allow read: if true; 
-      allow write: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com";
+      allow write: if isAdmin();
     }
 
     // الاستفهامات (الطلبات)
     match /istifhams/{istifhamId} {
       allow create: if isNotBlocked();
       allow read: if isNotBlocked() && (
-        resource.data.status == "active" ||
+        (resource.data.status == "active" && resource.data.mustafhemGender == getUserData().gender) ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        isAdmin() || request.auth.token.email == "mohamed76y@gmail.com"
+        isAdmin()
       );
       allow update: if isNotBlocked() && (
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        isAdmin() || request.auth.token.email == "mohamed76y@gmail.com"
+        isAdmin()
       );
-      allow delete: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com";
+      allow delete: if isAdmin();
     }
 
     // الإشعارات
     match /notifications/{notificationId} {
       allow read: if isNotBlocked() && resource.data.userId == request.auth.uid;
       allow update: if isNotBlocked() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com";
+      allow create: if isAdmin();
     }
 
     // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isSignedIn() && (request.auth.token.email == "mohamed76y@gmail.com" || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // طلبات السحب والتوثيق
-    match /payoutRequests/{id} { allow read, write: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com"; }
-    match /verificationRequests/{id} { allow read, write: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com"; }
-    match /adminLogs/{id} { allow read, write: if isAdmin() || request.auth.token.email == "mohamed76y@gmail.com"; }
+    match /payoutRequests/{id} { allow read, write: if isAdmin(); }
+    match /verificationRequests/{id} { allow read, write: if isAdmin(); }
+    match /adminLogs/{id} { allow read, write: if isAdmin(); }
   }
 }

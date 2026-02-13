@@ -7,24 +7,22 @@ import {
   Settings,
   LogOut,
   Home,
-  X,
   LayoutDashboard,
   Users,
   ShieldCheck,
   BadgeCent,
-  Lock,
   ChevronDown,
   Layers,
   Video,
   LifeBuoy,
   History,
-  Smartphone,
   GraduationCap,
   ImageIcon,
   Wand2,
   CheckSquare,
   Scale,
-  Palette
+  Palette,
+  RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,7 +46,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/f
 import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
@@ -81,7 +79,8 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
-  const { toggleSidebar, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
+  const { toast } = useToast();
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -102,48 +101,57 @@ export function AppSidebar() {
     router.push("/login");
   };
 
+  const toggleRole = async () => {
+    if (!profile || !userRef) return;
+    const newRole = profile.role === 'mufhem' ? 'mustafhem' : 'mufhem';
+    try {
+      await updateDoc(userRef, { role: newRole });
+      toast({ title: "تم تبديل نوع الحساب", description: `أنت الآن تتصفح كـ ${newRole === 'mufhem' ? 'مُفهم' : 'مُستفهم'}` });
+      router.push("/");
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في التبديل" });
+    }
+  };
+
   if (!user) return null;
 
   return (
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-6">
-        <div className="flex items-center justify-between w-full">
-          <Link href="/" className="flex items-center gap-3 group">
-            {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="h-14 w-14 object-contain" alt="Mini Icon" />
+        <Link href="/" className="flex items-center gap-3">
+          {settings?.miniIconUrl ? (
+            <img src={settings.miniIconUrl} className="h-14 w-14 object-contain" alt="Icon" />
+          ) : (
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-3xl font-black">ف</div>
+          )}
+          <div className="group-data-[collapsible=icon]:hidden">
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} className="h-16 w-auto object-contain" alt="Site Logo" />
             ) : (
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0">ف</div>
+              <span className="font-black text-3xl text-primary">{settings?.siteTitle || "فهمني"}</span>
             )}
-            
-            <div className="flex items-center group-data-[collapsible=icon]:hidden">
-              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Site Logo" />
-              ) : (
-                <div className="flex flex-col">
-                  <span className="font-black text-3xl font-headline text-primary">{settings?.siteTitle || "فهمني"}</span>
-                  <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
-                </div>
-              )}
-            </div>
-          </Link>
-        </div>
+          </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarSeparator />
 
       <SidebarContent>
         <div className="p-4 group-data-[collapsible=icon]:hidden">
-          <div className="bg-primary/5 p-4 rounded-3xl flex items-center gap-3 border-2 border-dashed border-primary/20">
-            <Avatar className="h-14 w-14 border-2 border-primary/30">
-              <AvatarImage src={profile?.profilePictureUrl} />
-              <AvatarFallback className="bg-primary/10 text-primary font-black">{profile?.fullName?.charAt(0) || 'ف'}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col truncate">
-              <span className="font-black text-base truncate">{profile?.fullName || 'جاري التحميل...'}</span>
-              <span className="text-[10px] bg-primary text-white self-start px-2 py-0.5 rounded-full font-black mt-1">
-                {profile?.isAdmin ? 'مسؤول' : (profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم')}
-              </span>
+          <div className="bg-primary/5 p-4 rounded-3xl space-y-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={profile?.profilePictureUrl} />
+                <AvatarFallback>{profile?.fullName?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col truncate">
+                <span className="font-black text-sm truncate">{profile?.fullName}</span>
+                <Badge className="w-fit text-[10px]">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
+              </div>
             </div>
+            <Button onClick={toggleRole} variant="outline" className="w-full h-10 rounded-xl text-xs font-bold border-2 border-primary/20 hover:bg-primary hover:text-white transition-all">
+              <RefreshCw className="ml-2 h-3 w-3" /> تبديل إلى {profile?.role === 'mufhem' ? 'مُستفهم' : 'مُفهم'}
+            </Button>
           </div>
         </div>
 
@@ -187,14 +195,10 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="h-14 rounded-2xl text-destructive hover:bg-destructive/5">
-              <LogOut className="h-6 w-6" />
-              <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarMenuButton onClick={handleLogout} className="h-14 rounded-2xl text-destructive">
+          <LogOut className="h-6 w-6" />
+          <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
+        </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
   );
