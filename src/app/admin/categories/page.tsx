@@ -8,10 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit3, Check, X, ChevronRight, Layers, Filter, Settings2, PlusCircle } from "lucide-react";
+import { Plus, Trash2, Edit3, Check, X, Layers, Filter, Settings2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function AdminCategories() {
   const firestore = useFirestore();
@@ -19,7 +18,7 @@ export default function AdminCategories() {
   const [newVal, setNewVal] = useState("");
   const [editingId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [parentForSub, setParentForSub] = useState<any>(null); // للتحكم في أي قسم نضيف تحته
+  const [parentForSub, setParentForSub] = useState<any>(null);
 
   // جلب كافة التصنيفات
   const categoriesQuery = useMemoFirebase(() => {
@@ -54,6 +53,7 @@ export default function AdminCategories() {
     try {
       await updateDoc(doc(firestore, "categories", id), { name: editValue.trim() });
       setEditId(null);
+      setEditValue("");
       toast({ title: "تم التعديل بنجاح" });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
@@ -74,25 +74,25 @@ export default function AdminCategories() {
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="border-r-8 border-primary pr-6 flex justify-between items-center">
+      <div className="border-r-8 border-primary pr-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الأقسام الهرمية</h1>
-          <p className="text-muted-foreground text-lg">نظام (قسم &gt; تخصص &gt; خيار) لضمان تنظيم احترافي للطلبات.</p>
+          <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الأقسام والتخصصات</h1>
+          <p className="text-muted-foreground text-lg">التحكم في هيكل الموقع (القسم &gt; التخصص &gt; خيارات إضافية).</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 w-full md:w-auto">
           <Input 
             placeholder="اسم قسم رئيسي جديد..." 
-            className="h-14 w-64 rounded-xl border-2 font-bold"
+            className="h-14 md:w-64 rounded-xl border-2 font-bold"
             value={newVal}
             onChange={(e) => setNewVal(e.target.value)}
           />
           <Button onClick={() => handleAdd('main')} className="h-14 px-8 rounded-xl font-black shadow-lg">
-            <Plus className="ml-2" /> إضافة قسم رئيسي
+            <Plus className="ml-2" /> إضافة قسم
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-10">
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-black text-2xl">جاري تحميل هيكل الأقسام...</div>
         ) : (
@@ -106,8 +106,8 @@ export default function AdminCategories() {
                   {editingId === main.id ? (
                     <div className="flex gap-2">
                       <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-10 w-48 font-bold" />
-                      <Button size="sm" onClick={() => handleSaveEdit(main.id)}><Check size={16} /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditId(null)}><X size={16} /></Button>
+                      <Button size="sm" onClick={() => handleSaveEdit(main.id)} className="bg-green-600"><Check size={16} /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditId(null); setEditValue(""); }}><X size={16} /></Button>
                     </div>
                   ) : (
                     <CardTitle className="text-2xl font-black text-primary">{main.name}</CardTitle>
@@ -122,20 +122,29 @@ export default function AdminCategories() {
                 </div>
               </CardHeader>
               <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {allCategories?.filter(sub => sub.type === 'sub' && sub.parentId === main.id).map((sub) => (
-                    <div key={sub.id} className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed border-zinc-200 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="font-black text-lg flex items-center gap-2">
-                          <Filter size={16} className="text-accent" /> {sub.name}
-                        </span>
+                    <div key={sub.id} className="p-6 bg-zinc-50 rounded-[2rem] border-2 border-dashed border-zinc-200 space-y-6 relative group">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          {editingId === sub.id ? (
+                            <div className="flex gap-2 mb-2">
+                              <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-10 text-sm font-bold" />
+                              <Button size="sm" onClick={() => handleSaveEdit(sub.id)} className="bg-green-600"><Check size={14} /></Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setEditId(null); setEditValue(""); }}><X size={14} /></Button>
+                            </div>
+                          ) : (
+                            <span className="font-black text-xl flex items-center gap-2 text-zinc-800">
+                              <Filter size={18} className="text-accent" /> {sub.name}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDelete(sub.id)}><X size={14} /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => setParentForSub(sub)}><Plus size={14} /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-500" onClick={() => { setEditId(sub.id); setEditValue(sub.name); }}><Edit3 size={14} /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-red-500" onClick={() => handleDelete(sub.id)}><X size={14} /></Button>
                         </div>
                       </div>
                       
-                      {/* الخيارات الدقيقة (المستوى 3) */}
                       <div className="flex flex-wrap gap-2">
                         {allCategories?.filter(opt => opt.type === 'option' && opt.parentId === sub.id).map((opt) => (
                           <Badge key={opt.id} variant="secondary" className="bg-white border-2 px-3 py-1 rounded-lg flex items-center gap-2">
@@ -143,9 +152,22 @@ export default function AdminCategories() {
                             <button onClick={() => handleDelete(opt.id)} className="text-red-400 hover:text-red-600"><X size={10} /></button>
                           </Badge>
                         ))}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setParentForSub(sub)}
+                          className="h-7 px-3 text-xs font-bold border-2 border-dashed border-zinc-300 rounded-lg hover:border-primary hover:text-primary"
+                        >
+                          <Plus size={12} className="ml-1" /> خيار إضافي
+                        </Button>
                       </div>
                     </div>
                   ))}
+                  {allCategories?.filter(sub => sub.type === 'sub' && sub.parentId === main.id).length === 0 && (
+                    <div className="col-span-full py-10 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl">
+                      لا توجد تخصصات مضافة تحت هذا القسم.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -153,13 +175,12 @@ export default function AdminCategories() {
         )}
       </div>
 
-      {/* مودال الإضافة الفرعية السريع */}
       {parentForSub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <Card className="w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 space-y-6">
             <div className="flex justify-between items-center border-b pb-4">
-              <h3 className="text-xl font-black">إضافة عنصر جديد تحت <span className="text-primary">{parentForSub.name}</span></h3>
-              <Button variant="ghost" onClick={() => setParentForSub(null)}><X /></Button>
+              <h3 className="text-xl font-black">إضافة {parentForSub.type === 'main' ? 'تخصص' : 'خيار'} تحت <span className="text-primary">{parentForSub.name}</span></h3>
+              <Button variant="ghost" onClick={() => { setParentForSub(null); setNewVal(""); }}><X /></Button>
             </div>
             <div className="space-y-4">
               <Label className="font-bold">الاسم الجديد</Label>

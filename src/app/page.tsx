@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UICardDescription } from "@/components/ui/card";
 import { 
@@ -28,9 +28,8 @@ import {
   Wand2,
   Search,
   Headset,
-  SearchCode,
-  Filter,
   Layers,
+  Filter,
   Settings2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -287,11 +286,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
-    return query(
-      requestsRef, 
-      where("studentId", "==", profile.id), 
-      limit(20)
-    );
+    return query(requestsRef, where("studentId", "==", profile.id), limit(20));
   }, [requestsRef, profile?.id]);
 
   const { data: rawRequests } = useCollection(myRequestsQuery);
@@ -444,7 +439,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                           {subCategories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
                           ))}
-                          {subCategories.length === 0 && <SelectItem value="none" disabled>لا توجد تخصصات متاحة</SelectItem>}
+                          {subCategories.length === 0 && <SelectItem value="none" disabled>لا توجد تخصصات متاحة لهذا القسم</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -453,7 +448,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                   {newRequest.categorySub && optionCategories.length > 0 && (
                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                       <Label className="text-lg font-black pr-2 text-purple-500 flex items-center gap-2">
-                        <Settings2 className="h-5 w-5" /> خيارات دقيقة
+                        <Settings2 className="h-5 w-5" /> خيارات إضافية
                       </Label>
                       <Select value={newRequest.categoryOption} onValueChange={(v) => setNewRequest({...newRequest, categoryOption: v})}>
                         <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
