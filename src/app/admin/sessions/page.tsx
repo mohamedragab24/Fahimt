@@ -156,24 +156,32 @@ export default function AdminSessionsReview() {
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> رابط تسجيل المحاضرة (صوت وصورة)</h4>
+              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
               {selectedSession?.recordingUrl && !selectedSession.recordingUrl.includes('Fahimni_Room') ? (
-                <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group">
-                  <iframe 
-                    src={selectedSession.recordingUrl} 
-                    className="w-full h-full border-none"
-                    allow="autoplay; fullscreen"
-                  />
+                <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
+                  {/* استخدام فيديو مدمج إذا كان الرابط مباشر، أو iframe إذا كان من خدمة خارجية */}
+                  {selectedSession.recordingUrl.endsWith('.mp4') ? (
+                    <video controls className="w-full h-full">
+                      <source src={selectedSession.recordingUrl} type="video/mp4" />
+                      متصفحك لا يدعم تشغيل الفيديو.
+                    </video>
+                  ) : (
+                    <iframe 
+                      src={selectedSession.recordingUrl} 
+                      className="w-full h-full border-none"
+                      allow="autoplay; fullscreen"
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="p-10 bg-orange-50 rounded-3xl border-2 border-dashed border-orange-200 flex flex-col items-center gap-4 text-center">
                   <ShieldAlert className="h-16 w-16 text-orange-400" />
                   <div>
-                    <p className="text-orange-900 font-black text-xl">التسجيل المباشر قيد المعالجة</p>
-                    <p className="text-orange-700 font-bold max-w-md">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف. يرجى المحاولة لاحقاً للمراجعة المرئية.</p>
+                    <p className="text-orange-900 font-black text-xl">الفيديو قيد المعالجة والرفع</p>
+                    <p className="text-orange-700 font-bold max-w-md mt-2">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف. يمكنك استخدام المعاينة المباشرة للغرفة بالأسفل.</p>
                   </div>
-                  <Button variant="outline" className="rounded-xl border-orange-200" onClick={() => window.open(`https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`, '_blank')}>
-                    <LinkIcon className="ml-2 h-4 w-4" /> فتح الغرفة للمعاينة المباشرة
+                  <Button variant="outline" className="rounded-xl border-orange-200 mt-4" onClick={() => window.open(`https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`, '_blank')}>
+                    <LinkIcon className="ml-2 h-4 w-4" /> معاينة مباشرة لغرفة الاجتماع
                   </Button>
                 </div>
               )}
@@ -191,9 +199,9 @@ export default function AdminSessionsReview() {
           <ShieldAlert size={60} className="text-blue-400" />
         </div>
         <div className="space-y-4">
-          <h3 className="text-3xl font-black">لماذا نراجع المحاضرات؟</h3>
+          <h3 className="text-3xl font-black">لماذا نوثق المحاضرات بالفيديو؟</h3>
           <p className="text-zinc-400 font-medium leading-relaxed max-w-4xl text-lg">
-            نظام الرقابة الإدارية مصمم لضمان "حق الفهم" للطالب و "حق الأجر" للمدرس. في حال وجود أي شكوى مالية أو تقنية، يرجع فريق الإدارة لهذا السجل (التقييمات، الملاحظات، وتسجيل الجلسة) لاتخاذ قرار عادل يحمي الطرفين.
+            نظام الرقابة الإدارية في "فهمني" يهدف لحماية حقوق الجميع. يتم تسجيل المحاضرات صوت وصورة للرجوع إليها في حال وجود أي شكوى تقنية أو مالية، مما يضمن بيئة تعليمية آمنة وعادلة.
           </p>
         </div>
       </div>

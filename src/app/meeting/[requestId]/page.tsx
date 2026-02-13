@@ -52,7 +52,9 @@ export default function MeetingPage() {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
-        lastLiveSession: new Date().toISOString()
+        lastLiveSession: new Date().toISOString(),
+        // تسجيل رابط المحاضرة المباشر فور البدء لضمان الرقابة
+        recordingUrl: `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`
       });
     }
   }, [requestRef, profile, requestId]);
@@ -74,6 +76,11 @@ export default function MeetingPage() {
           startWithAudioMuted: false,
           disableDeepLinking: true,
           prejoinPageEnabled: false,
+          // تفعيل ميزات التسجيل لضمان الرقابة
+          localRecording: {
+            enabled: true,
+            format: 'flac'
+          }
         },
         interfaceConfigOverwrite: {
           TOOLBAR_BUTTONS: [
@@ -89,10 +96,13 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      // الاستماع لأحداث التسجيل
+      // الاستماع لأحداث التسجيل وتحديث الرابط فوراً
       newApi.on('recordingStatusChanged', (data: any) => {
         if (data.on && data.link && requestRef) {
-          updateDocumentNonBlocking(requestRef, { recordingUrl: data.link });
+          updateDocumentNonBlocking(requestRef, { 
+            recordingUrl: data.link,
+            isRecordingActive: true
+          });
         }
       });
 
