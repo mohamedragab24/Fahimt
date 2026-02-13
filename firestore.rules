@@ -30,7 +30,7 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // السماح للأدمن الماستر بكل شيء
+    // السماح للأدمن الماستر والأدمن المساعد بكل شيء في النظام
     match /{document=**} {
       allow read, write: if isMasterAdmin() || isAdmin();
     }
@@ -62,19 +62,24 @@ service cloud.firestore {
     // الاستفهامات (الطلبات)
     match /istifhams/{istifhamId} {
       allow create: if isNotBlocked();
+      
+      // يسمح بالقراءة إذا كان المستخدم أدمن، أو صاحب الطلب، أو المفهم المرتبط، 
+      // أو إذا كان الطلب نشطاً ويطابق جنس المستخدم (للمفهمين)
       allow read: if isNotBlocked() && (
-        (resource.data.status == "active" && resource.data.mustafhemGender == getUserData().gender) ||
+        isAdmin() ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        isAdmin()
+        (resource.data.status == "active" && resource.data.mustafhemGender == getUserData().gender)
       );
-      // السماح بالتحديث إذا كان المستخدم هو صاحب الطلب، أو المفهم المرتبط به، أو مفهم جديد يحاول قبول طلب نشط متوافق مع جنسه
+
+      // السماح بالتحديث للأطراف المعنية أو للأدمن، وللمفهمين لقبول الطلبات النشطة المتوافقة مع جنسهم
       allow update: if isNotBlocked() && (
+        isAdmin() ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        (resource.data.status == "active" && getUserData().role == "mufhem" && resource.data.mustafhemGender == getUserData().gender) ||
-        isAdmin()
+        (resource.data.status == "active" && getUserData().role == "mufhem" && resource.data.mustafhemGender == getUserData().gender)
       );
+      
       allow delete: if isAdmin();
     }
 
@@ -88,11 +93,16 @@ service cloud.firestore {
     // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin() || isMasterAdmin();
+      allow write: if isAdmin();
     }
 
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }
     match /verificationRequests/{id} { allow read, write: if isAdmin(); }
     match /adminLogs/{id} { allow read, write: if isAdmin(); }
+    match /supportTickets/{id} { 
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isAdmin();
+    }
   }
 }
