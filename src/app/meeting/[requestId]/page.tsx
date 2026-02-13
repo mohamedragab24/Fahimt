@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -53,7 +52,6 @@ export default function MeetingPage() {
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
         lastLiveSession: new Date().toISOString(),
-        // تثبيت رابط الغرفة فوراً لضمان الرقابة الإدارية
         recordingUrl: `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`
       });
     }
@@ -77,7 +75,6 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
           enableWelcomePage: false,
-          // محاولة تفعيل التسجيل التلقائي إذا كان الحساب يدعم ذلك
           autoRecord: true,
           localRecording: {
             enabled: true,
@@ -98,7 +95,6 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      // الاستماع لأحداث التسجيل وتحديث الرابط فوراً في قاعدة البيانات
       newApi.on('recordingStatusChanged', (data: any) => {
         if (data.on && data.link && requestRef) {
           updateDocumentNonBlocking(requestRef, { 

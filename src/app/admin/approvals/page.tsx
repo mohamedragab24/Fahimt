@@ -43,17 +43,14 @@ export default function AdminApprovals() {
 
   const { data: adminProfile } = useDoc(userRef);
 
-  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
-  // جلب المستخدمين بشكل موسع لضمان شمول الحسابات القديمة (Legacy Users)
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
-    // جلب آخر 200 مستخدم للمراجعة، التصفية ستتم برمجياً للشمولية
     return query(collection(firestore, "users"), limit(200));
   }, [firestore, canReadApprovals]);
 
-  // جلب كافة الاستفهامات التي تنتظر الموافقة
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
@@ -62,7 +59,6 @@ export default function AdminApprovals() {
   const { data: allUsers, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
 
-  // فلترة الحسابات التي لم يتم اعتمادها (بما في ذلك التي لا تملك حقل الاعتماد بعد)
   const profiles = allUsers?.filter(u => u.isProfileApproved !== true && !u.isAdmin) || [];
 
   const handleApproveProfile = (u: any) => {
@@ -185,7 +181,6 @@ export default function AdminApprovals() {
         </TabsContent>
       </Tabs>
 
-      {/* مودال تفاصيل المستخدم */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
@@ -231,7 +226,6 @@ export default function AdminApprovals() {
         </DialogContent>
       </Dialog>
 
-      {/* مودال تفاصيل الاستفهام */}
       <Dialog open={!!selectedIstifham} onOpenChange={() => setSelectedIstifham(null)}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
