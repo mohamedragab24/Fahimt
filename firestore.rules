@@ -7,8 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "mohamed76y@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
     }
 
     function isNotBlocked() {
@@ -18,18 +22,11 @@ service cloud.firestore {
       );
     }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        getUserData().isAdmin == true ||
-        request.auth.token.email == "mohamed76y@gmail.com"
-      );
-    }
-
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح للأدمن بكل شيء
+    // السماح للأدمن بكل شيء في النظام
     match /{document=**} {
       allow read, write: if isAdmin();
     }
@@ -37,21 +34,22 @@ service cloud.firestore {
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) && (getUserData().status != "blocked" || isAdmin());
+      allow write: if isOwner(userId) && (isAdmin() || (exists(/databases/$(database)/documents/users/$(userId)) && get(/databases/$(database)/documents/users/$(userId)).data.status != "blocked"));
 
       match /transactions/{transactionId} {
         allow read: if isOwner(userId) && isNotBlocked();
         allow create: if isNotBlocked();
+        allow update, delete: if isAdmin();
       }
     }
 
     // الطعون (Appeals)
     match /appeals/{appealId} {
-      allow create: if isSignedIn(); // السماح للمحظور بتقديم طعن
+      allow create: if isSignedIn();
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
-    // الأقسام والتخصصات (متاحة للجميع للقراءة لملء النماذج)
+    // الأقسام والتخصصات
     match /categories/{categoryId} {
       allow read: if true; 
       allow write: if isAdmin();
@@ -71,6 +69,7 @@ service cloud.firestore {
         resource.data.mufhemId == request.auth.uid ||
         isAdmin()
       );
+      allow delete: if isAdmin();
     }
 
     // الإشعارات
@@ -85,5 +84,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // طلبات السحب والتوثيق
+    match /payoutRequests/{id} { allow read, write: if isAdmin(); }
+    match /verificationRequests/{id} { allow read, write: if isAdmin(); }
+    match /adminLogs/{id} { allow read, write: if isAdmin(); }
   }
 }

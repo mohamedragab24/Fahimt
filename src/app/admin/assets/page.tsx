@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -49,11 +50,11 @@ export default function AdminAssets() {
   };
 
   const getFallbackImage = (key: string) => {
-    if (key === 'logoUrl') return "";
+    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://placehold.co/400x400/29B6F6/white?text=FAHMANI";
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
-    return "";
+    return "https://placehold.co/600x400?text=Placeholder";
   };
 
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري جلب مركز التحكم بالأصول...</div>;
@@ -118,7 +119,7 @@ export default function AdminAssets() {
                         <img 
                           src={currentImage} 
                           alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-32 object-contain' : 'object-cover w-full h-full'}`} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-32 object-contain p-4' : 'object-cover w-full h-full'}`} 
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
