@@ -50,7 +50,6 @@ export default function MeetingPage() {
   useEffect(() => {
     if (requestRef && profile && requestId) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
-      // حفظ رابط المحاضرة للرقابة فور الدخول
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
         lastLiveSession: new Date().toISOString(),
@@ -77,7 +76,7 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
           enableWelcomePage: false,
-          autoRecord: true, // محاولة بدء التسجيل تلقائياً
+          autoRecord: true,
           localRecording: {
             enabled: true,
             format: 'flac'
@@ -94,7 +93,11 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      // مراقبة بدء التسجيل وحفظ الرابط الحقيقي إذا توفر
+      newApi.on('videoConferenceJoined', () => {
+        // محاولة بدء التسجيل برمجياً عند دخول الطرفين
+        newApi.executeCommand('startRecording', { mode: 'file' });
+      });
+
       newApi.on('recordingStatusChanged', (data: any) => {
         if (data.on && data.link && requestRef) {
           updateDocumentNonBlocking(requestRef, { 
@@ -138,7 +141,7 @@ export default function MeetingPage() {
   if (isLoading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-black text-white space-y-4">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <p className="text-xl font-black">جاري تأمين غرفة المحاضرة...</p>
+      <p className="text-xl font-black">جاري تأمين غرفة المحاضرة والرقابة...</p>
     </div>
   );
 
@@ -160,7 +163,7 @@ export default function MeetingPage() {
         <div className="flex items-center gap-3">
           {profile?.role === 'mufhem' && (
             <div className="hidden md:flex items-center gap-2 text-zinc-400 text-xs font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">
-              <AlertCircle size={14} /> بانتظار الطالب لإنهاء الجلسة
+              <AlertCircle size={14} /> بانتظار الطالب لإنهاء الجلسة (التقييم إلزامي للطالب)
             </div>
           )}
           <Button 
@@ -168,7 +171,7 @@ export default function MeetingPage() {
             size="sm" 
             onClick={() => { 
               if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة." });
+                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم." });
               } else {
                 api?.executeCommand('hangup'); 
               }
@@ -204,7 +207,7 @@ export default function MeetingPage() {
               <Label className="font-black text-sm mr-2">ما رأيك في شرح المعلم؟</Label>
               <Textarea 
                 placeholder="اكتب ملاحظاتك هنا (اختياري)..." 
-                className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary"
+                className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary text-right"
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
               />

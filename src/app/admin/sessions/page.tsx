@@ -28,7 +28,6 @@ export default function AdminSessionsReview() {
 
   const sessionsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadSessions) return null;
-    // جلب كافة المحاضرات التي تم قبولها أو اكتمالها للمراجعة
     return query(
       collection(firestore, "istifhams"), 
       where("status", "in", ["accepted", "completed"])
@@ -119,25 +118,24 @@ export default function AdminSessionsReview() {
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
               <ShieldCheck className="text-primary h-8 w-8" /> تقرير المحاضرة
             </DialogTitle>
-            <DialogDescription className="text-right">مراجعة أحداث الجلسة صوت وصورة والتقييم النهائي.</DialogDescription>
+            <DialogDescription className="text-right text-lg">مراجعة أحداث الجلسة صوت وصورة والتقييم النهائي.</DialogDescription>
           </DialogHeader>
           
           <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
                 <User className="text-primary" />
-                <div><span className="text-[10px] block font-black">المستفهم</span><span className="font-bold">{selectedSession?.mustafhemName}</span></div>
+                <div><span className="text-[10px] block font-black text-right">المستفهم</span><span className="font-bold">{selectedSession?.mustafhemName}</span></div>
               </div>
               <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
                 <ShieldCheck className="text-accent" />
-                <div><span className="text-[10px] block font-black">المفهم</span><span className="font-bold">{selectedSession?.mufhemName}</span></div>
+                <div><span className="text-[10px] block font-black text-right">المفهم</span><span className="font-bold">{selectedSession?.mufhemName}</span></div>
               </div>
             </div>
 
             <div className="space-y-4">
               <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (صوت وصورة)</h4>
               <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
-                {/* مشغل فيديو مدمج يعرض رابط الغرفة أو التسجيل */}
                 <iframe 
                   src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}#config.startWithAudioMuted=true&config.startWithVideoMuted=true`} 
                   className="w-full h-full border-none"
@@ -153,15 +151,15 @@ export default function AdminSessionsReview() {
               <h4 className="text-xl font-black flex items-center gap-3"><Star className="text-yellow-500 fill-yellow-500" /> تقييم الطالب</h4>
               {selectedSession?.rating ? (
                 <div className="space-y-4">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-end">
                     {[1,2,3,4,5].map(s => <Star key={s} className={`h-6 w-6 ${selectedSession.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
                   </div>
-                  <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border">
+                  <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border text-right">
                     "{selectedSession.review || "لا توجد ملاحظات مكتوبة."}"
                   </p>
                 </div>
               ) : (
-                <p className="text-muted-foreground font-bold italic">لم يتم تقييم الجلسة من قبل الطالب بعد.</p>
+                <p className="text-muted-foreground font-bold italic text-right">لم يتم تقييم الجلسة من قبل الطالب بعد.</p>
               )}
             </div>
           </div>

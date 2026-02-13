@@ -148,8 +148,8 @@ export function AppSidebar() {
                 <AvatarFallback>{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col truncate">
-                <span className="font-black text-sm truncate">{profile?.fullName}</span>
-                <Badge className="w-fit text-[10px]">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
+                <span className="font-black text-sm truncate text-right">{profile?.fullName}</span>
+                <Badge className="w-fit text-[10px] ml-auto">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
               </div>
             </div>
             <Button onClick={toggleRole} variant="outline" className="w-full h-10 rounded-xl text-xs font-bold border-2 border-primary/20 hover:bg-primary hover:text-white transition-all">
@@ -185,7 +185,7 @@ export function AppSidebar() {
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href}>
-                          <Link href={item.href} onClick={() => setOpenMobile(false)} className="font-black py-2">{item.title}</Link>
+                          <Link href={item.href} onClick={() => setOpenMobile(false)} className="font-black py-2 text-right w-full block">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

@@ -47,7 +47,6 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
-  // جلب كافة المستخدمين لمراجعة الحسابات القديمة والجديدة
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "users"), limit(500));
@@ -61,7 +60,6 @@ export default function AdminApprovals() {
   const { data: allUsers, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
 
-  // فلترة الحسابات التي لم يتم اعتمادها بعد (بما فيها القديمة)
   const profiles = allUsers?.filter(u => u.isProfileApproved !== true && !u.isAdmin) || [];
 
   const handleApproveProfile = (u: any) => {
@@ -165,12 +163,12 @@ export default function AdminApprovals() {
               istifhams?.map((ist) => (
                 <Card key={ist.id} className="rounded-3xl border-2 p-8 shadow-md flex flex-col md:flex-row justify-between items-center gap-6 bg-white group">
                   <div className="space-y-2 text-right w-full">
-                    <div className="flex items-center gap-3">
-                      <Badge className="bg-primary/10 text-primary border-none font-bold">{ist.category}</Badge>
+                    <div className="flex items-center gap-3 justify-end">
                       <span className="text-xs text-muted-foreground font-bold flex items-center gap-1"><Clock size={12}/> {new Date(ist.createdAt).toLocaleString('ar-EG')}</span>
+                      <Badge className="bg-primary/10 text-primary border-none font-bold">{ist.category}</Badge>
                     </div>
-                    <h4 className="text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors">{ist.title}</h4>
-                    <p className="font-bold text-muted-foreground">بواسطة: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
+                    <h4 className="text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
+                    <p className="font-bold text-muted-foreground text-right">بواسطة: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
                     <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> التفاصيل</Button>
@@ -198,20 +196,20 @@ export default function AdminApprovals() {
                   <AvatarImage src={selectedUser.profilePictureUrl} />
                   <AvatarFallback className="text-2xl font-black">{selectedUser.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="text-right flex-1">
                   <h4 className="text-xl font-black">{selectedUser.fullName}</h4>
-                  <div className="flex gap-2 mt-1">
-                    <Badge className="bg-primary/10 text-primary">{selectedUser.role === 'mufhem' ? 'خبير' : 'طالب'}</Badge>
+                  <div className="flex gap-2 mt-1 justify-end">
                     <Badge className="bg-muted text-muted-foreground">{selectedUser.gender === 'male' ? 'ذكر' : 'أنثى'}</Badge>
+                    <Badge className="bg-primary/10 text-primary">{selectedUser.role === 'mufhem' ? 'خبير' : 'طالب'}</Badge>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
                   <span className="text-[10px] font-black text-muted-foreground block">البريد الإلكتروني</span>
                   <span className="font-bold text-sm">{selectedUser.email}</span>
                 </div>
-                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
                   <span className="text-[10px] font-black text-muted-foreground block">رقم الهاتف</span>
                   <span className="font-bold text-sm">{selectedUser.phoneNumber}</span>
                 </div>
@@ -234,16 +232,16 @@ export default function AdminApprovals() {
           </DialogHeader>
           {selectedIstifham && (
             <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed space-y-4">
+              <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed space-y-4 text-right">
                 <h4 className="text-xl font-black text-primary">{selectedIstifham.title}</h4>
                 <p className="text-zinc-700 leading-relaxed font-medium">{selectedIstifham.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
                   <span className="text-[10px] font-black text-muted-foreground block">الميزانية</span>
                   <span className="font-bold text-lg text-primary">{selectedIstifham.amount} ج.م</span>
                 </div>
-                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
                   <span className="text-[10px] font-black text-muted-foreground block">الموعد</span>
                   <span className="font-bold text-sm">{new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')}</span>
                 </div>
