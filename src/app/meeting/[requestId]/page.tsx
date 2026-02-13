@@ -35,7 +35,7 @@ export default function MeetingPage() {
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
-    return doc(firestore, "requests", requestId as string);
+    return doc(firestore, "istifhams", requestId as string);
   }, [firestore, requestId]);
 
   const { data: request, isLoading } = useDoc(requestRef);
@@ -59,9 +59,9 @@ export default function MeetingPage() {
   useEffect(() => {
     if (request && profile) {
       if (profile.role === 'mufhem' && request.studentJoined) {
-        toast({ title: "وصل الطالب!", description: `${request.studentName} دخل المحاضرة الآن.` });
+        toast({ title: "وصل المستفهم!", description: `${request.mustafhemName} دخل المحاضرة الآن.` });
       } else if (profile.role === 'mustafhem' && request.teacherJoined) {
-        toast({ title: "وصل المعلم!", description: `${request.teacherName || "المعلم"} دخل المحاضرة الآن.` });
+        toast({ title: "وصل المفهم!", description: `${request.mufhemName || "المفهم"} دخل المحاضرة الآن.` });
       }
     }
   }, [request?.studentJoined, request?.teacherJoined]);
@@ -106,7 +106,7 @@ export default function MeetingPage() {
   const copyId = () => {
     navigator.clipboard.writeText(requestId as string);
     setCopied(true);
-    toast({ title: "تم النسخ!", description: "تم نسخ معرف المحاضرة للحافظة." });
+    toast({ title: "تم النسخ!", description: "تم نسخ معرف الاستفهام للحافظة." });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -152,7 +152,7 @@ export default function MeetingPage() {
             </h1>
             <div className="flex items-center gap-2 text-zinc-500 text-xs">
               <ShieldCheck className="h-3 w-3 text-green-500" />
-              اتصال مشفر وآمن | معرف الطلب: {requestId?.slice(0, 8)}...
+              اتصال مشفر وآمن | معرف الاستفهام: {requestId?.slice(0, 8)}...
             </div>
           </div>
         </div>

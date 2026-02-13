@@ -30,31 +30,32 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // إشعارات الاستفهامات المقبولة
+  // إشعارات الاستفهامات المقبولة (استخدام جدول istifhams الموحد)
   const notificationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    const requestsRef = collection(firestore, "requests");
-    const field = profile?.role === "mufhem" ? "teacherId" : "studentId";
+    // لا تشغل الاستعلام إذا كان الحساب محظوراً لتجنب خطأ الأذونات
+    if (!firestore || !user || !profile?.role || profile?.status === 'blocked') return null;
+    const istifhamsRef = collection(firestore, "istifhams");
+    const field = profile?.role === "mufhem" ? "mufhemId" : "mustafhemId";
     return query(
-      requestsRef,
+      istifhamsRef,
       where(field, "==", user.uid),
       where("status", "==", "accepted"),
       limit(5)
     );
-  }, [firestore, user, profile?.role]);
+  }, [firestore, user, profile?.role, profile?.status]);
 
   const { data: acceptedRequests } = useCollection(notificationsQuery);
 
   // إشعارات النظام (اعتماد الحسابات)
   const systemNotifsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user || profile?.status === 'blocked') return null;
     return query(
       collection(firestore, "notifications"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc"),
       limit(10)
     );
-  }, [firestore, user]);
+  }, [firestore, user, profile?.status]);
 
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 

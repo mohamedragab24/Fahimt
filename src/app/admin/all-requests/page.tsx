@@ -20,7 +20,8 @@ export default function AdminAllRequests() {
 
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "requests"), orderBy("createdAt", "desc"), limit(100));
+    // استخدام جدول istifhams الموحد
+    return query(collection(firestore, "istifhams"), orderBy("createdAt", "desc"), limit(100));
   }, [firestore]);
 
   const { data: requests, isLoading } = useCollection(requestsQuery);
@@ -28,31 +29,31 @@ export default function AdminAllRequests() {
   const handleDelete = async (id: string) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, "requests", id));
-      toast({ title: "تم الحذف", description: "تم حذف الطلب بنجاح من النظام." });
+      await deleteDoc(doc(firestore, "istifhams", id));
+      toast({ title: "تم الحذف", description: "تم حذف الاستفهام بنجاح من النظام." });
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف الطلب." });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف الاستفهام." });
     }
   };
 
   const filteredRequests = requests?.filter(r => 
     r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.teacherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.mustafhemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.mufhemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.id?.includes(searchTerm)
   );
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-blue-500 pr-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-4xl font-black font-headline">رقابة المحاضرات</h1>
-          <p className="text-muted-foreground text-lg">متابعة كافة الطلبات والجلسات القائمة والمنتهية في المنصة.</p>
+          <p className="text-muted-foreground text-lg">متابعة كافة الاستفهامات والجلسات القائمة والمنتهية في المنصة.</p>
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث بالعنوان، الطالب أو المدرس..." 
+            placeholder="ابحث بالعنوان، المستفهم أو المفهم..." 
             className="h-14 pr-12 rounded-2xl shadow-sm border-2"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -76,7 +77,7 @@ export default function AdminAllRequests() {
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="text-center py-20 animate-pulse font-bold">جاري تحميل البيانات...</TableCell></TableRow>
             ) : filteredRequests?.map((req) => (
-              <TableRow key={req.id} className="h-24 hover:bg-blue-50/30 transition-colors">
+              <TableRow key={req.id} className="h-24 hover:bg-primary/5 transition-colors">
                 <TableCell className="px-8">
                   <div className="flex flex-col">
                     <span className="font-bold text-lg">{req.title}</span>
@@ -86,31 +87,31 @@ export default function AdminAllRequests() {
                 <TableCell>
                   <div className="flex flex-col text-sm space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] h-4">طالب</Badge>
-                      <span className="font-bold">{req.studentName}</span>
+                      <Badge variant="outline" className="text-[10px] h-4">مستفهم</Badge>
+                      <span className="font-bold">{req.mustafhemName}</span>
                     </div>
-                    {req.teacherName && (
+                    {req.mufhemName && (
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] h-4 bg-blue-100 text-blue-700">مدرس</Badge>
-                        <span className="font-bold">{req.teacherName}</span>
+                        <Badge variant="secondary" className="text-[10px] h-4 bg-primary/10 text-primary border-none">مفهم</Badge>
+                        <span className="font-bold">{req.mufhemName}</span>
                       </div>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col text-xs font-bold text-muted-foreground">
-                    <div className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(req.meetingTime).toLocaleDateString('ar-EG')}</div>
-                    <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(req.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {req.meetingTime ? new Date(req.meetingTime).toLocaleDateString('ar-EG') : '-'}</div>
+                    <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> {req.meetingTime ? new Date(req.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '-'}</div>
                   </div>
                 </TableCell>
-                <TableCell className="font-black text-blue-600">{req.amount} ج.م</TableCell>
+                <TableCell className="font-black text-primary">{req.amount} ج.م</TableCell>
                 <TableCell>
                   <Badge className={`px-4 py-1.5 rounded-xl font-black ${
-                    req.status === 'pending' ? 'bg-orange-100 text-orange-600' : 
-                    req.status === 'accepted' ? 'bg-blue-100 text-blue-600' : 
+                    req.status === 'active' ? 'bg-blue-100 text-blue-600' : 
+                    req.status === 'accepted' ? 'bg-orange-100 text-orange-600' : 
                     req.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                   }`}>
-                    {req.status === 'pending' ? 'بانتظار مدرس' : req.status === 'accepted' ? 'جاهزة' : req.status === 'completed' ? 'مكتملة' : 'ملغية'}
+                    {req.status === 'pending_approval' ? 'قيد المراجعة' : req.status === 'active' ? 'بانتظار مفهم' : req.status === 'accepted' ? 'جاهزة' : req.status === 'completed' ? 'مكتملة' : 'ملغية'}
                   </Badge>
                 </TableCell>
                 <TableCell className="px-8 text-left">
@@ -124,7 +125,7 @@ export default function AdminAllRequests() {
                       <AlertDialogHeader>
                         <AlertDialogTitle className="text-right">هل أنت متأكد من الحذف؟</AlertDialogTitle>
                         <AlertDialogDescription className="text-right">
-                          سيتم حذف هذا الطلب نهائياً من قاعدة البيانات، لا يمكن التراجع عن هذا الإجراء.
+                          سيتم حذف هذا الاستفهام نهائياً من قاعدة البيانات، لا يمكن التراجع عن هذا الإجراء.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="flex-row-reverse gap-2">

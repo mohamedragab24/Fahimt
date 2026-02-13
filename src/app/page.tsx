@@ -55,7 +55,7 @@ export default function HomePage() {
     return <LandingPage router={router} settings={settings} />;
   }
 
-  // معالجة حالة الحظر
+  // معالجة حالة الحظر (لمنع استعلامات Firebase اللاحقة وتجنب خطأ الأذونات)
   if (profile.status === 'blocked') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 text-center space-y-6 bg-white rounded-[3rem] shadow-xl m-4 md:m-10" dir="rtl">
@@ -157,15 +157,16 @@ function MustafhemView({ profile }: any) {
   const { toast } = useToast();
 
   const categoriesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // لا تشغل الاستعلام إذا كان الحساب محظوراً لتجنب خطأ الأذونات
+    if (!firestore || profile?.status === 'blocked') return null;
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
-  }, [firestore]);
+  }, [firestore, profile?.status]);
   const { data: categories } = useCollection(categoriesQuery);
 
   const pendingIstifhamsQuery = useMemoFirebase(() => {
-    if (!firestore || !profile.id) return null;
+    if (!firestore || !profile.id || profile?.status === 'blocked') return null;
     return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(5));
-  }, [firestore, profile.id]);
+  }, [firestore, profile.id, profile?.status]);
   const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
   const handleCreate = async () => {
@@ -290,9 +291,9 @@ function MustafhemView({ profile }: any) {
 function MufhemView({ profile }: any) {
   const firestore = useFirestore();
   const istifhamsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || profile?.status === 'blocked') return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(20));
-  }, [firestore]);
+  }, [firestore, profile?.status]);
   const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
 
   return (

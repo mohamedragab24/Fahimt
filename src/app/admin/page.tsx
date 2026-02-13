@@ -73,8 +73,9 @@ export default function AdminDashboard() {
         const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
         const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
         const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
-        const completedRequestsQuery = query(collection(firestore, "requests"), where("status", "==", "completed"));
-        const lastRequestsQuery = query(collection(firestore, "requests"), orderBy("createdAt", "desc"), limit(5));
+        // استخدام جدول istifhams الموحد
+        const completedRequestsQuery = query(collection(firestore, "istifhams"), where("status", "==", "completed"));
+        const lastRequestsQuery = query(collection(firestore, "istifhams"), orderBy("createdAt", "desc"), limit(5));
 
         const [mufSnap, musSnap, verSnap, completedSnap, lastSnap] = await Promise.all([
           getDocs(mufQuery),
@@ -170,13 +171,13 @@ export default function AdminDashboard() {
         <Card className="shadow-2xl rounded-[2.5rem] border-2 overflow-hidden bg-white">
           <CardHeader className="bg-muted/30 border-b p-6">
             <CardTitle className="font-black text-xl flex items-center gap-3">
-              <Clock className="text-primary" /> آخر الطلبات المنفذة
+              <Clock className="text-primary" /> آخر الاستفهامات المنفذة
             </CardTitle>
           </CardHeader>
           <Table>
             <TableHeader className="bg-muted/10 h-12">
               <TableRow>
-                <TableHead className="text-right font-bold">الطلب</TableHead>
+                <TableHead className="text-right font-bold">الاستفهام</TableHead>
                 <TableHead className="text-right font-bold">المبلغ</TableHead>
                 <TableHead className="text-right font-bold">الحالة</TableHead>
               </TableRow>
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
                   <TableCell className="font-bold text-sm">
                     <div className="flex flex-col">
                       <span>{req.title}</span>
-                      <span className="text-[10px] text-muted-foreground">{req.studentName}</span>
+                      <span className="text-[10px] text-muted-foreground">{req.mustafhemName}</span>
                     </div>
                   </TableCell>
                   <TableCell className="font-black text-primary">{req.amount} ج.م</TableCell>
@@ -202,7 +203,7 @@ export default function AdminDashboard() {
               ))}
               {recentRequests.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">لا توجد طلبات مسجلة بعد.</TableCell>
+                  <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">لا توجد استفهامات مسجلة بعد.</TableCell>
                 </TableRow>
               )}
             </TableBody>
