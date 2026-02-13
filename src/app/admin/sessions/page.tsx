@@ -121,21 +121,13 @@ export default function AdminSessionsReview() {
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
-          <DialogHeader className="p-0">
-            <DialogTitle className="sr-only">مراجعة المحاضرة</DialogTitle>
-            <DialogDescription className="sr-only">تقرير كامل صوت وصورة للمحاضرة المختارة.</DialogDescription>
+          <DialogHeader className="px-8 pt-8">
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
+              <ShieldCheck className="text-primary h-8 w-8" /> مراجعة المحاضرة
+            </DialogTitle>
+            <DialogDescription className="text-right text-lg">تقرير الرقابة الكامل والوصول للتسجيل صوت وصورة.</DialogDescription>
           </DialogHeader>
           
-          <div className="bg-zinc-900 p-8 text-white flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-black">{selectedSession?.title}</h2>
-              <p className="text-zinc-400 font-bold mt-1">تقرير الرقابة الكامل للمحاضرة</p>
-            </div>
-            <div className="bg-primary/20 p-4 rounded-2xl">
-              <ShieldCheck className="h-10 w-10 text-primary" />
-            </div>
-          </div>
-
           <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ReportBox icon={User} label="المستفهم (الطالب)" value={selectedSession?.mustafhemName} />
@@ -162,30 +154,16 @@ export default function AdminSessionsReview() {
 
             <div className="space-y-4">
               <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
-              {selectedSession?.recordingUrl ? (
-                <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
-                  {selectedSession.recordingUrl.includes('Fahimni_Room') ? (
-                    <iframe 
-                      src={selectedSession.recordingUrl} 
-                      className="w-full h-full border-none"
-                      allow="autoplay; fullscreen"
-                    />
-                  ) : (
-                    <video controls className="w-full h-full">
-                      <source src={selectedSession.recordingUrl} type="video/mp4" />
-                      متصفحك لا يدعم تشغيل الفيديو.
-                    </video>
-                  )}
-                </div>
-              ) : (
-                <div className="p-10 bg-orange-50 rounded-3xl border-2 border-dashed border-orange-200 flex flex-col items-center gap-4 text-center">
-                  <ShieldAlert className="h-16 w-16 text-orange-400" />
-                  <div>
-                    <p className="text-orange-900 font-black text-xl">الفيديو قيد المعالجة والرفع</p>
-                    <p className="text-orange-700 font-bold max-w-md mt-2">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف.</p>
-                  </div>
-                </div>
-              )}
+              <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
+                <iframe 
+                  src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`} 
+                  className="w-full h-full border-none"
+                  allow="autoplay; fullscreen; microphone; camera; display-capture"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground font-bold text-center italic">
+                ملاحظة: إذا كانت المحاضرة منتهية، سيقوم المشغل بمحاولة استرجاع سجل الأحداث صوت وصورة.
+              </p>
             </div>
           </div>
 
