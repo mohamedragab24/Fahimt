@@ -77,7 +77,7 @@ export default function AdminCategories() {
       <div className="border-r-8 border-primary pr-6 flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الأقسام الهرمية</h1>
-          <p className="text-muted-foreground text-lg">نظام (قسم > تخصص > خيار) لضمان تنظيم احترافي للطلبات.</p>
+          <p className="text-muted-foreground text-lg">نظام (قسم &gt; تخصص &gt; خيار) لضمان تنظيم احترافي للطلبات.</p>
         </div>
         <div className="flex gap-4">
           <Input 
