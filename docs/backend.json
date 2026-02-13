@@ -30,6 +30,8 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["main", "sub", "option"] },
+        "parentId": { "type": "string", "description": "ID of the parent category if any." },
         "createdAt": { "type": "string", "format": "date-time" }
       }
     },
@@ -41,6 +43,8 @@
         "title": { "type": "string" },
         "amount": { "type": "number" },
         "category": { "type": "string" },
+        "categorySub": { "type": "string" },
+        "categoryOption": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "accepted", "completed", "canceled"] },
         "studentId": { "type": "string" },
         "studentName": { "type": "string" },
@@ -91,6 +95,7 @@
         "id": { "type": "string" },
         "landingBg": { "type": "string", "format": "uri" },
         "logoUrl": { "type": "string", "format": "uri" },
+        "miniIconUrl": { "type": "string", "format": "uri" },
         "studentHero": { "type": "string", "format": "uri" },
         "teacherHero": { "type": "string", "format": "uri" },
         "updatedAt": { "type": "string", "format": "date-time" }

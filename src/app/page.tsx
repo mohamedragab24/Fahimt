@@ -251,6 +251,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   const [newRequest, setNewRequest] = useState({ 
     title: "", 
     amount: "", 
@@ -260,6 +261,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
     meetingTime: "", 
     attachmentUrl: "" 
   });
+
   const [fileName, setFileName] = useState("");
   const [isAiRefining, setIsAiRefining] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -275,7 +277,11 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
   }, [firestore]);
 
-  const { data: categories } = useCollection(categoriesQuery);
+  const { data: allCategories } = useCollection(categoriesQuery);
+
+  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === (allCategories?.find(m => m.name === newRequest.category)?.id)) || [];
+  const optionCategories = allCategories?.filter(c => c.type === 'option' && c.parentId === (allCategories?.find(s => s.name === newRequest.categorySub)?.id)) || [];
 
   const myRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef || !profile?.id) return null;
@@ -381,7 +387,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
             <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black text-primary">ماذا تريد أن تتعلم اليوم؟</DialogTitle>
-                <UIDialogDescription className="text-right text-xl font-bold text-muted-foreground">أرفق صوراً للمسائل أو استخدم الذكاء الاصطناعي لتحسين طلبك.</UIDialogDescription>
+                <UIDialogDescription className="text-right text-xl font-bold text-muted-foreground">أكمل البيانات ليقوم النظام بربطك بالمفهم المناسب.</UIDialogDescription>
               </DialogHeader>
               <div className="grid gap-8 py-8">
                 <div className="space-y-3 relative">
@@ -408,41 +414,45 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-3">
-                    <Label className="text-sm font-black pr-2 text-primary">قسم رئيسي</Label>
-                    <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v})}>
+                    <Label className="text-sm font-black pr-2 text-primary">القسم الرئيسي</Label>
+                    <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v, categorySub: "", categoryOption: ""})}>
                       <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
                         <SelectValue placeholder="اختر القسم" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {categories?.filter(c => c.type === 'main' || !c.type).map((cat) => (
+                        {mainCategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3">
-                    <Label className="text-sm font-black pr-2 text-accent">قسم فرعي</Label>
-                    <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v})}>
+                  
+                  <div className={`space-y-3 transition-all ${!newRequest.category ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                    <Label className="text-sm font-black pr-2 text-accent">التخصص (فرعي)</Label>
+                    <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v, categoryOption: ""})}>
                       <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
-                        <SelectValue placeholder="اختر الفرع" />
+                        <SelectValue placeholder="اختر التخصص" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {categories?.filter(c => c.type === 'sub').map((cat) => (
+                        {subCategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
                         ))}
+                        {subCategories.length === 0 && <SelectItem value="none" disabled>لا توجد تخصصات متاحة</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3">
-                    <Label className="text-sm font-black pr-2 text-purple-500">خيارات</Label>
+
+                  <div className={`space-y-3 transition-all ${!newRequest.categorySub ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                    <Label className="text-sm font-black pr-2 text-purple-500">تفاصيل إضافية</Label>
                     <Select value={newRequest.categoryOption} onValueChange={(v) => setNewRequest({...newRequest, categoryOption: v})}>
                       <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
                         <SelectValue placeholder="تخصص دقيق" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {categories?.filter(c => c.type === 'option').map((cat) => (
+                        {optionCategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.name} className="font-bold">{cat.name}</SelectItem>
                         ))}
+                        {optionCategories.length === 0 && <SelectItem value="none" disabled>لا توجد خيارات</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
@@ -487,7 +497,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
               </div>
               <DialogFooter>
                 <Button onClick={handleCreateRequest} className="w-full py-10 text-3xl font-black rounded-3xl shadow-2xl bg-primary hover:bg-primary/90">
-                  <span className="ml-4 h-10 w-10">إرسال</span>
+                  <span className="ml-4">إرسال الطلب الآن</span>
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -554,7 +564,6 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  // فلاتر الأقسام الثلاثة
   const [filterMain, setFilterMain] = useState("all");
   const [filterSub, setFilterSub] = useState("all");
   const [filterOption, setFilterOption] = useState("all");
@@ -584,7 +593,7 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
   }, [firestore]);
 
-  const { data: categories } = useCollection(categoriesQuery);
+  const { data: allCategories } = useCollection(categoriesQuery);
 
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!requestsRef) return null;
@@ -618,7 +627,6 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
   const { data: activeRequests } = useCollection(myActiveRequestsQuery);
   const { data: completedRequests } = useCollection(myCompletedRequestsQuery);
 
-  // منطق التصفية المجمع
   const filteredAvailable = availableRequests?.filter(r => {
     const activeFilters = [];
     if (filterMain !== "all") activeFilters.push(filterMain);
@@ -627,7 +635,6 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
 
     if (activeFilters.length === 0) return true;
     
-    // التحقق من مطابقة أي من مستويات التصنيف للفلتر المختار
     return activeFilters.every(f => 
       r.category === f || r.categorySub === f || r.categoryOption === f
     );
@@ -756,7 +763,7 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 <SelectItem value="all" className="font-black">كل الأقسام الرئيسية</SelectItem>
-                {categories?.filter(c => c.type === 'main' || !c.type).map(c => (
+                {allCategories?.filter(c => c.type === 'main' || !c.type).map(c => (
                   <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -769,7 +776,7 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 <SelectItem value="all" className="font-black">كل الأقسام الفرعية</SelectItem>
-                {categories?.filter(c => c.type === 'sub').map(c => (
+                {allCategories?.filter(c => c.type === 'sub').map(c => (
                   <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -782,7 +789,7 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 <SelectItem value="all" className="font-black">كل الخيارات</SelectItem>
-                {categories?.filter(c => c.type === 'option').map(c => (
+                {allCategories?.filter(c => c.type === 'option').map(c => (
                   <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
               </SelectContent>
