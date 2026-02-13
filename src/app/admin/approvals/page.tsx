@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
-import { collection, query, where, doc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, query, where, doc, updateDoc, addDoc, orderBy } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,69 +44,71 @@ export default function AdminApprovals() {
 
   const { data: adminProfile } = useDoc(userRef);
 
+  // التأكد من أن المستخدم أدمن قبل تشغيل الاستعلامات لتجنب Permission Denied
+  const canReadApprovals = adminProfile?.isAdmin || user?.email === "mohamed76y@gmail.com";
+
   const profilesQuery = useMemoFirebase(() => {
-    if (!firestore || !adminProfile?.isAdmin) return null;
+    if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "users"), where("isProfileApproved", "==", false), where("status", "==", "active"));
-  }, [firestore, adminProfile?.isAdmin]);
+  }, [firestore, canReadApprovals]);
 
   const istifhamsQuery = useMemoFirebase(() => {
-    if (!firestore || !adminProfile?.isAdmin) return null;
-    return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
-  }, [firestore, adminProfile?.isAdmin]);
+    if (!firestore || !canReadApprovals) return null;
+    return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"), orderBy("createdAt", "desc"));
+  }, [firestore, canReadApprovals]);
 
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
 
-  const handleApproveProfile = async (user: any) => {
+  const handleApproveProfile = async (u: any) => {
     try {
-      await updateDoc(doc(firestore!, "users", user.id), { isProfileApproved: true });
+      await updateDoc(doc(firestore!, "users", u.id), { isProfileApproved: true });
       await addDoc(collection(firestore!, "notifications"), {
-        userId: user.id,
+        userId: u.id,
         title: "تم اعتماد حسابك!",
         message: "تهانينا، تم مراجعة ملفك الشخصي بنجاح. يمكنك الآن استخدام كافة مميزات المنصة.",
         type: "approval",
         read: false,
         createdAt: new Date().toISOString()
       });
-      toast({ title: "تم الاعتماد", description: "تم تفعيل الملف وإرسال إشعار." });
+      toast({ title: "تم الاعتماد", description: "تم تفعيل الملف وإرسال إشعار للمستخدم." });
       setSelectedUser(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
+      toast({ variant: "destructive", title: "خطأ في الاعتماد" });
     }
   };
 
-  const handleRejectProfile = async (user: any) => {
+  const handleRejectProfile = async (u: any) => {
     try {
-      await updateDoc(doc(firestore!, "users", user.id), { status: "blocked" });
-      toast({ variant: "destructive", title: "تم الرفض والحظر", description: "تم حظر الحساب تلقائياً." });
+      await updateDoc(doc(firestore!, "users", u.id), { status: "blocked" });
+      toast({ variant: "destructive", title: "تم الرفض والحظر", description: "تم حظر الحساب لعدم استيفاء الشروط." });
       setSelectedUser(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
+      toast({ variant: "destructive", title: "خطأ في العملية" });
     }
   };
 
   const handleApproveIstifham = async (ist: any) => {
     try {
       await updateDoc(doc(firestore!, "istifhams", ist.id), { status: "active" });
-      toast({ title: "تم النشر", description: "الاستفهام متاح الآن للمفهمين." });
+      toast({ title: "تم النشر بنجاح", description: "الاستفهام متاح الآن لكافة المُفهمين." });
       setSelectedIstifham(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
+      toast({ variant: "destructive", title: "خطأ في النشر" });
     }
   };
 
   const handleRejectIstifham = async (id: string) => {
     try {
       await updateDoc(doc(firestore!, "istifhams", id), { status: "canceled" });
-      toast({ variant: "destructive", title: "تم الرفض", description: "تم إلغاء الاستفهام." });
+      toast({ variant: "destructive", title: "تم رفض الاستفهام", description: "تم إلغاء الطلب ولن يظهر للعامة." });
       setSelectedIstifham(null);
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
     }
   };
 
-  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
-  if (!adminProfile?.isAdmin && !isMasterAdmin) {
+  if (!canReadApprovals && adminProfile) {
     return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</div>;
   }
 
@@ -129,7 +131,7 @@ export default function AdminApprovals() {
 
         <TabsContent value="profiles">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {profilesLoading ? <p className="col-span-full text-center font-bold animate-pulse">جاري التحميل...</p> : 
+            {profilesLoading ? <p className="col-span-full text-center font-bold animate-pulse">جاري تحميل الحسابات...</p> : 
               profiles?.map((p) => (
                 <Card key={p.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border-2 hover:border-primary/20 transition-all bg-white">
                   <CardHeader className="bg-muted/30 p-8 flex flex-col items-center text-center">
@@ -143,22 +145,22 @@ export default function AdminApprovals() {
                     </Badge>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل</Button>
+                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل الكاملة</Button>
                     <div className="flex gap-2">
                       <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12"><CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد</Button>
-                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> حظر</Button>
+                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> رفض</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             }
-            {!profilesLoading && profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات جديدة للمراجعة.</div>}
+            {!profilesLoading && profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات جديدة للمراجعة حالياً.</div>}
           </div>
         </TabsContent>
 
         <TabsContent value="istifhams">
           <div className="grid gap-6">
-            {istifhamsLoading ? <p className="text-center font-bold animate-pulse">جاري التحميل...</p> :
+            {istifhamsLoading ? <p className="text-center font-bold animate-pulse">جاري تحميل الاستفهامات...</p> :
               istifhams?.map((ist) => (
                 <Card key={ist.id} className="rounded-3xl border-2 p-8 shadow-md flex flex-col md:flex-row justify-between items-center gap-6 bg-white group">
                   <div className="space-y-2 text-right w-full">
@@ -167,7 +169,7 @@ export default function AdminApprovals() {
                       <span className="text-xs text-muted-foreground font-bold flex items-center gap-1"><Clock size={12}/> {new Date(ist.createdAt).toLocaleString('ar-EG')}</span>
                     </div>
                     <h4 className="text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors">{ist.title}</h4>
-                    <p className="font-bold text-muted-foreground">بواسطة المستفهم: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
+                    <p className="font-bold text-muted-foreground">بواسطة المُستفهم: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
                     <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> تفاصيل الاستفهام</Button>
@@ -176,7 +178,7 @@ export default function AdminApprovals() {
                 </Card>
               ))
             }
-            {!istifhamsLoading && istifhams?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة.</div>}
+            {!istifhamsLoading && istifhams?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة حالياً.</div>}
           </div>
         </TabsContent>
       </Tabs>
@@ -186,7 +188,7 @@ export default function AdminApprovals() {
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><UserCircle className="text-primary h-8 w-8" /> تفاصيل الحساب</DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة بيانات {selectedUser?.role === 'mufhem' ? 'المُفهم' : 'المُستفهم'} بالكامل.</DialogDescription>
+            <DialogDescription className="text-right text-lg">مراجعة بيانات {selectedUser?.role === 'mufhem' ? 'المُفهم' : 'المُستفهم'} بالكامل قبل الاعتماد.</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
@@ -232,7 +234,7 @@ export default function AdminApprovals() {
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><HelpCircle className="text-primary h-8 w-8" /> تفاصيل الاستفهام</DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة محتوى الاستفهام قبل نشره للمفهمين.</DialogDescription>
+            <DialogDescription className="text-right text-lg">مراجعة محتوى الاستفهام والميزانية قبل نشره للمُفهمين.</DialogDescription>
           </DialogHeader>
           {selectedIstifham && (
             <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
@@ -246,7 +248,7 @@ export default function AdminApprovals() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DetailBox icon={BadgeCent} label="الميزانية المقترحة" value={`${selectedIstifham.amount} ج.م`} />
                 <DetailBox icon={Calendar} label="موعد المحاضرة" value={new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')} />
-                <DetailBox icon={User} label="المستفهم" value={selectedIstifham.mustafhemName} />
+                <DetailBox icon={User} label="المُستفهم" value={selectedIstifham.mustafhemName} />
                 <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.subCategory || 'عام'}`} />
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4">

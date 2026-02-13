@@ -23,6 +23,7 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId);
@@ -33,8 +34,10 @@ service cloud.firestore {
       }
     }
 
+    // الأقسام والتخصصات (متاحة للجميع للقراءة لملء النماذج)
     match /categories/{categoryId} {
       allow read: if true; 
+      allow write: if isAdmin();
     }
 
     // الاستفهامات (الطلبات)
@@ -51,43 +54,34 @@ service cloud.firestore {
         resource.data.mufhemId == request.auth.uid ||
         isAdmin()
       );
-
-      match /messages/{messageId} {
-        allow read, write: if isSignedIn() && (
-          get(/databases/$(database)/documents/istifhams/$(istifhamId)).data.mustafhemId == request.auth.uid ||
-          get(/databases/$(database)/documents/istifhams/$(istifhamId)).data.mufhemId == request.auth.uid ||
-          isAdmin()
-        );
-      }
     }
 
     // الإشعارات
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin();
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isAdmin();
     }
 
-    match /supportTickets/{ticketId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-    
-    match /payoutRequests/{payoutId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-
+    // طلبات التوثيق
     match /verificationRequests/{verId} {
       allow create: if isSignedIn();
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
+    // طلبات السحب المالي
+    match /payoutRequests/{payoutId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // سجلات الإدارة
     match /adminLogs/{logId} {
       allow read, write: if isAdmin();
     }
