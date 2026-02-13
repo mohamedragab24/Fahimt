@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -22,7 +21,8 @@ import {
   HelpCircle,
   BadgeCent,
   MapPin,
-  FileText
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -46,7 +46,7 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
-  // جلب كافة المستخدمين غير المعتمدين بغض النظر عن الحالة لضمان الظهور
+  // جلب كافة المستخدمين غير المعتمدين
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "users"), where("isProfileApproved", "==", false));
