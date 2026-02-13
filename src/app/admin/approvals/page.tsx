@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
+import { collection, query, where, doc, limit } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,10 +46,11 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
-  // جلب كافة المستخدمين غير المعتمدين
+  // جلب المستخدمين بشكل موسع لضمان شمول الحسابات القديمة (Legacy Users)
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
-    return query(collection(firestore, "users"), where("isProfileApproved", "==", false));
+    // جلب آخر 200 مستخدم للمراجعة، التصفية ستتم برمجياً للشمولية
+    return query(collection(firestore, "users"), limit(200));
   }, [firestore, canReadApprovals]);
 
   // جلب كافة الاستفهامات التي تنتظر الموافقة
@@ -58,8 +59,11 @@ export default function AdminApprovals() {
     return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
   }, [firestore, canReadApprovals]);
 
-  const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
+  const { data: allUsers, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
+
+  // فلترة الحسابات التي لم يتم اعتمادها (بما في ذلك التي لا تملك حقل الاعتماد بعد)
+  const profiles = allUsers?.filter(u => u.isProfileApproved !== true && !u.isAdmin) || [];
 
   const handleApproveProfile = (u: any) => {
     if (!firestore) return;
@@ -82,7 +86,7 @@ export default function AdminApprovals() {
   const handleRejectProfile = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
-    updateDocumentNonBlocking(uRef, { status: "blocked" });
+    updateDocumentNonBlocking(uRef, { status: "blocked", isProfileApproved: false });
     toast({ variant: "destructive", title: "تم الرفض والحظر", description: "تم حظر الحساب لعدم استيفاء الشروط." });
     setSelectedUser(null);
   };
@@ -206,8 +210,8 @@ export default function AdminApprovals() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DetailBox icon={Mail} label="البريد الإلكتروني" value={selectedUser.email} />
                 <DetailBox icon={Phone} label="رقم الهاتف" value={selectedUser.phoneNumber} />
-                <DetailBox icon={Calendar} label="تاريخ الميلاد" value={new Date(selectedUser.birthDate).toLocaleDateString('ar-EG')} />
-                <DetailBox icon={Clock} label="تاريخ التسجيل" value={new Date(selectedUser.createdAt).toLocaleDateString('ar-EG')} />
+                <DetailBox icon={Calendar} label="تاريخ الميلاد" value={selectedUser.birthDate ? new Date(selectedUser.birthDate).toLocaleDateString('ar-EG') : 'غير محدد'} />
+                <DetailBox icon={Clock} label="تاريخ التسجيل" value={selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('ar-EG') : 'غير محدد'} />
               </div>
               {selectedUser.role === 'mufhem' && (
                 <div className="space-y-4">
