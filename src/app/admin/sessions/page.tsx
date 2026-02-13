@@ -3,9 +3,9 @@
 
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X, PlayCircle } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X, PlayCircle, FileText, CheckCircle2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -38,31 +38,20 @@ export default function AdminSessionsReview() {
 
   const sessions = rawSessions?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // دالة ذكية للحصول على الرابط حتى لو لم يكن مسجلاً في قاعدة البيانات
-  const getSessionUrl = (session: any) => {
-    if (session?.recordingUrl) return session.recordingUrl;
-    if (session?.id) {
-      return `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${session.id}`;
-    }
-    return null;
-  };
-
   if (!canReadSessions && adminProfile) {
     return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لمركز الرقابة.</div>;
   }
-
-  const activeUrl = getSessionUrl(selectedSession);
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-blue-600 pr-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black font-headline text-zinc-900">مركز رقابة المحاضرات</h1>
-          <p className="text-muted-foreground text-lg">مراجعة الجلسات المباشرة لضمان أمان وخصوصية المستخدمين وحل النزاعات.</p>
+          <h1 className="text-4xl font-black font-headline text-zinc-900">سجلات الرقابة الإدارية</h1>
+          <p className="text-muted-foreground text-lg">مراجعة تقارير المحاضرات، التقييمات، والتسجيلات صوت وصورة لحل النزاعات.</p>
         </div>
         <div className="bg-blue-50 p-4 rounded-2xl border-2 border-dashed border-blue-200 flex items-center gap-3 text-blue-700">
           <ShieldCheck />
-          <span className="font-black">نظام حماية الطرفين (مراجعة داخلية)</span>
+          <span className="font-black">مركز حماية الحقوق مفعل</span>
         </div>
       </div>
 
@@ -72,14 +61,14 @@ export default function AdminSessionsReview() {
             <TableRow>
               <TableHead className="text-right px-8 font-black text-zinc-900">المحاضرة</TableHead>
               <TableHead className="text-right font-black text-zinc-900">الأطراف</TableHead>
-              <TableHead className="text-right font-black text-zinc-900">الموعد والمبلغ</TableHead>
+              <TableHead className="text-right font-black text-zinc-900">الحالة والمبلغ</TableHead>
               <TableHead className="text-right font-black text-zinc-900">التقييم</TableHead>
               <TableHead className="text-left px-8 font-black text-zinc-900">الإجراء</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-20 font-bold animate-pulse">جاري تحميل البيانات...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-20 font-bold animate-pulse">جاري جلب السجلات من الأرشيف...</TableCell></TableRow>
             ) : sessions?.map((session) => (
               <TableRow key={session.id} className="h-24 hover:bg-muted/5 transition-colors">
                 <TableCell className="px-8">
@@ -91,12 +80,14 @@ export default function AdminSessionsReview() {
                 <TableCell>
                   <div className="flex flex-col text-sm space-y-1">
                     <span className="font-bold text-primary flex items-center gap-1"><User size={14}/> {session.mustafhemName}</span>
-                    <span className="font-bold text-accent flex items-center gap-1"><ShieldCheck size={14}/> {session.mufhemName || 'بانتظار مفهم'}</span>
+                    <span className="font-bold text-accent flex items-center gap-1"><ShieldCheck size={14}/> {session.mufhemName || 'لم يتم الربط'}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col text-xs font-bold space-y-1">
-                    <span className="flex items-center gap-1 text-muted-foreground"><Calendar size={12}/> {new Date(session.createdAt).toLocaleDateString('ar-EG')}</span>
+                    <Badge className={session.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}>
+                      {session.status === 'completed' ? 'مكتملة' : 'قيد التنفيذ'}
+                    </Badge>
                     <span className="flex items-center gap-1 text-primary"><BadgeCent size={12}/> {session.amount} ج.م</span>
                   </div>
                 </TableCell>
@@ -114,14 +105,14 @@ export default function AdminSessionsReview() {
                     className="rounded-xl gap-2 font-black shadow-lg bg-blue-600 hover:bg-blue-700" 
                     onClick={() => setSelectedSession(session)}
                   >
-                    <PlayCircle size={16} /> مراجعة المحاضرة
+                    <PlayCircle size={16} /> مراجعة التقرير
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
             {(!sessions || sessions.length === 0) && !isLoading && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-black opacity-30 text-xl">لا توجد محاضرات مسجلة حالياً.</TableCell>
+                <TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-black opacity-30 text-xl">لا توجد محاضرات في الأرشيف حتى الآن.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -129,46 +120,96 @@ export default function AdminSessionsReview() {
       </Card>
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[85vw] lg:max-w-[1100px] h-[85vh] p-0 overflow-hidden bg-black border-none rounded-[2.5rem] shadow-2xl" dir="rtl">
-          <DialogHeader className="p-6 bg-zinc-900 text-white border-b border-zinc-800 flex flex-row justify-between items-center space-y-0">
-            <DialogTitle className="text-2xl font-black flex items-center gap-3">
-              <Video className="text-blue-500" /> مراجعة محتوى المحاضرة: {selectedSession?.title}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 w-full h-full bg-zinc-950 relative flex items-center justify-center">
-            {activeUrl ? (
-              <iframe 
-                src={activeUrl} 
-                className="absolute inset-0 w-full h-full border-none"
-                allow="autoplay; fullscreen; microphone; camera; display-capture"
-                title="Recording Preview"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center p-10 text-center space-y-6">
-                <div className="bg-zinc-900 p-8 rounded-full border-2 border-dashed border-zinc-700">
-                  <ShieldAlert size={80} className="text-zinc-600" />
+        <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+          <div className="bg-zinc-900 p-8 text-white flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-black">{selectedSession?.title}</h2>
+              <p className="text-zinc-400 font-bold mt-1">تقرير الرقابة الكامل للمحاضرة</p>
+            </div>
+            <div className="bg-primary/20 p-4 rounded-2xl">
+              <ShieldCheck className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+
+          <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ReportBox icon={User} label="المستفهم (الطالب)" value={selectedSession?.mustafhemName} />
+              <ReportBox icon={ShieldCheck} label="المفهم (الخبير)" value={selectedSession?.mufhemName} />
+              <ReportBox icon={BadgeCent} label="المبلغ المتداول" value={`${selectedSession?.amount} ج.م`} />
+              <ReportBox icon={Clock} label="تاريخ الانعقاد" value={selectedSession?.createdAt ? new Date(selectedSession.createdAt).toLocaleString('ar-EG') : '-'} />
+            </div>
+
+            <div className="p-8 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
+              <h4 className="text-xl font-black flex items-center gap-3"><Star className="text-yellow-500 fill-yellow-500" /> تقييم الطالب والملاحظات</h4>
+              {selectedSession?.rating ? (
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-6 w-6 ${selectedSession.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
+                  </div>
+                  <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border">
+                    "{selectedSession.review || "لا توجد ملاحظات نصية مضافة."}"
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white">رابط التسجيل غير متوفر</h3>
-                  <p className="text-zinc-400 font-bold text-lg max-w-md">عذراً، لم يتم العثور على سجل لهذه المحاضرة.</p>
+              ) : (
+                <p className="text-muted-foreground font-bold italic">لم يتم تقييم هذه الجلسة بعد من قبل الطالب.</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> رابط تسجيل المحاضرة (صوت وصورة)</h4>
+              {selectedSession?.recordingUrl && !selectedSession.recordingUrl.includes('Fahimni_Room') ? (
+                <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group">
+                  <iframe 
+                    src={selectedSession.recordingUrl} 
+                    className="w-full h-full border-none"
+                    allow="autoplay; fullscreen"
+                  />
                 </div>
-                <Button variant="outline" onClick={() => setSelectedSession(null)} className="rounded-xl border-zinc-700 text-white hover:bg-white hover:text-black font-black px-10">إغلاق المعاينة</Button>
-              </div>
-            )}
+              ) : (
+                <div className="p-10 bg-orange-50 rounded-3xl border-2 border-dashed border-orange-200 flex flex-col items-center gap-4 text-center">
+                  <ShieldAlert className="h-16 w-16 text-orange-400" />
+                  <div>
+                    <p className="text-orange-900 font-black text-xl">التسجيل المباشر قيد المعالجة</p>
+                    <p className="text-orange-700 font-bold max-w-md">الجلسة انتهت، ويقوم النظام حالياً بضغط ورفع التسجيل صوت وصورة للأرشيف. يرجى المحاولة لاحقاً للمراجعة المرئية.</p>
+                  </div>
+                  <Button variant="outline" className="rounded-xl border-orange-200" onClick={() => window.open(`https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`, '_blank')}>
+                    <LinkIcon className="ml-2 h-4 w-4" /> فتح الغرفة للمعاينة المباشرة
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-8 bg-zinc-50 border-t flex justify-end">
+            <Button onClick={() => setSelectedSession(null)} className="rounded-2xl px-10 h-14 font-black text-lg">إغلاق التقرير</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      <div className="p-8 bg-zinc-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-        <div className="bg-blue-500/20 p-6 rounded-full shrink-0">
-          <ShieldAlert size={48} className="text-blue-400" />
+      <div className="p-10 bg-zinc-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-10 shadow-2xl">
+        <div className="bg-blue-500/20 p-8 rounded-[2rem] shrink-0">
+          <ShieldAlert size={60} className="text-blue-400" />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-2xl font-black">إرشادات الرقابة الإدارية</h3>
-          <p className="text-zinc-400 font-medium leading-relaxed max-w-3xl text-sm">
-            يتم حفظ المحاضرات صوت وصورة لضمان حق الطالب في الفهم وحق المعلم في الأجر. في حال وجود أي نزاع مالي أو شكوى فنية، سيقوم النظام بعرض التسجيل كاملاً لمراجعته واتخاذ القرار المناسب.
+        <div className="space-y-4">
+          <h3 className="text-3xl font-black">لماذا نراجع المحاضرات؟</h3>
+          <p className="text-zinc-400 font-medium leading-relaxed max-w-4xl text-lg">
+            نظام الرقابة الإدارية مصمم لضمان "حق الفهم" للطالب و "حق الأجر" للمدرس. في حال وجود أي شكوى مالية أو تقنية، يرجع فريق الإدارة لهذا السجل (التقييمات، الملاحظات، وتسجيل الجلسة) لاتخاذ قرار عادل يحمي الطرفين.
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportBox({ icon: Icon, label, value }: any) {
+  return (
+    <div className="p-6 bg-zinc-50 rounded-2xl border flex items-center gap-5 hover:bg-white transition-colors hover:shadow-md">
+      <div className="bg-white p-3 rounded-xl shadow-sm text-primary">
+        <Icon size={24} />
+      </div>
+      <div>
+        <span className="text-[10px] font-black text-muted-foreground block uppercase tracking-widest">{label}</span>
+        <span className="font-black text-lg text-zinc-900">{value || "غير محدد"}</span>
       </div>
     </div>
   );

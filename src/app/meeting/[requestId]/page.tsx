@@ -47,15 +47,12 @@ export default function MeetingPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  // تحديث حالة الحضور ورابط التسجيل فور الدخول
   useEffect(() => {
     if (requestRef && profile && requestId) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
-      const recordingLink = `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`;
-      
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
-        recordingUrl: recordingLink // حفظ الرابط فوراً لتمكين الرقابة الإدارية
+        lastLiveSession: new Date().toISOString()
       });
     }
   }, [requestRef, profile, requestId]);
@@ -91,6 +88,13 @@ export default function MeetingPage() {
       };
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
+
+      // الاستماع لأحداث التسجيل
+      newApi.on('recordingStatusChanged', (data: any) => {
+        if (data.on && data.link && requestRef) {
+          updateDocumentNonBlocking(requestRef, { recordingUrl: data.link });
+        }
+      });
 
       newApi.addEventListener('videoConferenceLeft', () => {
         if (profile.role === 'mustafhem') {
