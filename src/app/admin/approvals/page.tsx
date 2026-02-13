@@ -113,7 +113,7 @@ export default function AdminApprovals() {
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
-      <div className="border-r-8 border-primary pr-6">
+      <div className="border-r-8 border-primary pr-6 text-right">
         <h1 className="text-4xl font-black font-headline text-zinc-900">مركز الاعتماد والرقابة</h1>
         <p className="text-muted-foreground text-lg">مراجعة الحسابات والطلبات الجديدة لضمان الجودة.</p>
       </div>

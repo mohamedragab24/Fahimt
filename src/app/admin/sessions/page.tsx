@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -45,7 +45,7 @@ export default function AdminSessionsReview() {
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-blue-600 pr-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
+        <div className="text-right">
           <h1 className="text-4xl font-black font-headline text-zinc-900">سجلات الرقابة الإدارية</h1>
           <p className="text-muted-foreground text-lg">مراجعة المحاضرات صوت وصورة والتقييمات المسجلة لحفظ الحقوق.</p>
         </div>
@@ -71,22 +71,22 @@ export default function AdminSessionsReview() {
               <TableRow><TableCell colSpan={5} className="text-center py-20 font-bold animate-pulse">جاري جلب السجلات...</TableCell></TableRow>
             ) : sessions?.map((session) => (
               <TableRow key={session.id} className="h-24 hover:bg-muted/5 transition-colors">
-                <TableCell className="px-8">
+                <TableCell className="px-8 text-right">
                   <div className="flex flex-col">
                     <span className="font-bold text-lg text-zinc-800">{session.title}</span>
                     <span className="text-[10px] text-muted-foreground font-mono">ID: {session.id.slice(-6)}</span>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <div className="flex flex-col text-sm space-y-1">
-                    <span className="font-bold text-primary flex items-center gap-1"><User size={14}/> {session.mustafhemName}</span>
-                    <span className="font-bold text-accent flex items-center gap-1"><ShieldCheck size={14}/> {session.mufhemName || 'بانتظار المفهم'}</span>
+                    <span className="font-bold text-primary flex items-center gap-1 justify-end"><User size={14}/> {session.mustafhemName}</span>
+                    <span className="font-bold text-accent flex items-center gap-1 justify-end"><ShieldCheck size={14}/> {session.mufhemName || 'بانتظار المفهم'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="font-black text-primary">{session.amount} ج.م</TableCell>
-                <TableCell>
+                <TableCell className="font-black text-primary text-right">{session.amount} ج.م</TableCell>
+                <TableCell className="text-right">
                   {session.rating ? (
-                    <div className="flex items-center gap-1 text-yellow-500 font-black">
+                    <div className="flex items-center gap-1 text-yellow-500 font-black justify-end">
                       <Star size={16} className="fill-current" /> {session.rating}.0
                     </div>
                   ) : <span className="text-muted-foreground italic text-xs font-bold">لم تقيم بعد</span>}
@@ -114,52 +114,53 @@ export default function AdminSessionsReview() {
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
-          <DialogHeader className="px-8 pt-8">
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
-              <ShieldCheck className="text-primary h-8 w-8" /> تقرير المحاضرة
+          <DialogHeader className="px-8 pt-8 text-right">
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3 justify-end">
+              <ShieldCheck className="text-primary h-8 w-8" /> تقرير المحاضرة الرقابي
             </DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة أحداث الجلسة صوت وصورة والتقييم النهائي.</DialogDescription>
+            <DialogDescription className="text-right text-lg">مراجعة أحداث الجلسة صوت وصورة لضمان حقوق الطرفين.</DialogDescription>
           </DialogHeader>
           
           <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
                 <User className="text-primary" />
-                <div><span className="text-[10px] block font-black text-right">المستفهم</span><span className="font-bold">{selectedSession?.mustafhemName}</span></div>
+                <div className="text-right flex-1"><span className="text-[10px] block font-black">المستفهم</span><span className="font-bold">{selectedSession?.mustafhemName}</span></div>
               </div>
               <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
                 <ShieldCheck className="text-accent" />
-                <div><span className="text-[10px] block font-black text-right">المفهم</span><span className="font-bold">{selectedSession?.mufhemName}</span></div>
+                <div className="text-right flex-1"><span className="text-[10px] block font-black">المفهم</span><span className="font-bold">{selectedSession?.mufhemName}</span></div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (صوت وصورة)</h4>
-              <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
+              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600 justify-end"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
+              <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl border-4 border-zinc-100">
                 <iframe 
-                  src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}#config.startWithAudioMuted=true&config.startWithVideoMuted=true`} 
+                  src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}#config.startWithAudioMuted=true&config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.readOnly=true`} 
                   className="w-full h-full border-none"
                   allow="autoplay; fullscreen; microphone; camera; display-capture"
                 />
               </div>
-              <p className="text-xs text-muted-foreground font-bold text-center italic">
-                ملاحظة: إذا كانت المحاضرة منتهية، سيقوم النظام بمحاولة استرجاع سجل الأحداث صوت وصورة للمراجعة.
-              </p>
+              <div className="p-4 bg-blue-50 rounded-2xl flex items-center gap-3 text-blue-700 text-sm font-bold">
+                <AlertCircle size={18} />
+                <p>يتم عرض أحداث المحاضرة صوت وصورة من خلال "غرفة الرقابة الآمنة" داخل المنصة.</p>
+              </div>
             </div>
 
             <div className="p-8 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3"><Star className="text-yellow-500 fill-yellow-500" /> تقييم الطالب</h4>
+              <h4 className="text-xl font-black flex items-center gap-3 justify-end"><Star className="text-yellow-500 fill-yellow-500" /> تقييم الطالب النهائي</h4>
               {selectedSession?.rating ? (
                 <div className="space-y-4">
                   <div className="flex gap-2 justify-end">
                     {[1,2,3,4,5].map(s => <Star key={s} className={`h-6 w-6 ${selectedSession.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
                   </div>
                   <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border text-right">
-                    "{selectedSession.review || "لا توجد ملاحظات مكتوبة."}"
+                    "{selectedSession.review || "لا توجد ملاحظات مكتوبة من قبل الطالب."}"
                   </p>
                 </div>
               ) : (
-                <p className="text-muted-foreground font-bold italic text-right">لم يتم تقييم الجلسة من قبل الطالب بعد.</p>
+                <p className="text-muted-foreground font-bold italic text-right">لم يتم وضع تقييم نهائي بعد.</p>
               )}
             </div>
           </div>
@@ -174,10 +175,10 @@ export default function AdminSessionsReview() {
         <div className="bg-blue-500/20 p-8 rounded-[2rem] shrink-0">
           <ShieldAlert size={60} className="text-blue-400" />
         </div>
-        <div className="space-y-4">
-          <h3 className="text-3xl font-black">نظام الرقابة وحماية الخصوصية</h3>
+        <div className="space-y-4 text-right">
+          <h3 className="text-3xl font-black">نظام الرقابة صوت وصورة</h3>
           <p className="text-zinc-400 font-medium leading-relaxed max-w-4xl text-lg">
-            يتم توثيق كافة المحاضرات صوت وصورة لضمان حقوق الطلاب والمعلمين. في حال وجود أي نزاع، يمكن للإدارة مراجعة التسجيلات واتخاذ القرارات العادلة بناءً على ما حدث في الجلسة.
+            يتم توثيق كافة المحاضرات صوت وصورة لضمان حقوق الطلاب والمعلمين. في حال وجود أي نزاع، يمكن للإدارة مراجعة التسجيلات واتخاذ القرارات العادلة بناءً على ما حدث في الجلسة المسجلة.
           </p>
         </div>
       </div>
