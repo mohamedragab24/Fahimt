@@ -6,7 +6,7 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { ArrowRight, Video, ShieldCheck, Copy, Check, Star, AlertTriangle, Loader2 } from "lucide-react";
+import { Video, Star, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -75,7 +75,7 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
           enableWelcomePage: false,
-          autoRecord: true,
+          autoRecord: true, // محاولة بدء التسجيل تلقائياً
           localRecording: {
             enabled: true,
             format: 'flac'
@@ -95,6 +95,7 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
+      // مراقبة التسجيل وتوثيق الرابط
       newApi.on('recordingStatusChanged', (data: any) => {
         if (data.on && data.link && requestRef) {
           updateDocumentNonBlocking(requestRef, { 
@@ -116,7 +117,7 @@ export default function MeetingPage() {
 
   const submitRating = async () => {
     if (rating === 0) {
-      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى اختيار عدد النجوم لضمان جودة المنصة قبل المغادرة." });
+      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى تقييم المحاضرة لإكمال العملية." });
       return;
     }
     
@@ -130,7 +131,7 @@ export default function MeetingPage() {
         completedAt: new Date().toISOString()
       });
       
-      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم حفظ سجل المحاضرة." });
+      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك." });
       router.push("/requests");
     }
   };
@@ -163,7 +164,7 @@ export default function MeetingPage() {
             size="sm" 
             onClick={() => { 
               if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه الرقابة", description: "يجب على المستفهم (الطالب) إنهاء الجلسة أولاً لضمان اكتمال الشرح." });
+                toast({ variant: "destructive", title: "تنبيه", description: "يجب على المستفهم إنهاء الجلسة أولاً." });
               } else {
                 api?.executeCommand('hangup'); 
               }
@@ -185,7 +186,7 @@ export default function MeetingPage() {
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
               <Star className="text-yellow-500 fill-yellow-500" /> تقييم المحاضرة
             </DialogTitle>
-            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم الجلسة لإغلاقها نهائياً وحفظ حقوق الجميع.</DialogDescription>
+            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم الجلسة لإغلاقها نهائياً وحفظ سجل الرقابة.</DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-8 flex flex-col items-center">
             <div className="flex gap-3">
@@ -196,9 +197,9 @@ export default function MeetingPage() {
               ))}
             </div>
             <div className="w-full space-y-2">
-              <Label className="font-black text-sm mr-2">رأيك في الشرح (اختياري)</Label>
+              <Label className="font-black text-sm mr-2">رأيك في الشرح</Label>
               <Textarea 
-                placeholder="كيف كان أسلوب المُفهم؟ هل استفدت من المحاضرة؟" 
+                placeholder="كيف كان أداء المُفهم؟" 
                 className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary"
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
@@ -209,9 +210,9 @@ export default function MeetingPage() {
             <Button 
               onClick={submitRating} 
               disabled={isSubmitting}
-              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl transition-transform"
             >
-              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم وإكمال المحاضرة"}
+              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -4,7 +4,7 @@ import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X, PlayCircle, FileText, CheckCircle2 } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, Link as LinkIcon, BadgeCent, X, PlayCircle, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -152,16 +152,23 @@ export default function AdminSessionsReview() {
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
+              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600"><Video /> مراجعة أحداث الجلسة (صوت وصورة)</h4>
               <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl">
-                <iframe 
-                  src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`} 
-                  className="w-full h-full border-none"
-                  allow="autoplay; fullscreen; microphone; camera; display-capture"
-                />
+                {selectedSession?.recordingUrl && selectedSession.recordingUrl.includes('.mp4') ? (
+                  <video controls className="w-full h-full">
+                    <source src={selectedSession.recordingUrl} type="video/mp4" />
+                    متصفحك لا يدعم تشغيل الفيديو.
+                  </video>
+                ) : (
+                  <iframe 
+                    src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}`} 
+                    className="w-full h-full border-none"
+                    allow="autoplay; fullscreen; microphone; camera; display-capture"
+                  />
+                )}
               </div>
               <p className="text-xs text-muted-foreground font-bold text-center italic">
-                ملاحظة: إذا كانت المحاضرة منتهية، سيقوم المشغل بمحاولة استرجاع سجل الأحداث صوت وصورة.
+                ملاحظة: إذا لم يظهر فيديو مسجل، سيقوم النظام بمحاولة إعادة عرض أحداث الغرفة للمراجعة.
               </p>
             </div>
           </div>
@@ -177,9 +184,9 @@ export default function AdminSessionsReview() {
           <ShieldAlert size={60} className="text-blue-400" />
         </div>
         <div className="space-y-4">
-          <h3 className="text-3xl font-black">لماذا نوثق المحاضرات بالفيديو؟</h3>
+          <h3 className="text-3xl font-black">لماذا نوثق المحاضرات؟</h3>
           <p className="text-zinc-400 font-medium leading-relaxed max-w-4xl text-lg">
-            نظام الرقابة الإدارية في "فهمني" يهدف لحماية حقوق الجميع. يتم تسجيل المحاضرات صوت وصورة للرجوع إليها في حال وجود أي شكوى تقنية أو مالية، مما يضمن بيئة تعليمية آمنة وعادلة.
+            نظام الرقابة الإدارية في "فهمني" يهدف لحماية حقوق الجميع. يتم تسجيل المحاضرات صوت وصورة للرجوع إليها في حال وجود أي شكوى، مما يضمن بيئة تعليمية آمنة وعادلة.
           </p>
         </div>
       </div>
