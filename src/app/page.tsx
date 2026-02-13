@@ -19,12 +19,16 @@ import {
   Calendar as CalendarIcon,
   Layers,
   Filter,
-  CheckCircle
+  CheckCircle,
+  Wand2,
+  Sparkles,
+  Star,
+  Users
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, addDoc } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -35,6 +39,7 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { refineRequest } from "@/ai/flows/refine-request-flow";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -85,7 +90,6 @@ export default function HomePage() {
     return <LandingPage router={router} settings={settings} />;
   }
 
-  // حالة الحساب المحظور
   if (profile.status === 'blocked') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
@@ -119,7 +123,6 @@ export default function HomePage() {
     );
   }
 
-  // حالة الحساب قيد المراجعة (صفحة كاملة)
   if (!profile.isProfileApproved && !profile.isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
@@ -213,6 +216,7 @@ function LandingPage({ router, settings }: any) {
 function MustafhemView({ profile }: any) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
     title: "", 
     description: "", 
@@ -236,9 +240,36 @@ function MustafhemView({ profile }: any) {
   }, [firestore, profile.id]);
   const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
+  const featuredTeachersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"), where("role", "==", "mufhem"), where("isVerified", "==", true), limit(4));
+  }, [firestore]);
+  const { data: featuredTeachers } = useCollection(featuredTeachersQuery);
+
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
   const filteredOptions = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === newIstifham.categorySub)?.id) || [];
+
+  const handleRefine = async () => {
+    if (!newIstifham.description) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى كتابة وصف بسيط أولاً ليقوم الذكاء الاصطناعي بتحسينه." });
+      return;
+    }
+    setIsRefining(true);
+    try {
+      const result = await refineRequest({ text: newIstifham.description });
+      setNewIstifham(prev => ({
+        ...prev,
+        title: result.refinedTitle,
+        description: result.refinedDescription
+      }));
+      toast({ title: "تم التحسين بنجاح", description: "قام الذكاء الاصطناعي بصياغة طلبك بشكل احترافي." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل الاتصال بمحرك الذكاء الاصطناعي." });
+    } finally {
+      setIsRefining(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
@@ -264,7 +295,7 @@ function MustafhemView({ profile }: any) {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
         <div className="space-y-4 text-right">
           <h2 className="text-4xl font-black text-zinc-800">عندك سؤال؟ <br/> اطرح استفهامك الآن</h2>
@@ -281,13 +312,25 @@ function MustafhemView({ profile }: any) {
               </DialogHeader>
               <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
                 <div className="space-y-2">
-                  <Label className="font-black mr-2">عنوان الاستفهام</Label>
-                  <Input placeholder="مثال: شرح درس المصفوفات" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} required className="h-14 rounded-2xl border-2" />
+                  <div className="flex justify-between items-center px-2">
+                    <Label className="font-black">وصف الطلب</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleRefine}
+                      disabled={isRefining}
+                      className="text-primary font-black gap-2 hover:bg-primary/5"
+                    >
+                      {isRefining ? <Sparkles className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                      تحسين بالذكاء الاصطناعي
+                    </Button>
+                  </div>
+                  <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} required className="h-32 rounded-2xl border-2 p-4 text-lg font-medium" />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label className="font-black mr-2">وصف الطلب</Label>
-                  <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} required className="h-32 rounded-2xl border-2 p-4" />
+                  <Label className="font-black mr-2">عنوان الاستفهام</Label>
+                  <Input placeholder="مثال: شرح درس المصفوفات" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} required className="h-14 rounded-2xl border-2 font-bold" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -314,24 +357,13 @@ function MustafhemView({ profile }: any) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="font-black mr-2">خيارات إضافية</Label>
-                    <Select disabled={!newIstifham.categorySub} onValueChange={(v)=>setNewIstifham({...newIstifham, categoryOption: v})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2 font-bold"><SelectValue placeholder="اختر (اختياري)" /></SelectTrigger>
-                      <SelectContent>
-                        {filteredOptions.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label className="font-black mr-2">الميزانية (ج.م)</Label>
                     <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} required className="h-14 rounded-2xl border-2 font-bold" />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-black mr-2">موعد المحاضرة المفضل</Label>
-                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} required className="h-14 rounded-2xl border-2" />
+                  <div className="space-y-2">
+                    <Label className="font-black mr-2">موعد المحاضرة</Label>
+                    <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} required className="h-14 rounded-2xl border-2" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -341,6 +373,34 @@ function MustafhemView({ profile }: any) {
           </Dialog>
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
+      </div>
+
+      {/* Featured Teachers */}
+      <div className="space-y-6">
+        <h3 className="text-2xl font-black border-r-8 border-accent pr-6 flex items-center gap-3">
+          <Users className="text-accent" /> خبراء متميزون متاحون الآن
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featuredTeachers?.map(t => (
+            <Card key={t.id} className="rounded-[2.5rem] border-2 bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+              <div className="h-20 bg-accent/10"></div>
+              <CardContent className="p-6 -mt-10 flex flex-col items-center text-center">
+                <Image 
+                  src={t.profilePictureUrl || "https://picsum.photos/seed/avatar/200/200"} 
+                  width={80} 
+                  height={80} 
+                  alt="T" 
+                  className="rounded-3xl border-4 border-white shadow-lg mb-4"
+                />
+                <h4 className="font-black text-lg flex items-center gap-1">{t.fullName} <ShieldCheck className="text-blue-500 h-4 w-4" /></h4>
+                <p className="text-xs font-bold text-muted-foreground line-clamp-1">{t.specialization || "خبير تعليمي"}</p>
+                <div className="flex items-center gap-1 text-yellow-500 font-black text-xs mt-3">
+                  <Star size={12} className="fill-current" /> 5.0
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {pendingIstifhams && pendingIstifhams.length > 0 && (
@@ -372,6 +432,7 @@ function MustafhemView({ profile }: any) {
 function MufhemView({ profile }: any) {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
 
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !profile?.gender) return null;
@@ -384,6 +445,34 @@ function MufhemView({ profile }: any) {
   }, [firestore, profile?.gender]);
   
   const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
+
+  useEffect(() => {
+    const fetchMufhemStats = async () => {
+      if (!firestore || !profile.id) return;
+      
+      const txRef = collection(firestore, "users", profile.id, "transactions");
+      const txSnap = await getDocs(txRef);
+      let bal = 0;
+      txSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.status !== 'rejected') {
+          if (d.type === 'deposit' || d.type === 'earning') bal += d.amount;
+          else bal -= d.amount;
+        }
+      });
+
+      const istRef = collection(firestore, "istifhams");
+      const istQuery = query(istRef, where("mufhemId", "==", profile.id), where("status", "==", "completed"));
+      const istSnap = await getDocs(istQuery);
+
+      setStats({
+        balance: bal,
+        completed: istSnap.size,
+        rating: 5.0 // MVP default
+      });
+    };
+    fetchMufhemStats();
+  }, [firestore, profile.id]);
 
   const handleAccept = (ist: any) => {
     if (!firestore) return;
@@ -411,15 +500,15 @@ function MufhemView({ profile }: any) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-primary text-white rounded-[2.5rem] p-8 shadow-xl">
           <p className="font-bold opacity-80 text-right">الرصيد المتاح</p>
-          <h3 className="text-5xl font-black tabular-nums text-right">0 <span className="text-xl">ج.م</span></h3>
+          <h3 className="text-5xl font-black tabular-nums text-right">{stats.balance} <span className="text-xl">ج.م</span></h3>
         </Card>
         <Card className="bg-zinc-900 text-white rounded-[2.5rem] p-8 shadow-xl">
           <p className="font-bold opacity-80 text-right">استفهامات منجزة</p>
-          <h3 className="text-5xl font-black tabular-nums text-right">0</h3>
+          <h3 className="text-5xl font-black tabular-nums text-right">{stats.completed}</h3>
         </Card>
         <Card className="bg-accent text-white rounded-[2.5rem] p-8 shadow-xl">
           <p className="font-bold opacity-80 text-right">تقييمك العام</p>
-          <h3 className="text-5xl font-black tabular-nums text-right">5.0</h3>
+          <h3 className="text-5xl font-black tabular-nums text-right">{stats.rating.toFixed(1)}</h3>
         </Card>
       </div>
 

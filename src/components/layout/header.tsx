@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect, useRef } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, Video, User, Settings, LogOut, ShieldCheck, LifeBuoy, CheckCircle2, XCircle } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -11,11 +12,14 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
+  const lastNotifCount = useRef(0);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -59,6 +63,20 @@ export function Header() {
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
   const totalNotifications = (acceptedRequests?.length || 0) + (systemNotifs?.filter(n => !n.read).length || 0);
+
+  // عرض تنبيه منبثق عند وصول إشعار جديد
+  useEffect(() => {
+    if (totalNotifications > lastNotifCount.current) {
+      const latestNotif = systemNotifs?.[0] || acceptedRequests?.[0];
+      if (latestNotif) {
+        toast({
+          title: "إشعار جديد 🔔",
+          description: latestNotif.title || latestNotif.message || "لديك تحديث جديد في المنصة.",
+        });
+      }
+    }
+    lastNotifCount.current = totalNotifications;
+  }, [totalNotifications, systemNotifs, acceptedRequests, toast]);
 
   const handleLogout = async () => {
     await signOut(auth);
