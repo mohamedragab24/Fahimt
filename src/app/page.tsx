@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -274,9 +274,11 @@ function MustafhemView({ profile }: any) {
 
 function MufhemView({ profile }: any) {
   const firestore = useFirestore();
+  const { toast } = useToast();
+
   // فلترة الاستفهامات حسب حالة "active" وجنس "mustafhemGender" مطابق لجنس "profile.gender"
   const istifhamsQuery = useMemoFirebase(() => {
-    if (!firestore || profile?.status === 'blocked') return null;
+    if (!firestore || profile?.status === 'blocked' || !profile?.gender) return null;
     return query(
       collection(firestore, "istifhams"), 
       where("status", "==", "active"),
@@ -286,6 +288,28 @@ function MufhemView({ profile }: any) {
   }, [firestore, profile?.status, profile?.gender]);
   
   const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
+
+  const handleAccept = (ist: any) => {
+    if (!firestore) return;
+    const istRef = doc(firestore, "istifhams", ist.id);
+    updateDocumentNonBlocking(istRef, {
+      status: "accepted",
+      mufhemId: profile.id,
+      mufhemName: profile.fullName
+    });
+
+    // إشعار للطالب
+    addDocumentNonBlocking(collection(firestore, "notifications"), {
+      userId: ist.mustafhemId,
+      title: "تم قبول استفهامك!",
+      message: `وافق المُفهم ${profile.fullName} على طلبك. يمكنك الآن دخول المحاضرة.`,
+      type: "acceptance",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    toast({ title: "تم قبول الطلب", description: "يمكنك الآن بدء المحاضرة مع الطالب." });
+  };
 
   return (
     <div className="space-y-10">
@@ -318,7 +342,7 @@ function MufhemView({ profile }: any) {
                 <p className="text-muted-foreground text-sm line-clamp-2 mb-6 font-medium text-right">{ist.description}</p>
                 <div className="flex justify-between items-center pt-6 border-t border-dashed">
                   <span className="font-black text-primary text-2xl">{ist.amount} <span className="text-xs">ج.م</span></span>
-                  <Button className="rounded-xl font-black px-6">أنا أفهمك</Button>
+                  <Button onClick={() => handleAccept(ist)} className="rounded-xl font-black px-6">أنا أفهمك</Button>
                 </div>
               </Card>
             ))}
