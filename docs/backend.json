@@ -4,40 +4,30 @@
     "UserProfile": {
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user profile in the Fahmani application.",
+      "description": "يمثل الملف الشخصي للمستخدم في منصة فهمني.",
       "properties": {
         "id": { "type": "string" },
         "fullName": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "phoneNumber": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
         "birthDate": { "type": "string", "format": "date-time" },
         "role": { "type": "string", "enum": ["mufhem", "mustafhem"] },
         "profilePictureUrl": { "type": "string", "format": "uri" },
+        "isProfileApproved": { "type": "boolean", "description": "هل تم اعتماد الصورة والبيانات من الإدارة." },
         "specialization": { "type": "string" },
-        "bio": { "type": "string", "description": "نبذة تعريفية عن المعلم وخبراته." },
+        "bio": { "type": "string" },
         "isVerified": { "type": "boolean" },
-        "emailVerified": { "type": "boolean" },
         "status": { "type": "string", "enum": ["active", "blocked"] },
         "isAdmin": { "type": "boolean" },
-        "adminPermissions": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "fullName", "email", "phoneNumber", "role"]
+      "required": ["id", "fullName", "email", "role", "gender"]
     },
-    "Category": {
-      "title": "Category",
+    "Istifham": {
+      "title": "Istifham",
       "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["main", "sub", "option"] },
-        "parentId": { "type": "string", "description": "ID of the parent category if any." },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Request": {
-      "title": "Request",
-      "type": "object",
+      "description": "يمثل استفهام (طلب تعليمي) مقدم من مستفهم.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string" },
@@ -45,60 +35,28 @@
         "category": { "type": "string" },
         "categorySub": { "type": "string" },
         "categoryOption": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "accepted", "completed", "canceled"] },
-        "studentId": { "type": "string" },
-        "studentName": { "type": "string" },
-        "studentPhone": { "type": "string" },
-        "teacherId": { "type": "string" },
-        "teacherName": { "type": "string" },
-        "teacherPhone": { "type": "string" },
-        "teacherSpecialization": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_approval", "active", "accepted", "completed", "canceled"] },
+        "mustafhemId": { "type": "string" },
+        "mustafhemName": { "type": "string" },
+        "mufhemId": { "type": "string" },
+        "mufhemName": { "type": "string" },
         "meetingTime": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" },
         "attachmentUrl": { "type": "string" },
-        "rating": { "type": "number" },
-        "review": { "type": "string" }
+        "createdAt": { "type": "string" }
       }
     },
-    "Transaction": {
-      "title": "Transaction",
+    "PortfolioItem": {
+      "title": "PortfolioItem",
       "type": "object",
+      "description": "عمل من أعمال المفهمين.",
       "properties": {
         "id": { "type": "string" },
-        "amount": { "type": "number" },
-        "type": { "type": "string", "enum": ["deposit", "withdrawal", "payment", "earning"] },
-        "details": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "SupportTicket": {
-      "title": "SupportTicket",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "subject": { "type": "string" },
-        "category": { "type": "string" },
-        "message": { "type": "string" },
-        "status": { "type": "string" },
-        "adminReply": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "lastUpdate": { "type": "string" }
-      }
-    },
-    "AppSettings": {
-      "title": "AppSettings",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "landingBg": { "type": "string", "format": "uri" },
-        "logoUrl": { "type": "string", "format": "uri" },
-        "miniIconUrl": { "type": "string", "format": "uri" },
-        "studentHero": { "type": "string", "format": "uri" },
-        "teacherHero": { "type": "string", "format": "uri" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "mufhemId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "isApproved": { "type": "boolean" },
+        "createdAt": { "type": "string" }
       }
     }
   },
@@ -108,31 +66,19 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "User profiles."
+      "description": "ملفات المستخدمين."
     },
-    "/users/{userId}/transactions/{transactionId}": {
-      "schema": "Transaction",
-      "description": "Financial transactions for a user."
+    "/istifhams/{istifhamId}": {
+      "schema": "Istifham",
+      "description": "الاستفهامات التعليمية."
     },
-    "/categories/{categoryId}": {
-      "schema": "Category",
-      "description": "Learning categories."
-    },
-    "/requests/{requestId}": {
-      "schema": "Request",
-      "description": "Learning session requests."
-    },
-    "/requests/{requestId}/messages/{messageId}": {
-      "schema": "ChatMessage",
-      "description": "Messages for a specific request."
-    },
-    "/supportTickets/{ticketId}": {
-      "schema": "SupportTicket",
-      "description": "Support tickets for user issues."
+    "/portfolio/{itemId}": {
+      "schema": "PortfolioItem",
+      "description": "أعمال المفهمين."
     },
     "/settings/{settingId}": {
       "schema": "AppSettings",
-      "description": "Global application settings and asset links."
+      "description": "إعدادات المنصة."
     }
   }
 }

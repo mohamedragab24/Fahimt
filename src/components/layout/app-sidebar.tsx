@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Settings,
   LogOut,
-  HelpCircle,
   Home,
   X,
   LayoutDashboard,
@@ -22,7 +21,8 @@ import {
   Smartphone,
   GraduationCap,
   ImageIcon,
-  Wand2
+  Wand2,
+  CheckSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -50,8 +50,8 @@ import { useEffect } from "react";
 
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
-  { title: "المفهمين", icon: GraduationCap, href: "/teachers" },
-  { title: "طلباتي", icon: ClipboardList, href: "/requests" },
+  { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
+  { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
@@ -59,9 +59,10 @@ const menuItems = [
 
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+  { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
-  { title: "إدارة المفهمين", icon: Users, href: "/admin/mufahems" },
-  { title: "إدارة المستفهمين", icon: Users, href: "/admin/mustafhems" },
+  { title: "إدارة المُفهمين", icon: Users, href: "/admin/mufahems" },
+  { title: "إدارة المُستفهمين", icon: Users, href: "/admin/mustafhems" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
@@ -69,7 +70,6 @@ const adminItems = [
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
   { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
   { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
-  { title: "الصلاحيات", icon: Lock, href: "/admin/roles" },
 ];
 
 export function AppSidebar() {
@@ -92,54 +92,25 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
-  useEffect(() => {
-    if (user?.email === "mohamed76y@gmail.com" && profile && !profile.isAdmin && firestore) {
-      const ref = doc(firestore, "users", user.uid);
-      updateDoc(ref, { 
-        isAdmin: true,
-        adminPermissions: ["superadmin"] 
-      });
-    }
-  }, [user, profile, firestore]);
-
   const handleLogout = async () => {
     await signOut(auth);
     setOpenMobile(false);
     router.push("/login");
   };
 
-  const closeSidebar = () => {
-    setOpenMobile(false);
-  };
-
   if (!user) return null;
 
   return (
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
-      <SidebarHeader className="p-4 md:p-6">
+      <SidebarHeader className="p-6">
         <div className="flex items-center justify-between w-full">
-          <Link href="/" onClick={closeSidebar} className="flex items-center gap-3 overflow-hidden group">
-            {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-10 w-auto object-contain transition-transform group-hover:scale-110" />
-            ) : (
-              <div className="relative w-10 h-10 min-w-[40px] flex items-center justify-center bg-primary rounded-xl shadow-lg transition-transform group-hover:scale-110">
-                <span className="text-white font-black text-2xl">ف</span>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white"></div>
-              </div>
-            )}
-            <div className="flex flex-col group-data-[collapsible=icon]:hidden whitespace-nowrap transition-all">
-              <span className="font-black text-3xl font-headline leading-tight text-primary">فهمني</span>
-              <span className="text-[10px] text-accent font-black tracking-widest uppercase">التعليم الذكي</span>
+          <Link href="/" className="flex items-center gap-3 group">
+            {settings?.logoUrl ? <img src={settings.logoUrl} className="h-10 w-auto" /> : <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-black">ف</div>}
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="font-black text-2xl font-headline text-primary">فهمني</span>
+              <span className="text-[10px] text-accent font-black tracking-widest">التعليم الذكي</span>
             </div>
           </Link>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar}
-            className="md:hidden h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground"
-          >
-            <X className="h-6 w-6" />
-          </Button>
         </div>
       </SidebarHeader>
 
@@ -147,12 +118,10 @@ export function AppSidebar() {
 
       <SidebarContent>
         <div className="p-4 group-data-[collapsible=icon]:hidden">
-          <div className="bg-primary/5 p-4 rounded-3xl flex items-center gap-3 border-2 border-dashed border-primary/20 shadow-inner">
-            <Avatar className="h-12 w-12 min-w-[48px] border-2 border-primary/30 shadow-md">
+          <div className="bg-primary/5 p-4 rounded-3xl flex items-center gap-3 border-2 border-dashed border-primary/20">
+            <Avatar className="h-12 w-12 border-2 border-primary/30">
               <AvatarImage src={profile?.profilePictureUrl} />
-              <AvatarFallback className="bg-primary/10 text-primary font-black">
-                {profile?.fullName?.charAt(0) || 'ف'}
-              </AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary font-black">{profile?.fullName?.charAt(0) || 'ف'}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate">
               <span className="font-black text-sm truncate">{profile?.fullName || 'جاري التحميل...'}</span>
@@ -166,41 +135,23 @@ export function AppSidebar() {
         <SidebarMenu className="px-3 space-y-2 pt-4">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              {item.title === "المفهمين" && profile?.role !== 'mustafhem' ? null : (
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === item.href}
-                  tooltip={item.title}
-                  className={`h-14 rounded-2xl transition-all ${
-                    pathname === item.href 
-                      ? "bg-primary text-white shadow-xl hover:bg-primary/90" 
-                      : "hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                  }`}
-                >
-                  <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
-                    <item.icon className={`h-6 w-6 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                    <span className="font-black text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              )}
+              <SidebarMenuButton asChild isActive={pathname === item.href} className="h-14 rounded-2xl">
+                <Link href={item.href} onClick={() => setOpenMobile(false)} className="flex items-center gap-4 px-3">
+                  <item.icon className={`h-6 w-6 ${pathname === item.href ? "text-white" : "text-primary"}`} />
+                  <span className="font-black text-lg group-data-[collapsible=icon]:hidden">{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
 
           {profile?.isAdmin && (
-            <Collapsible asChild className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
+            <Collapsible className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton 
-                    tooltip="لوحة المسؤول" 
-                    className={`h-14 rounded-2xl transition-all ${
-                      pathname.startsWith('/admin') 
-                        ? "bg-zinc-900 text-white shadow-xl" 
-                        : "hover:bg-accent/10 text-muted-foreground hover:text-accent"
-                    }`}
-                  >
-                    <LayoutDashboard className={`h-6 w-6 shrink-0 ${pathname.startsWith('/admin') ? "text-white" : "text-accent"}`} />
+                  <SidebarMenuButton className="h-14 rounded-2xl">
+                    <LayoutDashboard className="h-6 w-6 text-accent" />
                     <span className="font-black text-lg group-data-[collapsible=icon]:hidden">لوحة المسؤول</span>
-                    <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180 group-data-[collapsible=icon]:hidden" />
+                    <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -208,10 +159,7 @@ export function AppSidebar() {
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href}>
-                          <Link href={item.href} onClick={closeSidebar} className="flex items-center gap-3 py-2">
-                            <item.icon className="h-4 w-4" />
-                            <span className="font-black">{item.title}</span>
-                          </Link>
+                          <Link href={item.href} onClick={() => setOpenMobile(false)} className="font-black py-2">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -223,35 +171,12 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-4">
+      <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton 
-              asChild 
-              isActive={pathname === "/download"}
-              tooltip="تحميل التطبيق"
-              className={`h-14 rounded-2xl transition-all border-2 border-transparent ${
-                pathname === "/download" ? "bg-accent/10 text-accent border-accent/20" : "hover:bg-accent/5 text-muted-foreground hover:text-accent"
-              }`}
-            >
-              <Link href="/download" onClick={closeSidebar} className="flex items-center gap-4 px-3 w-full">
-                <Smartphone className="h-6 w-6 shrink-0 text-accent" />
-                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تطبيق الجوال</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarSeparator className="my-2" />
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              onClick={handleLogout} 
-              className="h-14 rounded-2xl text-destructive hover:bg-destructive/5 hover:text-destructive transition-colors"
-            >
-              <div className="flex items-center gap-4 px-3 w-full">
-                <LogOut className="h-6 w-6 shrink-0" />
-                <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
-              </div>
+            <SidebarMenuButton onClick={handleLogout} className="h-14 rounded-2xl text-destructive hover:bg-destructive/5">
+              <LogOut className="h-6 w-6" />
+              <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

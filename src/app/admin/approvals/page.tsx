@@ -1,0 +1,120 @@
+
+"use client";
+
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, doc, updateDoc } from "firebase/firestore";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, XCircle, ShieldCheck, MessageSquare, User, Image as ImageIcon, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+export default function AdminApprovals() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  // جلب الملفات الشخصية التي لم تُعتمد بعد
+  const profilesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"), where("isProfileApproved", "==", false));
+  }, [firestore]);
+
+  // جلب الاستفهامات التي تنتظر المراجعة
+  const istifhamsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
+  }, [firestore]);
+
+  const { data: profiles } = useCollection(profilesQuery);
+  const { data: istifhams } = useCollection(istifhamsQuery);
+
+  const handleApproveProfile = async (id: string) => {
+    try {
+      await updateDoc(doc(firestore!, "users", id), { isProfileApproved: true });
+      toast({ title: "تم الاعتماد", description: "أصبح ملف المستخدم متاحاً للجميع الآن." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ" });
+    }
+  };
+
+  const handleApproveIstifham = async (id: string) => {
+    try {
+      await updateDoc(doc(firestore!, "istifhams", id), { status: "active" });
+      toast({ title: "تم النشر", description: "الاستفهام متاح الآن للمفهمين." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ" });
+    }
+  };
+
+  return (
+    <div className="p-6 md:p-10 space-y-10" dir="rtl">
+      <div className="border-r-8 border-primary pr-6">
+        <h1 className="text-4xl font-black font-headline">مركز الاعتماد والرقابة</h1>
+        <p className="text-muted-foreground text-lg">مراجعة المحتوى قبل نشره لضمان جودة وهوية منصة فهمني.</p>
+      </div>
+
+      <Tabs defaultValue="profiles" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-16 p-1 bg-muted rounded-2xl mb-8">
+          <TabsTrigger value="profiles" className="rounded-xl text-lg font-bold">
+            <User className="ml-2 h-5 w-5" /> مراجعة الحسابات ({profiles?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="istifhams" className="rounded-xl text-lg font-bold">
+            <MessageSquare className="ml-2 h-5 w-5" /> مراجعة الاستفهامات ({istifhams?.length || 0})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profiles">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {profiles?.map((p) => (
+              <Card key={p.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border-2">
+                <CardHeader className="bg-muted/30 p-8 flex flex-col items-center text-center">
+                  <Avatar className="h-24 w-24 border-4 border-white shadow-xl mb-4">
+                    <AvatarImage src={p.profilePictureUrl} />
+                    <AvatarFallback>{p.fullName?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <CardTitle className="font-black text-xl">{p.fullName}</CardTitle>
+                  <Badge variant="outline" className="mt-2">{p.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleApproveProfile(p.id)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12">
+                      <CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد
+                    </Button>
+                    <Button variant="destructive" className="flex-1 font-bold rounded-xl h-12">
+                      <XCircle className="ml-2 h-5 w-5" /> رفض
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات جديدة للمراجعة.</div>}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="istifhams">
+          <div className="grid gap-6">
+            {istifhams?.map((ist) => (
+              <Card key={ist.id} className="rounded-3xl border-2 p-8 shadow-md flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="space-y-2 text-right w-full">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary/10 text-primary border-none">{ist.category}</Badge>
+                    <span className="text-xs text-muted-foreground font-bold flex items-center gap-1"><Clock size={12}/> {new Date(ist.createdAt).toLocaleString('ar-EG')}</span>
+                  </div>
+                  <h4 className="text-2xl font-black">{ist.title}</h4>
+                  <p className="font-bold text-muted-foreground">بواسطة المستفهم: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
+                </div>
+                <div className="flex gap-3 w-full md:w-auto shrink-0">
+                  <Button onClick={() => handleApproveIstifham(ist.id)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl">اعتماد ونشر</Button>
+                  <Button variant="outline" className="h-14 px-8 font-black rounded-2xl border-2">رفض</Button>
+                </div>
+              </Card>
+            ))}
+            {istifhams?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة.</div>}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

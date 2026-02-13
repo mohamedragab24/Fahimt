@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, Sparkles } from "lucide-react";
+import { Upload, Sparkles, User, UserCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"mustafhem" | "mufhem">("mustafhem");
+  const [gender, setGender] = useState<"male" | "female">("male");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
@@ -61,22 +62,18 @@ export default function LoginPage() {
 
     if (isLogin) {
       initiateEmailSignIn(auth, email, password).catch((err: any) => {
-        toast({ variant: "destructive", title: "خطأ في الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
+        toast({ variant: "destructive", title: "خطأ في الدخول", description: "البيانات غير صحيحة." });
         setIsProcessing(false);
       });
     } else {
       if (!fullName || !phoneNumber || !birthDate || !email || !password) {
-        toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال كافة البيانات الإلزامية" });
+        toast({ variant: "destructive", title: "تنبيه", description: "يرجى إكمال البيانات الإلزامية." });
         setIsProcessing(false);
         return;
       }
 
       initiateEmailSignUp(auth, email, password).catch((err: any) => {
-        if (err.code === 'auth/email-already-in-use') {
-          toast({ variant: "destructive", title: "خطأ في التسجيل", description: "هذا البريد مسجل بالفعل في النظام." });
-        } else {
-          toast({ variant: "destructive", title: "خطأ", description: "فشل إنشاء الحساب، يرجى المحاولة لاحقاً." });
-        }
+        toast({ variant: "destructive", title: "خطأ", description: "فشل إنشاء الحساب." });
         setIsProcessing(false);
       });
     }
@@ -85,9 +82,6 @@ export default function LoginPage() {
   useEffect(() => {
     if (user && firestore && !isLogin) {
       const userRef = doc(firestore, "users", user.uid);
-      const adminEmail = "mohamed76y@gmail.com";
-      const isTargetAdmin = user.email === adminEmail;
-
       getDoc(userRef).then((snap) => {
         if (!snap.exists()) {
           setDoc(userRef, {
@@ -96,11 +90,10 @@ export default function LoginPage() {
             email: user.email,
             phoneNumber,
             role,
-            isVerified: true,
+            gender,
+            isProfileApproved: false,
             birthDate: birthDate ? new Date(birthDate).toISOString() : new Date().toISOString(),
             profilePictureUrl: profilePictureUrl || `https://picsum.photos/seed/${user.uid}/200/200`,
-            isAdmin: isTargetAdmin,
-            adminPermissions: isTargetAdmin ? ["superadmin"] : [],
             status: "active",
             createdAt: new Date().toISOString()
           }).then(() => {
@@ -109,110 +102,63 @@ export default function LoginPage() {
         }
       });
     }
-  }, [user, isLogin, firestore, fullName, phoneNumber, role, profilePictureUrl, birthDate, router]);
-
-  if (isUserLoading) return <div className="flex h-screen items-center justify-center font-black animate-pulse text-primary text-2xl">جاري التحميل...</div>;
+  }, [user, isLogin, firestore, fullName, phoneNumber, role, gender, profilePictureUrl, birthDate, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-primary/5" dir="rtl">
-      <Card className="w-full max-w-lg shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-t-[12px] border-primary rounded-[3rem] bg-white overflow-hidden relative">
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
-        <CardHeader className="text-center space-y-4 pt-12 relative z-10">
-          <div className="mx-auto flex flex-col items-center gap-4">
-            {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-20 w-auto object-contain animate-in zoom-in" />
-            ) : (
-              <div className="bg-primary w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl relative group transition-transform hover:scale-110">
-                <span className="text-white font-black text-4xl">ف</span>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full border-4 border-white shadow-md"></div>
-              </div>
-            )}
+    <div className="flex min-h-screen items-center justify-center p-4 bg-[#f8fafc]" dir="rtl">
+      <Card className="w-full max-w-lg shadow-2xl border-t-8 border-primary rounded-[2.5rem] bg-white overflow-hidden">
+        <CardHeader className="text-center pt-10">
+          <div className="mx-auto mb-4">
+            {settings?.logoUrl ? <img src={settings.logoUrl} className="h-16 mx-auto" /> : <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white text-3xl font-black mx-auto">ف</div>}
           </div>
-          <div>
-            <CardTitle className="text-4xl font-black font-headline text-primary tracking-tight">
-              {isLogin ? "دخول " : "حساب جديد"}
-            </CardTitle>
-            <CardDescription className="text-xl font-bold text-muted-foreground mt-2">
-              {isLogin ? "مرحباً بك مجدداً في فهمني" : "ابدأ رحلة التعلم الذكية اليوم"}
-            </CardDescription>
-          </div>
+          <CardTitle className="text-3xl font-black text-primary">{isLogin ? "مرحباً بك مجدداً" : "انضم لعائلة فهمني"}</CardTitle>
+          <CardDescription className="font-bold">{isLogin ? "ادخل لمتابعة استفهاماتك" : "ابدأ رحلة التعلم الذكية اليوم"}</CardDescription>
         </CardHeader>
-        
-        <CardContent className="px-10 pb-10 relative z-10">
-          <form onSubmit={handleAuth} className="space-y-6">
+        <CardContent className="px-8">
+          <form onSubmit={handleAuth} className="space-y-5">
             {!isLogin && (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center gap-4 mb-6">
-                  <div className="relative group">
-                    <Avatar className="h-28 w-28 border-4 border-primary/20 shadow-xl transition-transform group-hover:scale-105">
+              <div className="space-y-5">
+                <div className="flex flex-col items-center">
+                  <div className="relative cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <Avatar className="h-24 w-24 border-4 border-primary/10">
                       <AvatarImage src={profilePictureUrl} />
-                      <AvatarFallback className="text-2xl font-black bg-primary/5 text-primary">صورة</AvatarFallback>
+                      <AvatarFallback><UserCircle className="h-12 w-12" /></AvatarFallback>
                     </Avatar>
-                    <Button 
-                      type="button" 
-                      size="icon" 
-                      className="absolute bottom-0 right-0 rounded-2xl h-10 w-10 shadow-xl bg-accent hover:bg-accent/90 border-2 border-white"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="h-5 w-5" />
-                    </Button>
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                    <div className="absolute bottom-0 right-0 bg-primary p-1.5 rounded-full text-white"><Upload size={14}/></div>
                   </div>
-                  <Label className="font-black text-primary/60">صورة الحساب (اختياري)</Label>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">الاسم الكامل</Label>
-                    <Input placeholder="أحمد محمد" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-14 rounded-2xl border-2 focus:border-primary px-6 text-lg font-bold" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">رقم الهاتف</Label>
-                    <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-14 rounded-2xl border-2 focus:border-primary px-6 text-lg font-bold" />
-                  </div>
+                <Input placeholder="الاسم الكامل" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-12 rounded-xl border-2" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input placeholder="رقم الهاتف" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-12 rounded-xl border-2" />
+                  <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-12 rounded-xl border-2" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-black pr-2">تاريخ الميلاد</Label>
-                  <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-2xl border-2 focus:border-primary px-6 text-lg font-bold" />
+                <div className="p-4 bg-muted/30 rounded-2xl space-y-3">
+                  <Label className="font-black text-sm">نوع الحساب</Label>
+                  <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex gap-4">
+                    <div className="flex items-center gap-2"><RadioGroupItem value="mustafhem" id="r1"/><Label htmlFor="r1" className="font-bold">مُستفهم</Label></div>
+                    <div className="flex items-center gap-2"><RadioGroupItem value="mufhem" id="r2"/><Label htmlFor="r2" className="font-bold">مُفهم</Label></div>
+                  </RadioGroup>
                 </div>
-                <div className="space-y-3 p-6 bg-primary/5 rounded-[2rem] border-2 border-dashed border-primary/20 shadow-inner">
-                  <Label className="font-black text-primary text-lg flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" /> نوع الحساب
-                  </Label>
-                  <RadioGroup value={role} onValueChange={(v: any) => setRole(v)} className="flex gap-6">
-                    <div className="flex items-center space-x-2 space-x-reverse bg-white px-6 py-3 rounded-2xl border-2 border-transparent data-[state=checked]:border-primary shadow-sm cursor-pointer transition-all hover:shadow-md">
-                      <RadioGroupItem value="mustafhem" id="mustafhem" />
-                      <Label htmlFor="mustafhem" className="cursor-pointer font-black text-lg">مُستفهم</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse bg-white px-6 py-3 rounded-2xl border-2 border-transparent data-[state=checked]:border-accent shadow-sm cursor-pointer transition-all hover:shadow-md">
-                      <RadioGroupItem value="mufhem" id="mufhem" className="data-[state=checked]:border-accent data-[state=checked]:text-accent" />
-                      <Label htmlFor="mufhem" className="cursor-pointer font-black text-lg">مُفهم</Label>
-                    </div>
+                <div className="p-4 bg-muted/30 rounded-2xl space-y-3">
+                  <Label className="font-black text-sm">الجنس</Label>
+                  <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex gap-4">
+                    <div className="flex items-center gap-2"><RadioGroupItem value="male" id="g1"/><Label htmlFor="g1" className="font-bold">ذكر</Label></div>
+                    <div className="flex items-center gap-2"><RadioGroupItem value="female" id="g2"/><Label htmlFor="g2" className="font-bold">أنثى</Label></div>
                   </RadioGroup>
                 </div>
               </div>
             )}
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-black pr-2">البريد الإلكتروني</Label>
-                <Input type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-14 rounded-2xl border-2 focus:border-primary px-6 text-lg font-bold" />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-black pr-2">كلمة المرور</Label>
-                <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-14 rounded-2xl border-2 focus:border-primary px-6 text-lg font-bold" />
-              </div>
-            </div>
-
-            <Button type="submit" disabled={isProcessing} className="w-full font-black text-2xl py-10 rounded-[2rem] shadow-[0_20px_40px_rgba(41,182,246,0.2)] hover:scale-[1.02] transition-all bg-primary hover:bg-primary/90">
-              {isProcessing ? "جاري العمل..." : (isLogin ? "دخول" : "ابدأ الآن")}
+            <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-12 rounded-xl border-2" />
+            <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-12 rounded-xl border-2" />
+            <Button type="submit" disabled={isProcessing} className="w-full h-14 text-xl font-black rounded-2xl shadow-xl">
+              {isProcessing ? "جاري العمل..." : (isLogin ? "دخول" : "إنشاء حساب")}
             </Button>
           </form>
         </CardContent>
-        
-        <CardFooter className="justify-center border-t bg-primary/5 py-8">
-          <Button variant="link" onClick={() => { setIsLogin(!isLogin); setIsProcessing(false); }} className="text-primary font-black text-lg hover:text-accent">
-            {isLogin ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب؟ ادخل من هنا"}
+        <CardFooter className="justify-center border-t py-6 bg-muted/5">
+          <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="font-bold text-primary">
+            {isLogin ? "ليس لديك حساب؟ سجل كـ مُستفهم أو مُفهم" : "لديك حساب بالفعل؟ ادخل"}
           </Button>
         </CardFooter>
       </Card>
