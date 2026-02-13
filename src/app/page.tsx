@@ -84,7 +84,6 @@ export default function HomePage() {
     return <LandingPage router={router} settings={settings} />;
   }
 
-  // واجهة المستخدم المحظور
   if (profile.status === 'blocked') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
@@ -210,7 +209,7 @@ function MustafhemView({ profile }: any) {
         status: "pending_approval",
         mustafhemId: profile.id,
         mustafhemName: profile.fullName,
-        mustafhemGender: profile.gender, // تخزين الجنس للفلترة
+        mustafhemGender: profile.gender,
         createdAt: new Date().toISOString()
       });
 
@@ -276,7 +275,6 @@ function MufhemView({ profile }: any) {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  // فلترة الاستفهامات حسب حالة "active" وجنس "mustafhemGender" مطابق لجنس "profile.gender"
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || profile?.status === 'blocked' || !profile?.gender) return null;
     return query(
@@ -298,7 +296,6 @@ function MufhemView({ profile }: any) {
       mufhemName: profile.fullName
     });
 
-    // إشعار للطالب
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: ist.mustafhemId,
       title: "تم قبول استفهامك!",
@@ -329,7 +326,7 @@ function MufhemView({ profile }: any) {
       </div>
 
       <div className="space-y-6">
-        <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات معتمدة متاحة الآن ({profile.gender === 'male' ? 'للرجال' : 'للنساء'})</h3>
+        <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات معتمدة متاحة الآن</h3>
         {isLoading ? <div className="text-center py-20 animate-pulse font-black">جاري جلب البيانات...</div> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {istifhams?.map(ist => (

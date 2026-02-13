@@ -70,7 +70,7 @@ export default function LoginPage() {
         toast({ 
           variant: "destructive", 
           title: "بيانات ناقصة", 
-          description: "كافة الحقول بما فيها الصورة الشخصية إجبارية لإتمام التسجيل." 
+          description: "يرجى تعبئة كافة الحقول بما فيها الصورة الشخصية لإتمام التسجيل." 
         });
         setIsProcessing(false);
         return;
@@ -120,7 +120,7 @@ export default function LoginPage() {
             )}
           </div>
           <CardTitle className="text-3xl font-black text-primary">{isLogin ? "مرحباً بك مجدداً" : "انضم لعائلة فهمني"}</CardTitle>
-          <CardDescription className="font-bold">{isLogin ? "ادخل لمتابعة استفهاماتك" : "ابدأ رحلة التعلم الذكية اليوم (جميع الحقول إجبارية)"}</CardDescription>
+          <CardDescription className="font-bold">{isLogin ? "ادخل لمتابعة استفهاماتك" : "ابدأ رحلة التعلم الذكية اليوم"}</CardDescription>
         </CardHeader>
         <CardContent className="px-8">
           <form onSubmit={handleAuth} className="space-y-5">
@@ -134,22 +134,22 @@ export default function LoginPage() {
                     </Avatar>
                     <div className="absolute bottom-0 right-0 bg-primary p-2 rounded-full text-white shadow-lg"><Upload size={16}/></div>
                   </div>
-                  <Label className="mt-2 text-xs font-black text-primary">الصورة الشخصية (إجباري)</Label>
+                  <Label className="mt-2 text-xs font-black text-primary">الصورة الشخصية</Label>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="font-black text-xs mr-2">الاسم الكامل (إجباري)</Label>
+                  <Label className="font-black text-xs mr-2">الاسم الكامل</Label>
                   <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-12 rounded-xl border-2" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="font-black text-xs mr-2">رقم الهاتف (إجباري)</Label>
+                    <Label className="font-black text-xs mr-2">رقم الهاتف</Label>
                     <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-12 rounded-xl border-2" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-xs mr-2">تاريخ الميلاد (إجباري)</Label>
+                    <Label className="font-black text-xs mr-2">تاريخ الميلاد</Label>
                     <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-12 rounded-xl border-2" />
                   </div>
                 </div>

@@ -320,7 +320,7 @@ export default function ProfilePage() {
                 onClick={handleSave} 
                 className="bg-primary w-full md:w-auto px-16 py-10 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 active:scale-95 group"
               >
-                <Save className="ml-4 h-8 w-8 group-hover:animate-bounce" /> حفظ التعديلات الآن
+                <Save className="ml-4 h-8 w-8 group-hover:animate-bounce" /> حفظ التعديلات
               </Button>
             </div>
           </div>

@@ -22,7 +22,8 @@ import {
   CheckSquare,
   Scale,
   Palette,
-  RefreshCw
+  RefreshCw,
+  FileCheck
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,12 +62,13 @@ const menuItems = [
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
+  { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
+  { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
   { title: "تخصيص المنصة", icon: Palette, href: "/admin/customize" },
   { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
   { title: "إدارة المُفهمين", icon: Users, href: "/admin/mufahems" },
   { title: "إدارة المُستفهمين", icon: Users, href: "/admin/mustafhems" },
-  { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
   { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
