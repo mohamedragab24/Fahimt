@@ -417,11 +417,11 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <Label className="text-lg font-black pr-2 text-primary flex items-center gap-2">
-                      <Layers className="h-5 w-5" /> القسم الرئيسي
+                      <Layers className="h-5 w-5" /> القسم
                     </Label>
                     <Select value={newRequest.category} onValueChange={(v) => setNewRequest({...newRequest, category: v, categorySub: "", categoryOption: ""})}>
                       <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
-                        <SelectValue placeholder="اختر القسم الأساسي" />
+                        <SelectValue placeholder="اختر القسم" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
                         {mainCategories.map((cat) => (
@@ -434,7 +434,7 @@ function StudentView({ profile, settings }: { profile: any, settings: any }) {
                   {newRequest.category && (
                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                       <Label className="text-lg font-black pr-2 text-accent flex items-center gap-2">
-                        <Filter className="h-5 w-5" /> التخصص الفرعي
+                        <Filter className="h-5 w-5" /> التخصص
                       </Label>
                       <Select value={newRequest.categorySub} onValueChange={(v) => setNewRequest({...newRequest, categorySub: v, categoryOption: ""})}>
                         <SelectTrigger className="h-16 rounded-2xl border-2 font-bold text-lg">
@@ -770,10 +770,10 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
             <Select value={filterMain} onValueChange={setFilterMain}>
               <SelectTrigger className="h-14 rounded-xl border-2 font-black text-sm px-4">
                 <Layers className="h-4 w-4 ml-2 text-primary" />
-                <SelectValue placeholder="قسم رئيسي" />
+                <SelectValue placeholder="القسم" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="all" className="font-black">كل الأقسام الرئيسية</SelectItem>
+                <SelectItem value="all" className="font-black">كل الأقسام</SelectItem>
                 {allCategories?.filter(c => c.type === 'main' || !c.type).map(c => (
                   <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
@@ -783,10 +783,10 @@ function TeacherView({ profile, settings }: { profile: any, settings: any }) {
             <Select value={filterSub} onValueChange={setFilterSub}>
               <SelectTrigger className="h-14 rounded-xl border-2 font-black text-sm px-4">
                 <Filter className="h-4 w-4 ml-2 text-accent" />
-                <SelectValue placeholder="قسم فرعي" />
+                <SelectValue placeholder="التخصص" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="all" className="font-black">كل الأقسام الفرعية</SelectItem>
+                <SelectItem value="all" className="font-black">كل التخصصات</SelectItem>
                 {allCategories?.filter(c => c.type === 'sub').map(c => (
                   <SelectItem key={c.id} value={c.name} className="font-black">{c.name}</SelectItem>
                 ))}
