@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -6,7 +7,7 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { Video, Star, Loader2 } from "lucide-react";
+import { Video, Star, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -49,6 +50,7 @@ export default function MeetingPage() {
   useEffect(() => {
     if (requestRef && profile && requestId) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
+      // حفظ رابط المحاضرة للرقابة فور الدخول
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
         lastLiveSession: new Date().toISOString(),
@@ -85,17 +87,14 @@ export default function MeetingPage() {
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
             'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-            'security'
+            'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview', 'help', 'mute-everyone'
           ],
         }
       };
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      // مراقبة التسجيل وتوثيق الرابط
+      // مراقبة بدء التسجيل وحفظ الرابط الحقيقي إذا توفر
       newApi.on('recordingStatusChanged', (data: any) => {
         if (data.on && data.link && requestRef) {
           updateDocumentNonBlocking(requestRef, { 
@@ -117,7 +116,7 @@ export default function MeetingPage() {
 
   const submitRating = async () => {
     if (rating === 0) {
-      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى تقييم المحاضرة لإكمال العملية." });
+      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى تقييم المحاضرة لإكمال العملية وحفظ السجل." });
       return;
     }
     
@@ -131,7 +130,7 @@ export default function MeetingPage() {
         completedAt: new Date().toISOString()
       });
       
-      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك." });
+      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم حفظ سجل المحاضرة." });
       router.push("/requests");
     }
   };
@@ -159,12 +158,17 @@ export default function MeetingPage() {
         </div>
         
         <div className="flex items-center gap-3">
+          {profile?.role === 'mufhem' && (
+            <div className="hidden md:flex items-center gap-2 text-zinc-400 text-xs font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">
+              <AlertCircle size={14} /> بانتظار الطالب لإنهاء الجلسة
+            </div>
+          )}
           <Button 
             variant="destructive" 
             size="sm" 
             onClick={() => { 
               if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه", description: "يجب على المستفهم إنهاء الجلسة أولاً." });
+                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة." });
               } else {
                 api?.executeCommand('hangup'); 
               }
@@ -186,7 +190,7 @@ export default function MeetingPage() {
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
               <Star className="text-yellow-500 fill-yellow-500" /> تقييم المحاضرة
             </DialogTitle>
-            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم الجلسة لإغلاقها نهائياً وحفظ سجل الرقابة.</DialogDescription>
+            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم أداء المفهم لإغلاق المحاضرة وحفظ حقك.</DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-8 flex flex-col items-center">
             <div className="flex gap-3">
@@ -197,9 +201,9 @@ export default function MeetingPage() {
               ))}
             </div>
             <div className="w-full space-y-2">
-              <Label className="font-black text-sm mr-2">رأيك في الشرح</Label>
+              <Label className="font-black text-sm mr-2">ما رأيك في شرح المعلم؟</Label>
               <Textarea 
-                placeholder="كيف كان أداء المُفهم؟" 
+                placeholder="اكتب ملاحظاتك هنا (اختياري)..." 
                 className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary"
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
@@ -210,9 +214,9 @@ export default function MeetingPage() {
             <Button 
               onClick={submitRating} 
               disabled={isSubmitting}
-              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl transition-transform"
+              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl"
             >
-              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم"}
+              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم وإنهاء الجلسة"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -46,9 +47,10 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
+  // جلب كافة المستخدمين لمراجعة الحسابات القديمة والجديدة
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
-    return query(collection(firestore, "users"), limit(200));
+    return query(collection(firestore, "users"), limit(500));
   }, [firestore, canReadApprovals]);
 
   const istifhamsQuery = useMemoFirebase(() => {
@@ -59,6 +61,7 @@ export default function AdminApprovals() {
   const { data: allUsers, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
 
+  // فلترة الحسابات التي لم يتم اعتمادها بعد (بما فيها القديمة)
   const profiles = allUsers?.filter(u => u.isProfileApproved !== true && !u.isAdmin) || [];
 
   const handleApproveProfile = (u: any) => {
@@ -114,7 +117,7 @@ export default function AdminApprovals() {
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6">
         <h1 className="text-4xl font-black font-headline text-zinc-900">مركز الاعتماد والرقابة</h1>
-        <p className="text-muted-foreground text-lg">مراجعة الهويات والاستفهامات الجديدة قبل النشر لضمان الجودة.</p>
+        <p className="text-muted-foreground text-lg">مراجعة الحسابات والطلبات الجديدة لضمان الجودة.</p>
       </div>
 
       <Tabs defaultValue="profiles" className="w-full">
@@ -143,16 +146,16 @@ export default function AdminApprovals() {
                     </Badge>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل الكاملة</Button>
+                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> عرض التفاصيل</Button>
                     <div className="flex gap-2">
-                      <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12 text-white"><CheckCircle2 className="ml-2 h-5 w-5" /> اعتماد</Button>
-                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12"><XCircle className="ml-2 h-5 w-5" /> رفض</Button>
+                      <Button onClick={() => handleApproveProfile(p)} className="flex-1 bg-green-600 hover:bg-green-700 font-bold rounded-xl h-12 text-white">اعتماد</Button>
+                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="flex-1 font-bold rounded-xl h-12">رفض</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             }
-            {!profilesLoading && profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات جديدة للمراجعة حالياً.</div>}
+            {!profilesLoading && profiles?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد حسابات بانتظار المراجعة.</div>}
           </div>
         </TabsContent>
 
@@ -167,106 +170,92 @@ export default function AdminApprovals() {
                       <span className="text-xs text-muted-foreground font-bold flex items-center gap-1"><Clock size={12}/> {new Date(ist.createdAt).toLocaleString('ar-EG')}</span>
                     </div>
                     <h4 className="text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors">{ist.title}</h4>
-                    <p className="font-bold text-muted-foreground">بواسطة المُستفهم: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
+                    <p className="font-bold text-muted-foreground">بواسطة: <span className="text-zinc-900">{ist.mustafhemName}</span></p>
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
-                    <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> تفاصيل الاستفهام</Button>
-                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg text-white">نشر الآن</Button>
+                    <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> التفاصيل</Button>
+                    <Button onClick={() => handleApproveIstifham(ist)} className="bg-green-600 hover:bg-green-700 h-14 px-8 font-black rounded-2xl shadow-lg text-white">نشر الطلب</Button>
                   </div>
                 </Card>
               ))
             }
-            {!istifhamsLoading && istifhams?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة حالياً.</div>}
+            {!istifhamsLoading && istifhams?.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة.</div>}
           </div>
         </TabsContent>
       </Tabs>
 
+      {/* مودال تفاصيل الحساب */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><UserCircle className="text-primary h-8 w-8" /> تفاصيل الحساب</DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة بيانات {selectedUser?.role === 'mufhem' ? 'المُفهم' : 'المُستفهم'} بالكامل قبل الاعتماد.</DialogDescription>
+            <DialogTitle className="text-right text-2xl font-black flex items-center gap-3"><UserCircle className="text-primary h-8 w-8" /> بيانات الحساب</DialogTitle>
+            <DialogDescription className="text-right">مراجعة كاملة لبيانات {selectedUser?.role === 'mufhem' ? 'المُفهم' : 'المُستفهم'}.</DialogDescription>
           </DialogHeader>
           {selectedUser && (
-            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
-              <div className="flex items-center gap-6 p-6 bg-muted/20 rounded-3xl border-2 border-dashed">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="flex items-center gap-6 p-6 bg-muted/20 rounded-3xl">
+                <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
                   <AvatarImage src={selectedUser.profilePictureUrl} />
                   <AvatarFallback className="text-2xl font-black">{selectedUser.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h4 className="text-2xl font-black">{selectedUser.fullName}</h4>
-                  <div className="flex gap-2 mt-2">
-                    <Badge className="bg-primary/10 text-primary">{selectedUser.gender === 'male' ? 'ذكر' : 'أنثى'}</Badge>
-                    <Badge className="bg-accent/10 text-accent">{selectedUser.role === 'mufhem' ? 'خبير تعليمي' : 'طالب علم'}</Badge>
+                  <h4 className="text-xl font-black">{selectedUser.fullName}</h4>
+                  <div className="flex gap-2 mt-1">
+                    <Badge className="bg-primary/10 text-primary">{selectedUser.role === 'mufhem' ? 'خبير' : 'طالب'}</Badge>
+                    <Badge className="bg-muted text-muted-foreground">{selectedUser.gender === 'male' ? 'ذكر' : 'أنثى'}</Badge>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailBox icon={Mail} label="البريد الإلكتروني" value={selectedUser.email} />
-                <DetailBox icon={Phone} label="رقم الهاتف" value={selectedUser.phoneNumber} />
-                <DetailBox icon={Calendar} label="تاريخ الميلاد" value={selectedUser.birthDate ? new Date(selectedUser.birthDate).toLocaleDateString('ar-EG') : 'غير محدد'} />
-                <DetailBox icon={Clock} label="تاريخ التسجيل" value={selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('ar-EG') : 'غير محدد'} />
-              </div>
-              {selectedUser.role === 'mufhem' && (
-                <div className="space-y-4">
-                  <Label className="text-xl font-black">التخصص والنبذة</Label>
-                  <div className="p-6 bg-zinc-50 rounded-2xl border-2 border-dashed italic">
-                    <p className="font-black text-primary mb-2">{selectedUser.specialization || "غير محدد"}</p>
-                    <p className="text-muted-foreground leading-relaxed">"{selectedUser.bio || "لا توجد نبذة"}"</p>
-                  </div>
+                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                  <span className="text-[10px] font-black text-muted-foreground block">البريد الإلكتروني</span>
+                  <span className="font-bold text-sm">{selectedUser.email}</span>
                 </div>
-              )}
+                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                  <span className="text-[10px] font-black text-muted-foreground block">رقم الهاتف</span>
+                  <span className="font-bold text-sm">{selectedUser.phoneNumber}</span>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white">اعتماد الحساب</Button>
-                <Button onClick={() => handleRejectProfile(selectedUser)} variant="destructive" className="h-16 rounded-2xl font-black text-xl">رفض وحظر</Button>
+                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-14 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-lg text-white">اعتماد الآن</Button>
+                <Button onClick={() => handleRejectProfile(selectedUser)} variant="destructive" className="h-14 rounded-2xl font-black text-lg">رفض الحساب</Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
+      {/* مودال تفاصيل الاستفهام */}
       <Dialog open={!!selectedIstifham} onOpenChange={() => setSelectedIstifham(null)}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><HelpCircle className="text-primary h-8 w-8" /> تفاصيل الاستفهام</DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة محتوى الاستفهام والميزانية قبل نشره للمُفهمين.</DialogDescription>
+            <DialogTitle className="text-right text-2xl font-black flex items-center gap-3"><HelpCircle className="text-primary h-8 w-8" /> تفاصيل الطلب</DialogTitle>
+            <DialogDescription className="text-right">مراجعة المحتوى والميزانية المقترحة.</DialogDescription>
           </DialogHeader>
           {selectedIstifham && (
-            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
-              <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 space-y-4">
-                <h4 className="text-2xl font-black text-primary leading-tight">{selectedIstifham.title}</h4>
-                <div className="flex items-start gap-2">
-                  <FileText className="text-muted-foreground shrink-0 mt-1" size={18} />
-                  <p className="text-zinc-700 leading-relaxed font-medium">{selectedIstifham.description}</p>
+            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="p-6 bg-primary/5 rounded-3xl border-2 border-dashed space-y-4">
+                <h4 className="text-xl font-black text-primary">{selectedIstifham.title}</h4>
+                <p className="text-zinc-700 leading-relaxed font-medium">{selectedIstifham.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                  <span className="text-[10px] font-black text-muted-foreground block">الميزانية</span>
+                  <span className="font-bold text-lg text-primary">{selectedIstifham.amount} ج.م</span>
+                </div>
+                <div className="p-4 bg-zinc-50 rounded-2xl border">
+                  <span className="text-[10px] font-black text-muted-foreground block">الموعد</span>
+                  <span className="font-bold text-sm">{new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailBox icon={BadgeCent} label="الميزانية المقترحة" value={`${selectedIstifham.amount} ج.م`} />
-                <DetailBox icon={Calendar} label="موعد المحاضرة" value={new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')} />
-                <DetailBox icon={User} label="المُستفهم" value={selectedIstifham.mustafhemName} />
-                <DetailBox icon={MapPin} label="القسم والتخصص" value={`${selectedIstifham.category} > ${selectedIstifham.categorySub || 'عام'}`} />
-              </div>
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl shadow-lg text-white">اعتماد ونشر فوراً</Button>
-                <Button onClick={() => handleRejectIstifham(selectedIstifham.id)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-lg text-white">رفض الاستفهام</Button>
+                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-14 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-lg text-white">نشر الطلب</Button>
+                <Button onClick={() => handleRejectIstifham(selectedIstifham.id)} variant="destructive" className="h-14 rounded-2xl font-black text-lg">رفض الطلب</Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function DetailBox({ icon: Icon, label, value }: any) {
-  return (
-    <div className="p-4 bg-muted/10 rounded-2xl border flex items-center gap-4">
-      <div className="bg-white p-2 rounded-lg shadow-sm text-primary"><Icon size={20} /></div>
-      <div>
-        <span className="text-[10px] font-black text-muted-foreground block uppercase">{label}</span>
-        <span className="font-bold text-sm">{value}</span>
-      </div>
     </div>
   );
 }
