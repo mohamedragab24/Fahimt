@@ -47,16 +47,21 @@ export default function MeetingPage() {
 
   const { data: profile } = useDoc(userRef);
 
+  // تحديث حالة الحضور ورابط التسجيل فور الدخول
   useEffect(() => {
-    if (requestRef && profile) {
+    if (requestRef && profile && requestId) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
-      updateDocumentNonBlocking(requestRef, { [field]: true });
+      const recordingLink = `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`;
+      
+      updateDocumentNonBlocking(requestRef, { 
+        [field]: true,
+        recordingUrl: recordingLink // حفظ الرابط فوراً لتمكين الرقابة الإدارية
+      });
     }
-  }, [requestRef, profile]);
+  }, [requestRef, profile, requestId]);
 
   const startMeeting = () => {
     if (window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
-      // استخدام غرفة فريدة تعتمد على معرف الطلب
       const roomName = `Fahimni_Room_${requestId}`;
       const domain = "8x8.vc";
       const options = {
@@ -87,9 +92,12 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      // الاستماع لحدث مغادرة الاجتماع لفتح التقييم
       newApi.addEventListener('videoConferenceLeft', () => {
-        setShowRating(true);
+        if (profile.role === 'mustafhem') {
+          setShowRating(true);
+        } else {
+          router.push("/requests");
+        }
       });
     }
   };
@@ -103,14 +111,10 @@ export default function MeetingPage() {
     setIsSubmitting(true);
     
     if (requestRef) {
-      // إنشاء رابط تسجيل افتراضي مدمج للمراجعة (يعتمد على معرف الغرفة في Jitsi)
-      const recordingLink = `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`;
-      
       updateDocumentNonBlocking(requestRef, {
         rating,
         review,
         status: 'completed',
-        recordingUrl: recordingLink,
         completedAt: new Date().toISOString()
       });
       
@@ -163,7 +167,6 @@ export default function MeetingPage() {
         <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      {/* مودال التقييم الإجباري - يظهر عند مغادرة الجلسة */}
       <Dialog open={showRating} onOpenChange={(open) => { if (!open && rating === 0) return; setShowRating(open); }}>
         <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl" dir="rtl">
           <DialogHeader>

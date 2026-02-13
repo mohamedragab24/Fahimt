@@ -23,13 +23,11 @@ export default function AdminSessionsReview() {
 
   const { data: adminProfile } = useDoc(userRef);
 
-  // التأكد من شمول كافة حسابات الأدمن الماستر
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadSessions = adminProfile?.isAdmin || isMasterAdmin;
 
   const sessionsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadSessions) return null;
-    // جلب الجلسات المقبولة أو المكتملة
     return query(
       collection(firestore, "istifhams"), 
       where("status", "in", ["accepted", "completed"])
@@ -40,9 +38,20 @@ export default function AdminSessionsReview() {
 
   const sessions = rawSessions?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // دالة ذكية للحصول على الرابط حتى لو لم يكن مسجلاً في قاعدة البيانات
+  const getSessionUrl = (session: any) => {
+    if (session?.recordingUrl) return session.recordingUrl;
+    if (session?.id) {
+      return `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${session.id}`;
+    }
+    return null;
+  };
+
   if (!canReadSessions && adminProfile) {
     return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لمركز الرقابة.</div>;
   }
+
+  const activeUrl = getSessionUrl(selectedSession);
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
@@ -119,7 +128,6 @@ export default function AdminSessionsReview() {
         </Table>
       </Card>
 
-      {/* مودال مراجعة التسجيل داخل المنصة */}
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[85vw] lg:max-w-[1100px] h-[85vh] p-0 overflow-hidden bg-black border-none rounded-[2.5rem] shadow-2xl" dir="rtl">
           <DialogHeader className="p-6 bg-zinc-900 text-white border-b border-zinc-800 flex flex-row justify-between items-center space-y-0">
@@ -128,9 +136,9 @@ export default function AdminSessionsReview() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 w-full h-full bg-zinc-950 relative flex items-center justify-center">
-            {selectedSession?.recordingUrl ? (
+            {activeUrl ? (
               <iframe 
-                src={selectedSession.recordingUrl} 
+                src={activeUrl} 
                 className="absolute inset-0 w-full h-full border-none"
                 allow="autoplay; fullscreen; microphone; camera; display-capture"
                 title="Recording Preview"
@@ -142,7 +150,7 @@ export default function AdminSessionsReview() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black text-white">رابط التسجيل غير متوفر</h3>
-                  <p className="text-zinc-400 font-bold text-lg max-w-md">عذراً، لم يتم إنشاء رابط تسجيل لهذه المحاضرة بعد أو أنها لا تزال جارية.</p>
+                  <p className="text-zinc-400 font-bold text-lg max-w-md">عذراً، لم يتم العثور على سجل لهذه المحاضرة.</p>
                 </div>
                 <Button variant="outline" onClick={() => setSelectedSession(null)} className="rounded-xl border-zinc-700 text-white hover:bg-white hover:text-black font-black px-10">إغلاق المعاينة</Button>
               </div>
