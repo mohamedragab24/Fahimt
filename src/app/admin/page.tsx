@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,8 +14,7 @@ import {
   Activity,
   ArrowUpRight,
   Wallet,
-  Users2,
-  PieChart
+  Users2
 } from "lucide-react";
 import { 
   BarChart, 
@@ -34,6 +32,11 @@ export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -73,7 +76,6 @@ export default function AdminDashboard() {
         const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
         const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
         const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
-        // استخدام جدول istifhams الموحد
         const completedRequestsQuery = query(collection(firestore, "istifhams"), where("status", "==", "completed"));
         const lastRequestsQuery = query(collection(firestore, "istifhams"), orderBy("createdAt", "desc"), limit(5));
 
@@ -149,22 +151,24 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="vertical" margin={{ right: 40, left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} strokeOpacity={0.1} />
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={100} tick={{ fontWeight: 'bold' }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-                  formatter={(value: any) => [`${value.toLocaleString()} ج.م`, 'المبلغ']}
-                />
-                <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={40}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical" margin={{ right: 40, left: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} strokeOpacity={0.1} />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontWeight: 'bold' }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                    formatter={(value: any) => [`${value.toLocaleString()} ج.م`, 'المبلغ']}
+                  />
+                  <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={40}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
