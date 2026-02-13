@@ -34,25 +34,35 @@ service cloud.firestore {
       allow read: if true; 
     }
 
-    match /requests/{requestId} {
+    // الاستفهامات (الطلبات)
+    match /istifhams/{istifhamId} {
       allow create: if isSignedIn();
       allow read: if isSignedIn() && (
-        resource.data.status == "pending" ||
-        resource.data.studentId == request.auth.uid || 
-        resource.data.teacherId == request.auth.uid
+        resource.data.status == "active" ||
+        resource.data.mustafhemId == request.auth.uid || 
+        resource.data.mufhemId == request.auth.uid ||
+        isAdmin()
       );
       allow update: if isSignedIn() && (
-        resource.data.status == "pending" ||
-        resource.data.studentId == request.auth.uid || 
-        resource.data.teacherId == request.auth.uid
+        resource.data.mustafhemId == request.auth.uid || 
+        resource.data.mufhemId == request.auth.uid ||
+        isAdmin()
       );
 
       match /messages/{messageId} {
         allow read, write: if isSignedIn() && (
-          get(/databases/$(database)/documents/requests/$(requestId)).data.studentId == request.auth.uid ||
-          get(/databases/$(database)/documents/requests/$(requestId)).data.teacherId == request.auth.uid
+          get(/databases/$(database)/documents/istifhams/$(istifhamId)).data.mustafhemId == request.auth.uid ||
+          get(/databases/$(database)/documents/istifhams/$(istifhamId)).data.mufhemId == request.auth.uid ||
+          isAdmin()
         );
       }
+    }
+
+    // الإشعارات
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /supportTickets/{ticketId} {
@@ -71,8 +81,8 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      // السماح بقراءة الإعدادات العامة للجميع لعرض الخلفية واللوجو
-      allow read: if settingId == "general" || isAdmin();
+      // السماح بقراءة الإعدادات العامة للجميع لعرض الهوية البصرية
+      allow read: if true;
       allow write: if isAdmin();
     }
 
