@@ -50,7 +50,7 @@ export default function AdminAssets() {
   };
 
   const getFallbackImage = (key: string) => {
-    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://placehold.co/400x400/29B6F6/white?text=FAHMANI";
+    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://placehold.co/400x400/29B6F6/white?text=LOGO";
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;

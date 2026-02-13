@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -73,7 +74,7 @@ export function Header() {
           <SidebarTrigger className="h-10 w-10 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-20 w-auto transition-transform group-hover:scale-110 object-contain" />
+              <img src={settings.logoUrl} alt="Logo" className="h-14 md:h-20 w-auto transition-transform group-hover:scale-110 object-contain" />
             ) : (
               <div className="relative bg-primary p-1.5 rounded-lg shadow-sm transition-transform group-hover:scale-110">
                 <span className="text-white font-black text-sm">ف</span>
