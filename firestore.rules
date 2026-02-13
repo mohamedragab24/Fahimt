@@ -7,9 +7,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isNotBlocked() {
+      return isSignedIn() && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status != "blocked"
+      );
+    }
+
     function isAdmin() {
       return isSignedIn() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+        getUserData().isAdmin == true ||
         request.auth.token.email == "mohamed76y@gmail.com"
       );
     }
@@ -26,11 +37,11 @@ service cloud.firestore {
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) && (getUserData().status != "blocked" || isAdmin());
 
       match /transactions/{transactionId} {
-        allow read: if isOwner(userId);
-        allow create: if isSignedIn();
+        allow read: if isOwner(userId) && isNotBlocked();
+        allow create: if isNotBlocked();
       }
     }
 
@@ -42,14 +53,14 @@ service cloud.firestore {
 
     // الاستفهامات (الطلبات)
     match /istifhams/{istifhamId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (
+      allow create: if isNotBlocked();
+      allow read: if isNotBlocked() && (
         resource.data.status == "active" ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
         isAdmin()
       );
-      allow update: if isSignedIn() && (
+      allow update: if isNotBlocked() && (
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
         isAdmin()
@@ -58,21 +69,21 @@ service cloud.firestore {
 
     // الإشعارات
     match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isNotBlocked() && resource.data.userId == request.auth.uid;
+      allow update: if isNotBlocked() && resource.data.userId == request.auth.uid;
       allow create: if isAdmin();
     }
 
     // طلبات التوثيق
     match /verificationRequests/{verId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isNotBlocked();
+      allow read: if isNotBlocked() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // طلبات السحب المالي
     match /payoutRequests/{payoutId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isNotBlocked();
+      allow read: if isNotBlocked() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // الإعدادات العامة

@@ -12,12 +12,15 @@ import {
   ShieldAlert,
   Layers,
   Filter,
-  Clock
+  Clock,
+  XCircle,
+  LogOut
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +32,7 @@ import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function HomePage() {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -52,13 +55,35 @@ export default function HomePage() {
     return <LandingPage router={router} settings={settings} />;
   }
 
+  // معالجة حالة الحظر
+  if (profile.status === 'blocked') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 text-center space-y-6 bg-white rounded-[3rem] shadow-xl m-4 md:m-10" dir="rtl">
+        <div className="bg-red-100 p-8 rounded-full text-red-600 animate-bounce">
+          <XCircle size={80} />
+        </div>
+        <h1 className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك</h1>
+        <p className="text-xl text-muted-foreground max-w-md font-bold leading-relaxed">
+          لقد تم مراجعة حسابك من قبل الإدارة وتقرر حظره لعدم استيفاء شروط المنصة أو انتهاك السياسات. يرجى التواصل مع الدعم الفني إذا كنت تعتقد أن هناك خطأ.
+        </p>
+        <Button 
+          variant="destructive" 
+          onClick={() => signOut(auth).then(() => router.push("/login"))} 
+          className="rounded-2xl px-10 py-8 text-xl font-black shadow-xl hover:scale-105 transition-all"
+        >
+          <LogOut className="ml-3 h-6 w-6" /> تسجيل الخروج
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         {!profile.isProfileApproved && (
           <div className="mb-6 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl flex items-center gap-4 text-orange-700 animate-pulse">
             <ShieldAlert />
-            <span className="font-bold text-sm">ملفك الشخصي قيد المراجعة؛ صورتك وبياناتك ستظهر للمُفهمين فور اعتمادها من الإدارة.</span>
+            <span className="font-bold text-sm">ملفك الشخصي قيد المراجعة من قبل الإدارة؛ سيتم إخطارك فور اعتماده لتتمكن من استخدام كافة مميزات المنصة.</span>
           </div>
         )}
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
@@ -72,10 +97,12 @@ export default function HomePage() {
               {profile.role === "mufhem" ? "شارك خبرتك وابدأ في استقبال الاستفهامات التعليمية المعتمدة." : "اطرح استفهامك الآن وسيقوم نخبة المفهمين بمساعدتك فور مراجعة طلبك."}
             </p>
           </div>
-          <div className="flex flex-col items-center bg-muted/20 p-8 rounded-3xl">
+          <div className="flex flex-col items-center bg-muted/20 p-8 rounded-3xl shrink-0">
             <TrendingUp className="text-accent mb-2" />
             <span className="text-xs font-black uppercase text-muted-foreground">الحالة الحالية</span>
-            <Badge className="mt-2 px-6 py-2 text-md font-black">{profile.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}</Badge>
+            <Badge className="mt-2 px-6 py-2 text-md font-black">
+              {profile.isAdmin ? "مسؤول النظام" : (profile.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح")}
+            </Badge>
           </div>
         </div>
       </div>
@@ -146,7 +173,7 @@ function MustafhemView({ profile }: any) {
       toast({ 
         variant: "destructive", 
         title: "بيانات ناقصة", 
-        description: "كافة الحقول إجبارية لضمان قبول استفهامك." 
+        description: "كافة الحقول إجبارية لضمان قبول استفهامك ومراجعته." 
       });
       return;
     }
@@ -181,7 +208,7 @@ function MustafhemView({ profile }: any) {
             <DialogContent className="sm:max-w-[650px] rounded-[2.5rem]" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام الجديد</DialogTitle>
-                <DialogDescription className="text-right">يرجى ملء كافة الحقول لضمان وصول طلبك لأفضل المُفهمين.</DialogDescription>
+                <DialogDescription className="text-right">سيتم مراجعة طلبك من قبل الإدارة قبل نشره للمُفهمين.</DialogDescription>
               </DialogHeader>
               <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
                 <div className="space-y-2">
@@ -287,12 +314,12 @@ function MufhemView({ profile }: any) {
 
       <div className="space-y-6">
         <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات معتمدة متاحة الآن</h3>
-        {isLoading ? <div className="text-center py-20 animate-pulse font-black">جاري جلب الاستفهامات...</div> : (
+        {isLoading ? <div className="text-center py-20 animate-pulse font-black">جاري جلب الاستفهامات المعتمدة...</div> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {istifhams?.map(ist => (
               <Card key={ist.id} className="p-8 rounded-[2.5rem] border-2 shadow-lg hover:border-primary transition-all bg-white group">
                 <div className="flex justify-between items-start mb-4">
-                  <Badge variant="secondary" className="px-3 py-1 font-bold">{ist.category}</Badge>
+                  <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary border-none">{ist.category}</Badge>
                   <span className="text-xs font-bold text-muted-foreground">{new Date(ist.createdAt).toLocaleDateString('ar-EG')}</span>
                 </div>
                 <h4 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
