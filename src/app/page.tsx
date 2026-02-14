@@ -118,7 +118,7 @@ export default function HomePage() {
                 placeholder="اكتب رسالتك هنا بالتفصيل..." 
                 className="h-40 rounded-xl text-lg p-4 border-2" 
                 value={appealReason}
-                onChange={(e) => appealReason(e.target.value)}
+                onChange={(e) => setAppealReason(e.target.value)}
               />
               <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600">إرسال طعن</Button>
             </div>
@@ -345,14 +345,15 @@ function MustafhemView({ profile }: any) {
       return;
     }
 
-    if (firestore) {
+    if (firestore && profile) {
+      // إصلاح خطأ الـ undefined: التأكد من وجود قيمة للجنس والبيانات الأساسية
       await addDoc(collection(firestore, "istifhams"), {
         ...newIstifham,
         amount: Number(newIstifham.amount),
         status: "pending_approval",
         mustafhemId: profile.id,
-        mustafhemName: profile.fullName,
-        mustafhemGender: profile.gender,
+        mustafhemName: profile.fullName || "مستخدم فهمني",
+        mustafhemGender: profile.gender || "male", // القيمة الافتراضية تمنع انهيار العملية
         createdAt: new Date().toISOString()
       });
 
