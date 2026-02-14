@@ -33,9 +33,9 @@ export default function ProfilePage() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const userRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user?.uid) return null;
     return doc(firestore, "users", user.uid);
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
 
   const { data: profile, isLoading } = useDoc(userRef);
 
@@ -166,7 +166,8 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading || !profile) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
+  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
+  if (!profile) return <div className="p-10 text-center font-bold">يرجى تسجيل الدخول لعرض الملف الشخصي.</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
