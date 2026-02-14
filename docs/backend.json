@@ -81,6 +81,7 @@
         "backgroundColor": { "type": "string" },
         "logoUrl": { "type": "string" },
         "miniIconUrl": { "type": "string" },
+        "splashImageUrl": { "type": "string", "description": "صورة تظهر عند تحميل الموقع (Splash Screen)" },
         "landingBg": { "type": "string" },
         "studentHero": { "type": "string" },
         "teacherHero": { "type": "string" }

@@ -31,7 +31,8 @@ import {
   Timer,
   ClipboardList,
   Upload,
-  ImageIcon
+  ImageIcon,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -92,7 +93,30 @@ export default function HomePage() {
     }
   };
 
-  if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-black animate-pulse text-primary text-2xl">جاري تحميل منصة فهمني...</div>;
+  if (isUserLoading || isProfileLoading) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-white" dir="rtl">
+        {settings?.splashImageUrl ? (
+          <div className="animate-pulse space-y-6 flex flex-col items-center">
+            <img 
+              src={settings.splashImageUrl} 
+              alt="Loading" 
+              className="h-48 w-auto object-contain drop-shadow-2xl" 
+            />
+            <div className="flex items-center gap-3 text-primary font-black text-xl">
+              <Loader2 className="animate-spin" />
+              جاري تحميل منصة {settings.siteTitle || "فهمني"}...
+            </div>
+          </div>
+        ) : (
+          <div className="p-10 text-center font-black animate-pulse text-primary text-2xl flex flex-col items-center gap-4">
+            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white text-4xl shadow-xl">ف</div>
+            جاري تحميل منصة فهمني...
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (!user || !profile) {
     return <LandingPage router={router} settings={settings} />;
@@ -242,7 +266,9 @@ function LandingPage({ router, settings }: any) {
             <span className="text-white text-[10px] md:text-xs font-bold opacity-80">منصة التعلم الذكي</span>
           </div>
           <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl">
-            ف
+            {settings?.miniIconUrl ? (
+              <img src={settings.miniIconUrl} className="w-full h-full object-contain p-1" alt="f" />
+            ) : "ف"}
           </div>
         </div>
       </header>
@@ -277,7 +303,7 @@ function LandingPage({ router, settings }: any) {
 
       {/* Footer Hint */}
       <footer className="absolute bottom-8 left-0 w-full z-10 text-center text-white/40 font-bold text-sm">
-        جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤
+        {settings?.footerText || "جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤"}
       </footer>
     </div>
   );

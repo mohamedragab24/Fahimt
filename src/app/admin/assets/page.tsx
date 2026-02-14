@@ -6,7 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle } from "lucide-react";
+import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -50,7 +50,7 @@ export default function AdminAssets() {
   };
 
   const getFallbackImage = (key: string) => {
-    if (key === 'logoUrl' || key === 'miniIconUrl') return "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400";
+    if (key === 'logoUrl' || key === 'miniIconUrl' || key === 'splashImageUrl') return "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400";
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
@@ -62,6 +62,7 @@ export default function AdminAssets() {
   const assetItems = [
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر، القائمة الجانبية، وصفحة الدخول.', icon: Flower2 },
     { key: 'miniIconUrl', label: 'الأيقونة المصغرة (Favicon)', desc: 'تستخدم كأيقونة بجانب اسم الموقع وفي التنبيهات.', icon: Layout },
+    { key: 'splashImageUrl', label: 'صورة شاشة التحميل (Splash)', desc: 'تظهر للمستخدمين أثناء تحميل الموقع لأول مرة.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'تظهر للزوار في الواجهة الأمامية (Desktop).', icon: Monitor },
     { key: 'studentHero', label: 'صورة واجهة الطلاب', desc: 'تظهر للطلاب عند طلب استفهام جديد.', icon: Users },
     { key: 'teacherHero', label: 'صورة واجهة المعلمين', desc: 'تظهر للمدرسين في لوحة التحكم.', icon: Users }
@@ -114,12 +115,12 @@ export default function AdminAssets() {
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
                       <AlertCircle size={14} /> المعاينة الحالية (المنشورة الآن)
                     </div>
-                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'h-48' : 'aspect-video'}`}>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
                         <img 
                           src={currentImage} 
                           alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
