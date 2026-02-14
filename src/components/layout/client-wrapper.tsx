@@ -70,30 +70,24 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
       // تحديث الأيقونة المصغرة (Favicon) بشكل قوي جداً في علامة التبويب
       if (settings.miniIconUrl) {
         const updateFavicon = (url: string) => {
-          // البحث عن جميع الروابط المتعلقة بالأيقونة واستبدالها
-          const selectors = [
-            "link[rel='icon']",
-            "link[rel='shortcut icon']",
-            "link[rel='apple-touch-icon']",
-            "link[rel='alternate icon']"
-          ];
-          
-          let found = false;
-          selectors.forEach(selector => {
-            const links = document.querySelectorAll(selector);
-            links.forEach(link => {
-              (link as HTMLLinkElement).href = url;
-              found = true;
-            });
-          });
+          // مسح جميع روابط الأيقونات القديمة لضمان القوة
+          const existingIcons = document.querySelectorAll("link[rel*='icon']");
+          existingIcons.forEach(el => el.parentNode?.removeChild(el));
 
-          // إذا لم يتم العثور على وسم (مثل حالات المتصفحات التي تخفي الأيقونة الافتراضية)، ننشئ واحداً جديداً
-          if (!found) {
-            const newLink = document.createElement('link');
-            newLink.rel = 'icon';
-            newLink.href = url;
-            document.head.appendChild(newLink);
-          }
+          // إنشاء الأيقونات الجديدة بكافة الأنماط
+          const iconTypes = [
+            { rel: 'icon', type: 'image/png' },
+            { rel: 'shortcut icon', type: 'image/png' },
+            { rel: 'apple-touch-icon', type: 'image/png' }
+          ];
+
+          iconTypes.forEach(type => {
+            const link = document.createElement('link');
+            link.rel = type.rel;
+            link.type = type.type;
+            link.href = url;
+            document.head.appendChild(link);
+          });
         };
         
         updateFavicon(settings.miniIconUrl);
@@ -111,6 +105,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
 
 // دالة مساعدة لتحويل Hex إلى HSL لتتوافق مع Tailwind CSS Variables
 function hexToHsl(hex: string) {
+  if (!hex) return null;
   let r = 0, g = 0, b = 0;
   if (hex.length === 4) {
     r = parseInt(hex[1] + hex[1], 16);

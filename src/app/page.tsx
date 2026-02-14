@@ -93,29 +93,34 @@ export default function HomePage() {
     }
   };
 
+  // شاشة التحميل (Modal Overlay / Splash Screen)
   if (isUserLoading || isProfileLoading) {
+    // الأولوية لـ splashImageUrl ثم miniIconUrl كبديل ذكي
     const splashSrc = settings?.splashImageUrl || settings?.miniIconUrl;
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white backdrop-blur-md" dir="rtl">
-        <div className="relative flex flex-col items-center max-w-xs w-full px-6 animate-in fade-in zoom-in duration-700">
-          {splashSrc ? (
-            <img 
-              src={splashSrc} 
-              alt="Loading" 
-              className="h-40 md:h-56 w-auto object-contain drop-shadow-2xl mb-8 animate-pulse" 
-            />
-          ) : (
-            <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center text-white text-5xl font-black mb-8 shadow-2xl animate-bounce">ف</div>
-          )}
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white" dir="rtl">
+        <div className="relative flex flex-col items-center max-w-sm w-full px-10 animate-in fade-in zoom-in duration-1000">
+          <div className="relative group">
+            {splashSrc ? (
+              <img 
+                src={splashSrc} 
+                alt="Loading" 
+                className="h-48 md:h-64 w-auto object-contain drop-shadow-2xl mb-10 transition-transform duration-700 group-hover:scale-105" 
+              />
+            ) : (
+              <div className="w-32 h-32 bg-primary rounded-[2.5rem] flex items-center justify-center text-white text-6xl font-black mb-10 shadow-2xl animate-bounce">ف</div>
+            )}
+            <div className="absolute -inset-4 bg-primary/5 rounded-full blur-3xl -z-10 animate-pulse"></div>
+          </div>
           
-          <div className="w-full space-y-4 text-center">
-            <h2 className="text-2xl font-black text-primary tracking-tight">
+          <div className="w-full space-y-6 text-center">
+            <h2 className="text-3xl font-black text-primary tracking-tight">
               {settings?.siteTitle || "فهمني"}
             </h2>
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-muted rounded-full overflow-hidden shadow-inner">
               <div className="h-full bg-primary animate-progress origin-left"></div>
             </div>
-            <p className="text-muted-foreground font-bold text-sm animate-pulse">جاري تأمين اتصالك بالمنصة...</p>
+            <p className="text-muted-foreground font-bold text-sm animate-pulse tracking-widest">جاري تهيئة بيئة التعلم...</p>
           </div>
         </div>
       </div>
@@ -640,9 +645,7 @@ function MufhemView({ profile }: any) {
       <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
         <div className="p-4 border-b flex items-center justify-between">
           <h3 className="text-xl font-black text-zinc-800">المشاريع المفتوحة</h3>
-          <Button variant="outline" size="icon" className="h-10 w-10">
-            <SlidersHorizontal size={18} />
-          </Button>
+          <button onClick={() => router.push('/admin/categories')} className="text-primary font-bold text-sm hover:underline">إدارة الأقسام</button>
         </div>
 
         {isLoading ? (

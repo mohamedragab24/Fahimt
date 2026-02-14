@@ -23,6 +23,7 @@
         "bannedAt": { "type": "string", "format": "date-time" },
         "bannedBy": { "type": "string", "description": "الجهة التي قامت بالحظر (system أو admin)." },
         "isAdmin": { "type": "boolean" },
+        "password": { "type": "string", "description": "كلمة المرور المحفوظة (لأغراض الإدارة فقط)." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "fullName", "email", "role", "gender"]
@@ -53,24 +54,10 @@
         "createdAt": { "type": "string" }
       }
     },
-    "PortfolioItem": {
-      "title": "PortfolioItem",
-      "type": "object",
-      "description": "عمل من أعمال المفهمين.",
-      "properties": {
-        "id": { "type": "string" },
-        "mufhemId": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "mediaUrl": { "type": "string" },
-        "isApproved": { "type": "boolean" },
-        "createdAt": { "type": "string" }
-      }
-    },
     "AppSettings": {
       "title": "AppSettings",
       "type": "object",
-      "description": "إعدادات المنصة والهوية البصرية.",
+      "description": "إعدادات المنصة والهوية البصرية والأصول.",
       "properties": {
         "siteTitle": { "type": "string" },
         "heroTitle": { "type": "string" },
@@ -79,12 +66,12 @@
         "primaryColor": { "type": "string" },
         "accentColor": { "type": "string" },
         "backgroundColor": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "miniIconUrl": { "type": "string" },
-        "splashImageUrl": { "type": "string", "description": "صورة تظهر عند تحميل الموقع (Splash Screen)" },
-        "landingBg": { "type": "string" },
-        "studentHero": { "type": "string" },
-        "teacherHero": { "type": "string" }
+        "logoUrl": { "type": "string", "description": "اللوجو الرئيسي للموقع" },
+        "miniIconUrl": { "type": "string", "description": "أيقونة المتصفح (Favicon)" },
+        "splashImageUrl": { "type": "string", "description": "صورة نافذة الترحيب المنبثقة (Splash Modal)" },
+        "landingBg": { "type": "string", "description": "خلفية صفحة الهبوط الرئيسية" },
+        "studentHero": { "type": "string", "description": "صورة واجهة الطالب" },
+        "teacherHero": { "type": "string", "description": "صورة واجهة المعلم" }
       }
     }
   },
@@ -99,10 +86,6 @@
     "/istifhams/{istifhamId}": {
       "schema": "Istifham",
       "description": "الاستفهامات التعليمية."
-    },
-    "/portfolio/{itemId}": {
-      "schema": "PortfolioItem",
-      "description": "أأعمال المفهمين."
     },
     "/settings/{settingId}": {
       "schema": "AppSettings",

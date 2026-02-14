@@ -6,7 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap } from "lucide-react";
+import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -38,10 +38,10 @@ export default function AdminAssets() {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          toast({ title: "تم التحديث!", description: "تم رفع الصورة الجديدة بنجاح وتحديث الموقع بالكامل." });
+          toast({ title: "تم التحديث!", description: "تم رفع الملف بنجاح وتحديث قاعدة البيانات." });
         } catch (err) {
           console.error(err);
-          toast({ variant: "destructive", title: "خطأ في الأذونات", description: "فشل تحديث الصورة. تأكد من أنك تملك صلاحيات المسؤول الماستر." });
+          toast({ variant: "destructive", title: "خطأ", description: "فشل التحديث، تأكد من صلاحياتك." });
         } finally {
           setUploadingKey(null);
         }
@@ -61,24 +61,24 @@ export default function AdminAssets() {
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري تحميل مركز التحكم بالأصول...</div>;
 
   const assetItems = [
-    { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر، القائمة الجانبية، وصفحة الدخول.', icon: Flower2 },
-    { key: 'miniIconUrl', label: 'الأيقونة المصغرة (Favicon)', desc: 'تستخدم كأيقونة بجانب اسم الموقع وفي التنبيهات.', icon: Layout },
-    { key: 'splashImageUrl', label: 'صورة شاشة التحميل (Splash)', desc: 'تظهر للمستخدمين أثناء تحميل الموقع لأول مرة.', icon: Zap },
-    { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'تظهر للزوار في الواجهة الأمامية (Desktop).', icon: Monitor },
-    { key: 'studentHero', label: 'صورة واجهة الطلاب', desc: 'تظهر للطلاب عند طلب استفهام جديد.', icon: Users },
-    { key: 'teacherHero', label: 'صورة واجهة المعلمين', desc: 'تظهر للمدرسين في لوحة التحكم.', icon: Users }
+    { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
+    { key: 'miniIconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح وبجانب اسم الموقع.', icon: Layout },
+    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
+    { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
+    { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب (Mustafhems).', icon: Users },
+    { key: 'teacherHero', label: 'صورة واجهة المعلم', desc: 'تظهر للمدرسين في لوحة تحكم المفهمين.', icon: Box }
   ];
 
   return (
     <div className="p-6 md:p-10 space-y-10 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">مركز إدارة الهوية البصرية</h1>
-          <p className="text-muted-foreground text-xl">تحكم في اللوجو والصور؛ سيقوم النظام بتحديث الموقع لحظياً لكل المستخدمين.</p>
+          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">مركز إدارة جميع صور المنصة</h1>
+          <p className="text-muted-foreground text-xl">تحكم كامل في الأصول المخزنة في Firebase؛ التحديث يطبق فوراً للجميع.</p>
         </div>
         <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
           <Sparkles className="text-primary h-6 w-6" />
-          <span className="font-black text-primary">تحديث لحظي مفعل</span>
+          <span className="font-black text-primary">قاعدة البيانات متصلة</span>
         </div>
       </div>
 
@@ -103,10 +103,10 @@ export default function AdminAssets() {
                   <Button 
                     onClick={() => { setActiveKey(item.key); fileInputRef.current?.click(); }}
                     disabled={uploadingKey === item.key}
-                    className="h-16 px-10 rounded-[1.5rem] font-black text-xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all hover:scale-105"
+                    className="h-16 px-10 rounded-[1.5rem] font-black text-xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all"
                   >
                     {uploadingKey === item.key ? <RefreshCw className="animate-spin ml-2" /> : <Upload className="ml-2 h-6 w-6" />}
-                    تغيير الصورة
+                    رفع صورة جديدة
                   </Button>
                 </div>
               </CardHeader>
@@ -114,7 +114,7 @@ export default function AdminAssets() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
-                      <AlertCircle size={14} /> المعاينة الحالية (المنشورة الآن)
+                      <AlertCircle size={14} /> المعاينة الحالية (من الفايربيز)
                     </div>
                     <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
@@ -137,14 +137,10 @@ export default function AdminAssets() {
                       <CheckCircle2 size={40} className="animate-bounce" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-2xl font-black text-primary">تزامن فوري</h4>
+                      <h4 className="text-2xl font-black text-primary">مزامنة فورية</h4>
                       <p className="text-zinc-600 font-bold leading-relaxed">
-                        بمجرد رفع الصورة، سيتم استبدالها في كافة أرجاء المنصة لكل المستخدمين فوراً.
+                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة بيانات الفايربيز وظهوره لجميع المستخدمين في نفس اللحظة.
                       </p>
-                    </div>
-                    <div className="flex items-center gap-3 bg-white px-6 py-2 rounded-full shadow-sm text-green-600 font-black">
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
-                      قاعدة البيانات متصلة ومباشرة
                     </div>
                   </div>
                 </div>
