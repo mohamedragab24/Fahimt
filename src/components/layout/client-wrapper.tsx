@@ -67,14 +67,14 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث الأيقونة المصغرة (Favicon)
+      // تحديث الأيقونة المصغرة (Favicon) بشكل قوي
       if (settings.miniIconUrl) {
         updateFavicon(settings.miniIconUrl);
       }
 
       // تحديث عنوان الموقع
       if (settings.siteTitle) {
-        document.title = settings.siteTitle + " - منصة التعلم الذكي";
+        document.title = settings.siteTitle;
       }
     }
   }, [settings]);
@@ -82,15 +82,33 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// دالة لتحديث أيقونة الموقع في المتصفح
+// دالة متطورة لتحديث أيقونة الموقع في المتصفح (Favicon)
 function updateFavicon(url: string) {
-  let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-  if (!link) {
-    link = document.createElement('link');
+  if (!url) return;
+  
+  // البحث عن جميع الروابط المتعلقة بالأيقونة وتحديثها
+  const selectors = [
+    "link[rel='icon']",
+    "link[rel='shortcut icon']",
+    "link[rel='apple-touch-icon']"
+  ];
+  
+  let found = false;
+  selectors.forEach(selector => {
+    const links = document.querySelectorAll(selector);
+    links.forEach(link => {
+      (link as HTMLLinkElement).href = url;
+      found = true;
+    });
+  });
+
+  // إذا لم يتم العثور على وسم، نقوم بإنشاء واحد جديد
+  if (!found) {
+    const link = document.createElement('link');
     link.rel = 'icon';
+    link.href = url;
     document.getElementsByTagName('head')[0].appendChild(link);
   }
-  link.href = url;
 }
 
 // دالة مساعدة لتحويل Hex إلى HSL لتتوافق مع Tailwind CSS Variables

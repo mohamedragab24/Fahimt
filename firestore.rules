@@ -4,6 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // 1. صلاحيات المسؤول الماستر المطلقة - مسموح له بكل شيء في أي مكان
+    // تم وضعها في البداية لضمان التنفيذ الفوري
     match /{document=**} {
       allow read, write: if request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
@@ -18,7 +19,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) ||
+        request.auth.token.email == "mohamed76y@gmail.com" ||
+        request.auth.token.email == "mohamjedminijd2006@gmail.com"
+      );
     }
 
     function isNotBlocked() {
@@ -44,44 +49,12 @@ service cloud.firestore {
       }
     }
 
-    // الطعون (Appeals)
-    match /appeals/{appealId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-    }
-
-    // الأقسام والتخصصات
-    match /categories/{categoryId} {
-      allow read: if true; 
-      allow write: if isAdmin();
-    }
-
     // الاستفهامات (الطلبات)
     match /istifhams/{istifhamId} {
       allow create: if isNotBlocked();
-      
-      allow read: if isNotBlocked() && (
-        isAdmin() ||
-        resource.data.mustafhemId == request.auth.uid || 
-        resource.data.mufhemId == request.auth.uid ||
-        (resource.data.status == "active" && resource.data.mustafhemGender == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.gender)
-      );
-
-      allow update: if isNotBlocked() && (
-        isAdmin() ||
-        resource.data.mustafhemId == request.auth.uid || 
-        resource.data.mufhemId == request.auth.uid ||
-        (resource.data.status == "active" && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "mufhem" && resource.data.mustafhemGender == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.gender)
-      );
-      
+      allow read: if isNotBlocked();
+      allow update: if isNotBlocked();
       allow delete: if isAdmin();
-    }
-
-    // الإشعارات
-    match /notifications/{notificationId} {
-      allow read: if isNotBlocked() && resource.data.userId == request.auth.uid;
-      allow update: if isNotBlocked() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin();
     }
 
     // الإعدادات العامة
@@ -90,14 +63,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // القواعد العامة للمجموعات الأخرى
+    match /notifications/{id} { allow read, write: if isSignedIn(); }
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }
     match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /verificationRequests/{id} { allow read, write: if isAdmin(); }
     match /adminLogs/{id} { allow read, write: if isAdmin(); }
-    match /supportTickets/{id} { 
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow update: if isAdmin();
-    }
+    match /supportTickets/{id} { allow read, write: if isSignedIn(); }
+    match /appeals/{id} { allow read, write: if isSignedIn(); }
+    match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
   }
 }
