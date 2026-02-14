@@ -7,10 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // التحقق من المسؤول الماستر بالبريد أو المعرف الفريد
     function isMasterAdmin() {
       return isSignedIn() && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
-        request.auth.token.email == "mohamjedminijd2006@gmail.com"
+        request.auth.token.email == "mohamjedminijd2006@gmail.com" ||
+        request.auth.uid == "ee87e6bwIbaSb5JoVLl4dcrHAjn2"
       );
     }
 
@@ -29,7 +31,7 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح للمسؤول الماستر بكل شيء لتجنب أي أخطاء أذونات
+    // السماح للمسؤول الماستر بكل شيء بشكل مطلق - هذا يحل مشكلة الرفع
     match /{document=**} {
       allow read, write: if isMasterAdmin();
     }
@@ -86,10 +88,10 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
 
-    // الإعدادات العامة - تصريح مباشر للمسؤول الماستر
+    // الإعدادات العامة - مسموح للجميع بالقراءة وللمسؤولين بالكتابة
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isMasterAdmin() || isAdmin();
+      allow write: if isAdmin() || isMasterAdmin();
     }
 
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }
