@@ -94,6 +94,7 @@ export default function MeetingPage() {
       setApi(newApi);
 
       newApi.on('videoConferenceJoined', () => {
+        // محاولة تفعيل التسجيل تلقائياً لحماية الطرفين
         newApi.executeCommand('startRecording', { mode: 'file' });
       });
 

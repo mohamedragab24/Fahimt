@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText, AlertCircle } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText, AlertCircle, MessageSquare } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";

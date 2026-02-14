@@ -97,6 +97,7 @@ service cloud.firestore {
     }
 
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }
+    match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /verificationRequests/{id} { allow read, write: if isAdmin(); }
     match /adminLogs/{id} { allow read, write: if isAdmin(); }
     match /supportTickets/{id} { 
