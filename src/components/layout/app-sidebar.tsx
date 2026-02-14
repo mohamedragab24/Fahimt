@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -23,7 +22,8 @@ import {
   Scale,
   Palette,
   RefreshCw,
-  FileCheck
+  FileCheck,
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,6 +61,7 @@ const menuItems = [
 
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+  { title: "إدارة المنصة", icon: Shield, href: "/admin/roles" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
