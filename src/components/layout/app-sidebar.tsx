@@ -127,7 +127,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-6">
         <Link href="/" className="flex items-center gap-3">
           {settings?.miniIconUrl ? (
-            <img src={settings.miniIconUrl} className="h-14 w-14 object-contain" alt="Icon" />
+            <img src={settings.miniIconUrl} className="h-14 w-14 object-contain rounded-xl" alt="Icon" />
           ) : (
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-3xl font-black">ف</div>
           )}

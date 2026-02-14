@@ -91,8 +91,11 @@ export function Header() {
         <div className="flex items-center gap-4">
           <SidebarTrigger className="h-12 w-12 text-primary" />
           <Link href="/" className="flex items-center gap-2 mr-2 group">
-            {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-20 md:h-24 w-auto transition-transform group-hover:scale-110 object-contain" />
+            {settings?.miniIconUrl ? (
+              <div className="relative group-hover:scale-110 transition-transform">
+                <img src={settings.miniIconUrl} alt="Logo" className="h-12 w-12 md:h-14 md:h-14 rounded-xl object-contain shadow-md" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full border-2 border-white"></div>
+              </div>
             ) : (
               <div className="relative bg-primary p-2 rounded-xl shadow-md transition-transform group-hover:scale-110">
                 <span className="text-white font-black text-xl">ف</span>
@@ -100,6 +103,7 @@ export function Header() {
               </div>
             )}
             {!settings?.logoUrl && <span className="font-black text-3xl font-headline hidden sm:inline-block text-primary">فهمني</span>}
+            {settings?.logoUrl && <img src={settings.logoUrl} alt="Full Logo" className="h-16 w-auto hidden sm:inline-block object-contain" />}
           </Link>
         </div>
 
