@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -29,7 +29,9 @@ import {
   User,
   SlidersHorizontal,
   Timer,
-  ClipboardList
+  ClipboardList,
+  Upload,
+  ImageIcon
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -255,7 +257,7 @@ function LandingPage({ router, settings }: any) {
             {settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}
           </p>
 
-          {/* Search Bar */}
+          {/* محرك البحث */}
           <div className="w-full max-w-3xl mx-auto bg-white/10 backdrop-blur-md p-2 md:p-3 rounded-2xl md:rounded-[2.5rem] flex flex-col md:flex-row items-center gap-2 border border-white/20 shadow-2xl animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
             <Input 
               placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
@@ -284,6 +286,7 @@ function LandingPage({ router, settings }: any) {
 function MustafhemView({ profile }: any) {
   const firestore = useFirestore();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
@@ -293,7 +296,8 @@ function MustafhemView({ profile }: any) {
     category: "", 
     categorySub: "", 
     categoryOption: "", 
-    meetingTime: "" 
+    meetingTime: "",
+    attachmentUrl: ""
   });
   const { toast } = useToast();
 
@@ -339,6 +343,17 @@ function MustafhemView({ profile }: any) {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewIstifham(prev => ({ ...prev, attachmentUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleCreate = async () => {
     if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة الحقول الأساسية للاستفهام." });
@@ -346,19 +361,20 @@ function MustafhemView({ profile }: any) {
     }
 
     if (firestore && profile) {
-      // إصلاح خطأ الـ undefined: التأكد من وجود قيمة للجنس والبيانات الأساسية
+      const genderValue = profile.gender || "male";
+      
       await addDoc(collection(firestore, "istifhams"), {
         ...newIstifham,
         amount: Number(newIstifham.amount),
         status: "pending_approval",
         mustafhemId: profile.id,
         mustafhemName: profile.fullName || "مستخدم فهمني",
-        mustafhemGender: profile.gender || "male", // القيمة الافتراضية تمنع انهيار العملية
+        mustafhemGender: genderValue,
         createdAt: new Date().toISOString()
       });
 
       setIsDialogOpen(false);
-      setNewIstifham({ title: "", description: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "" });
+      setNewIstifham({ title: "", description: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
       toast({ title: "تم الإرسال للمراجعة", description: "سيتم مراجعة استفهامك ونشره خلال دقائق." });
     }
   };
@@ -395,6 +411,16 @@ function MustafhemView({ profile }: any) {
                     </Button>
                   </div>
                   <Textarea placeholder="اكتب هنا تفاصيل ما تود فهمه بوضوح..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} required className="h-32 rounded-2xl border-2 p-4 text-lg font-medium" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-black mr-2">صورة توضيحية (اختياري)</Label>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-14 rounded-xl border-2 dashed w-full font-bold">
+                      <ImageIcon className="ml-2 h-5 w-5" /> {newIstifham.attachmentUrl ? "تم اختيار صورة" : "ارفق صورة للمشكلة"}
+                    </Button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

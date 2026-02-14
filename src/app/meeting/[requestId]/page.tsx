@@ -106,7 +106,6 @@ export default function MeetingPage() {
     }
   };
 
-  // المراقبة اللحظية لإنهاء الجلسة من قبل الطالب بالنسبة للمعلم
   useEffect(() => {
     if (request?.status === 'completed' || request?.status === 'pending_review') {
       if (profile?.role === 'mufhem' && !showRatingDialog) {
@@ -170,9 +169,8 @@ export default function MeetingPage() {
         onLoad={startMeeting}
       />
       
-      {/* شريط التنبيه الدائم */}
       <div className="bg-red-500 text-white text-center py-2 font-black text-sm md:text-lg animate-pulse shadow-lg z-[60]">
-        الجلسة مسجلة لضمان حقك وجوة الخدمة
+        الجلسة مسجلة لضمان حقك وجودة الخدمة
       </div>
 
       <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 z-50">
@@ -205,11 +203,12 @@ export default function MeetingPage() {
         <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      {/* مودال التقييم والشكاوى المطور */}
       <Dialog open={showRatingDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-8" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="sr-only">تقييم الجلسة التعليمية</DialogTitle>
+          </DialogHeader>
           
-          {/* واجهة المستفهم (الطالب) */}
           {isStudent && (
             <div className="space-y-6">
               {currentStep === 'goal' && (
@@ -227,9 +226,7 @@ export default function MeetingPage() {
 
               {currentStep === 'ratings' && (
                 <div className="space-y-6">
-                  <DialogHeader>
-                    <DialogTitle className="text-right text-2xl font-black">تقييم الجلسة</DialogTitle>
-                  </DialogHeader>
+                  <h3 className="text-right text-2xl font-black">تقييم الجلسة</h3>
                   <div className="space-y-6">
                     <RatingItem label="قيم مدى فهمك لهذا الاستفهام" value={understandingRating} onChange={setUnderstandingRating} />
                     <RatingItem label="قيم أسلوب وشرح المفهم" value={teacherStyleRating} onChange={setTeacherStyleRating} />
@@ -277,7 +274,6 @@ export default function MeetingPage() {
             </div>
           )}
 
-          {/* واجهة المفهم (المعلم) */}
           {!isStudent && (
             <div className="space-y-8 py-6">
               <div className="text-center space-y-4">
