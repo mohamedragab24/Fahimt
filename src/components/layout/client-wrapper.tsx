@@ -67,10 +67,10 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث الأيقونة المصغرة (Favicon) بشكل قوي جداً
+      // تحديث الأيقونة المصغرة (Favicon) بشكل قوي جداً في علامة التبويب
       if (settings.miniIconUrl) {
         const updateFavicon = (url: string) => {
-          // البحث عن جميع الروابط المتعلقة بالأيقونة
+          // البحث عن جميع الروابط المتعلقة بالأيقونة واستبدالها
           const selectors = [
             "link[rel='icon']",
             "link[rel='shortcut icon']",
@@ -87,7 +87,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
             });
           });
 
-          // إذا لم يتم العثور على وسم، نقوم بإنشاء واحد جديد فوراً في رأس الصفحة
+          // إذا لم يتم العثور على وسم (مثل حالات المتصفحات التي تخفي الأيقونة الافتراضية)، ننشئ واحداً جديداً
           if (!found) {
             const newLink = document.createElement('link');
             newLink.rel = 'icon';
