@@ -1,3 +1,4 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -5,31 +6,31 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/**
+ * تهيئة الفايربيز مع مراعاة بيئات البناء المختلفة (Vercel vs Firebase App Hosting).
+ */
 export function initializeFirebase() {
-  if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
+  if (getApps().length > 0) return getSdks(getApp());
+
+  let firebaseApp;
+  
+  // التحقق مما إذا كنا في بيئة استضافة الفايربيز الرسمية لتجنب رسائل الخطأ في Vercel
+  const isFirebaseHosting = typeof window !== 'undefined' && 
+    (window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app'));
+
+  if (isFirebaseHosting && process.env.NODE_ENV === 'production') {
     try {
-      // Attempt to initialize via Firebase App Hosting environment variables
+      // المحاولة فقط إذا كان الاحتمال كبيراً للنجاح (استضافة فايربيز)
       firebaseApp = initializeApp();
     } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
       firebaseApp = initializeApp(firebaseConfig);
     }
-
-    return getSdks(firebaseApp);
+  } else {
+    // في Vercel أو التطوير المحلي، نستخدم الإعدادات مباشرة
+    firebaseApp = initializeApp(firebaseConfig);
   }
 
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {

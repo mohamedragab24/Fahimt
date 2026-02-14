@@ -35,9 +35,6 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   );
 }
 
-/**
- * مكون لإدارة الثيم الديناميكي وحقن الألوان والأيقونات من قاعدة البيانات.
- */
 function ThemeManager({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => {
@@ -51,7 +48,6 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
     if (settings) {
       const root = document.documentElement;
       
-      // تحديث الألوان
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
         if (hsl) root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
@@ -67,17 +63,15 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث الأيقونة المصغرة للويب (Favicon) من حقل faviconUrl حصراً
-      const faviconToUse = settings.faviconUrl || settings.miniIconUrl;
-      if (faviconToUse && typeof document !== 'undefined') {
+      // تحديث الأيقونة حصراً من faviconUrl
+      if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
 
-          // مسح روابط الأيقونات القديمة
+          // حذف جميع الأيقونات الحالية (المنافسة) لضمان السيادة الكاملة لشعارك
           const existingIcons = document.querySelectorAll("link[rel*='icon']");
           existingIcons.forEach(el => el.remove());
 
-          // إنشاء الأيقونات الجديدة
           const iconTypes = [
             { rel: 'icon', type: 'image/png' },
             { rel: 'shortcut icon', type: 'image/png' },
@@ -93,10 +87,9 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
           });
         };
         
-        updateFavicon(faviconToUse);
+        updateFavicon(settings.faviconUrl);
       }
 
-      // تحديث عنوان الموقع في التبويب
       if (settings.siteTitle) {
         document.title = settings.siteTitle;
       }
@@ -106,7 +99,6 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// دالة مساعدة لتحويل Hex إلى HSL لتتوافق مع Tailwind CSS Variables
 function hexToHsl(hex: string) {
   if (!hex) return null;
   let r = 0, g = 0, b = 0;
