@@ -25,7 +25,10 @@ import {
   Star,
   Users,
   Search,
-  MessageSquare
+  MessageSquare,
+  User,
+  SlidersHorizontal,
+  Timer
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -503,8 +506,7 @@ function MufhemView({ profile }: any) {
     return query(
       collection(firestore, "istifhams"), 
       where("status", "==", "active"),
-      where("mustafhemGender", "==", profile.gender),
-      limit(50)
+      where("mustafhemGender", "==", profile.gender)
     );
   }, [firestore, profile?.gender]);
   
@@ -532,7 +534,7 @@ function MufhemView({ profile }: any) {
       setStats({
         balance: bal,
         completed: istSnap.size,
-        rating: 5.0 // MVP default
+        rating: 5.0 
       });
     };
     fetchMufhemStats();
@@ -576,27 +578,59 @@ function MufhemView({ profile }: any) {
         </Card>
       </div>
 
-      <div className="space-y-6">
-        <h3 className="text-3xl font-black border-r-8 border-primary pr-6">استفهامات متاحة لك</h3>
-        {isLoading ? <div className="text-center py-20 animate-pulse font-black">جاري جلب البيانات...</div> : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b flex items-center justify-between">
+          <h3 className="text-xl font-black text-zinc-800">المشاريع المفتوحة</h3>
+          <Button variant="outline" size="icon" className="h-10 w-10">
+            <SlidersHorizontal size={18} />
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="p-20 text-center animate-pulse font-bold text-zinc-400">جاري جلب الطلبات المتاحة...</div>
+        ) : (
+          <div className="divide-y">
             {istifhams?.map(ist => (
-              <Card key={ist.id} className="p-8 rounded-[2.5rem] border-2 shadow-lg hover:border-primary transition-all bg-white group">
-                <div className="flex justify-between items-start mb-4">
-                  <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary">{ist.categorySub || ist.category}</Badge>
-                  <span className="text-xs font-bold text-muted-foreground">{new Date(ist.createdAt).toLocaleDateString('ar-EG')}</span>
+              <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all group">
+                <div className="space-y-3">
+                  <h4 className="text-xl font-bold text-primary group-hover:underline cursor-pointer">
+                    {ist.title}
+                  </h4>
+                  
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500">
+                    <div className="flex items-center gap-1.5">
+                      <User size={14} className="text-zinc-400" />
+                      <span className="font-medium">{ist.mustafhemName}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={14} className="text-zinc-400" />
+                      <span className="font-medium">منذ قليل</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MessageSquare size={14} className="text-zinc-400" />
+                      <span className="font-medium text-primary">أضف أول عرض</span>
+                    </div>
+                  </div>
+
+                  <p className="text-zinc-600 text-sm leading-relaxed line-clamp-2">
+                    {ist.description}
+                  </p>
+
+                  <div className="pt-2 flex justify-between items-center">
+                    <span className="text-2xl font-black text-primary">
+                      {ist.amount} <span className="text-xs">ج.م</span>
+                    </span>
+                    <Button onClick={() => handleAccept(ist)} className="rounded-lg font-bold px-6 h-10 shadow-md">
+                      أنا أفهمك
+                    </Button>
+                  </div>
                 </div>
-                <h4 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
-                <p className="text-muted-foreground text-sm line-clamp-2 mb-6 font-medium text-right">{ist.description}</p>
-                <div className="flex justify-between items-center pt-6 border-t border-dashed">
-                  <span className="font-black text-primary text-2xl">{ist.amount} <span className="text-xs">ج.م</span></span>
-                  <Button onClick={() => handleAccept(ist)} className="rounded-xl font-black px-6">أنا أفهمك</Button>
-                </div>
-              </Card>
+              </div>
             ))}
             {istifhams?.length === 0 && (
-              <div className="col-span-full py-20 text-center bg-muted/10 rounded-[2rem] border-4 border-dashed border-muted-foreground/20">
-                <p className="text-muted-foreground font-black text-xl opacity-40">لا توجد استفهامات جديدة حالياً.</p>
+              <div className="py-20 text-center text-zinc-400 font-bold opacity-50 flex flex-col items-center gap-4">
+                <ClipboardList size={48} />
+                لا توجد استفهامات جديدة حالياً.
               </div>
             )}
           </div>

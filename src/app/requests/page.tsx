@@ -1,38 +1,27 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Calendar, 
-  CheckCircle2, 
-  XCircle, 
-  Timer, 
-  Trash2, 
+  Clock, 
   User, 
-  BadgeCent,
-  AlertCircle,
-  ClipboardList,
-  Video,
-  Copy,
-  Check,
-  Star,
-  ShieldCheck,
   MessageSquare,
-  Send,
-  Eye
+  Eye,
+  Timer,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  ClipboardList,
+  SlidersHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, doc, limit, orderBy, addDoc } from "firebase/firestore";
-import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, query, where, doc, limit } from "firebase/firestore";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function RequestsPage() {
   const { user, isUserLoading } = useUser();
@@ -66,157 +55,133 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="p-4 md:p-10 max-w-6xl mx-auto space-y-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6 bg-white/50 p-6 rounded-2xl shadow-sm">
-        <div className="space-y-1 text-right">
-          <h1 className="text-3xl md:text-4xl font-black font-headline">إدارة الاستفهامات</h1>
-          <p className="text-muted-foreground text-lg">تتبع حالة استفهاماتك والوصول للمحاضرات المباشرة.</p>
+    <div className="bg-white min-h-screen" dir="rtl">
+      <div className="max-w-4xl mx-auto border-x min-h-screen shadow-sm">
+        {/* Header matching the screenshot style */}
+        <div className="flex items-center justify-between p-4 border-b bg-white sticky top-0 z-10">
+          <h1 className="text-xl md:text-2xl font-black text-zinc-800">الاستفهامات المفتوحة</h1>
+          <Button variant="outline" size="icon" className="rounded-md border-zinc-200">
+            <SlidersHorizontal size={18} className="text-zinc-600" />
+          </Button>
         </div>
-        <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
-          <BadgeCent className="text-primary h-6 w-6" />
-          <span className="font-bold text-primary text-xl">{uniqueRequests.length} استفهام إجمالي</span>
-        </div>
+
+        <Tabs defaultValue="pending" className="w-full">
+          <div className="border-b bg-zinc-50/50">
+            <TabsList className="flex h-12 bg-transparent p-0 gap-0 overflow-x-auto no-scrollbar">
+              <TabLink value="pending" icon={Eye} label="المراجعة" />
+              <TabLink value="active" icon={Timer} label="الانتظار" />
+              <TabLink value="accepted" icon={AlertCircle} label="المقبولة" />
+              <TabLink value="completed" icon={CheckCircle2} label="المكتملة" />
+              <TabLink value="canceled" icon={XCircle} label="الملغية" />
+            </TabsList>
+          </div>
+
+          {['pending_approval', 'active', 'accepted', 'completed', 'canceled'].map((status) => (
+            <TabsContent key={status} value={status === 'pending_approval' ? 'pending' : status} className="m-0">
+              <RequestList 
+                requests={uniqueRequests.filter((r: any) => r.status === status)} 
+                status={status} 
+                userId={user?.uid} 
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="pending" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto md:h-20 p-2 bg-muted/40 rounded-[1.5rem] md:rounded-[2rem] shadow-inner mb-10 gap-2">
-          <TabsTrigger value="pending" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
-            <Eye className="h-4 w-4 md:h-5 md:w-5" /> المراجعة
-          </TabsTrigger>
-          <TabsTrigger value="active" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
-            <Timer className="h-4 w-4 md:h-5 md:w-5" /> الانتظار
-          </TabsTrigger>
-          <TabsTrigger value="accepted" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
-            <AlertCircle className="h-4 w-4 md:h-5 md:w-5" /> المقبولة
-          </TabsTrigger>
-          <TabsTrigger value="completed" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
-            <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" /> المكتملة
-          </TabsTrigger>
-          <TabsTrigger value="canceled" className="rounded-xl md:rounded-2xl data-[state=active]:bg-white data-[state=active]:shadow-lg text-sm md:text-lg font-bold flex gap-2 transition-all py-3">
-            <XCircle className="h-4 w-4 md:h-5 md:w-5" /> الملغية
-          </TabsTrigger>
-        </TabsList>
-
-        {['pending_approval', 'active', 'accepted', 'completed', 'canceled'].map((status) => (
-          <TabsContent key={status} value={status === 'pending_approval' ? 'pending' : status} className="space-y-8 focus-visible:ring-0">
-            <RequestList 
-              requests={uniqueRequests.filter((r: any) => r.status === status)} 
-              status={status} 
-              userId={user?.uid} 
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
     </div>
   );
 }
 
-function RequestList({ requests, status, userId }: { requests: any[], status: string, userId?: string }) {
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const router = useRouter();
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+function TabLink({ value, icon: Icon, label }: any) {
+  return (
+    <TabsTrigger 
+      value={value} 
+      className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-white data-[state=active]:text-primary text-zinc-500 font-bold px-4 transition-all"
+    >
+      <Icon size={16} className="ml-2 hidden sm:inline" />
+      {label}
+    </TabsTrigger>
+  );
+}
 
-  const handleAction = (req: any, action: 'cancel' | 'complete') => {
-    if (!firestore) return;
-    const reqRef = doc(firestore, "istifhams", req.id);
-    
-    if (action === 'cancel') {
-      updateDocumentNonBlocking(reqRef, { status: 'canceled' });
-      toast({ title: "تم إلغاء الاستفهام", description: "تم تحديث الحالة بنجاح." });
-    }
-  };
+function RequestList({ requests, status, userId }: { requests: any[], status: string, userId?: string }) {
+  const router = useRouter();
 
   if (requests.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 md:py-32 bg-white rounded-[2rem] md:rounded-[3rem] border-4 border-dashed border-muted shadow-sm px-4 text-center">
-        <div className="bg-muted/30 p-6 md:p-8 rounded-full mb-6">
-          <ClipboardList size={48} className="text-muted-foreground opacity-30" />
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="bg-zinc-50 p-6 rounded-full mb-4">
+          <ClipboardList size={40} className="text-zinc-300" />
         </div>
-        <p className="text-muted-foreground text-xl md:text-2xl font-black">لا توجد استفهامات في هذا القسم حالياً</p>
+        <p className="text-zinc-400 font-bold">لا توجد استفهامات في هذا القسم حالياً</p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-8">
+    <div className="divide-y divide-zinc-100">
       {requests.map((req) => (
-        <Card key={req.id} className="shadow-xl border-2 hover:border-primary/40 transition-all rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-white group">
-          <CardContent className="p-0 flex flex-col md:flex-row">
-            <div className="p-6 md:p-10 flex-1 space-y-8 text-right">
-              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                <div className="space-y-3">
-                  <div className="flex gap-2 justify-end md:justify-start">
-                    <Badge variant="secondary" className="px-4 py-1 text-md font-bold bg-primary/10 text-primary border-none">{req.category}</Badge>
-                    <Badge variant="outline" className="px-4 py-1 text-md font-bold text-muted-foreground">ID: {req.id.slice(-5)}</Badge>
-                  </div>
-                  <CardTitle className="text-2xl md:text-3xl font-black leading-tight group-hover:text-primary transition-colors">{req.title}</CardTitle>
-                </div>
-                <div className="text-center bg-muted/20 p-4 rounded-2xl min-w-[120px] self-center md:self-start">
-                  <span className="text-sm font-bold text-muted-foreground block mb-1">المبلغ</span>
-                  <span className="text-3xl font-black text-primary tabular-nums">{req.amount}</span>
-                  <span className="text-xs font-bold text-primary mr-1">ج.م</span>
-                </div>
-              </div>
+        <div 
+          key={req.id} 
+          onClick={() => status === 'accepted' && router.push(`/meeting/${req.id}`)}
+          className="p-6 hover:bg-zinc-50 transition-colors cursor-pointer group"
+        >
+          <div className="space-y-3">
+            {/* Title - Blue and bold */}
+            <h3 className="text-xl font-bold text-primary group-hover:underline leading-tight">
+              {req.title}
+            </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-6 bg-muted/10 rounded-3xl border border-dashed border-muted-foreground/20">
-                <div className="flex items-center gap-4 justify-end md:justify-start">
-                  <div className="bg-white p-3 rounded-xl shadow-sm"><Calendar className="h-6 w-6 text-primary" /></div>
-                  <div className="text-right">
-                    <span className="text-xs text-muted-foreground font-bold block">التاريخ</span>
-                    <span className="font-bold">{new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 justify-end md:justify-start">
-                  <div className="bg-white p-3 rounded-xl shadow-sm"><User className="h-6 w-6 text-primary" /></div>
-                  <div className="text-right">
-                    <span className="text-xs text-muted-foreground font-bold block">{req.mustafhemId === userId ? "المُفهم (الخبير)" : "المُستفهم (الطالب)"}</span>
-                    <span className="font-bold">{req.mustafhemId === userId ? (req.mufhemName || "بانتظار قبول مُفهم...") : (req.mustafhemName || "مستفهم")}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 justify-end md:justify-start">
-                  <div className="bg-white p-3 rounded-xl shadow-sm"><BadgeCent className="h-6 w-6 text-primary" /></div>
-                  <div className="text-right">
-                    <span className="text-xs text-muted-foreground font-bold block">الحالة</span>
-                    <span className="font-bold">
-                      {status === 'pending_approval' ? 'قيد المراجعة' : 
-                       status === 'active' ? 'بانتظار مُفهم' : 
-                       status === 'accepted' ? 'جاهز للبث' : 
-                       status === 'completed' ? 'تم بنجاح' : 'ملغي'}
-                    </span>
-                  </div>
-                </div>
+            {/* Meta Data Row - Matching the icons in the screenshot */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500">
+              <div className="flex items-center gap-1.5">
+                <User size={14} className="text-zinc-400" />
+                <span className="font-medium">
+                  {req.mustafhemId === userId ? (req.mufhemName || "بانتظار مفهم") : req.mustafhemName}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock size={14} className="text-zinc-400" />
+                <span className="font-medium">منذ {getTimeAgo(req.createdAt)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <MessageSquare size={14} className="text-zinc-400" />
+                <span className="font-medium">
+                  {status === 'active' ? 'أضف أول عرض' : status === 'accepted' ? 'تم القبول' : 'محاضرة مكتملة'}
+                </span>
               </div>
             </div>
 
-            <div className="bg-muted/20 p-6 md:p-8 md:w-80 flex flex-col justify-center gap-4 border-t md:border-t-0 md:border-r border-dashed">
-              {(status === 'pending_approval' || status === 'active') && req.mustafhemId === userId && (
-                <Button 
-                  variant="destructive" 
-                  className="w-full py-8 md:py-10 font-black text-xl rounded-2xl shadow-lg hover:scale-[1.02] transition-transform" 
-                  onClick={() => handleAction(req, 'cancel')}
-                >
-                  <Trash2 className="h-6 w-6 ml-3" /> إلغاء الاستفهام
-                </Button>
-              )}
+            {/* Description - Truncated */}
+            <p className="text-zinc-600 text-sm leading-relaxed line-clamp-2">
+              {req.description}
+            </p>
+
+            {/* Price/Budget Tag - Optional footer info */}
+            <div className="pt-2 flex justify-between items-center">
+              <div className="text-primary font-black text-lg">
+                {req.amount} <span className="text-xs">ج.م</span>
+              </div>
               {status === 'accepted' && (
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 py-6 font-black text-lg rounded-2xl shadow-xl"
-                  onClick={() => router.push(`/meeting/${req.id}`)}
-                >
-                  <Video className="h-6 w-6 ml-3" /> دخول المحاضرة
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold h-9">
+                  دخول المحاضرة
                 </Button>
               )}
-              {status === 'completed' && (
-                <div className="flex flex-col items-center gap-3 text-green-600 font-black text-center">
-                  <CheckCircle2 size={48} />
-                  <span className="text-xl">تمت بنجاح</span>
-                </div>
-              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );
+}
+
+// Helper to format time ago
+function getTimeAgo(dateStr: string) {
+  const diff = new Date().getTime() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 60) return `${minutes} دقيقة`;
+  if (hours < 24) return `${hours} ساعة`;
+  return `${days} يوم`;
 }
