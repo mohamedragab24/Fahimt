@@ -29,13 +29,9 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // السماح للأدمن الماستر والأدمن المساعد بكل شيء في النظام لضمان الرقابة الكاملة
+    // السماح للمسؤول الماستر بكل شيء لتجنب أي أخطاء أذونات
     match /{document=**} {
-      allow read, write: if isMasterAdmin() || isAdmin();
+      allow read, write: if isMasterAdmin();
     }
 
     // ملفات المستخدمين
@@ -70,14 +66,14 @@ service cloud.firestore {
         isAdmin() ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        (resource.data.status == "active" && resource.data.mustafhemGender == getUserData().gender)
+        (resource.data.status == "active" && resource.data.mustafhemGender == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.gender)
       );
 
       allow update: if isNotBlocked() && (
         isAdmin() ||
         resource.data.mustafhemId == request.auth.uid || 
         resource.data.mufhemId == request.auth.uid ||
-        (resource.data.status == "active" && getUserData().role == "mufhem" && resource.data.mustafhemGender == getUserData().gender)
+        (resource.data.status == "active" && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "mufhem" && resource.data.mustafhemGender == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.gender)
       );
       
       allow delete: if isAdmin();
@@ -90,7 +86,7 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
 
-    // الإعدادات العامة - ضمان صلاحية الماستر أدمن القصوى هنا
+    // الإعدادات العامة - تصريح مباشر للمسؤول الماستر
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isMasterAdmin() || isAdmin();

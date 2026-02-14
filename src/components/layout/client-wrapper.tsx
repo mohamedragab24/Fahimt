@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -35,7 +36,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
 }
 
 /**
- * مكون لإدارة الثيم الديناميكي وحقن الألوان من قاعدة البيانات.
+ * مكون لإدارة الثيم الديناميكي وحقن الألوان والأيقونات من قاعدة البيانات.
  */
 function ThemeManager({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
@@ -50,6 +51,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
     if (settings) {
       const root = document.documentElement;
       
+      // تحديث الألوان
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
         if (hsl) root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
@@ -64,10 +66,31 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         const hsl = hexToHsl(settings.backgroundColor);
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
+
+      // تحديث الأيقونة المصغرة (Favicon)
+      if (settings.miniIconUrl) {
+        updateFavicon(settings.miniIconUrl);
+      }
+
+      // تحديث عنوان الموقع
+      if (settings.siteTitle) {
+        document.title = settings.siteTitle + " - منصة التعلم الذكي";
+      }
     }
   }, [settings]);
 
   return <>{children}</>;
+}
+
+// دالة لتحديث أيقونة الموقع في المتصفح
+function updateFavicon(url: string) {
+  let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.getElementsByTagName('head')[0].appendChild(link);
+  }
+  link.href = url;
 }
 
 // دالة مساعدة لتحويل Hex إلى HSL لتتوافق مع Tailwind CSS Variables
