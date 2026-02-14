@@ -3,27 +3,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. صلاحيات المسؤول الماستر المطلقة - مسموح له بكل شيء في أي مكان
-    // تم وضعها في البداية لضمان التنفيذ الفوري
-    match /{document=**} {
-      allow read, write: if request.auth != null && (
+    // 1. صلاحيات المسؤول الماستر المطلقة
+    function isMasterAdmin() {
+      return request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
         request.auth.token.email == "mohamjedminijd2006@gmail.com" ||
         request.auth.uid == "ee87e6bwIbaSb5JoVLl4dcrHAjn2"
       );
     }
 
-    // دوال مساعدة لبقية القواعد
-    function isSignedIn() {
-      return request.auth != null;
+    // 2. التحقق مما إذا كان المستخدم مسؤولاً عادياً
+    function isAdmin() {
+      return request.auth != null && (
+        isMasterAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
     }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) ||
-        request.auth.token.email == "mohamed76y@gmail.com" ||
-        request.auth.token.email == "mohamjedminijd2006@gmail.com"
-      );
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     function isNotBlocked() {
@@ -37,13 +36,18 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // السماح للمسؤول الماستر بكل شيء
+    match /{document=**} {
+      allow read, write: if isMasterAdmin();
+    }
+
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) && isNotBlocked();
+      allow write: if (isOwner(userId) || isAdmin()) && isNotBlocked();
 
       match /transactions/{transactionId} {
-        allow read: if isOwner(userId) && isNotBlocked();
+        allow read: if isOwner(userId) || isAdmin();
         allow create: if isNotBlocked();
         allow update, delete: if isAdmin();
       }
@@ -52,12 +56,12 @@ service cloud.firestore {
     // الاستفهامات (الطلبات)
     match /istifhams/{istifhamId} {
       allow create: if isNotBlocked();
-      allow read: if isNotBlocked();
-      allow update: if isNotBlocked();
+      allow read: if true;
+      allow update: if isNotBlocked() || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // الإعدادات العامة
+    // الإعدادات العامة - مسموح لأي مسؤول بتغييرها
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
