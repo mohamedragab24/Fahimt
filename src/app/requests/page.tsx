@@ -57,7 +57,6 @@ export default function RequestsPage() {
   return (
     <div className="bg-white min-h-screen" dir="rtl">
       <div className="max-w-4xl mx-auto border-x min-h-screen shadow-sm">
-        {/* Header matching the screenshot style */}
         <div className="flex items-center justify-between p-4 border-b bg-white sticky top-0 z-10">
           <h1 className="text-xl md:text-2xl font-black text-zinc-800">الاستفهامات المفتوحة</h1>
           <Button variant="outline" size="icon" className="rounded-md border-zinc-200">
@@ -122,16 +121,14 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
       {requests.map((req) => (
         <div 
           key={req.id} 
-          onClick={() => status === 'accepted' && router.push(`/meeting/${req.id}`)}
+          onClick={() => router.push(`/requests/${req.id}`)}
           className="p-6 hover:bg-zinc-50 transition-colors cursor-pointer group"
         >
           <div className="space-y-3">
-            {/* Title - Blue and bold */}
             <h3 className="text-xl font-bold text-primary group-hover:underline leading-tight">
               {req.title}
             </h3>
 
-            {/* Meta Data Row - Matching the icons in the screenshot */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500">
               <div className="flex items-center gap-1.5">
                 <User size={14} className="text-zinc-400" />
@@ -151,21 +148,17 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
               </div>
             </div>
 
-            {/* Description - Truncated */}
             <p className="text-zinc-600 text-sm leading-relaxed line-clamp-2">
               {req.description}
             </p>
 
-            {/* Price/Budget Tag - Optional footer info */}
             <div className="pt-2 flex justify-between items-center">
               <div className="text-primary font-black text-lg">
                 {req.amount} <span className="text-xs">ج.م</span>
               </div>
-              {status === 'accepted' && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold h-9">
-                  دخول المحاضرة
-                </Button>
-              )}
+              <Button size="sm" variant="outline" className="rounded-lg font-bold h-9">
+                عرض التفاصيل
+              </Button>
             </div>
           </div>
         </div>
@@ -174,8 +167,8 @@ function RequestList({ requests, status, userId }: { requests: any[], status: st
   );
 }
 
-// Helper to format time ago
 function getTimeAgo(dateStr: string) {
+  if (!dateStr) return "لحظات";
   const diff = new Date().getTime() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);

@@ -28,7 +28,8 @@ import {
   MessageSquare,
   User,
   SlidersHorizontal,
-  Timer
+  Timer,
+  ClipboardList
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -117,7 +118,7 @@ export default function HomePage() {
                 placeholder="اكتب رسالتك هنا بالتفصيل..." 
                 className="h-40 rounded-xl text-lg p-4 border-2" 
                 value={appealReason}
-                onChange={(e) => setAppealReason(e.target.value)}
+                onChange={(e) => appealReason(e.target.value)}
               />
               <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600">إرسال طعن</Button>
             </div>
@@ -228,9 +229,9 @@ function LandingPage({ router, settings }: any) {
         </div>
 
         <nav className="hidden lg:flex items-center gap-8 text-white/90 font-black text-lg">
-          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">تصفح الاستفهامات</button>
-          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">أعمال المفهمين</button>
-          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">المفهمين</button>
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors font-black">تصفح الاستفهامات</button>
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors font-black">أعمال المفهمين</button>
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors font-black">المفهمين</button>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -282,6 +283,7 @@ function LandingPage({ router, settings }: any) {
 
 function MustafhemView({ profile }: any) {
   const firestore = useFirestore();
+  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
@@ -315,7 +317,6 @@ function MustafhemView({ profile }: any) {
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
-  const filteredOptions = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === newIstifham.categorySub)?.id) || [];
 
   const handleRefine = async () => {
     if (!newIstifham.description) {
@@ -375,7 +376,7 @@ function MustafhemView({ profile }: any) {
                 <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
                   <Zap className="text-primary fill-primary/10" /> تفاصيل الاستفهام
                 </DialogTitle>
-                <DialogDescription className="text-right font-bold">اشرح ما تريد فهمه لنصلك بالخبير المناسب.</DialogDescription>
+                <DialogDescription className="text-right font-bold text-lg">اشرح ما تريد فهمه لنصلك بالخبير المناسب.</DialogDescription>
               </DialogHeader>
               <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
                 <div className="space-y-2">
@@ -442,14 +443,13 @@ function MustafhemView({ profile }: any) {
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
 
-      {/* Featured Teachers */}
       <div className="space-y-6">
         <h3 className="text-2xl font-black border-r-8 border-accent pr-6 flex items-center gap-3">
           <Users className="text-accent" /> خبراء متميزون متاحون الآن
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredTeachers?.map(t => (
-            <Card key={t.id} className="rounded-[2.5rem] border-2 bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+            <Card key={t.id} className="rounded-[2.5rem] border-2 bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer" onClick={() => router.push(`/teachers`)}>
               <div className="h-20 bg-accent/10"></div>
               <CardContent className="p-6 -mt-10 flex flex-col items-center text-center">
                 <Image 
@@ -475,7 +475,7 @@ function MustafhemView({ profile }: any) {
           <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6">استفهاماتك قيد المراجعة</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingIstifhams.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-orange-100 bg-white shadow-lg overflow-hidden group">
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-orange-100 bg-white shadow-lg overflow-hidden group cursor-pointer hover:border-orange-300 transition-all" onClick={() => router.push(`/requests/${ist.id}`)}>
                 <div className="p-6 space-y-4">
                   <Badge className="bg-orange-100 text-orange-600 border-none font-bold">بانتظار موافقة الإدارة</Badge>
                   <h4 className="text-xl font-black text-zinc-800 line-clamp-1">{ist.title}</h4>
@@ -498,6 +498,7 @@ function MustafhemView({ profile }: any) {
 
 function MufhemView({ profile }: any) {
   const firestore = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
   const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
 
@@ -559,6 +560,7 @@ function MufhemView({ profile }: any) {
     });
 
     toast({ title: "تم قبول الطلب", description: "يمكنك الآن بدء المحاضرة مع الطالب." });
+    router.push(`/requests/${ist.id}`);
   };
 
   return (
@@ -591,7 +593,7 @@ function MufhemView({ profile }: any) {
         ) : (
           <div className="divide-y">
             {istifhams?.map(ist => (
-              <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all group">
+              <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all group cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>
                 <div className="space-y-3">
                   <h4 className="text-xl font-bold text-primary group-hover:underline cursor-pointer">
                     {ist.title}
@@ -620,7 +622,7 @@ function MufhemView({ profile }: any) {
                     <span className="text-2xl font-black text-primary">
                       {ist.amount} <span className="text-xs">ج.م</span>
                     </span>
-                    <Button onClick={() => handleAccept(ist)} className="rounded-lg font-bold px-6 h-10 shadow-md">
+                    <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-lg font-bold px-6 h-10 shadow-md">
                       أنا أفهمك
                     </Button>
                   </div>
