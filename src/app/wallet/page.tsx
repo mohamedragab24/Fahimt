@@ -128,7 +128,7 @@ export default function WalletPage() {
     setAmount("");
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل بيانات المحفظة...</div>;
+  if (isLoading || !profile) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل بيانات المحفظة...</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12" dir="rtl">
@@ -163,7 +163,7 @@ export default function WalletPage() {
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-white text-primary hover:bg-gray-100 px-14 py-10 rounded-3xl font-black text-2xl shadow-2xl transition-all hover:scale-105 active:scale-95 group">
-                    {profile?.role === 'mustafhem' ? (
+                    {profile.role === 'mustafhem' ? (
                       <><Plus className="ml-3 h-8 w-8 group-hover:rotate-90 transition-transform" /> إضافة رصيد</>
                     ) : (
                       <><Download className="ml-3 h-8 w-8" /> طلب سحب أرباح</>
@@ -173,10 +173,10 @@ export default function WalletPage() {
                 <DialogContent dir="rtl" className="rounded-[2.5rem] sm:max-w-[500px]">
                   <DialogHeader>
                     <DialogTitle className="text-right text-3xl font-black mb-2">
-                      {profile?.role === 'mustafhem' ? 'شحن المحفظة' : 'سحب الأرباح'}
+                      {profile.role === 'mustafhem' ? 'شحن المحفظة' : 'سحب الأرباح'}
                     </DialogTitle>
                     <DialogDescription className="text-right text-lg">
-                      {profile?.role === 'mustafhem' 
+                      {profile.role === 'mustafhem' 
                         ? 'أدخل المبلغ المراد شحنه عبر فودافون كاش أو أي محفظة إلكترونية.' 
                         : 'سيتم مراجعة طلب السحب وتحويل المبلغ لرقمك خلال 24 ساعة.'}
                     </DialogDescription>
@@ -214,7 +214,7 @@ export default function WalletPage() {
           <CardContent className="space-y-8">
             <div className="p-8 bg-muted/30 rounded-[2rem] space-y-4 border-2 border-dashed border-primary/20">
               <span className="text-sm text-muted-foreground font-black block">رقم المحفظة الإلكترونية</span>
-              <p className="font-mono text-3xl font-black text-primary tracking-[0.2em]">{profile?.phoneNumber || "غير مسجل"}</p>
+              <p className="font-mono text-3xl font-black text-primary tracking-[0.2em]">{profile.phoneNumber || "غير مسجل"}</p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-sm font-bold text-muted-foreground">

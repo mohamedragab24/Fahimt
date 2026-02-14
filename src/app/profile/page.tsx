@@ -166,7 +166,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
+  if (isLoading || !profile) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
