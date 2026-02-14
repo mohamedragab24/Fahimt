@@ -95,6 +95,7 @@ export default function LoginPage() {
             phoneNumber,
             role,
             gender,
+            password, // حفظ كلمة المرور للتمكن من رؤيتها في لوحة التحكم (لأغراض البروتبوتايب)
             isProfileApproved: false,
             birthDate: new Date(birthDate).toISOString(),
             profilePictureUrl,
@@ -106,7 +107,7 @@ export default function LoginPage() {
         }
       });
     }
-  }, [user, isLogin, firestore, fullName, phoneNumber, role, gender, profilePictureUrl, birthDate, router]);
+  }, [user, isLogin, firestore, fullName, phoneNumber, role, gender, profilePictureUrl, birthDate, router, password]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#f8fafc]" dir="rtl">

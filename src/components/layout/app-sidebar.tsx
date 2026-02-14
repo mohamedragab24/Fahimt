@@ -25,7 +25,8 @@ import {
   RefreshCw,
   FileCheck,
   Shield,
-  ShieldAlert
+  ShieldAlert,
+  UserCog
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -38,6 +39,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  SidebarSeparator as SidebarSep,
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
@@ -63,7 +65,8 @@ const menuItems = [
 
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
-  { title: "إدارة المنصة", icon: Shield, href: "/admin/roles" },
+  { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
+  { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
