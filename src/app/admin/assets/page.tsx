@@ -40,7 +40,8 @@ export default function AdminAssets() {
           }, { merge: true });
           toast({ title: "تم التحديث!", description: "تم رفع الصورة الجديدة بنجاح وتحديث الموقع بالكامل." });
         } catch (err) {
-          toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث الصورة في قاعدة البيانات." });
+          console.error(err);
+          toast({ variant: "destructive", title: "خطأ في الأذونات", description: "فشل تحديث الصورة. تأكد من أنك تملك صلاحيات المسؤول الماستر." });
         } finally {
           setUploadingKey(null);
         }
