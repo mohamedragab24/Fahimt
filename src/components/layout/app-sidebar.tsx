@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -23,7 +24,8 @@ import {
   Palette,
   RefreshCw,
   FileCheck,
-  Shield
+  Shield,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,6 +67,7 @@ const adminItems = [
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
+  { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
   { title: "تخصيص المنصة", icon: Palette, href: "/admin/customize" },
   { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },

@@ -19,6 +19,9 @@
         "bio": { "type": "string" },
         "isVerified": { "type": "boolean" },
         "status": { "type": "string", "enum": ["active", "blocked"] },
+        "banReason": { "type": "string", "description": "سبب حظر الحساب إن وجد." },
+        "bannedAt": { "type": "string", "format": "date-time" },
+        "bannedBy": { "type": "string", "description": "الجهة التي قامت بالحظر (system أو admin)." },
         "isAdmin": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },

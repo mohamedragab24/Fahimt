@@ -6,20 +6,22 @@ import { useParams, useRouter } from "next/navigation";
 import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, collection, addDoc } from "firebase/firestore";
-import { Video, Star, Loader2, AlertCircle, ShieldAlert, CheckCircle2, XCircle, Info, MessageSquare } from "lucide-react";
+import { doc } from "firebase/firestore";
+import { Video, Star, Loader2, Info, ShieldAlert, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 
 declare global {
   interface Window {
     JitsiMeetExternalAPI: any;
+    webkitSpeechRecognition: any;
   }
 }
+
+const BANNED_WORDS = ["حمار", "غبي", "كلب", "واطي", "تفو", "شتيمة", "زفت", "يا وسخ", "يا غبي"];
 
 type RatingFlow = 'goal' | 'ratings' | 'complaint_ask' | 'complaint_terms' | 'complaint_final' | 'technical_only';
 
@@ -57,6 +59,65 @@ export default function MeetingPage() {
   }, [firestore, user]);
 
   const { data: profile } = useDoc(userRef);
+
+  // نظام الرقابة الصوتية التلقائي
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window && user && profile) {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'ar-SA';
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('')
+          .toLowerCase();
+
+        const detectedBannedWord = BANNED_WORDS.find(word => transcript.includes(word));
+
+        if (detectedBannedWord) {
+          handleAutoBan(detectedBannedWord);
+          recognition.stop();
+        }
+      };
+
+      recognition.onerror = () => {
+        // إعادة التشغيل في حال الخطأ لضمان استمرار الرقابة
+        try { recognition.start(); } catch(e) {}
+      };
+
+      recognition.onend = () => {
+        try { recognition.start(); } catch(e) {}
+      };
+
+      try { recognition.start(); } catch(e) {}
+
+      return () => {
+        recognition.stop();
+      };
+    }
+  }, [user, profile]);
+
+  const handleAutoBan = (word: string) => {
+    if (!userRef || !user) return;
+
+    updateDocumentNonBlocking(userRef, {
+      status: 'blocked',
+      banReason: `حظر تلقائي من السيستم: استخدام لفظ خارج (${word}) أثناء المحاضرة.`,
+      bannedAt: new Date().toISOString(),
+      bannedBy: 'system'
+    });
+
+    toast({
+      variant: "destructive",
+      title: "تم حظر حسابك",
+      description: "لقد انتهكت سياسة الاستخدام وتم حظر حسابك تلقائياً."
+    });
+
+    if (api) api.executeCommand('hangup');
+    router.push("/");
+  };
 
   useEffect(() => {
     if (requestRef && profile && requestId) {
@@ -206,7 +267,7 @@ export default function MeetingPage() {
       <Dialog open={showRatingDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-8" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="sr-only">تقييم الجلسة التعليمية</DialogTitle>
+            <DialogTitle className="text-right text-2xl font-black">تقييم الجلسة التعليمية</DialogTitle>
           </DialogHeader>
           
           {isStudent && (
