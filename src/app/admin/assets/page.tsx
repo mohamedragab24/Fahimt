@@ -62,8 +62,8 @@ export default function AdminAssets() {
 
   const assetItems = [
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
-    { key: 'miniIconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح وبجانب اسم الموقع.', icon: Layout },
-    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
+    { key: 'miniIconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح بجانب اسم الموقع.', icon: Layout },
+    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Modal)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
     { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب (Mustafhems).', icon: Users },
     { key: 'teacherHero', label: 'صورة واجهة المعلم', desc: 'تظهر للمدرسين في لوحة تحكم المفهمين.', icon: Box }
@@ -139,7 +139,7 @@ export default function AdminAssets() {
                     <div className="space-y-2">
                       <h4 className="text-2xl font-black text-primary">مزامنة فورية</h4>
                       <p className="text-zinc-600 font-bold leading-relaxed">
-                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة بيانات الفايربيز وظهوره لجميع المستخدمين في نفس اللحظة.
+                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة بيانات الفايربيز وظهوره لجميع المستخدمين في نفس اللحظة، بما في ذلك أيقونة علامة التبويب.
                       </p>
                     </div>
                   </div>
