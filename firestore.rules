@@ -3,26 +3,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // التحقق من المسؤول الماستر - منح صلاحية مطلقة لحل مشاكل الرفع
-    function isMasterAdmin() {
-      return isSignedIn() && (
+    // 1. صلاحيات المسؤول الماستر المطلقة - يجب أن تكون في البداية لضمان العبور
+    // تم منح صلاحية كاملة (قراءة وكتابة) لهؤلاء المستخدمين على كل مستند في النظام
+    match /{document=**} {
+      allow read, write: if request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
         request.auth.token.email == "mohamjedminijd2006@gmail.com" ||
         request.auth.uid == "ee87e6bwIbaSb5JoVLl4dcrHAjn2"
       );
     }
 
-    // قاعدة عامة: المسؤول الماستر له حق الوصول الكامل لكل شيء
-    match /{document=**} {
-      allow read, write: if isMasterAdmin();
+    // دوال مساعدة لبقية القواعد
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     function isAdmin() {
-      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     function isNotBlocked() {

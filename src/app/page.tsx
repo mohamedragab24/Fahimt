@@ -97,20 +97,28 @@ export default function HomePage() {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-white" dir="rtl">
         {settings?.splashImageUrl ? (
-          <div className="animate-pulse space-y-6 flex flex-col items-center">
-            <img 
-              src={settings.splashImageUrl} 
-              alt="Loading" 
-              className="h-48 w-auto object-contain drop-shadow-2xl" 
-            />
-            <div className="flex items-center gap-3 text-primary font-black text-xl">
-              <Loader2 className="animate-spin" />
-              جاري تحميل منصة {settings.siteTitle || "فهمني"}...
+          <div className="animate-in fade-in zoom-in duration-1000 space-y-8 flex flex-col items-center">
+            <div className="relative">
+              <img 
+                src={settings.splashImageUrl} 
+                alt="Loading" 
+                className="h-56 md:h-72 w-auto object-contain drop-shadow-2xl" 
+              />
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary animate-progress origin-left"></div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3 text-primary font-black text-2xl">
+                <Loader2 className="animate-spin h-6 w-6" />
+                جاري فتح {settings.siteTitle || "فهمني"}...
+              </div>
+              <p className="text-muted-foreground font-bold animate-pulse">يرجى الانتظار لحظات</p>
             </div>
           </div>
         ) : (
           <div className="p-10 text-center font-black animate-pulse text-primary text-2xl flex flex-col items-center gap-4">
-            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white text-4xl shadow-xl">ف</div>
+            <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center text-white text-5xl shadow-2xl">ف</div>
             جاري تحميل منصة فهمني...
           </div>
         )}
