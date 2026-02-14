@@ -51,7 +51,7 @@ export default function AdminSessionsReview() {
         </div>
         <div className="bg-blue-50 p-4 rounded-2xl border-2 border-dashed border-blue-200 flex items-center gap-3 text-blue-700">
           <ShieldCheck />
-          <span className="font-black">نظام الرقابة بالفيديو مفعل</span>
+          <span className="font-black">نظام الرقابة بالفيديو مفعّل</span>
         </div>
       </div>
 
