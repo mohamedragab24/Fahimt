@@ -23,7 +23,9 @@ import {
   Wand2,
   Sparkles,
   Star,
-  Users
+  Users,
+  Search,
+  MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -184,31 +186,93 @@ export default function HomePage() {
 
 function LandingPage({ router, settings }: any) {
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleActionRequiringLogin = () => {
+    router.push('/login');
+  };
+
   return (
-    <div className="min-h-screen bg-white font-body" dir="rtl">
-      <header className="absolute top-0 left-0 w-full z-50 px-6 md:px-16 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button onClick={() => router.push('/login')} className="bg-primary font-black rounded-full px-8 py-6 text-lg">حساب جديد</Button>
-          <Button variant="ghost" onClick={() => router.push('/login')} className="text-white font-black text-lg">دخول</Button>
+    <div className="relative min-h-screen bg-black font-body overflow-hidden" dir="rtl">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+          src={landingImage} 
+          alt="Books Background" 
+          fill 
+          priority
+          className="object-cover brightness-[0.4]"
+          data-ai-hint="books background"
+        />
+      </div>
+
+      {/* Navigation Header */}
+      <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => router.push('/login')} 
+            className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8 py-2 md:py-6 text-sm md:text-lg shadow-lg transition-all"
+          >
+            حساب جديد
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/login')} 
+            className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 font-black rounded-full px-6 md:px-8 py-2 md:py-6 text-sm md:text-lg"
+          >
+            دخول
+          </Button>
         </div>
-        <div className="flex items-center">
-          {settings?.logoUrl && (
-            <img src={settings.logoUrl} className="h-28 w-auto object-contain" alt="Logo" style={{ maxHeight: '120px' }} />
-          )}
+
+        <nav className="hidden lg:flex items-center gap-8 text-white/90 font-black text-lg">
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">تصفح الاستفهامات</button>
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">أعمال المفهمين</button>
+          <button onClick={handleActionRequiringLogin} className="hover:text-primary transition-colors">المفهمين</button>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            <span className="text-primary font-black text-2xl md:text-3xl block leading-none">فهمني</span>
+            <span className="text-white text-[10px] md:text-xs font-bold opacity-80">منصة التعلم الذكي</span>
+          </div>
+          <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl">
+            ف
+          </div>
         </div>
       </header>
 
-      <section className="relative h-screen flex flex-col items-center justify-center text-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={landingImage} alt="Bg" className="w-full h-full object-cover brightness-[0.3]" />
+      {/* Hero Section */}
+      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-20 md:pt-32">
+        <div className="max-w-5xl space-y-8 md:space-y-12">
+          <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight animate-in fade-in slide-in-from-bottom-10 duration-700">
+            {settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}
+          </h1>
+          <p className="text-xl md:text-4xl text-zinc-300 font-bold opacity-90 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
+            {settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}
+          </p>
+
+          {/* Search Bar */}
+          <div className="w-full max-w-3xl mx-auto bg-white/10 backdrop-blur-md p-2 md:p-3 rounded-2xl md:rounded-[2.5rem] flex flex-col md:flex-row items-center gap-2 border border-white/20 shadow-2xl animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
+            <Input 
+              placeholder="أدخل عنوان الموضوع الذي تريد فهمه" 
+              className="flex-1 bg-transparent border-none text-white text-lg md:text-2xl h-14 md:h-20 px-6 placeholder:text-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button 
+              onClick={handleActionRequiringLogin}
+              className="w-full md:w-auto h-14 md:h-20 px-10 md:px-12 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-xl md:rounded-[2rem] shadow-xl transition-all hover:scale-105"
+            >
+              استفهم الآن
+            </Button>
+          </div>
         </div>
-        <div className="relative z-10 space-y-8 max-w-5xl px-4">
-          <h1 className="text-6xl md:text-8xl font-black text-white leading-tight">{settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}</h1>
-          <p className="text-2xl md:text-4xl text-zinc-200 font-bold opacity-90">{settings?.heroSubtitle || "مُفهمين خبراء لخدمة كل مُستفهم طموح"}</p>
-          <Button onClick={() => router.push('/login')} className="h-20 px-16 text-3xl font-black rounded-3xl shadow-2xl hover:scale-105 transition-all">ابدأ رحلتك الآن</Button>
-        </div>
-      </section>
+      </main>
+
+      {/* Footer Hint */}
+      <footer className="absolute bottom-8 left-0 w-full z-10 text-center text-white/40 font-bold text-sm">
+        جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤
+      </footer>
     </div>
   );
 }
