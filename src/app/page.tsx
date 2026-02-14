@@ -32,7 +32,8 @@ import {
   ClipboardList,
   Upload,
   ImageIcon,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -49,12 +50,15 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
+import { Progress } from "@/components/ui/progress";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [showSplash, setShowSplash] = useState(true);
+  const [progress, setProgress] = useState(0);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -71,6 +75,27 @@ export default function HomePage() {
 
   const [appealReason, setAppealReason] = useState("");
   const [isSendingAppeal, setIsSendingAppeal] = useState(false);
+
+  // شاشة ترحيب مودال تظهر فقط إذا كانت هناك صورة مخصصة في splashImageUrl
+  useEffect(() => {
+    if (settings) {
+      if (settings.splashImageUrl) {
+        const timer = setInterval(() => {
+          setProgress((oldProgress) => {
+            if (oldProgress === 100) {
+              clearInterval(timer);
+              setTimeout(() => setShowSplash(false), 500);
+              return 100;
+            }
+            return Math.min(oldProgress + 10, 100);
+          });
+        }, 200);
+        return () => clearInterval(timer);
+      } else {
+        setShowSplash(false);
+      }
+    }
+  }, [settings]);
 
   const handleSendAppeal = async () => {
     if (!appealReason.trim() || !firestore || !user) return;
@@ -93,9 +118,36 @@ export default function HomePage() {
     }
   };
 
-  // تم إلغاء شاشة التحميل بناءً على طلبك
   if (isUserLoading || isProfileLoading) {
     return null;
+  }
+
+  // واجهة شاشة التحميل المودال
+  if (showSplash && settings?.splashImageUrl) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-500">
+        <div className="relative w-full max-w-md p-8 text-center space-y-8 animate-in zoom-in-95 duration-500">
+          <button 
+            onClick={() => setShowSplash(false)}
+            className="absolute -top-4 -right-4 bg-white p-2 rounded-full shadow-lg hover:bg-zinc-100 transition-colors"
+          >
+            <X size={20} />
+          </button>
+          <div className="relative aspect-square w-64 mx-auto overflow-hidden rounded-[3rem] shadow-2xl border-8 border-white ring-4 ring-primary/20">
+            <img 
+              src={settings.splashImageUrl} 
+              alt="Welcome" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-3xl font-black text-primary">مرحباً بك في {settings.siteTitle || "فهمني"}</h2>
+            <p className="text-muted-foreground font-bold">جاري تحضير بيئة التعلم الذكية...</p>
+            <Progress value={progress} className="h-2 w-full" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user || !profile) {

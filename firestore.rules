@@ -3,13 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. صلاحيات المسؤول الماستر المطلقة (أولوية قصوى) - حل مشكلة الأذونات نهائياً
+    // 1. صلاحيات المسؤول الماستر المطلقة (أولوية قصوى)
+    // حساب mohamed76y@gmail.com هو صاحب المنصة ويملك صلاحية كاملة على كل شيء
     function isMasterAdmin() {
       return request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
-        request.auth.token.email == "mohamjedminijd2006@gmail.com" ||
         request.auth.uid == "ee87e6bwIbaSb5JoVLl4dcrHAjn2"
       );
+    }
+
+    // القاعدة الذهبية: المسؤول الماستر له حق الوصول الكامل والنهائي لكل شيء في البداية
+    match /{document=**} {
+      allow read, write: if isMasterAdmin();
     }
 
     // 2. التحقق مما إذا كان المستخدم مسؤولاً (للمساعدين)
@@ -36,11 +41,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // القاعدة الذهبية: المسؤول الماستر له حق الوصول الكامل والنهائي لكل شيء
-    match /{document=**} {
-      allow read, write: if isMasterAdmin();
-    }
-
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -61,10 +61,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // الإعدادات العامة والأصول - مسموح لأي مسؤول بتغييرها
+    // الإعدادات العامة والأصول - مسموح لأي مسؤول أو الماستر بتغييرها
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isMasterAdmin();
     }
 
     // القواعد العامة للمجموعات الأخرى

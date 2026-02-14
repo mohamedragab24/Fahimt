@@ -67,20 +67,15 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث الأيقونة المصغرة (Favicon) بشكل آمن
-      if (settings.miniIconUrl && typeof document !== 'undefined') {
+      // تحديث الأيقونة المصغرة للويب (Favicon) من حقل faviconUrl حصراً
+      const faviconToUse = settings.faviconUrl || settings.miniIconUrl;
+      if (faviconToUse && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
 
-          // مسح روابط الأيقونات القديمة بأمان باستخدام remove()
+          // مسح روابط الأيقونات القديمة
           const existingIcons = document.querySelectorAll("link[rel*='icon']");
-          existingIcons.forEach(el => {
-            try {
-              el.remove();
-            } catch (e) {
-              console.warn("Failed to remove old favicon element", e);
-            }
-          });
+          existingIcons.forEach(el => el.remove());
 
           // إنشاء الأيقونات الجديدة
           const iconTypes = [
@@ -98,7 +93,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
           });
         };
         
-        updateFavicon(settings.miniIconUrl);
+        updateFavicon(faviconToUse);
       }
 
       // تحديث عنوان الموقع في التبويب

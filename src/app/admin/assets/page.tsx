@@ -6,7 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box } from "lucide-react";
+import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -51,7 +51,7 @@ export default function AdminAssets() {
   };
 
   const getFallbackImage = (key: string) => {
-    if (key === 'logoUrl' || key === 'miniIconUrl' || key === 'splashImageUrl') return "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400";
+    if (key === 'logoUrl' || key === 'miniIconUrl' || key === 'faviconUrl' || key === 'splashImageUrl') return "https://placehold.co/400x400?text=Fahimni";
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
@@ -62,8 +62,9 @@ export default function AdminAssets() {
 
   const assetItems = [
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
-    { key: 'miniIconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح بجانب اسم الموقع.', icon: Layout },
-    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Modal)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
+    { key: 'miniIconUrl', label: 'الأيقونة المصغرة (UI)', desc: 'تظهر بجانب الاسم في القائمة الجانبية والهيدر.', icon: Layout },
+    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح (Tab).', icon: Globe },
+    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
     { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب (Mustafhems).', icon: Users },
     { key: 'teacherHero', label: 'صورة واجهة المعلم', desc: 'تظهر للمدرسين في لوحة تحكم المفهمين.', icon: Box }
@@ -73,8 +74,8 @@ export default function AdminAssets() {
     <div className="p-6 md:p-10 space-y-10 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">مركز إدارة جميع صور المنصة</h1>
-          <p className="text-muted-foreground text-xl">تحكم كامل في الأصول المخزنة في Firebase؛ التحديث يطبق فوراً للجميع.</p>
+          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">إدارة أصول وصور المنصة</h1>
+          <p className="text-muted-foreground text-xl">تحكم كامل في جميع الصور؛ التحديث يطبق فوراً على مستوى النظام.</p>
         </div>
         <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
           <Sparkles className="text-primary h-6 w-6" />
@@ -114,14 +115,14 @@ export default function AdminAssets() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
-                      <AlertCircle size={14} /> المعاينة الحالية (من الفايربيز)
+                      <AlertCircle size={14} /> المعاينة الحالية
                     </div>
-                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' ? 'h-48' : 'aspect-video'}`}>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
                         <img 
                           src={currentImage} 
                           alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
@@ -139,7 +140,7 @@ export default function AdminAssets() {
                     <div className="space-y-2">
                       <h4 className="text-2xl font-black text-primary">مزامنة فورية</h4>
                       <p className="text-zinc-600 font-bold leading-relaxed">
-                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة بيانات الفايربيز وظهوره لجميع المستخدمين في نفس اللحظة، بما في ذلك أيقونة علامة التبويب.
+                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة البيانات وظهوره لجميع المستخدمين في نفس اللحظة.
                       </p>
                     </div>
                   </div>
