@@ -7,18 +7,21 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, collection, addDoc } from "firebase/firestore";
-import { Video, Star, Loader2, AlertCircle } from "lucide-react";
+import { Video, Star, Loader2, AlertCircle, ShieldAlert, CheckCircle2, XCircle, Info, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 declare global {
   interface Window {
     JitsiMeetExternalAPI: any;
   }
 }
+
+type RatingFlow = 'goal' | 'ratings' | 'complaint_ask' | 'complaint_terms' | 'complaint_final' | 'technical_only';
 
 export default function MeetingPage() {
   const { requestId } = useParams();
@@ -28,8 +31,16 @@ export default function MeetingPage() {
   const { toast } = useToast();
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
   const [api, setApi] = useState<any>(null);
-  const [showRating, setShowRating] = useState(false);
-  const [rating, setRating] = useState(0);
+  
+  // UI States
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [currentStep, setCurrentStep] = useState<RatingFlow>('goal');
+  
+  // Rating Data
+  const [goalAchieved, setGoalAchieved] = useState<boolean | null>(null);
+  const [understandingRating, setUnderstandingRating] = useState(0);
+  const [teacherStyleRating, setTeacherStyleRating] = useState(0);
+  const [platformTechRating, setPlatformTechRating] = useState(0);
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,10 +88,6 @@ export default function MeetingPage() {
           prejoinPageEnabled: false,
           enableWelcomePage: false,
           autoRecord: true,
-          localRecording: {
-            enabled: true,
-            format: 'flac'
-          }
         },
         interfaceConfigOverwrite: {
           TOOLBAR_BUTTONS: [
@@ -93,68 +100,56 @@ export default function MeetingPage() {
       const newApi = new window.JitsiMeetExternalAPI(domain, options);
       setApi(newApi);
 
-      newApi.on('videoConferenceJoined', () => {
-        // محاولة تفعيل التسجيل تلقائياً لحماية الطرفين
-        newApi.executeCommand('startRecording', { mode: 'file' });
-      });
-
-      newApi.on('recordingStatusChanged', (data: any) => {
-        if (data.on && data.link && requestRef) {
-          updateDocumentNonBlocking(requestRef, { 
-            recordingUrl: data.link,
-            isRecordingActive: true
-          });
-        }
-      });
-
       newApi.addEventListener('videoConferenceLeft', () => {
-        if (profile.role === 'mustafhem') {
-          setShowRating(true);
-        } else {
-          router.push("/requests");
-        }
+        setShowRatingDialog(true);
       });
     }
   };
 
-  const submitRating = async () => {
-    if (rating === 0) {
-      toast({ variant: "destructive", title: "التقييم إجباري", description: "يرجى تقييم المحاضرة لإكمال العملية وحفظ السجل." });
-      return;
+  // المراقبة اللحظية لإنهاء الجلسة من قبل الطالب بالنسبة للمعلم
+  useEffect(() => {
+    if (request?.status === 'completed' || request?.status === 'pending_review') {
+      if (profile?.role === 'mufhem' && !showRatingDialog) {
+        setShowRatingDialog(true);
+        setCurrentStep('technical_only');
+      }
     }
-    
+  }, [request?.status, profile?.role, showRatingDialog]);
+
+  const handleFinishSession = async (isComplaint: boolean = false) => {
     setIsSubmitting(true);
     
     if (requestRef && request && firestore) {
-      // 1. تحديث حالة الاستفهام
-      updateDocumentNonBlocking(requestRef, {
-        rating,
-        review,
-        status: 'completed',
-        completedAt: new Date().toISOString()
-      });
-
-      // 2. معالجة الأموال (أتمتة الدفع)
-      const commission = request.amount * 0.2;
-      const teacherEarning = request.amount * 0.8;
-
-      // خصم من الطالب (إذا لم يخصم مسبقاً، هنا نعتبره دفعة نهائية)
-      createTransactionNonBlocking(firestore, request.mustafhemId, {
-        amount: request.amount,
-        type: 'withdrawal',
-        details: `رسوم محاضرة: ${request.title}`,
-        status: 'completed'
-      });
-
-      // إضافة للمعلم
-      createTransactionNonBlocking(firestore, request.mufhemId, {
-        amount: teacherEarning,
-        type: 'earning',
-        details: `أرباح محاضرة: ${request.title} (بعد خصم عمولة 20%)`,
-        status: 'completed'
-      });
+      const finalStatus = isComplaint ? 'pending_review' : 'completed';
       
-      toast({ title: "تم الانتهاء بنجاح!", description: "شكراً لتقييمك، تم تحويل الأرباح للمفهم وحفظ سجل الرقابة." });
+      updateDocumentNonBlocking(requestRef, {
+        understandingRating,
+        teacherStyleRating,
+        platformTechRating,
+        review,
+        status: finalStatus,
+        completedAt: new Date().toISOString(),
+        hasComplaint: isComplaint
+      });
+
+      if (!isComplaint) {
+        const teacherEarning = request.amount * 0.8;
+        createTransactionNonBlocking(firestore, request.mustafhemId, {
+          amount: request.amount,
+          type: 'withdrawal',
+          details: `رسوم محاضرة: ${request.title}`,
+          status: 'completed'
+        });
+        createTransactionNonBlocking(firestore, request.mufhemId, {
+          amount: teacherEarning,
+          type: 'earning',
+          details: `أرباح محاضرة: ${request.title}`,
+          status: 'completed'
+        });
+      } else {
+        toast({ title: "تم تسجيل الشكوى", description: "سيتم مراجعة الجلسة من قبل الإدارة خلال 3 أيام." });
+      }
+      
       router.push("/requests");
     }
   };
@@ -166,6 +161,8 @@ export default function MeetingPage() {
     </div>
   );
 
+  const isStudent = profile?.role === 'mustafhem';
+
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden" dir="rtl">
       <Script 
@@ -173,6 +170,11 @@ export default function MeetingPage() {
         onLoad={startMeeting}
       />
       
+      {/* شريط التنبيه الدائم */}
+      <div className="bg-red-500 text-white text-center py-2 font-black text-sm md:text-lg animate-pulse shadow-lg z-[60]">
+        الجلسة مسجلة لضمان حقك وجوة الخدمة
+      </div>
+
       <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 z-50">
         <div className="flex items-center gap-4">
           <div className="bg-primary/20 p-2 rounded-lg">
@@ -182,22 +184,17 @@ export default function MeetingPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          {profile?.role === 'mufhem' && (
-            <div className="hidden md:flex items-center gap-2 text-zinc-400 text-xs font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">
-              <AlertCircle size={14} /> بانتظار الطالب لإنهاء الجلسة (التقييم إلزامي للطالب)
-            </div>
-          )}
           <Button 
             variant="destructive" 
             size="sm" 
             onClick={() => { 
-              if (profile?.role === 'mufhem') {
-                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب (المستفهم) إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم وتحويل أرباحك." });
+              if (!isStudent) {
+                toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم وتحويل أرباحك." });
               } else {
                 api?.executeCommand('hangup'); 
               }
             }} 
-            className="rounded-full px-6 font-bold shadow-lg"
+            className="rounded-full px-6 font-black shadow-lg"
           >
             إنهاء الجلسة
           </Button>
@@ -208,43 +205,123 @@ export default function MeetingPage() {
         <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      <Dialog open={showRating} onOpenChange={(open) => { if (!open && rating === 0) return; setShowRating(open); }}>
-        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
-              <Star className="text-yellow-500 fill-yellow-500" /> تقييم المحاضرة
-            </DialogTitle>
-            <DialogDescription className="text-right text-lg font-medium">يرجى تقييم أداء المفهم لإغلاق المحاضرة وضمان حقه في الأرباح.</DialogDescription>
-          </DialogHeader>
-          <div className="py-8 space-y-8 flex flex-col items-center">
-            <div className="flex gap-3">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setRating(star)} className="transition-all hover:scale-125">
-                  <Star className={`h-12 w-12 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />
-                </button>
-              ))}
+      {/* مودال التقييم والشكاوى المطور */}
+      <Dialog open={showRatingDialog} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-8" dir="rtl">
+          
+          {/* واجهة المستفهم (الطالب) */}
+          {isStudent && (
+            <div className="space-y-6">
+              {currentStep === 'goal' && (
+                <div className="text-center space-y-8 py-6">
+                  <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-primary">
+                    <MessageSquare size={40} />
+                  </div>
+                  <h2 className="text-2xl font-black text-zinc-800">هل فهمت وحققت هدفك من الاستفهام؟</h2>
+                  <div className="flex gap-4 justify-center">
+                    <Button onClick={() => { setGoalAchieved(true); setCurrentStep('ratings'); }} className="h-16 px-12 rounded-2xl bg-green-600 hover:bg-green-700 text-xl font-black">نعم</Button>
+                    <Button onClick={() => { setGoalAchieved(false); setCurrentStep('complaint_ask'); }} variant="outline" className="h-16 px-12 rounded-2xl border-2 text-xl font-black">لا</Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 'ratings' && (
+                <div className="space-y-6">
+                  <DialogHeader>
+                    <DialogTitle className="text-right text-2xl font-black">تقييم الجلسة</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    <RatingItem label="قيم مدى فهمك لهذا الاستفهام" value={understandingRating} onChange={setUnderstandingRating} />
+                    <RatingItem label="قيم أسلوب وشرح المفهم" value={teacherStyleRating} onChange={setTeacherStyleRating} />
+                    <RatingItem label="قيم جودة الجلسة تقنياً على المنصة" value={platformTechRating} onChange={setPlatformTechRating} />
+                    <div className="space-y-2">
+                      <Label className="font-bold">اكتب رأيك...</Label>
+                      <Textarea value={review} onChange={(e) => setReview(e.target.value)} className="rounded-xl border-2" />
+                    </div>
+                    <Button onClick={() => handleFinishSession(false)} disabled={isSubmitting} className="w-full h-14 rounded-2xl font-black text-lg">إرسال التقييم وإنهاء</Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 'complaint_ask' && (
+                <div className="text-center space-y-8 py-6">
+                  <div className="bg-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-orange-600">
+                    <ShieldAlert size={40} />
+                  </div>
+                  <h2 className="text-2xl font-black text-zinc-800 leading-relaxed px-4">هل تريد تقديم شكوى وطلب مراجعة للجلسة لاسترداد قيمتها ومعاقبة المفهم في حالة ثبوت خطئه؟</h2>
+                  <div className="flex gap-4 justify-center">
+                    <Button onClick={() => setCurrentStep('complaint_terms')} className="h-16 px-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-xl font-black">نعم</Button>
+                    <Button onClick={() => setCurrentStep('ratings')} variant="outline" className="h-16 px-12 rounded-2xl border-2 text-xl font-black">لا</Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 'complaint_terms' && (
+                <div className="space-y-6">
+                  <div className="p-6 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 text-sm space-y-4">
+                    <h3 className="font-black text-blue-800 text-lg flex items-center gap-2"><Info size={20}/> تنبيهات الشكوى:</h3>
+                    <ul className="list-decimal list-inside space-y-2 text-blue-900 font-bold">
+                      <li>استكمال إجراءات الشكوى سيحول الأمر للإدارة لمراجعة التسجيل.</li>
+                      <li>إذا ثبت خطأك، سيتم خصم مستحقاتك المالية.</li>
+                      <li>إذا ثبت تقصير المفهم، سيتم إعادة المبلغ لك كلياً أو جزئياً.</li>
+                    </ul>
+                    <p className="text-xs text-red-600 font-black">* ملاحظة: في حال انتهاء الفترة المجانية (أول 5 دقائق) دون طلب مغادرة، سيتم خصم الرصيد تلقائياً.</p>
+                  </div>
+                  <h4 className="text-xl font-black text-center">هل تود استكمال إجراءات الشكوى؟</h4>
+                  <div className="flex gap-4">
+                    <Button onClick={() => handleFinishSession(true)} className="flex-1 h-14 rounded-2xl bg-red-600 font-black">استكمال الشكوى</Button>
+                    <Button onClick={() => setCurrentStep('ratings')} variant="outline" className="flex-1 h-14 rounded-2xl font-black">الإقرار بالتحصيل</Button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="w-full space-y-2">
-              <Label className="font-black text-sm mr-2">ما رأيك في شرح المعلم؟</Label>
-              <Textarea 
-                placeholder="اكتب ملاحظاتك هنا (اختياري)..." 
-                className="h-32 rounded-2xl text-lg p-4 border-2 focus:border-primary text-right"
-                value={review}
-                onChange={(e) => setReview(e.target.value)}
-              />
+          )}
+
+          {/* واجهة المفهم (المعلم) */}
+          {!isStudent && (
+            <div className="space-y-8 py-6">
+              <div className="text-center space-y-4">
+                <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-blue-600 animate-bounce">
+                  <Loader2 size={40} />
+                </div>
+                <h2 className="text-2xl font-black">يرجى الانتظار لحظات..</h2>
+                <p className="text-muted-foreground font-bold leading-relaxed px-10 text-lg">المستفهم يقوم بتقييم الجلسة الآن. خروجك قبل النهاية قد يؤثر على احتساب الجلسة.</p>
+              </div>
+              
+              <div className="border-t pt-8 space-y-6">
+                <RatingItem label="قيم جودة الجلسة تقنياً على المنصة" value={platformTechRating} onChange={setPlatformTechRating} />
+                <div className="space-y-2">
+                  <Label className="font-bold">ملاحظات تقنية (اختياري)</Label>
+                  <Textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="اكتب رأيك..." className="rounded-xl border-2 h-24" />
+                </div>
+                <Button 
+                  onClick={() => router.push("/requests")} 
+                  disabled={request?.status === 'accepted'} 
+                  className="w-full h-16 rounded-2xl font-black text-xl shadow-lg"
+                >
+                  {request?.status === 'accepted' ? "بانتظار إنهاء الطالب..." : "إنهاء والعودة"}
+                </Button>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              onClick={submitRating} 
-              disabled={isSubmitting}
-              className="w-full h-16 text-xl font-black rounded-2xl shadow-xl"
-            >
-              {isSubmitting ? "جاري الحفظ..." : "إرسال التقييم وإنهاء الجلسة"}
-            </Button>
-          </DialogFooter>
+          )}
+
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function RatingItem({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) {
+  return (
+    <div className="space-y-2 text-right">
+      <Label className="font-black text-zinc-700">{label}</Label>
+      <div className="flex gap-2 justify-end">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <button key={s} onClick={() => onChange(s)} className="transition-transform hover:scale-110">
+            <Star className={`h-8 w-8 ${value >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
