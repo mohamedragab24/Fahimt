@@ -94,34 +94,30 @@ export default function HomePage() {
   };
 
   if (isUserLoading || isProfileLoading) {
+    const splashSrc = settings?.splashImageUrl || settings?.miniIconUrl;
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-white" dir="rtl">
-        {settings?.splashImageUrl ? (
-          <div className="animate-in fade-in zoom-in duration-1000 space-y-8 flex flex-col items-center">
-            <div className="relative">
-              <img 
-                src={settings.splashImageUrl} 
-                alt="Loading" 
-                className="h-56 md:h-72 w-auto object-contain drop-shadow-2xl" 
-              />
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary animate-progress origin-left"></div>
-              </div>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white backdrop-blur-md" dir="rtl">
+        <div className="relative flex flex-col items-center max-w-xs w-full px-6 animate-in fade-in zoom-in duration-700">
+          {splashSrc ? (
+            <img 
+              src={splashSrc} 
+              alt="Loading" 
+              className="h-40 md:h-56 w-auto object-contain drop-shadow-2xl mb-8 animate-pulse" 
+            />
+          ) : (
+            <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center text-white text-5xl font-black mb-8 shadow-2xl animate-bounce">ف</div>
+          )}
+          
+          <div className="w-full space-y-4 text-center">
+            <h2 className="text-2xl font-black text-primary tracking-tight">
+              {settings?.siteTitle || "فهمني"}
+            </h2>
+            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary animate-progress origin-left"></div>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-3 text-primary font-black text-2xl">
-                <Loader2 className="animate-spin h-6 w-6" />
-                جاري فتح {settings.siteTitle || "فهمني"}...
-              </div>
-              <p className="text-muted-foreground font-bold animate-pulse">يرجى الانتظار لحظات</p>
-            </div>
+            <p className="text-muted-foreground font-bold text-sm animate-pulse">جاري تأمين اتصالك بالمنصة...</p>
           </div>
-        ) : (
-          <div className="p-10 text-center font-black animate-pulse text-primary text-2xl flex flex-col items-center gap-4">
-            <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center text-white text-5xl shadow-2xl">ف</div>
-            جاري تحميل منصة فهمني...
-          </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -270,12 +266,12 @@ function LandingPage({ router, settings }: any) {
 
         <div className="flex items-center gap-2">
           <div className="text-right">
-            <span className="text-primary font-black text-2xl md:text-3xl block leading-none">فهمني</span>
+            <span className="text-primary font-black text-2xl md:text-3xl block leading-none">{settings?.siteTitle || "فهمني"}</span>
             <span className="text-white text-[10px] md:text-xs font-bold opacity-80">منصة التعلم الذكي</span>
           </div>
           <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl">
             {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="w-full h-full object-contain p-1" alt="f" />
+              <img src={settings.miniIconUrl} className="w-full h-full object-contain p-1 rounded-lg" alt="icon" />
             ) : "ف"}
           </div>
         </div>

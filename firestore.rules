@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. صلاحيات المسؤول الماستر المطلقة (وصول كامل دون قيود)
+    // 1. صلاحيات المسؤول الماستر المطلقة (أولوية قصوى)
     function isMasterAdmin() {
       return request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
@@ -12,7 +12,7 @@ service cloud.firestore {
       );
     }
 
-    // 2. التحقق مما إذا كان المستخدم مسؤولاً (سواء ماستر أو بقرار إداري)
+    // 2. التحقق مما إذا كان المستخدم مسؤولاً
     function isAdmin() {
       return request.auth != null && (
         isMasterAdmin() ||
@@ -36,7 +36,7 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // السماح للمسؤول الماستر بكل شيء في أي مكان
+    // القاعدة الذهبية: المسؤول الماستر له حق الوصول الكامل والنهائي
     match /{document=**} {
       allow read, write: if isMasterAdmin();
     }
@@ -61,7 +61,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // الإعدادات العامة - مسموح لأي مسؤول بتغييرها
+    // الإعدادات العامة - مسموح لأي مسؤول أو حساب له صلاحية إدارية بتغييرها
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
