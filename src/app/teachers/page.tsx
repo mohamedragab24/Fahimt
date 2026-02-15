@@ -3,15 +3,15 @@
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { GraduationCap, ShieldCheck, Star, Search, MessageSquare, Briefcase, Image as ImageIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ShieldCheck, Star, Search, MapPin, User } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export default function TeachersPage() {
   const firestore = useFirestore();
@@ -25,7 +25,6 @@ export default function TeachersPage() {
 
   const { data: teachers, isLoading } = useCollection(teachersQuery);
 
-  // جلب أعمال المفهم المختار
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;
     return query(collection(firestore, "portfolio"), where("mufhemId", "==", selectedTeacher.id), orderBy("createdAt", "desc"));
@@ -39,118 +38,113 @@ export default function TeachersPage() {
   );
 
   return (
-    <div className="p-6 md:p-10 space-y-12" dir="rtl">
+    <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tight">نخبة "المفهمين" الموثقين</h1>
-        <p className="text-muted-foreground text-xl">تصفح قائمة الخبراء المتاحين لمساعدتك في أي وقت.</p>
-        <div className="relative mt-8">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tight text-zinc-800">نخبة "المفهمين" الموثقين</h1>
+        <div className="relative mt-8 max-w-xl mx-auto">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث باسم المدرس أو التخصص (مثل: رياضيات، لغات...)" 
-            className="h-16 pr-12 rounded-2xl shadow-xl text-lg border-2 focus:border-primary"
+            placeholder="ابحث باسم المدرس أو التخصص..." 
+            className="h-14 pr-12 rounded-2xl shadow-sm border-2 bg-white focus:border-primary"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {isLoading ? (
-          <div className="col-span-full py-20 text-center animate-pulse font-bold text-2xl">جاري البحث عن المدرسين...</div>
+          <div className="col-span-full py-20 text-center animate-pulse font-bold text-xl">جاري البحث عن المدرسين...</div>
         ) : filteredTeachers?.map((teacher) => (
-          <Card key={teacher.id} className="rounded-[2.5rem] border-2 hover:border-primary transition-all overflow-hidden group shadow-lg hover:shadow-2xl bg-white">
-            <CardHeader className="p-0 relative">
-              <div className="h-32 bg-gradient-to-br from-primary to-accent"></div>
-              <div className="absolute -bottom-12 right-8">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
-                  <AvatarImage src={teacher.profilePictureUrl} />
-                  <AvatarFallback className="text-2xl font-black">{teacher.fullName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-16 p-8 space-y-4">
-              <div>
-                <h3 className="text-xl font-black flex items-center gap-2">
+          <Card key={teacher.id} className="rounded-xl overflow-hidden shadow-sm border-none flex flex-col items-center p-6 bg-white text-center hover:shadow-md transition-shadow">
+            <div className="relative mb-4">
+              <Avatar className="h-24 w-24 border-2 border-zinc-50 shadow-sm">
+                <AvatarImage src={teacher.profilePictureUrl} />
+                <AvatarFallback className="text-2xl font-black bg-zinc-100 text-zinc-400">{teacher.fullName?.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </div>
+            
+            <div className="space-y-1 mb-4 flex flex-col items-center w-full">
+              <div className="flex items-center gap-2 justify-center">
+                <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
+                <h3 className="text-lg font-bold text-zinc-800 flex items-center gap-1">
                   {teacher.fullName}
-                  {teacher.isVerified && <ShieldCheck className="h-5 w-5 text-blue-500 fill-blue-500/10" />}
+                  {teacher.isVerified && <ShieldCheck className="h-4 w-4 text-blue-500 fill-blue-500" />}
                 </h3>
-                <p className="text-primary font-bold text-sm flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" /> {teacher.specialization || "خبير تعليمي"}
-                </p>
               </div>
-              <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-medium text-right">
-                {teacher.bio || "لا يوجد نبذة تعريفية مضافة حالياً."}
-              </p>
-              <div className="flex justify-between items-center pt-4 border-t border-dashed">
-                <div className="flex items-center gap-1 text-yellow-500 font-bold">
-                  <Star className="h-4 w-4 fill-current" /> 5.0
-                </div>
-                <Button 
-                  onClick={() => setSelectedTeacher(teacher)}
-                  variant="outline" 
-                  className="rounded-xl font-bold hover:bg-primary hover:text-white"
-                >
-                  عرض الملف
-                </Button>
+              <div className="flex items-center gap-1 text-zinc-500 text-sm font-medium">
+                <User size={14} className="opacity-70" />
+                <span className="truncate max-w-[120px]">{teacher.specialization || "خبير تعليمي"}</span>
+                <span className="mx-1 text-zinc-300">•</span>
+                <MapPin size={14} className="opacity-70" />
+                <span>مصر</span>
               </div>
-            </CardContent>
+            </div>
+
+            <div className="flex gap-0.5 mb-6 justify-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              ))}
+            </div>
+
+            <Button 
+              onClick={() => setSelectedTeacher(teacher)}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg h-11 transition-colors"
+            >
+              الملف الشخصي
+            </Button>
           </Card>
         ))}
       </div>
 
       <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
-        <DialogContent className="sm:max-w-[700px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+        <DialogContent className="sm:max-w-[700px] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
           <ScrollArea className="max-h-[90vh]">
-            <div className="p-10 space-y-8">
-              <div className="flex items-center gap-6 p-8 bg-muted/20 rounded-[2.5rem]">
-                <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+            <div className="p-8 space-y-8">
+              <div className="flex items-center gap-6 p-6 bg-zinc-50 rounded-3xl">
+                <Avatar className="h-28 w-28 border-4 border-white shadow-md">
                   <AvatarImage src={selectedTeacher?.profilePictureUrl} />
                   <AvatarFallback className="text-4xl">{selectedTeacher?.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-right flex-1">
-                  <h4 className="text-3xl font-black flex items-center gap-3">
+                  <h4 className="text-2xl font-black flex items-center gap-2">
                     {selectedTeacher?.fullName}
-                    {selectedTeacher?.isVerified && <ShieldCheck className="h-8 w-8 text-blue-500" />}
+                    {selectedTeacher?.isVerified && <ShieldCheck className="h-6 w-6 text-blue-500" />}
                   </h4>
-                  <Badge className="bg-primary mt-3 px-6 py-1.5 text-md font-black">{selectedTeacher?.specialization || "خبير عام"}</Badge>
+                  <Badge className="bg-primary/10 text-primary border-none mt-2 px-4 py-1 font-bold">
+                    {selectedTeacher?.specialization || "خبير عام"}
+                  </Badge>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h5 className="text-2xl font-black flex items-center gap-3 border-r-4 border-primary pr-4">
-                  <Briefcase className="text-primary" /> النبذة التعريفية والخبرات
-                </h5>
-                <div className="p-8 bg-zinc-50 rounded-3xl border-2 border-dashed text-xl leading-relaxed text-zinc-700 italic text-right">
+                <h5 className="text-xl font-black text-zinc-800 border-r-4 border-primary pr-3">النبذة التعريفية</h5>
+                <div className="p-6 bg-zinc-50 rounded-2xl text-lg leading-relaxed text-zinc-600 italic">
                   "{selectedTeacher?.bio || "لم يقم هذا المفهم بإضافة نبذة تعريفية بعد."}"
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <h5 className="text-2xl font-black flex items-center gap-3 border-r-4 border-accent pr-4">
-                  <ImageIcon className="text-accent" /> معرض الأعمال والشهادات
-                </h5>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {teacherPortfolio?.map(item => (
-                    <Card key={item.id} className="aspect-square rounded-2xl overflow-hidden border-2 shadow-md">
-                      <img src={item.mediaUrl} className="w-full h-full object-cover" alt="Portfolio" />
-                    </Card>
-                  ))}
-                  {(!teacherPortfolio || teacherPortfolio.length === 0) && (
-                    <div className="col-span-full py-10 text-center bg-muted/10 rounded-2xl text-muted-foreground font-bold italic">
-                      لا توجد أعمال معروضة حالياً.
-                    </div>
-                  )}
+              {teacherPortfolio && teacherPortfolio.length > 0 && (
+                <div className="space-y-4">
+                  <h5 className="text-xl font-black text-zinc-800 border-r-4 border-accent pr-3">معرض الأعمال</h5>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {teacherPortfolio.map(item => (
+                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm">
+                        <img src={item.mediaUrl} className="w-full h-full object-cover" alt="Portfolio" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-2 gap-6 pt-4">
-                <div className="bg-green-50 p-6 rounded-3xl text-center">
-                  <p className="text-sm text-green-600 font-black">تقييم الطلاب</p>
-                  <p className="text-4xl font-black text-green-700">5.0 <span className="text-lg">/ 5</span></p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-50 p-4 rounded-2xl text-center">
+                  <p className="text-xs text-green-600 font-bold mb-1">التقييم العام</p>
+                  <p className="text-2xl font-black text-green-700">5.0</p>
                 </div>
-                <div className="bg-blue-50 p-6 rounded-3xl text-center">
-                  <p className="text-sm text-blue-600 font-black">حالة التوثيق</p>
-                  <p className="text-2xl font-black text-blue-700">{selectedTeacher?.isVerified ? "موثق رسمياً" : "نشط"}</p>
+                <div className="bg-blue-50 p-4 rounded-2xl text-center">
+                  <p className="text-xs text-blue-600 font-bold mb-1">الحالة</p>
+                  <p className="text-2xl font-black text-blue-700">{selectedTeacher?.isVerified ? "موثق" : "نشط"}</p>
                 </div>
               </div>
             </div>
