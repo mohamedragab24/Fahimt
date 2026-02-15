@@ -14,7 +14,9 @@ import {
   Users,
   MessageSquare,
   X,
-  Briefcase
+  Briefcase,
+  ImageIcon,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -357,6 +359,18 @@ function MufhemView({ profile }: any) {
           <h3 className="text-5xl font-black">{stats.rating.toFixed(1)}</h3>
         </Card>
       </div>
+
+      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-accent/10">
+        <div className="space-y-4 text-right">
+          <h2 className="text-4xl font-black text-zinc-800">اعرض مهاراتك.. أضف عملاً جديداً لمعرضك</h2>
+          <p className="text-muted-foreground font-bold text-lg max-w-xl">كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم.</p>
+          <Button size="lg" onClick={() => router.push('/portfolio/add')} className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20">
+            إضافة عمل جديد للمعرض <Plus className="mr-2" />
+          </Button>
+        </div>
+        <ImageIcon size={120} className="text-accent opacity-20 hidden md:block" />
+      </div>
+
       <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
         <div className="p-6 border-b"><h3 className="text-xl font-black">الاستفهامات المتاحة</h3></div>
         <div className="divide-y">

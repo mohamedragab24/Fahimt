@@ -79,9 +79,9 @@ export default function GlobalPortfolioPage() {
           {profile?.role === 'mufhem' && (
             <Button 
               onClick={() => router.push('/portfolio/add')}
-              className="h-14 px-8 rounded-2xl font-black bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 flex gap-2"
+              className="h-14 px-8 rounded-2xl font-black bg-accent hover:bg-accent/90 shadow-xl shadow-accent/20 flex gap-2"
             >
-              <Plus size={20} /> إضافة عمل جديد
+              <Plus size={20} /> إضافة عمل جديد للمعرض
             </Button>
           )}
         </div>
