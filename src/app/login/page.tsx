@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -18,18 +17,14 @@ import {
   UserCircle, 
   Mail, 
   ShieldCheck, 
-  CheckCircle2, 
   Loader2, 
   KeyRound, 
-  UserPlus, 
   LogIn, 
   ChevronRight, 
   Calendar,
   Smartphone,
   MessageSquare,
   User,
-  Info,
-  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
@@ -52,7 +47,7 @@ const COUNTRIES = [
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [step, setStep] = useState<'info' | 'verify' | 'final'>('info');
+  const [step, setStep] = useState<'info' | 'verify'>('info');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -218,7 +213,6 @@ export default function LoginPage() {
             <div className="space-y-8">
               {step === 'info' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* 1. الصورة الشخصية */}
                   <div className="flex flex-col items-center gap-4">
                     <div className="relative cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                       <Avatar className={`h-40 w-44 border-[6px] transition-all group-hover:scale-105 ${profilePictureUrl ? 'border-primary/20 shadow-2xl' : 'border-dashed border-zinc-200 bg-zinc-50'}`}>
@@ -232,13 +226,11 @@ export default function LoginPage() {
                   </div>
                   
                   <div className="space-y-6">
-                    {/* 2. الاسم الكامل */}
                     <div className="space-y-2">
                       <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">الاسم الكامل <User size={18} className="text-primary"/></Label>
                       <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
                     </div>
 
-                    {/* 3. رقم الهاتف وتاريخ الميلاد */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">رقم الهاتف <Smartphone size={18} className="text-primary"/></Label>
@@ -264,19 +256,16 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* 4. البريد الإلكتروني */}
                     <div className="space-y-2">
                       <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">البريد الإلكتروني <Mail size={18} className="text-primary"/></Label>
                       <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
                     </div>
 
-                    {/* 5. كلمة المرور */}
                     <div className="space-y-2">
                       <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary"/></Label>
                       <Input type="password" placeholder="أدخل كلمة مرور قوية" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
                     </div>
 
-                    {/* 6. نوع الحساب والجنس */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                       <div className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
                         <Label className="text-sm font-black text-muted-foreground block mb-2">نوع الحساب</Label>
@@ -295,7 +284,6 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  {/* اختيار وسيلة التحقق */}
                   <div className="p-8 bg-primary/5 rounded-[2.5rem] border-2 border-primary/10 space-y-6">
                     <div className="flex items-center justify-center gap-2 text-primary font-black">
                       <ShieldCheck /> <span>اختر وسيلة تأكيد الحساب</span>
@@ -318,7 +306,6 @@ export default function LoginPage() {
                         <Mail size={20} className="ml-2"/> بريد
                       </Button>
                     </div>
-                    <p className="text-[10px] text-center text-zinc-400 font-bold">سنقوم بإرسال رمز مكون من 6 أرقام لتأكيد ملكية حسابك.</p>
                   </div>
 
                   <Button onClick={handleStartSignUp} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent hover:scale-[1.02] shadow-2xl transition-all">
