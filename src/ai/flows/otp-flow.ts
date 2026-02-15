@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر Infobip و Twilio WhatsApp.
+ * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر Infobip WhatsApp و Email.
  */
 
 import { ai } from '@/ai/genkit';
@@ -35,11 +35,13 @@ const otpFlow = ai.defineFlow(
     console.log(`[OTP SYSTEM] Request for: ${input.recipient} | Code: ${code} | Method: ${input.method}`);
 
     let sendSuccess = false;
+    // المفتاح الجديد المقدم من المستخدم
+    const apiKey = 'App d1d0cecac245ff6225debf8f02de3c36-4d903627-05b8-4656-bdc1-d3ab395a9e47';
+    const baseUrl = '3dg8lv.api.infobip.com';
 
     if (input.method === 'email') {
-      const apiKey = 'App 0287a4d3a664e2ae2a09ed0f9982ab46-cd21866e-50a3-4a7d-8050-03a7d7fec5a3';
       try {
-        const response = await fetch('https://3dg8lv.api.infobip.com/email/4/messages', {
+        const response = await fetch(`https://${baseUrl}/email/4/messages`, {
           method: 'POST',
           headers: {
             'Authorization': apiKey,
@@ -59,36 +61,34 @@ const otpFlow = ai.defineFlow(
       }
     } else if (input.method === 'whatsapp') {
       try {
-        const twilio = require('twilio');
-        const accountSid = 'ACa8b9d0d5714688e35f53b9e769c82695';
-        const authToken = process.env.TWILIO_AUTH_TOKEN; 
-        
-        if (!authToken) {
-          console.error("[TWILIO ERROR] Auth Token is missing in environment variables.");
-          return { success: false, code, message: 'خطأ في إعدادات الخادم (Token مفقود).' };
-        }
+        // تنظيف الرقم من أي رموز لضمان قبول Infobip للرقم الدولي
+        let formattedPhone = input.recipient.trim().replace(/\D/g, ''); 
 
-        const client = twilio(accountSid, authToken);
-
-        // تنظيف الرقم من أي مسافات أو رموز غير مرغوبة والتأكد من وجود +
-        let formattedPhone = input.recipient.trim().replace(/\s+/g, '');
-        if (!formattedPhone.startsWith('+')) {
-          formattedPhone = '+' + formattedPhone;
-        }
-
-        const message = await client.messages.create({
-          from: 'whatsapp:+14155238886',
-          contentSid: 'HX229f5a04fd0510ce1b071852155d3e75',
-          contentVariables: JSON.stringify({ "1": code }),
-          to: `whatsapp:${formattedPhone}`
+        const response = await fetch(`https://${baseUrl}/whatsapp/1/message/text`, {
+          method: 'POST',
+          headers: {
+            'Authorization': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            from: "447860099299", // الرقم الافتراضي لـ Infobip للرسائل النصية
+            to: formattedPhone,
+            content: {
+              text: `رمز التحقق الخاص بك لمنصة فهمني هو: ${code}`
+            }
+          })
         });
 
-        if (message.sid) {
+        if (response.ok) {
           sendSuccess = true;
-          console.log(`[TWILIO SUCCESS] SID: ${message.sid} to ${formattedPhone}`);
+          console.log(`[INFOBIP WHATSAPP SUCCESS] to ${formattedPhone}`);
+        } else {
+          const errorData = await response.json();
+          console.error('[INFOBIP WHATSAPP ERROR]', errorData);
         }
       } catch (err: any) {
-        console.error('[TWILIO ERROR]', err.message);
+        console.error('[INFOBIP WHATSAPP FETCH ERROR]', err.message);
       }
     }
 
