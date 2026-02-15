@@ -6,7 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box, Globe } from "lucide-react";
+import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box, Globe, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -52,6 +52,7 @@ export default function AdminAssets() {
 
   const getFallbackImage = (key: string) => {
     if (key === 'logoUrl' || key === 'miniIconUrl' || key === 'faviconUrl' || key === 'splashImageUrl') return "https://placehold.co/400x400?text=Fahimni";
+    if (key === 'verifiedBadgeUrl') return PlaceHolderImages.find(i => i.id === 'verified-badge')?.imageUrl;
     if (key === 'landingBg') return PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl;
     if (key === 'studentHero') return PlaceHolderImages.find(i => i.id === 'hero-student')?.imageUrl;
     if (key === 'teacherHero') return PlaceHolderImages.find(i => i.id === 'hero-teacher')?.imageUrl;
@@ -63,6 +64,7 @@ export default function AdminAssets() {
   const assetItems = [
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
     { key: 'miniIconUrl', label: 'الأيقونة المصغرة (UI)', desc: 'تظهر بجانب الاسم في القائمة الجانبية والهيدر.', icon: Layout },
+    { key: 'verifiedBadgeUrl', label: 'شارة التوثيق (Verified Badge)', desc: 'تظهر بجانب أسماء المفهمين الموثقين.', icon: ShieldCheck },
     { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح (Tab).', icon: Globe },
     { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
@@ -117,12 +119,12 @@ export default function AdminAssets() {
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
                       <AlertCircle size={14} /> المعاينة الحالية
                     </div>
-                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' ? 'h-48' : 'aspect-video'}`}>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
                         <img 
                           src={currentImage} 
                           alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">

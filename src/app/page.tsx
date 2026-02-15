@@ -131,7 +131,7 @@ export default function HomePage() {
     );
   }
 
-  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
     <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">

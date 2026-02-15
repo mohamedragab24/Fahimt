@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, where, orderBy, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
@@ -18,6 +18,12 @@ export default function TeachersPage() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   const teachersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -54,7 +60,7 @@ export default function TeachersPage() {
     t.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
     <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
