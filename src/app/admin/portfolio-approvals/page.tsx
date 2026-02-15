@@ -95,6 +95,10 @@ export default function AdminPortfolioApprovals() {
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl" dir="rtl">
+          <DialogHeader className="p-6 border-b bg-muted/10 sr-only">
+            <DialogTitle>معاينة العمل: {selectedItem?.title}</DialogTitle>
+            <DialogDescription>مراجعة محتوى العمل قبل اتخاذ قرار النشر.</DialogDescription>
+          </DialogHeader>
           <ScrollArea className="max-h-[90vh]">
             <div className="bg-black aspect-video flex items-center justify-center">
               {selectedItem?.mediaType === 'video' ? (

@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ShieldCheck, Clock, Layout, PlayCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
@@ -137,6 +137,10 @@ export default function GlobalPortfolioPage() {
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{selectedItem?.title || "تفاصيل العمل"}</DialogTitle>
+            <DialogDescription>عرض بيانات وتفاصيل النموذج التعليمي للمفهم.</DialogDescription>
+          </DialogHeader>
           <ScrollArea className="max-h-[90vh]">
             <div className="p-0 relative bg-zinc-900 flex items-center justify-center min-h-[400px]">
               {selectedItem?.mediaType === 'video' ? (

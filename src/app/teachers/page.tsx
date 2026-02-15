@@ -9,7 +9,7 @@ import { Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react"
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -127,6 +127,10 @@ export default function TeachersPage() {
 
       <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
         <DialogContent className="sm:max-w-[700px] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>ملف المفهم: {selectedTeacher?.fullName}</DialogTitle>
+            <DialogDescription>عرض النبذة التعريفية ومعرض أعمال الخبير التعليمي.</DialogDescription>
+          </DialogHeader>
           <ScrollArea className="max-h-[90vh]">
             <div className="p-8 space-y-8">
               <div className="flex items-center gap-6 p-6 bg-zinc-50 rounded-3xl">
