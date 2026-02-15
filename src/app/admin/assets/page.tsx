@@ -30,7 +30,7 @@ export default function AdminAssets() {
     if (file && activeKey && firestore) {
       setUploadingKey(activeKey);
       
-      // التنبيه بحجم الصورة للأيقونات
+      // التنبيه بحجم الصورة للأيقونات لضمان سرعة المتصفح
       if (activeKey === 'faviconUrl' && file.size > 500 * 1024) {
         toast({ variant: "destructive", title: "تنبيه الحجم", description: "أيقونة المتصفح يجب أن تكون صغيرة الحجم (أقل من 500 ك.ب) لضمان سرعة التحميل." });
       }
@@ -72,9 +72,9 @@ export default function AdminAssets() {
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
     { key: 'miniIconUrl', label: 'الأيقونة المصغرة (UI)', desc: 'تظهر بجانب الاسم في القائمة الجانبية والهيدر.', icon: Layout },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق (Verified Badge)', desc: 'تظهر بجانب أسماء المفهمين الموثقين.', icon: ShieldCheck },
-    { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
+    { key: 'splashImageUrl', label: 'صورة الترحيب (Splash)', desc: 'تظهر للمستخدم كنافذة منبثقة عند الدخول.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
-    { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب (Mustafhems).', icon: Users },
+    { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب.', icon: Users },
     { key: 'teacherHero', label: 'صورة واجهة المعلم', desc: 'تظهر للمدرسين في لوحة تحكم المفهمين.', icon: Box }
   ];
 
@@ -83,11 +83,11 @@ export default function AdminAssets() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">إدارة أصول وصور المنصة</h1>
-          <p className="text-muted-foreground text-xl">تحكم كامل في جميع الصور؛ التحديث يطبق فوراً على مستوى النظام.</p>
+          <p className="text-muted-foreground text-xl">تحكم كامل في جميع الصور؛ أي تعديل هنا أو في Firebase يطبق فوراً.</p>
         </div>
         <div className="bg-primary/10 px-6 py-3 rounded-2xl flex items-center gap-3">
           <Sparkles className="text-primary h-6 w-6" />
-          <span className="font-black text-primary">قاعدة البيانات متصلة</span>
+          <span className="font-black text-primary">المزامنة مع Firebase مفعلة</span>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function AdminAssets() {
                     className={`h-16 px-10 rounded-[1.5rem] font-black text-xl shadow-xl transition-all ${item.key === 'faviconUrl' ? 'bg-accent hover:bg-accent/90' : 'bg-primary hover:bg-primary/90'}`}
                   >
                     {uploadingKey === item.key ? <RefreshCw className="animate-spin ml-2" /> : <Upload className="ml-2 h-6 w-6" />}
-                    تغيير الأيقونة الآن
+                    تحديث الصورة
                   </Button>
                 </div>
               </CardHeader>
@@ -135,7 +135,7 @@ export default function AdminAssets() {
                           />
                           {item.key === 'faviconUrl' && (
                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/img:opacity-100 transition-opacity whitespace-nowrap">
-                              هكذا ستظهر في لسان المتصفح
+                              هكذا ستظهر في أعلى المتصفح
                             </div>
                           )}
                         </div>
@@ -153,9 +153,9 @@ export default function AdminAssets() {
                       <CheckCircle2 size={40} className="animate-bounce" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className={`text-2xl font-black ${item.key === 'faviconUrl' ? 'text-accent' : 'text-primary'}`}>تحديث فوري</h4>
+                      <h4 className={`text-2xl font-black ${item.key === 'faviconUrl' ? 'text-accent' : 'text-primary'}`}>ربط مباشر مع Firebase</h4>
                       <p className="text-zinc-600 font-bold leading-relaxed">
-                        عند تغيير أيقونة المتصفح، سيقوم النظام بتحديثها تلقائياً لكل المستخدمين. قد تحتاج لعمل Refresh واحد فقط لتراها بنفسك في المتصفح.
+                        عند تحديث هذه القيمة هنا أو من خلال Firebase Console مباشرة، سيقوم النظام بتبديلها لحظياً لكل المستخدمين دون الحاجة لإعادة تحميل الصفحة.
                       </p>
                     </div>
                   </div>
