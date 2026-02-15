@@ -28,7 +28,9 @@ import {
   Scale,
   MessageCircle,
   FileSearch,
-  GalleryVertical
+  GalleryVertical,
+  Edit3,
+  Wand2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -66,6 +68,8 @@ const menuItems = [
 
 const adminItems = [
   { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+  { title: "المحرر المرئي", icon: Edit3, href: "/admin/manual-editor" },
+  { title: "الإدارة بالذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
   { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
@@ -81,6 +85,7 @@ const adminItems = [
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
+  { title: "تخصيص الهوية", icon: Settings, href: "/admin/customize" },
   { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
   { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
 ];
@@ -158,9 +163,9 @@ export function AppSidebar() {
                 <Badge className="w-fit text-[10px] ml-auto">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
               </div>
             </div>
-            <Button onClick={toggleRole} variant="outline" className="w-full h-10 rounded-xl text-xs font-bold border-2 border-primary/20 hover:bg-primary hover:text-white transition-all">
-              <RefreshCw className="ml-2 h-3 w-3" /> تبديل إلى {profile?.role === 'mufhem' ? 'مُستفهم' : 'مُفهم'}
-            </Button>
+            <button onClick={toggleRole} className="w-full h-10 rounded-xl text-xs font-bold border-2 border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+              <RefreshCw className="h-3 w-3" /> تبديل إلى {profile?.role === 'mufhem' ? 'مُستفهم' : 'مُفهم'}
+            </button>
           </div>
         </div>
 
