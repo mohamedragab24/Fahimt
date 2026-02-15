@@ -16,16 +16,13 @@ import {
   RefreshCw, 
   Sparkles, 
   Edit3, 
-  Monitor, 
   MousePointer2,
   FileText,
   ShieldCheck,
   Info,
   BookOpen,
-  Layout,
   Layers,
-  ChevronLeft,
-  ChevronRight
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -74,10 +71,10 @@ export default function ManualEditorPage() {
 
   useEffect(() => {
     if (settings) {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         ...settings
-      });
+      }));
     }
   }, [settings]);
 
@@ -98,7 +95,7 @@ export default function ManualEditorPage() {
   };
 
   const handleFieldClick = (key: string, label: string) => {
-    setActiveField({ key, label, value: (formData as any)[key] });
+    setActiveField({ key, label, value: (formData as any)[key] || "" });
   };
 
   const updateField = () => {
@@ -153,9 +150,9 @@ export default function ManualEditorPage() {
               <Palette size={14} /> ألوان المنصة
             </h3>
             <div className="space-y-6">
-              <ColorInput label="اللون الأساسي" value={formData.primaryColor} onChange={(v) => setFormData({...formData, primaryColor: v})} />
-              <ColorInput label="لون التمييز" value={formData.accentColor} onChange={(v) => setFormData({...formData, accentColor: v})} />
-              <ColorInput label="لون الخلفية" value={formData.backgroundColor} onChange={(v) => setFormData({...formData, backgroundColor: v})} />
+              <ColorInput label="اللون الأساسي" value={formData.primaryColor || "#29B6F6"} onChange={(v) => setFormData({...formData, primaryColor: v})} />
+              <ColorInput label="لون التمييز" value={formData.accentColor || "#FF7043"} onChange={(v) => setFormData({...formData, accentColor: v})} />
+              <ColorInput label="لون الخلفية" value={formData.backgroundColor || "#F8FAFC"} onChange={(v) => setFormData({...formData, backgroundColor: v})} />
             </div>
           </div>
 
@@ -166,11 +163,11 @@ export default function ManualEditorPage() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <Label className="text-xs font-bold opacity-60">اسم الموقع</Label>
-                <Input value={formData.siteTitle} onChange={(e)=>setFormData({...formData, siteTitle: e.target.value})} className="h-10 rounded-lg text-sm font-bold" />
+                <Input value={formData.siteTitle || ""} onChange={(e)=>setFormData({...formData, siteTitle: e.target.value})} className="h-10 rounded-lg text-sm font-bold" />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs font-bold opacity-60">نص التذييل</Label>
-                <Input value={formData.footerText} onChange={(e)=>setFormData({...formData, footerText: e.target.value})} className="h-10 rounded-lg text-sm font-bold" />
+                <Input value={formData.footerText || ""} onChange={(e)=>setFormData({...formData, footerText: e.target.value})} className="h-10 rounded-lg text-sm font-bold" />
               </div>
             </div>
           </div>
@@ -381,13 +378,13 @@ export default function ManualEditorPage() {
             <Label className="font-black mb-4 block text-lg">النص الجديد</Label>
             {activeField?.key.toLowerCase().includes('description') || activeField?.key.toLowerCase().includes('content') || activeField?.key.toLowerCase().includes('subtitle') ? (
               <Textarea 
-                value={activeField?.value} 
+                value={activeField?.value || ""} 
                 onChange={(e) => setActiveField({...activeField!, value: e.target.value})}
                 className="h-60 rounded-3xl border-4 border-zinc-100 text-2xl font-medium p-8 focus:border-primary transition-all leading-relaxed"
               />
             ) : (
               <Input 
-                value={activeField?.value} 
+                value={activeField?.value || ""} 
                 onChange={(e) => setActiveField({...activeField!, value: e.target.value})}
                 className="h-20 rounded-2xl border-4 border-zinc-100 text-3xl font-black px-6 focus:border-primary transition-all"
               />
@@ -413,14 +410,14 @@ function ColorInput({ label, value, onChange }: { label: string, value: string, 
         <div className="relative h-14 w-14 rounded-2xl overflow-hidden border-2 shadow-inner group">
           <input 
             type="color" 
-            value={value} 
+            value={value || "#000000"} 
             onChange={(e) => onChange(e.target.value)} 
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0" 
           />
-          <div style={{ backgroundColor: value }} className="w-full h-full"></div>
+          <div style={{ backgroundColor: value || "#000000" }} className="w-full h-full"></div>
         </div>
         <Input 
-          value={value} 
+          value={value || ""} 
           onChange={(e) => onChange(e.target.value)} 
           className="h-14 font-mono font-bold text-lg flex-1 rounded-2xl border-2" 
         />
