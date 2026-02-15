@@ -52,7 +52,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
     if (settings) {
       const root = document.documentElement;
       
-      // تحديث الألوان الأساسية من الفايربيز
+      // تحديث الألوان الأساسية
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
         if (hsl) root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
@@ -68,25 +68,25 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث أيقونة المتصفح (Favicon) بطريقة آمنة لا تسبب أخطاء DOM
+      // تحديث نصف قطر الزوايا (Radius)
+      if (settings.borderRadius) {
+        root.style.setProperty('--radius', settings.borderRadius);
+      }
+
+      // تحديث أيقونة المتصفح (Favicon)
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
-          
           const cacheBuster = settings.updatedAt ? encodeURIComponent(settings.updatedAt) : Date.now();
           const finalUrl = url.startsWith('data:') ? url : `${url}${url.includes('?') ? '&' : '?'}v=${cacheBuster}`;
-
           const rels = ['icon', 'shortcut icon', 'apple-touch-icon'];
-          
           rels.forEach(rel => {
-            // البحث عن الوسوم الحالية بدلاً من حذفها لمنع أخطاء React Parent/Child
             const existingLinks = document.querySelectorAll(`link[rel*='${rel}']`);
             if (existingLinks.length > 0) {
               existingLinks.forEach(link => {
                 (link as HTMLLinkElement).href = finalUrl;
               });
             } else {
-              // إنشاء وسم جديد فقط إذا لم يكن موجوداً
               const link = document.createElement('link');
               link.rel = rel;
               link.href = finalUrl;
@@ -97,7 +97,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         updateFavicon(settings.faviconUrl);
       }
 
-      // تحديث عنوان الموقع من الفايربيز
+      // تحديث عنوان الموقع
       if (settings.siteTitle) {
         document.title = settings.siteTitle;
       }
