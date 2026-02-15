@@ -34,7 +34,6 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { refineRequest } from "@/ai/flows/refine-request-flow";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -185,7 +184,6 @@ function MustafhemView({ profile }: any) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRefining, setIsRefining] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
     title: "", 
     description: "", 
@@ -214,20 +212,6 @@ function MustafhemView({ profile }: any) {
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
-
-  const handleRefine = async () => {
-    if (!newIstifham.description) return;
-    setIsRefining(true);
-    try {
-      const result = await refineRequest({ text: newIstifham.description });
-      setNewIstifham(prev => ({ ...prev, title: result.refinedTitle, description: result.refinedDescription }));
-      toast({ title: "تم التحسين" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
-    } finally {
-      setIsRefining(false);
-    }
-  };
 
   const handleCreate = async () => {
     const titleWords = countWords(newIstifham.title);
@@ -294,7 +278,6 @@ function MustafhemView({ profile }: any) {
                     <Label className="font-black">تفاصيل الاستفهام (بحد أقصى 1000 كلمة)</Label>
                     <div className="flex items-center gap-4">
                       <span className={`text-xs font-bold ${countWords(newIstifham.description) > 1000 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.description)} / 1000</span>
-                      <Button variant="ghost" size="sm" onClick={handleRefine} disabled={isRefining} className="text-primary font-black"><Wand2 className="h-4 w-4 ml-2" /> تحسين بالذكاء الاصطناعي</Button>
                     </div>
                   </div>
                   <Textarea placeholder="اشرح مشكلتك بالتفصيل..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" />
