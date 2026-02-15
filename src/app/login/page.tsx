@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -82,7 +81,7 @@ export default function LoginPage() {
         toast({ variant: "destructive", title: "خطأ", description: result.message });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الرمز، حاول مرة أخرى." });
+      toast({ variant: "destructive", title: "خطأ في النظام", description: "تعذر الاتصال بخادم الرسائل، يرجى المحاولة لاحقاً." });
     } finally {
       setIsSendingOtp(false);
     }
@@ -161,9 +160,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50/50" dir="rtl">
       <Card className="w-full max-w-lg shadow-[0_20px_60px_rgba(0,0,0,0.1)] border-none rounded-[3rem] bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="text-center pt-12 pb-6 space-y-6">
-          <div className="mx-auto mb-4">
+          <div className="mx-auto mb-4 scale-110">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-24 md:h-32 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 md:h-40 mx-auto object-contain" alt="Logo" />
             ) : (
               <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white text-5xl font-black mx-auto shadow-xl">ف</div>
             )}
@@ -196,14 +195,14 @@ export default function LoginPage() {
                           value={email} 
                           onChange={(e)=>setEmail(e.target.value)} 
                           disabled={otpSent}
-                          className="h-14 rounded-2xl border-2 font-bold text-lg" 
+                          className="h-16 rounded-2xl border-2 font-bold text-lg bg-zinc-50/50 focus:bg-white transition-colors" 
                         />
                         {!otpSent && (
                           <Button 
                             type="button" 
                             onClick={handleSendOTP} 
                             disabled={isSendingOtp}
-                            className="h-14 px-6 rounded-2xl font-black bg-primary shadow-lg shadow-primary/20"
+                            className="h-16 px-8 rounded-2xl font-black bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                           >
                             {isSendingOtp ? <Loader2 className="animate-spin" /> : "إرسال"}
                           </Button>
@@ -307,7 +306,7 @@ export default function LoginPage() {
                   <Label className="font-black text-sm mr-2 text-zinc-700 flex items-center gap-2">
                     <Mail size={16} className="text-primary" /> البريد الإلكتروني
                   </Label>
-                  <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-bold text-lg" />
+                  <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-bold text-lg bg-zinc-50/50" />
                 </div>
 
                 <div className="space-y-3">
@@ -319,7 +318,7 @@ export default function LoginPage() {
                       نسيت كلمة المرور؟
                     </Link>
                   </div>
-                  <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-bold text-lg" />
+                  <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-bold text-lg bg-zinc-50/50" />
                 </div>
 
                 <Button type="submit" disabled={isProcessing} className="w-full h-16 text-2xl font-black rounded-3xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all hover:scale-105">

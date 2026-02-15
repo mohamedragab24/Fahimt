@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -49,7 +48,7 @@ export default function ForgotPasswordPage() {
         toast({ variant: "destructive", title: "خطأ", description: result.message });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الرمز." });
+      toast({ variant: "destructive", title: "خطأ في النظام", description: "فشل إرسال الرمز، يرجى المحاولة لاحقاً." });
     } finally {
       setIsProcessing(false);
     }
@@ -80,9 +79,9 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50/50" dir="rtl">
       <Card className="w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-none rounded-[3rem] bg-white overflow-hidden animate-in fade-in zoom-in duration-500">
         <CardHeader className="text-center pt-12 pb-8 space-y-6">
-          <div className="mx-auto">
+          <div className="mx-auto scale-110">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-24 md:h-32 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 md:h-40 mx-auto object-contain" alt="Logo" />
             ) : (
               <div className="bg-primary/10 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner">
                 <ShieldCheck size={48} />
@@ -111,10 +110,10 @@ export default function ForgotPasswordPage() {
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
                     disabled={otpSent}
-                    className="h-16 rounded-2xl border-2 focus:border-primary text-lg font-bold"
+                    className="h-16 rounded-2xl border-2 focus:border-primary text-lg font-bold bg-zinc-50/50"
                   />
                   {!otpSent && (
-                    <Button onClick={handleSendOTP} disabled={isProcessing} className="h-16 px-6 rounded-2xl font-black">
+                    <Button onClick={handleSendOTP} disabled={isProcessing} className="h-16 px-8 rounded-2xl font-black bg-primary">
                       {isProcessing ? <Loader2 className="animate-spin" /> : "إرسال"}
                     </Button>
                   )}
@@ -127,14 +126,14 @@ export default function ForgotPasswordPage() {
                     <Label className="font-black text-xl text-primary flex items-center justify-center gap-2">
                       <KeyRound size={24} /> رمز التحقق
                     </Label>
-                    <p className="text-xs text-muted-foreground font-bold">أدخل الرمز المكون من 6 أرقام</p>
+                    <p className="text-sm text-muted-foreground font-bold">أدخل الرمز المكون من 6 أرقام</p>
                   </div>
                   <Input 
                     placeholder="0 0 0 0 0 0" 
                     maxLength={6}
                     value={otpCodeInput} 
                     onChange={(e)=>setOtpCodeInput(e.target.value)}
-                    className="h-20 text-4xl font-black text-center tracking-[0.5em] rounded-3xl border-2" 
+                    className="h-20 text-4xl font-black text-center tracking-[0.5em] rounded-3xl border-2 bg-white" 
                   />
                   <Button onClick={handleVerifyAndReset} disabled={isProcessing} className="w-full h-16 rounded-2xl font-black text-xl bg-primary shadow-xl">
                     {isProcessing ? <Loader2 className="animate-spin ml-2" /> : "تأكيد الرمز والاستعادة"}
@@ -161,7 +160,7 @@ export default function ForgotPasswordPage() {
         <CardFooter className="justify-center border-t py-8 bg-zinc-50/50">
           <Button variant="ghost" asChild className="font-black text-zinc-500 hover:text-primary transition-colors text-lg">
             <Link href="/login" className="flex items-center gap-2">
-              <ArrowRight size={20} /> العودة لتسجيل الدخول
+              <ArrowRight size={20} className="rotate-180" /> العودة لتسجيل الدخول
             </Link>
           </Button>
         </CardFooter>
