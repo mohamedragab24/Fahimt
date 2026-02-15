@@ -7,7 +7,7 @@ import { collection, query, orderBy, doc, updateDoc, addDoc, deleteDoc } from "f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Clock, Send, User, Trash2, Ban, Paperclip, Star } from "lucide-react";
+import { MessageCircle, Clock, Send, User, Trash2, Ban, Paperclip, Star, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,8 +72,15 @@ export default function AdminFloatingChats() {
 
   const closeChat = async (id: string) => {
     if (!firestore) return;
-    await updateDoc(doc(firestore, "floatingChats", id), { status: "closed" });
-    toast({ title: "تم إغلاق المحادثة" });
+    try {
+      await updateDoc(doc(firestore, "floatingChats", id), { 
+        status: "closed",
+        updatedAt: new Date().toISOString()
+      });
+      toast({ title: "تم إغلاق المحادثة", description: "سيظهر طلب التقييم للعميل الآن." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في الإغلاق" });
+    }
   };
 
   const deleteChat = async (id: string) => {
@@ -87,7 +94,7 @@ export default function AdminFloatingChats() {
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6">
         <h1 className="text-4xl font-black font-headline">النافذة العائمة (إدارة الدردشة)</h1>
-        <p className="text-muted-foreground text-lg">الرد المباشر، حذف المحادثات، ومتابعة تقييمات العملاء.</p>
+        <p className="text-muted-foreground text-lg">الرد المباشر، إغلاق المحادثات، وحذف السجلات.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -103,7 +110,7 @@ export default function AdminFloatingChats() {
                     className={`p-6 cursor-pointer hover:bg-muted transition-colors ${selectedChat?.id === chat.id ? 'bg-primary/5 border-r-4 border-primary' : ''}`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <Badge className={chat.status === 'open' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}>
+                      <Badge className={chat.status === 'open' ? 'bg-orange-100 text-orange-600' : chat.status === 'closed' ? 'bg-zinc-100 text-zinc-600' : 'bg-green-100 text-green-600'}>
                         {chat.status === 'open' ? 'جديدة' : chat.status === 'closed' ? 'مغلقة' : 'تم الرد'}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground font-mono">{new Date(chat.updatedAt).toLocaleTimeString('ar-EG')}</span>
@@ -133,9 +140,11 @@ export default function AdminFloatingChats() {
                   <p className="text-xs text-muted-foreground mt-1">Chat ID: {selectedChat.id}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => closeChat(selectedChat.id)} className="rounded-xl font-bold">
-                    إغلاق يدوياً
-                  </Button>
+                  {selectedChat.status !== 'closed' && (
+                    <Button variant="outline" size="sm" onClick={() => closeChat(selectedChat.id)} className="rounded-xl font-bold border-orange-500 text-orange-600 hover:bg-orange-50">
+                      <XCircle className="ml-1 h-4 w-4" /> إنهاء الدردشة
+                    </Button>
+                  )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" className="rounded-xl font-bold">
@@ -145,7 +154,7 @@ export default function AdminFloatingChats() {
                     <AlertDialogContent dir="rtl">
                       <AlertDialogHeader>
                         <AlertDialogTitle className="text-right">حذف المحادثة؟</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right">سيتم حذف كافة الرسائل والبيانات الخاصة بهذا الشات العائم.</AlertDialogDescription>
+                        <AlertDialogDescription className="text-right">سيتم حذف كافة الرسائل والبيانات الخاصة بهذا الشات العائم نهائياً.</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="flex-row-reverse gap-2">
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
@@ -173,17 +182,18 @@ export default function AdminFloatingChats() {
               <div className="p-6 border-t bg-white">
                 <div className="flex gap-2">
                   <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
-                  <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl">
+                  <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl" disabled={selectedChat.status === 'closed'}>
                     <Paperclip size={24} />
                   </Button>
                   <Input 
-                    placeholder="اكتب ردك هنا..." 
+                    placeholder={selectedChat.status === 'closed' ? "هذه المحادثة مغلقة" : "اكتب ردك هنا..."} 
                     className="h-14 rounded-xl border-2" 
                     value={replyMessage} 
                     onChange={(e) => setReplyMessage(e.target.value)} 
                     onKeyDown={(e) => e.key === 'Enter' && handleReply()} 
+                    disabled={selectedChat.status === 'closed'}
                   />
-                  <Button onClick={() => handleReply()} className="h-14 px-8 rounded-xl bg-primary">
+                  <Button onClick={() => handleReply()} className="h-14 px-8 rounded-xl bg-primary" disabled={selectedChat.status === 'closed'}>
                     <Send size={20}/>
                   </Button>
                 </div>

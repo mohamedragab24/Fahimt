@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, X, Send, Minus, Maximize2, Loader2, User, Paperclip, Star, LogOut } from "lucide-react";
+import { MessageCircle, X, Send, Minus, Maximize2, Loader2, User, Paperclip, Star, LogOut, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,18 +19,41 @@ export function FloatingChat() {
   const [isRatingMode, setIsRatingMode] = useState(false);
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState("");
+  const [chatStatus, setChatStatus] = useState<string>("open");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const chatId = user?.uid || null;
 
+  // استماع لرسائل الدردشة
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !chatId) return null;
     return query(collection(firestore, "floatingChats", chatId, "messages"), orderBy("createdAt", "asc"));
   }, [firestore, chatId]);
 
   const { data: messages } = useCollection(messagesQuery);
+
+  // استماع لحالة المحادثة (هل أغلقها المسؤول؟)
+  useEffect(() => {
+    if (!firestore || !chatId) return;
+    
+    const unsub = onSnapshot(doc(firestore, "floatingChats", chatId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setChatStatus(data.status);
+        
+        // إذا تم إغلاق المحادثة ولم يتم التقييم بعد، فرض وضع التقييم
+        if (data.status === "closed" && !data.rating) {
+          setIsRatingMode(true);
+          setIsOpen(true); // تأكد من فتح النافذة ليراها المستخدم
+          setIsMinimized(false);
+        }
+      }
+    });
+    
+    return () => unsub();
+  }, [firestore, chatId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,7 +63,7 @@ export function FloatingChat() {
 
   const handleSendMessage = async (attachmentBase64?: string) => {
     if (!message.trim() && !attachmentBase64) return;
-    if (!firestore || !user) return;
+    if (!firestore || !user || chatStatus === 'closed') return;
 
     try {
       const chatRef = doc(firestore, "floatingChats", user.uid);
@@ -107,19 +130,23 @@ export function FloatingChat() {
   return (
     <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4" dir="rtl">
       {isOpen && (
-        <Card className={`w-80 md:w-96 shadow-2xl rounded-[2rem] border-2 overflow-hidden transition-all ${isMinimized ? 'h-16' : 'h-[500px]'}`}>
+        <Card className={`w-80 md:w-96 shadow-2xl rounded-[2rem] border-2 overflow-hidden transition-all ${isMinimized ? 'h-16' : 'h-[500px]'} ${chatStatus === 'closed' && isRatingMode ? 'border-yellow-400' : ''}`}>
           <CardHeader className="bg-primary text-white p-4 flex flex-row justify-between items-center space-y-0">
             <CardTitle className="text-lg font-black flex items-center gap-2">
               <User size={20} /> دعم فهمني الفوري
             </CardTitle>
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => setIsMinimized(!isMinimized)}>
-                {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={handleEndChat}>
-                <LogOut size={16} />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => setIsOpen(false)}>
+              {!isRatingMode && (
+                <>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => setIsMinimized(!isMinimized)}>
+                    {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={handleEndChat}>
+                    <LogOut size={16} />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => !isRatingMode && setIsOpen(false)} disabled={isRatingMode}>
                 <X size={16} />
               </Button>
             </div>
@@ -128,21 +155,26 @@ export function FloatingChat() {
           {!isMinimized && (
             <div className="flex flex-col h-[436px]">
               {isRatingMode ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
-                  <div className="bg-yellow-100 p-4 rounded-full text-yellow-600">
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 bg-white animate-in fade-in zoom-in">
+                  <div className="bg-yellow-100 p-6 rounded-full text-yellow-600 animate-bounce">
                     <Star size={48} className="fill-current" />
                   </div>
-                  <h3 className="text-xl font-black">كيف كانت تجربتك؟</h3>
-                  <p className="text-sm text-muted-foreground font-bold">تقييمك يساعدنا على تحسين جودة الدعم.</p>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-zinc-800">انتهت المحادثة</h3>
+                    <p className="text-sm text-muted-foreground font-bold">يرجى تقييم تجربتك مع الدعم لإغلاق النافذة.</p>
+                  </div>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-125">
-                        <Star size={32} className={`${rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />
+                      <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-125 focus:outline-none">
+                        <Star size={32} className={`${rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'} transition-colors`} />
                       </button>
                     ))}
                   </div>
-                  <Button onClick={handleSendRating} disabled={rating === 0} className="w-full h-14 rounded-2xl font-black text-lg">إرسال التقييم وإغلاق</Button>
-                  <Button variant="ghost" onClick={() => setIsRatingMode(false)} className="font-bold">العودة للدردشة</Button>
+                  <Button onClick={handleSendRating} disabled={rating === 0} className="w-full h-14 rounded-2xl font-black text-lg shadow-lg">إرسال التقييم وإنهاء</Button>
+                  
+                  {chatStatus !== 'closed' && (
+                    <Button variant="ghost" onClick={() => setIsRatingMode(false)} className="font-bold text-zinc-400">العودة للدردشة</Button>
+                  )}
                 </div>
               ) : (
                 <>
