@@ -10,74 +10,83 @@ import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight, Lock, Sparkles } from "lucide-react";
+import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight, Lock, Sparkles, MessageSquare } from "lucide-react";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
+import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 
-/**
- * صفحة استعادة كلمة المرور بتصميم احترافي فريد
- * تم دمج اللوجو والألوان الأساسية (اللبني والبرتقالي) مع خطوط Black
- */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [method, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
+  const [step, setStep] = useState<'input' | 'verify' | 'success'>('input');
+  const [otpCode, setOtpCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSent, setIsEmailSent] = useState(false);
   
   const { auth, firestore } = useFirebase();
   const { toast } = useToast();
 
-  // جلب إعدادات المنصة للحصول على اللوجو واسم الموقع
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, "settings", "general");
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  const handleSendResetLink = async () => {
-    if (!email || !email.includes("@")) {
-      toast({ 
-        variant: "destructive", 
-        title: "تنبيه هام", 
-        description: "يرجى كتابة بريد إلكتروني صحيح لنتمكن من مساعدتك." 
-      });
+  const handleSendOTP = async () => {
+    const recipient = method === 'whatsapp' ? phone : email;
+    if (!recipient) {
+      toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
     }
     
     setIsProcessing(true);
     try {
-      // إرسال رابط إعادة التعيين الرسمي من فايربيز
+      const result = await generateAndSendOTP({ recipient, method });
+      if (result.success) {
+        setGeneratedCode(result.code);
+        setStep('verify');
+        toast({ title: "تم إرسال الرمز بنجاح" });
+      } else {
+        toast({ variant: "destructive", title: "فشل الإرسال", description: result.message });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في الخدمة" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleVerifyAndReset = async () => {
+    if (otpCode !== generatedCode) {
+      toast({ variant: "destructive", title: "رمز خاطئ" });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // إرسال رابط إعادة التعيين الرسمي لبريد المستخدم بعد التحقق من الهوية
       await sendPasswordResetEmail(auth, email);
-      setIsEmailSent(true);
-      toast({ 
-        title: "تم الإرسال بنجاح!", 
-        description: "رابط الأمان في طريقه إلى بريدك الإلكتروني الآن." 
-      });
-    } catch (e: any) {
-      console.error(e);
-      toast({ 
-        variant: "destructive", 
-        title: "عذراً، فشل الإرسال", 
-        description: "تأكد من كتابة البريد المسجل لدينا بشكل صحيح." 
-      });
+      setStep('success');
+      toast({ title: "تم التحقق!", description: "أرسلنا رابط تعيين كلمة المرور لبريدك." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "تأكد من صحة البريد المرتبط بالحساب." });
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6 bg-[#F8FAFC] selection:bg-primary selection:text-white" dir="rtl">
-      {/* خلفية جمالية متدرجة */}
+    <div className="flex min-h-screen items-center justify-center p-6 bg-[#F8FAFC]" dir="rtl">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 -z-10"></div>
       
       <Card className="w-full max-w-xl shadow-[0_40px_100px_rgba(0,0,0,0.08)] border-4 border-white rounded-[4rem] bg-white overflow-hidden animate-in fade-in zoom-in duration-700">
         <CardHeader className="text-center pt-16 pb-8 space-y-10">
-          {/* منطقة اللوجو */}
           <div className="relative mx-auto w-fit group">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-40 md:h-52 mx-auto object-contain relative z-10 transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              <img src={settings.logoUrl} className="h-40 md:h-52 mx-auto object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
             ) : (
-              <div className="bg-primary w-32 h-32 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-2xl relative z-10 transition-transform duration-500 group-hover:rotate-12">
+              <div className="bg-primary w-32 h-32 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-2xl">
                 <Lock size={64} strokeWidth={2.5} />
               </div>
             )}
@@ -85,66 +94,79 @@ export default function ForgotPasswordPage() {
 
           <div className="space-y-3 px-6">
             <CardTitle className="text-4xl md:text-5xl font-black text-zinc-900 tracking-tight flex items-center justify-center gap-3">
-              <Sparkles className="text-accent animate-pulse" /> استعادة الدخول
+              {step === 'verify' ? "تأكيد الهوية" : "استعادة الدخول"}
             </CardTitle>
             <CardDescription className="text-xl font-bold text-zinc-500 leading-relaxed max-w-sm mx-auto">
-              لا تقلق، سنرسل لك رابطاً آمناً لتعيين كلمة مرور جديدة لبريدك المسجل.
+              {step === 'verify' ? "أدخل الرمز الذي وصلك للمتابعة" : "اختر الوسيلة الأنسب لاستلام رمز الاستعادة"}
             </CardDescription>
           </div>
         </CardHeader>
         
         <CardContent className="px-10 md:px-16 pb-12">
-          {!isSent ? (
-            <div className="space-y-10">
-              <div className="space-y-4">
-                <Label className="font-black text-xl text-zinc-800 mr-2 flex items-center gap-3">
-                  <Mail size={24} className="text-primary" /> البريد الإلكتروني للحساب
-                </Label>
-                <div className="relative">
-                  <Input 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    className="h-20 rounded-[2rem] border-2 border-zinc-100 focus:border-primary focus:ring-0 text-2xl font-black bg-zinc-50/50 shadow-inner px-8 transition-all"
-                  />
-                </div>
+          {step === 'input' && (
+            <div className="space-y-8">
+              <div className="flex gap-2 p-2 bg-zinc-50 rounded-2xl border mb-4">
+                <Button onClick={() => setOtpMethod('whatsapp')} variant={method === 'whatsapp' ? 'default' : 'ghost'} className="flex-1 h-12 rounded-xl font-black">
+                  <MessageSquare size={18} className="ml-2" /> واتساب
+                </Button>
+                <Button onClick={() => setOtpMethod('email')} variant={method === 'email' ? 'default' : 'ghost'} className="flex-1 h-12 rounded-xl font-black">
+                  <Mail size={18} className="ml-2" /> بريد
+                </Button>
               </div>
 
-              <Button 
-                onClick={handleSendResetLink} 
-                disabled={isProcessing} 
-                className="w-full h-20 rounded-[2rem] font-black text-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_20px_50px_rgba(41,182,246,0.3)] transition-all hover:scale-[1.02] active:scale-95"
-              >
-                {isProcessing ? (
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="animate-spin h-8 w-8" />
-                    <span>جاري التحقق والإرسال...</span>
-                  </div>
+              <div className="space-y-4">
+                <Label className="font-black text-lg text-zinc-800">
+                  {method === 'whatsapp' ? 'رقم الهاتف المسجل' : 'البريد الإلكتروني'}
+                </Label>
+                {method === 'whatsapp' ? (
+                  <Input placeholder="01xxxxxxxxx" value={phone} onChange={(e)=>setPhone(e.target.value)} className="h-16 rounded-2xl border-2 font-black text-2xl" />
                 ) : (
-                  <div className="flex items-center gap-3">
-                    <span>إرسال رابط الاستعادة</span>
-                    <ChevronRight className="h-8 w-8 rotate-180" />
+                  <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-16 rounded-2xl border-2 font-black text-xl" />
+                )}
+                {method === 'whatsapp' && (
+                  <div className="space-y-2">
+                    <Label className="font-black text-sm opacity-50">البريد (لإرسال الرابط النهائي)</Label>
+                    <Input type="email" placeholder="بريدك الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 rounded-xl border-2 font-bold" />
                   </div>
                 )}
+              </div>
+
+              <Button onClick={handleSendOTP} disabled={isProcessing} className="w-full h-20 rounded-[2rem] font-black text-2xl bg-primary shadow-xl">
+                {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "إرسال رمز الاستعادة"}
               </Button>
             </div>
-          ) : (
-            <div className="text-center space-y-10 py-6 animate-in slide-in-from-bottom-8 duration-500">
-              <div className="relative mx-auto w-fit">
-                <div className="absolute inset-0 bg-green-400/20 blur-3xl rounded-full scale-150"></div>
-                <div className="bg-green-100 w-32 h-32 rounded-full flex items-center justify-center mx-auto text-green-600 relative z-10 shadow-lg">
-                  <CheckCircle2 size={80} className="animate-bounce" />
-                </div>
+          )}
+
+          {step === 'verify' && (
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Label className="font-black text-xl text-center block">رمز التحقق</Label>
+                <Input 
+                  maxLength={6} 
+                  className="h-20 text-4xl font-black text-center tracking-[0.5em] rounded-3xl border-4 border-primary/20"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleVerifyAndReset} disabled={isProcessing} className="w-full h-20 rounded-[2rem] font-black text-2xl bg-accent shadow-xl">
+                {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تأكيد الرمز"}
+              </Button>
+              <Button variant="ghost" onClick={() => setStep('input')} className="w-full font-bold">الرجوع</Button>
+            </div>
+          )}
+
+          {step === 'success' && (
+            <div className="text-center space-y-10 py-6">
+              <div className="bg-green-100 w-32 h-32 rounded-full flex items-center justify-center mx-auto text-green-600">
+                <CheckCircle2 size={80} className="animate-bounce" />
               </div>
               <div className="space-y-4">
-                <h3 className="text-4xl font-black text-zinc-900">رابط الأمان وصل!</h3>
+                <h3 className="text-4xl font-black">تم إرسال الرابط!</h3>
                 <p className="text-xl font-bold text-zinc-500 leading-relaxed px-4">
-                  لقد أرسلنا تعليمات استعادة كلمة المرور لبريدك: <br/>
-                  <span className="text-primary font-black underline decoration-dashed underline-offset-8 mt-2 block">{email}</span>
+                  تحقق من بريدك الآن لتعيين كلمة المرور الجديدة.
                 </p>
               </div>
-              <Button asChild className="w-full h-20 rounded-[2rem] text-2xl font-black shadow-xl bg-zinc-900 hover:bg-black transition-all">
+              <Button asChild className="w-full h-20 rounded-[2rem] text-2xl font-black bg-zinc-900">
                 <Link href="/login">العودة لتسجيل الدخول</Link>
               </Button>
             </div>
@@ -152,7 +174,7 @@ export default function ForgotPasswordPage() {
         </CardContent>
         
         <CardFooter className="justify-center border-t border-zinc-50 py-12 bg-zinc-50/30">
-          <Button variant="ghost" asChild className="font-black text-zinc-400 hover:text-primary text-xl gap-3 transition-colors h-14 rounded-2xl">
+          <Button variant="ghost" asChild className="font-black text-zinc-400 hover:text-primary text-xl gap-3 h-14">
             <Link href="/login">
               <ChevronRight size={28} className="rotate-180" /> 
               <span>رجوع للخلف</span>
