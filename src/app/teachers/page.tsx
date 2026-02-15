@@ -32,7 +32,6 @@ export default function TeachersPage() {
 
   const { data: teachers, isLoading } = useCollection(teachersQuery);
 
-  // تبسيط الاستعلام لتجنب الحاجة لفهرس مركب
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;
     return query(
@@ -68,11 +67,13 @@ export default function TeachersPage() {
   return (
     <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tight text-zinc-800">نخبة "المفهمين" الموثقين</h1>
+        <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tight text-zinc-800">
+          {settings?.teachersListTitle || "نخبة 'المفهمين' الموثقين"}
+        </h1>
         <div className="relative mt-8 max-w-xl mx-auto">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث باسم المدرس أو التخصص..." 
+            placeholder={settings?.teachersListSearchPlaceholder || "ابحث باسم المدرس أو التخصص..."} 
             className="h-14 pr-12 rounded-2xl shadow-sm border-2 bg-white focus:border-primary"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

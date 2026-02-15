@@ -153,7 +153,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      {profile.role === "mustafhem" ? <MustafhemView profile={profile} /> : <MufhemView profile={profile} />}
+      {profile.role === "mustafhem" ? <MustafhemView profile={profile} settings={settings} /> : <MufhemView profile={profile} settings={settings} />}
     </div>
   );
 }
@@ -188,7 +188,7 @@ function LandingPage({ router, settings }: any) {
   );
 }
 
-function MustafhemView({ profile }: any) {
+function MustafhemView({ profile, settings }: any) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -264,12 +264,12 @@ function MustafhemView({ profile }: any) {
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
         <div className="space-y-4 text-right">
-          <h2 className="text-4xl font-black text-zinc-800">عندك سؤال؟ اطرح استفهامك الآن</h2>
+          <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">طلب استفهام جديد</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">{settings?.studentDashboardBtn || "طلب استفهام جديد"}</Button></DialogTrigger>
             <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
               <DialogHeader>
-                <DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle>
+                <DialogTitle className="text-right text-3xl font-black">{settings?.createIstifhamTitle || "تفاصيل الاستفهام"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
                 
@@ -327,7 +327,7 @@ function MustafhemView({ profile }: any) {
                   </div>
                 </div>
               </div>
-              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
+              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">{settings?.createIstifhamBtn || "تأكيد وإرسال للمراجعة"}</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
@@ -384,7 +384,7 @@ function MustafhemView({ profile }: any) {
   );
 }
 
-function MufhemView({ profile }: any) {
+function MufhemView({ profile, settings }: any) {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -437,10 +437,10 @@ function MufhemView({ profile }: any) {
 
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-accent/10">
         <div className="space-y-4 text-right">
-          <h2 className="text-4xl font-black text-zinc-800">اعرض مهاراتك.. أضف عملاً جديداً لمعرضك</h2>
-          <p className="text-muted-foreground font-bold text-lg max-w-xl">كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم.</p>
+          <h2 className="text-4xl font-black text-zinc-800">{settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}</h2>
+          <p className="text-muted-foreground font-bold text-lg max-w-xl">{settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم."}</p>
           <Button size="lg" onClick={() => router.push('/portfolio/add')} className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20">
-            إضافة عمل جديد للمعرض <Plus className="mr-2" />
+            {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"} <Plus className="mr-2" />
           </Button>
         </div>
         <ImageIcon size={120} className="text-accent opacity-20 hidden md:block" />

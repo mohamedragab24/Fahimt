@@ -42,14 +42,21 @@ import {
   ChevronRight,
   Gavel,
   Lock,
-  Target
+  Target,
+  Users,
+  Video,
+  Star,
+  Search,
+  Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
-type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar';
+type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list';
 
 export default function ManualEditorPage() {
   const firestore = useFirestore();
@@ -108,7 +115,19 @@ export default function ManualEditorPage() {
     guaranteesTitle: "ضمان الحقوق",
     guaranteesDescription: "نحن في 'فهمني' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
     guideTitle: "الدليل الإرشادي",
-    guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين."
+    guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
+    // New Dashboard Content
+    studentDashboardTitle: "عندك سؤال؟ اطرح استفهامك الآن",
+    studentDashboardBtn: "طلب استفهام جديد",
+    teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
+    teacherDashboardSubtitle: "كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم.",
+    teacherDashboardBtn: "إضافة عمل جديد للمعرض",
+    teachersListTitle: "نخبة 'المفهمين' الموثقين",
+    teachersListSearchPlaceholder: "ابحث باسم المدرس أو التخصص...",
+    portfolioListTitle: "أعمال المفهمين",
+    portfolioListSubtitle: "نماذج تعليمية ملهمة من خبراء منصة فهمني.",
+    createIstifhamTitle: "تفاصيل الاستفهام",
+    createIstifhamBtn: "تأكيد وإرسال للمراجعة"
   });
 
   useEffect(() => {
@@ -197,11 +216,11 @@ export default function ManualEditorPage() {
         <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-full md:w-auto mx-4 max-w-[50%] md:max-w-none">
           <TabsList className="bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto flex-nowrap no-scrollbar justify-start md:justify-center">
             <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
+            <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
+            <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">قائمة المدرسين</TabsTrigger>
+            <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
             <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
             <TabsTrigger value="terms" className="rounded-lg font-black px-4 shrink-0">الشروط</TabsTrigger>
-            <TabsTrigger value="privacy" className="rounded-lg font-black px-4 shrink-0">الخصوصية</TabsTrigger>
-            <TabsTrigger value="guarantees" className="rounded-lg font-black px-4 shrink-0">الضمانات</TabsTrigger>
-            <TabsTrigger value="guide" className="rounded-lg font-black px-4 shrink-0">الدليل</TabsTrigger>
             <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
             <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
           </TabsList>
@@ -353,6 +372,144 @@ export default function ManualEditorPage() {
                 </section>
               )}
 
+              {currentPage === 'dashboards' && (
+                <section className="p-12 space-y-20">
+                  {/* Student View Simulation */}
+                  <div className="space-y-8">
+                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest border-r-4 border-primary pr-3">معاينة لوحة المستفهم</h3>
+                    <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-primary/5 hover:border-primary/20 transition-all">
+                      <div className="space-y-4 text-right">
+                        <h2 
+                          className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => handleFieldClick('studentDashboardTitle', 'عنوان لوحة المستفهم')}
+                        >
+                          {formData.studentDashboardTitle}
+                        </h2>
+                        <Button 
+                          size="lg" 
+                          className="h-16 px-10 text-xl font-black rounded-2xl"
+                          onClick={() => handleFieldClick('studentDashboardBtn', 'نص زر طلب استفهام')}
+                        >
+                          {formData.studentDashboardBtn}
+                        </Button>
+                      </div>
+                      <BookOpen size={100} className="text-primary opacity-20" />
+                    </div>
+                  </div>
+
+                  {/* Teacher View Simulation */}
+                  <div className="space-y-8">
+                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest border-r-4 border-accent pr-3">معاينة لوحة المفهم</h3>
+                    <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-accent/5 hover:border-accent/20 transition-all">
+                      <div className="space-y-4 text-right">
+                        <h2 
+                          className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-accent transition-colors"
+                          onClick={() => handleFieldClick('teacherDashboardTitle', 'عنوان لوحة المفهم')}
+                        >
+                          {formData.teacherDashboardTitle}
+                        </h2>
+                        <p 
+                          className="text-muted-foreground font-bold text-lg max-w-xl cursor-pointer hover:text-zinc-900"
+                          onClick={() => handleFieldClick('teacherDashboardSubtitle', 'وصف لوحة المفهم')}
+                        >
+                          {formData.teacherDashboardSubtitle}
+                        </p>
+                        <Button 
+                          size="lg" 
+                          className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90"
+                          onClick={() => handleFieldClick('teacherDashboardBtn', 'نص زر إضافة عمل')}
+                        >
+                          {formData.teacherDashboardBtn} <Plus className="mr-2" />
+                        </Button>
+                      </div>
+                      <ImageIcon size={100} className="text-accent opacity-20" />
+                    </div>
+                  </div>
+
+                  {/* Create Request Modal Simulation */}
+                  <div className="space-y-8 pt-10 border-t">
+                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest text-center">معاينة نموذج إنشاء طلب (Modal)</h3>
+                    <div className="max-w-2xl mx-auto bg-white border-4 border-zinc-100 rounded-[3rem] shadow-2xl p-10 space-y-8">
+                      <h4 
+                        className="text-3xl font-black text-center cursor-pointer hover:text-primary"
+                        onClick={() => handleFieldClick('createIstifhamTitle', 'عنوان نافذة الطلب')}
+                      >
+                        {formData.createIstifhamTitle}
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="h-14 bg-zinc-50 rounded-2xl border-2 border-dashed"></div>
+                        <div className="h-32 bg-zinc-50 rounded-2xl border-2 border-dashed"></div>
+                        <div className="h-24 bg-primary/5 rounded-2xl border-2 border-dashed border-primary/20"></div>
+                      </div>
+                      <Button 
+                        className="w-full h-16 text-xl font-black rounded-2xl shadow-xl"
+                        onClick={() => handleFieldClick('createIstifhamBtn', 'نص زر إرسال الطلب')}
+                      >
+                        {formData.createIstifhamBtn}
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {currentPage === 'teachers_list' && (
+                <section className="p-12 space-y-12">
+                  <div className="text-center space-y-8 max-w-3xl mx-auto">
+                    <h1 
+                      className="text-5xl font-black tracking-tight text-zinc-800 cursor-pointer hover:text-primary transition-all"
+                      onClick={() => handleFieldClick('teachersListTitle', 'عنوان صفحة المدرسين')}
+                    >
+                      {formData.teachersListTitle}
+                    </h1>
+                    <div 
+                      className="relative max-w-xl mx-auto h-16 bg-white rounded-2xl border-2 shadow-sm flex items-center px-6 text-zinc-400 font-bold cursor-pointer hover:border-primary"
+                      onClick={() => handleFieldClick('teachersListSearchPlaceholder', 'نص البحث عن مدرس')}
+                    >
+                      <Search className="ml-4 h-5 w-5" />
+                      {formData.teachersListSearchPlaceholder}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-6">
+                    {[1,2,3].map(i => (
+                      <Card key={i} className="rounded-xl p-6 bg-white text-center space-y-4 opacity-50 grayscale">
+                        <Avatar className="h-20 w-20 mx-auto border-2"><AvatarFallback>خ</AvatarFallback></Avatar>
+                        <div className="h-4 w-24 bg-zinc-100 mx-auto rounded"></div>
+                        <div className="h-10 w-full bg-blue-500 rounded-lg"></div>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {currentPage === 'portfolio_list' && (
+                <section className="p-12 space-y-12">
+                  <div className="space-y-4 border-r-8 border-primary pr-6">
+                    <h1 
+                      className="text-4xl font-black text-zinc-900 cursor-pointer hover:text-primary transition-all"
+                      onClick={() => handleFieldClick('portfolioListTitle', 'عنوان معرض الأعمال')}
+                    >
+                      {formData.portfolioListTitle}
+                    </h1>
+                    <p 
+                      className="text-muted-foreground font-bold text-xl cursor-pointer hover:text-zinc-900"
+                      onClick={() => handleFieldClick('portfolioListSubtitle', 'وصف معرض الأعمال')}
+                    >
+                      {formData.portfolioListSubtitle}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-10">
+                    {[1,2].map(i => (
+                      <div key={i} className="space-y-4 opacity-40">
+                        <div className="aspect-video bg-zinc-200 rounded-[2rem]"></div>
+                        <div className="h-6 w-48 bg-zinc-300 rounded"></div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {currentPage === 'about' && (
                 <section className="py-32 px-16 space-y-20">
                   <div className="flex flex-col md:flex-row gap-16 items-center">
@@ -388,88 +545,6 @@ export default function ManualEditorPage() {
                 </section>
               )}
 
-              {currentPage === 'terms' && (
-                <section className="py-32 px-16 space-y-12">
-                  <div className="text-center space-y-6">
-                    <div className="bg-primary/10 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto text-primary shadow-inner mb-6">
-                      <Gavel size={48} />
-                    </div>
-                    <h2 
-                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight"
-                      onClick={() => handleFieldClick('termsTitle', 'عنوان شروط الاستخدام')}
-                    >
-                      {formData.termsTitle}
-                    </h2>
-                    <p 
-                      className="text-2xl leading-relaxed font-bold text-zinc-500 max-w-3xl mx-auto cursor-pointer hover:bg-black/5 p-6 rounded-2xl transition-all"
-                      onClick={() => handleFieldClick('termsDescription', 'وصف شروط الاستخدام', 'textarea')}
-                    >
-                      {formData.termsDescription}
-                    </p>
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'privacy' && (
-                <section className="py-32 px-16 space-y-12 text-right">
-                  <div className="max-w-4xl mx-auto space-y-10">
-                    <h2 
-                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight text-center"
-                      onClick={() => handleFieldClick('privacyTitle', 'عنوان سياسة الخصوصية')}
-                    >
-                      {formData.privacyTitle}
-                    </h2>
-                    <div 
-                      className="p-10 bg-zinc-50 rounded-[3rem] border-2 border-dashed border-primary/20 cursor-pointer hover:bg-white transition-all shadow-inner"
-                      onClick={() => handleFieldClick('privacyDescription', 'محتوى سياسة الخصوصية', 'textarea')}
-                    >
-                      <p className="text-2xl leading-relaxed font-medium text-zinc-700">
-                        {formData.privacyDescription}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'guarantees' && (
-                <section className="py-32 px-16 space-y-12 text-center">
-                  <div className="bg-accent/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-accent shadow-inner mb-6">
-                    <ShieldCheck size={48} />
-                  </div>
-                  <h2 
-                    className="text-6xl font-black cursor-pointer hover:text-accent transition-all leading-tight"
-                    onClick={() => handleFieldClick('guaranteesTitle', 'عنوان ضمان الحقوق')}
-                  >
-                    {formData.guaranteesTitle}
-                  </h2>
-                  <p 
-                    className="text-2xl leading-relaxed font-bold text-zinc-600 max-w-3xl mx-auto cursor-pointer hover:bg-accent/5 p-10 border-r-8 border-accent transition-all text-right"
-                    onClick={() => handleFieldClick('guaranteesDescription', 'وصف ضمان الحقوق', 'textarea')}
-                  >
-                    {formData.guaranteesDescription}
-                  </p>
-                </section>
-              )}
-
-              {currentPage === 'guide' && (
-                <section className="py-32 px-16 space-y-12">
-                  <div className="text-center space-y-6">
-                    <h2 
-                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight"
-                      onClick={() => handleFieldClick('guideTitle', 'عنوان الدليل الإرشادي')}
-                    >
-                      {formData.guideTitle}
-                    </h2>
-                    <p 
-                      className="text-2xl leading-relaxed font-bold text-zinc-500 max-w-3xl mx-auto cursor-pointer hover:bg-black/5 p-6 rounded-2xl transition-all"
-                      onClick={() => handleFieldClick('guideSubtitle', 'وصف الدليل الإرشادي', 'textarea')}
-                    >
-                      {formData.guideSubtitle}
-                    </p>
-                  </div>
-                </section>
-              )}
-
               {currentPage === 'sidebar' && (
                 <section className="py-20 px-16 flex justify-center bg-zinc-50">
                   <Card className="w-80 border-2 shadow-2xl rounded-[3rem] overflow-hidden bg-white">
@@ -486,12 +561,6 @@ export default function ManualEditorPage() {
                       <SidebarItem icon={Settings} label={formData.sideSettings} onClick={() => handleFieldClick('sideSettings', 'زر الإعدادات')} />
                       <div className="pt-4 border-t mt-4">
                         <SidebarItem icon={LayoutDashboard} label={formData.sideAdmin} onClick={() => handleFieldClick('sideAdmin', 'عنوان لوحة المسؤول')} color="text-accent" />
-                        <div className="pr-4 space-y-1 mt-2">
-                          <AdminSubItem label="نظرة عامة" />
-                          <AdminSubItem label="المحرر المرئي" />
-                          <AdminSubItem label="فريق العمل" />
-                          <AdminSubItem label="المالية" />
-                        </div>
                       </div>
                       <div className="pt-4 space-y-2">
                         <div 
@@ -645,14 +714,6 @@ function SidebarItem({ icon: Icon, label, onClick, color }: any) {
       <Icon size={20} className={color || "text-primary"} />
       <span className={`font-black text-sm ${color || "text-zinc-700"}`}>{label}</span>
       <Edit3 size={12} className="ml-auto opacity-0 group-hover:opacity-100 text-zinc-300" />
-    </div>
-  );
-}
-
-function AdminSubItem({ label }: { label: string }) {
-  return (
-    <div className="py-2 text-[10px] font-black text-zinc-400 border-r-2 border-zinc-100 pr-3 hover:text-primary cursor-default">
-      {label}
     </div>
   );
 }

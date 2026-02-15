@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ShieldCheck, Clock, Layout, PlayCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,12 @@ export default function GlobalPortfolioPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   // عرض الأعمال المعتمدة فقط
   const portfolioQuery = useMemoFirebase(() => {
@@ -37,7 +43,6 @@ export default function GlobalPortfolioPage() {
 
   const { data: allUsers } = useCollection(usersQuery);
 
-  // الترتيب في الذاكرة لضمان العمل الفوري
   const portfolioItems = rawPortfolioItems 
     ? [...rawPortfolioItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) 
     : [];
@@ -56,9 +61,9 @@ export default function GlobalPortfolioPage() {
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto">
         <div className="space-y-2 text-right w-full md:w-auto border-r-8 border-primary pr-6">
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
-            <Layout className="text-primary" /> أعمال المفهمين
+            <Layout className="text-primary" /> {settings?.portfolioListTitle || "أعمال المفهمين"}
           </h1>
-          <p className="text-muted-foreground font-bold">نماذج تعليمية ملهمة من خبراء منصة فهمني.</p>
+          <p className="text-muted-foreground font-bold">{settings?.portfolioListSubtitle || "نماذج تعليمية ملهمة من خبراء منصة فهمني."}</p>
         </div>
         
         <div className="relative w-full md:w-96">
@@ -106,7 +111,6 @@ export default function GlobalPortfolioPage() {
                   />
                 )}
                 
-                {/* شارة مميز كما في الصورة */}
                 <div className="absolute top-4 right-4 flex flex-col gap-2">
                   <Badge className="bg-[#FFC107] text-zinc-900 font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">
                     مميز
@@ -118,7 +122,6 @@ export default function GlobalPortfolioPage() {
                   )}
                 </div>
 
-                {/* آفاتار المفهم المتداخل كما في الصورة */}
                 <div className="absolute bottom-4 right-4">
                   <Avatar className="h-16 w-16 border-[6px] border-white shadow-2xl transition-transform group-hover:scale-110">
                     <AvatarImage src={teacher?.profilePictureUrl} />
