@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,12 @@ import {
   Wallet,
   Settings,
   LayoutDashboard,
-  LogOut
+  LogOut,
+  ShieldAlert,
+  ChevronRight,
+  Gavel,
+  Lock,
+  Target
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -189,20 +194,23 @@ export default function ManualEditorPage() {
           </div>
         </div>
 
-        <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-full md:w-auto mx-4 max-w-[50%] md:max-w-none overflow-hidden">
+        <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-full md:w-auto mx-4 max-w-[50%] md:max-w-none">
           <TabsList className="bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto flex-nowrap no-scrollbar justify-start md:justify-center">
             <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
             <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
+            <TabsTrigger value="terms" className="rounded-lg font-black px-4 shrink-0">الشروط</TabsTrigger>
+            <TabsTrigger value="privacy" className="rounded-lg font-black px-4 shrink-0">الخصوصية</TabsTrigger>
+            <TabsTrigger value="guarantees" className="rounded-lg font-black px-4 shrink-0">الضمانات</TabsTrigger>
             <TabsTrigger value="guide" className="rounded-lg font-black px-4 shrink-0">الدليل</TabsTrigger>
             <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
-            <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">أخرى</TabsTrigger>
+            <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
           </TabsList>
         </Tabs>
 
         <div className="flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
             {isSaving ? <RefreshCw className="animate-spin ml-2" /> : <Save className="ml-2" />}
-            حفظ
+            حفظ التغييرات
           </Button>
         </div>
       </header>
@@ -269,10 +277,10 @@ export default function ManualEditorPage() {
               <div className="flex items-center gap-4">
                 <div 
                   style={{ backgroundColor: formData.primaryColor, borderRadius: `calc(${formData.borderRadius} / 2)` }} 
-                  className="w-12 h-12 flex items-center justify-center text-white font-black text-2xl shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                  className="w-12 h-12 flex items-center justify-center text-white font-black text-2xl shadow-lg cursor-pointer hover:scale-110 transition-transform overflow-hidden"
                   onClick={() => handleFieldClick('logoUrl', 'الشعار المربع', 'image')}
                 >
-                  {formData.logoUrl ? <img src={formData.logoUrl} className="w-full h-full object-cover rounded-inherit" /> : "ف"}
+                  {formData.logoUrl ? <img src={formData.logoUrl} className="w-full h-full object-cover" /> : "ف"}
                 </div>
                 <span 
                   className="font-black text-3xl cursor-pointer hover:text-primary transition-all"
@@ -375,16 +383,95 @@ export default function ManualEditorPage() {
                         style={{ borderRadius: formData.borderRadius }}
                         onClick={() => handleFieldClick('aboutImage', 'صورة صفحة عن المنصة', 'image')}
                       />
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                        <Upload size={48} className="text-white drop-shadow-lg" />
-                      </div>
                     </div>
                   </div>
                 </section>
               )}
 
+              {currentPage === 'terms' && (
+                <section className="py-32 px-16 space-y-12">
+                  <div className="text-center space-y-6">
+                    <div className="bg-primary/10 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto text-primary shadow-inner mb-6">
+                      <Gavel size={48} />
+                    </div>
+                    <h2 
+                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight"
+                      onClick={() => handleFieldClick('termsTitle', 'عنوان شروط الاستخدام')}
+                    >
+                      {formData.termsTitle}
+                    </h2>
+                    <p 
+                      className="text-2xl leading-relaxed font-bold text-zinc-500 max-w-3xl mx-auto cursor-pointer hover:bg-black/5 p-6 rounded-2xl transition-all"
+                      onClick={() => handleFieldClick('termsDescription', 'وصف شروط الاستخدام', 'textarea')}
+                    >
+                      {formData.termsDescription}
+                    </p>
+                  </div>
+                </section>
+              )}
+
+              {currentPage === 'privacy' && (
+                <section className="py-32 px-16 space-y-12 text-right">
+                  <div className="max-w-4xl mx-auto space-y-10">
+                    <h2 
+                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight text-center"
+                      onClick={() => handleFieldClick('privacyTitle', 'عنوان سياسة الخصوصية')}
+                    >
+                      {formData.privacyTitle}
+                    </h2>
+                    <div 
+                      className="p-10 bg-zinc-50 rounded-[3rem] border-2 border-dashed border-primary/20 cursor-pointer hover:bg-white transition-all shadow-inner"
+                      onClick={() => handleFieldClick('privacyDescription', 'محتوى سياسة الخصوصية', 'textarea')}
+                    >
+                      <p className="text-2xl leading-relaxed font-medium text-zinc-700">
+                        {formData.privacyDescription}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {currentPage === 'guarantees' && (
+                <section className="py-32 px-16 space-y-12 text-center">
+                  <div className="bg-accent/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-accent shadow-inner mb-6">
+                    <ShieldCheck size={48} />
+                  </div>
+                  <h2 
+                    className="text-6xl font-black cursor-pointer hover:text-accent transition-all leading-tight"
+                    onClick={() => handleFieldClick('guaranteesTitle', 'عنوان ضمان الحقوق')}
+                  >
+                    {formData.guaranteesTitle}
+                  </h2>
+                  <p 
+                    className="text-2xl leading-relaxed font-bold text-zinc-600 max-w-3xl mx-auto cursor-pointer hover:bg-accent/5 p-10 border-r-8 border-accent transition-all text-right"
+                    onClick={() => handleFieldClick('guaranteesDescription', 'وصف ضمان الحقوق', 'textarea')}
+                  >
+                    {formData.guaranteesDescription}
+                  </p>
+                </section>
+              )}
+
+              {currentPage === 'guide' && (
+                <section className="py-32 px-16 space-y-12">
+                  <div className="text-center space-y-6">
+                    <h2 
+                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight"
+                      onClick={() => handleFieldClick('guideTitle', 'عنوان الدليل الإرشادي')}
+                    >
+                      {formData.guideTitle}
+                    </h2>
+                    <p 
+                      className="text-2xl leading-relaxed font-bold text-zinc-500 max-w-3xl mx-auto cursor-pointer hover:bg-black/5 p-6 rounded-2xl transition-all"
+                      onClick={() => handleFieldClick('guideSubtitle', 'وصف الدليل الإرشادي', 'textarea')}
+                    >
+                      {formData.guideSubtitle}
+                    </p>
+                  </div>
+                </section>
+              )}
+
               {currentPage === 'sidebar' && (
-                <section className="py-20 px-16 flex justify-center">
+                <section className="py-20 px-16 flex justify-center bg-zinc-50">
                   <Card className="w-80 border-2 shadow-2xl rounded-[3rem] overflow-hidden bg-white">
                     <div className="p-8 border-b flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white font-black text-2xl">ف</div>
@@ -399,6 +486,12 @@ export default function ManualEditorPage() {
                       <SidebarItem icon={Settings} label={formData.sideSettings} onClick={() => handleFieldClick('sideSettings', 'زر الإعدادات')} />
                       <div className="pt-4 border-t mt-4">
                         <SidebarItem icon={LayoutDashboard} label={formData.sideAdmin} onClick={() => handleFieldClick('sideAdmin', 'عنوان لوحة المسؤول')} color="text-accent" />
+                        <div className="pr-4 space-y-1 mt-2">
+                          <AdminSubItem label="نظرة عامة" />
+                          <AdminSubItem label="المحرر المرئي" />
+                          <AdminSubItem label="فريق العمل" />
+                          <AdminSubItem label="المالية" />
+                        </div>
                       </div>
                       <div className="pt-4 space-y-2">
                         <div 
@@ -460,18 +553,18 @@ export default function ManualEditorPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-10">
-            <Label className="font-black mb-4 block text-lg">القيمة الجديدة</Label>
+            <Label className="font-black mb-4 block text-lg text-right">القيمة الجديدة</Label>
             {activeField?.type === 'textarea' ? (
               <Textarea 
                 value={activeField?.value || ""} 
                 onChange={(e) => setActiveField({...activeField!, value: e.target.value})}
-                className="h-60 rounded-3xl border-4 border-zinc-100 text-2xl font-medium p-8 focus:border-primary transition-all leading-relaxed"
+                className="h-60 rounded-3xl border-4 border-zinc-100 text-2xl font-medium p-8 focus:border-primary transition-all leading-relaxed text-right"
               />
             ) : (
               <Input 
                 value={activeField?.value || ""} 
                 onChange={(e) => setActiveField({...activeField!, value: e.target.value})}
-                className="h-20 rounded-2xl border-4 border-zinc-100 text-3xl font-black px-6 focus:border-primary transition-all"
+                className="h-20 rounded-2xl border-4 border-zinc-100 text-3xl font-black px-6 focus:border-primary transition-all text-right"
               />
             )}
           </div>
@@ -552,6 +645,14 @@ function SidebarItem({ icon: Icon, label, onClick, color }: any) {
       <Icon size={20} className={color || "text-primary"} />
       <span className={`font-black text-sm ${color || "text-zinc-700"}`}>{label}</span>
       <Edit3 size={12} className="ml-auto opacity-0 group-hover:opacity-100 text-zinc-300" />
+    </div>
+  );
+}
+
+function AdminSubItem({ label }: { label: string }) {
+  return (
+    <div className="py-2 text-[10px] font-black text-zinc-400 border-r-2 border-zinc-100 pr-3 hover:text-primary cursor-default">
+      {label}
     </div>
   );
 }
