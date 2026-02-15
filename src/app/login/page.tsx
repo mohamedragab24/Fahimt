@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -14,7 +13,21 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { sendEmailVerification } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, UserCircle, Mail, ShieldCheck, CheckCircle2, Loader2, KeyRound, UserPlus, LogIn, ChevronRight, Lock, Calendar } from "lucide-react";
+import { 
+  Upload, 
+  UserCircle, 
+  Mail, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Loader2, 
+  KeyRound, 
+  UserPlus, 
+  LogIn, 
+  ChevronRight, 
+  Lock, 
+  Calendar,
+  Smartphone 
+} from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
