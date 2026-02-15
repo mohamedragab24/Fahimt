@@ -19,7 +19,9 @@ import {
   ImageIcon,
   Mail,
   Phone,
-  UserCircle
+  UserCircle,
+  Target,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +44,6 @@ export default function RequestDetailsPage() {
 
   const { data: request, isLoading } = useDoc(requestRef);
 
-  // جلب بيانات صاحب المشروع
   const ownerRef = useMemoFirebase(() => {
     if (!firestore || !request?.mustafhemId) return null;
     return doc(firestore, "users", request.mustafhemId);
@@ -69,50 +70,48 @@ export default function RequestDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
               <CardContent className="p-8 space-y-8">
-                <div className="border-b pb-6">
-                  <h1 className="text-3xl font-black text-zinc-900 leading-tight">تفاصيل المشروع</h1>
+                <div className="border-b pb-6 text-right">
+                  <h1 className="text-3xl font-black text-zinc-900 leading-tight">تفاصيل الاستفهام</h1>
                 </div>
 
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-primary">{request.title}</h2>
+                <div className="space-y-8 text-right">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-primary">{request.title}</h2>
+                    <div className="flex items-center gap-2 text-muted-foreground font-bold text-xs justify-end">
+                      {request.category} • {request.categorySub} <Tag size={12} />
+                    </div>
+                  </div>
                   
-                  <div className="prose prose-zinc max-w-none">
-                    <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-medium">
+                  <div className="space-y-4">
+                    <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
+                      التفاصيل <FileText size={18} className="text-primary" />
+                    </h4>
+                    <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-medium bg-zinc-50 p-6 rounded-2xl border-2 border-dashed">
                       {request.description}
                     </p>
                   </div>
 
+                  {request.goal && (
+                    <div className="space-y-4">
+                      <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
+                        هدف الاستفهام (شرط الاستحقاق) <Target size={18} className="text-accent" />
+                      </h4>
+                      <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-bold italic bg-accent/5 p-6 rounded-2xl border-2 border-accent/10">
+                        "{request.goal}"
+                      </p>
+                    </div>
+                  )}
+
                   {request.attachmentUrl && (
                     <div className="mt-6 space-y-3">
-                      <h4 className="font-bold text-zinc-900 flex items-center gap-2">
-                        <ImageIcon size={18} className="text-primary" /> المرفقات التوضيحية:
+                      <h4 className="font-bold text-zinc-900 flex items-center gap-2 justify-end">
+                        المرفقات <ImageIcon size={18} className="text-primary" />
                       </h4>
-                      <div className="rounded-2xl overflow-hidden border-2 shadow-sm max-w-md">
+                      <div className="rounded-2xl overflow-hidden border-2 shadow-sm max-w-md mr-auto">
                         <img src={request.attachmentUrl} alt="Attachment" className="w-full h-auto" />
                       </div>
                     </div>
                   )}
-                </div>
-
-                <div className="space-y-4 pt-6 border-t border-dashed">
-                  <h4 className="font-bold text-zinc-900 flex items-center gap-2">
-                    <Tag size={18} className="text-primary" /> المهارات المطلوبة:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 px-4 py-1.5 rounded-lg font-bold">
-                      {request.category}
-                    </Badge>
-                    {request.categorySub && (
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 px-4 py-1.5 rounded-lg font-bold">
-                        {request.categorySub}
-                      </Badge>
-                    )}
-                    {request.categoryOption && (
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 px-4 py-1.5 rounded-lg font-bold">
-                        {request.categoryOption}
-                      </Badge>
-                    )}
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -162,27 +161,27 @@ export default function RequestDetailsPage() {
             </Card>
 
             <Card className="rounded-2xl border-none shadow-sm bg-white overflow-hidden">
-              <div className="p-6 border-b bg-zinc-50/50">
-                <h4 className="font-black text-zinc-800">صاحب المشروع</h4>
+              <div className="p-6 border-b bg-zinc-50/50 text-right">
+                <h4 className="font-black text-zinc-800">المستفهم</h4>
               </div>
               <CardContent className="p-6 space-y-6">
                 <div 
-                  className="flex items-center gap-4 cursor-pointer group"
+                  className="flex items-center gap-4 cursor-pointer group justify-end"
                   onClick={() => setShowOwnerProfile(true)}
                 >
+                  <div className="text-right">
+                    <p className="font-black text-zinc-900 flex items-center gap-1 group-hover:text-primary transition-colors justify-end">
+                      {request.mustafhemName}
+                      <ShieldCheck size={14} className="text-blue-500" />
+                    </p>
+                    <p className="text-xs text-zinc-500 font-bold">اضغط لعرض الملف</p>
+                  </div>
                   <Avatar className="h-14 w-14 border-2 border-primary/10 group-hover:border-primary transition-all">
                     <AvatarImage src={owner?.profilePictureUrl} />
                     <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
                       {request.mustafhemName?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-right">
-                    <p className="font-black text-zinc-900 flex items-center gap-1 group-hover:text-primary transition-colors">
-                      {request.mustafhemName}
-                      <ShieldCheck size={14} className="text-blue-500" />
-                    </p>
-                    <p className="text-xs text-zinc-500 font-bold">اضغط لعرض الملف</p>
-                  </div>
                 </div>
 
                 <div className="space-y-3 pt-4 border-t">
@@ -204,10 +203,10 @@ export default function RequestDetailsPage() {
       <Dialog open={showOwnerProfile} onOpenChange={setShowOwnerProfile}>
         <DialogContent className="rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-2xl font-black flex items-center gap-3">
-              <UserCircle className="text-primary" /> ملف صاحب المشروع
+            <DialogTitle className="text-right text-2xl font-black flex items-center gap-3 justify-end">
+              <UserCircle className="text-primary" /> ملف المستفهم
             </DialogTitle>
-            <DialogDescription className="text-right">معلومات أساسية حول المستفهم.</DialogDescription>
+            <DialogDescription className="text-right">معلومات أساسية حول صاحب الاستفهام.</DialogDescription>
           </DialogHeader>
           {owner && (
             <div className="py-6 space-y-6">

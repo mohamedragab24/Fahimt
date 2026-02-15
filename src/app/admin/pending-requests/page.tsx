@@ -15,7 +15,8 @@ import {
   BadgeCent,
   Calendar,
   User,
-  FileText
+  FileText,
+  Target
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -27,7 +28,6 @@ export default function AdminPendingRequests() {
   const { toast } = useToast();
   const [selectedIstifham, setSelectedIstifham] = useState<any>(null);
 
-  // تم تبسيط الاستعلام لضمان جلب كافة النتائج
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -103,12 +103,24 @@ export default function AdminPendingRequests() {
             <DialogDescription className="text-right text-lg">مراجعة كاملة لمحتوى الاستفهام قبل النشر للمفهمين.</DialogDescription>
           </DialogHeader>
           {selectedIstifham && (
-            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2">
+            <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto px-2 text-right">
               <div className="p-8 bg-orange-50/50 rounded-3xl border-2 border-dashed border-orange-200 space-y-4">
                 <h4 className="text-2xl font-black text-zinc-900 leading-tight">{selectedIstifham.title}</h4>
-                <div className="flex items-start gap-3">
-                  <FileText className="text-orange-500 shrink-0 mt-1" size={20} />
-                  <p className="text-zinc-700 leading-relaxed font-bold text-lg">{selectedIstifham.description}</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="font-black text-primary flex items-center gap-2 justify-end">
+                      التفاصيل <FileText size={16}/>
+                    </Label>
+                    <p className="text-zinc-700 leading-relaxed font-bold text-lg">{selectedIstifham.description}</p>
+                  </div>
+                  {selectedIstifham.goal && (
+                    <div className="space-y-2 border-t pt-4">
+                      <Label className="font-black text-accent flex items-center gap-2 justify-end">
+                        هدف الاستفهام <Target size={16}/>
+                      </Label>
+                      <p className="text-zinc-700 leading-relaxed font-bold text-md italic">"{selectedIstifham.goal}"</p>
+                    </div>
+                  )}
                 </div>
               </div>
               

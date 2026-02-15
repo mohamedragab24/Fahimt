@@ -16,7 +16,9 @@ import {
   X,
   Briefcase,
   ImageIcon,
-  Plus
+  Plus,
+  Target,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -184,8 +186,22 @@ function MustafhemView({ profile }: any) {
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
-  const [newIstifham, setNewIstifham] = useState({ title: "", description: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
+  const [newIstifham, setNewIstifham] = useState({ 
+    title: "", 
+    description: "", 
+    goal: "",
+    amount: "", 
+    category: "", 
+    categorySub: "", 
+    categoryOption: "", 
+    meetingTime: "", 
+    attachmentUrl: "" 
+  });
   const { toast } = useToast();
+
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  };
 
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
@@ -214,10 +230,28 @@ function MustafhemView({ profile }: any) {
   };
 
   const handleCreate = async () => {
-    if (!newIstifham.title || !newIstifham.description || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
+    const titleWords = countWords(newIstifham.title);
+    const descWords = countWords(newIstifham.description);
+    const goalWords = countWords(newIstifham.goal);
+
+    if (titleWords > 100) {
+      toast({ variant: "destructive", title: "تنبيه", description: "العنوان يتجاوز 100 كلمة." });
+      return;
+    }
+    if (descWords > 1000) {
+      toast({ variant: "destructive", title: "تنبيه", description: "التفاصيل تتجاوز 1000 كلمة." });
+      return;
+    }
+    if (goalWords > 200) {
+      toast({ variant: "destructive", title: "تنبيه", description: "الهدف يتجاوز 200 كلمة." });
+      return;
+    }
+
+    if (!newIstifham.title || !newIstifham.description || !newIstifham.goal || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
     }
+
     if (firestore && profile) {
       await addDoc(collection(firestore, "istifhams"), {
         ...newIstifham,
@@ -229,7 +263,7 @@ function MustafhemView({ profile }: any) {
         createdAt: new Date().toISOString()
       });
       setIsDialogOpen(false);
-      setNewIstifham({ title: "", description: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
+      setNewIstifham({ title: "", description: "", goal: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
       toast({ title: "تم الإرسال للمراجعة" });
     }
   };
@@ -241,35 +275,70 @@ function MustafhemView({ profile }: any) {
           <h2 className="text-4xl font-black text-zinc-800">عندك سؤال؟ اطرح استفهامك الآن</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">طلب استفهام جديد</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
+            <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto px-2">
+              <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
+                
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-2">
-                    <Label className="font-black">وصف الطلب</Label>
-                    <Button variant="ghost" size="sm" onClick={handleRefine} disabled={isRefining} className="text-primary font-black"><Wand2 className="h-4 w-4 ml-2" /> تحسين بالذكاء الاصطناعي</Button>
+                    <Label className="font-black">عنوان الاستفهام (بحد أقصى 100 كلمة)</Label>
+                    <span className={`text-xs font-bold ${countWords(newIstifham.title) > 100 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.title)} / 100</span>
                   </div>
-                  <Textarea placeholder="اشرح مشكلتك..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-2xl border-2" />
+                  <Input placeholder="عنوان مختصر وواضح..." value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
                 </div>
-                <Input placeholder="عنوان الاستفهام" value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
-                <div className="grid grid-cols-2 gap-6">
-                  <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: ""})}>
-                    <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="القسم" /></SelectTrigger>
-                    <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Select onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v})}>
-                    <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="التخصص" /></SelectTrigger>
-                    <SelectContent>{filteredSubs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-2">
+                    <Label className="font-black">تفاصيل الاستفهام (بحد أقصى 1000 كلمة)</Label>
+                    <div className="flex items-center gap-4">
+                      <span className={`text-xs font-bold ${countWords(newIstifham.description) > 1000 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.description)} / 1000</span>
+                      <Button variant="ghost" size="sm" onClick={handleRefine} disabled={isRefining} className="text-primary font-black"><Wand2 className="h-4 w-4 ml-2" /> تحسين بالذكاء الاصطناعي</Button>
+                    </div>
+                  </div>
+                  <Textarea placeholder="اشرح مشكلتك بالتفصيل..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" />
                 </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-2">
+                    <Label className="font-black text-primary flex items-center gap-2">
+                      <Target size={16}/> هدف الاستفهام (بحد أقصى 200 كلمة)
+                    </Label>
+                    <span className={`text-xs font-bold ${countWords(newIstifham.goal) > 200 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.goal)} / 200</span>
+                  </div>
+                  <Textarea placeholder="ما هو الشيء الذي إذا حققه المدرس تعتبر أنك فهمت تماماً؟" value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" />
+                </div>
+
                 <div className="grid grid-cols-2 gap-6">
-                  <Input type="number" placeholder="الميزانية" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" />
-                  <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" />
+                  <div className="space-y-2">
+                    <Label className="font-black pr-2">القسم</Label>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: ""})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                      <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-black pr-2">التخصص</Label>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v})}>
+                      <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                      <SelectContent>{filteredSubs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="font-black pr-2">الميزانية (ج.م)</Label>
+                    <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-black pr-2">موعد المحاضرة المقترح</Label>
+                    <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" />
+                  </div>
                 </div>
               </div>
-              <DialogFooter><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
+              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
