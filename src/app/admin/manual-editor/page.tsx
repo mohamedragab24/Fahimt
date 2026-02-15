@@ -164,6 +164,15 @@ export default function ManualEditorPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-zinc-100" dir="rtl">
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
       
       {/* Header Toolbar */}
@@ -172,28 +181,28 @@ export default function ManualEditorPage() {
           <div className="bg-primary/10 p-3 rounded-2xl text-primary">
             <LayoutTemplate size={32} />
           </div>
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-2xl font-black">المحرر المرئي الفائق</h1>
             <p className="text-xs text-muted-foreground font-bold flex items-center gap-1">
-              <MousePointer2 size={12} /> اضغط على أي عنصر (نص، زر، صورة) لتعديله فوراً
+              <MousePointer2 size={12} /> اضغط على أي عنصر لتعديله
             </p>
           </div>
         </div>
 
-        <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-auto">
-          <TabsList className="bg-muted/50 p-1 rounded-xl h-14">
-            <TabsTrigger value="home" className="rounded-lg font-black px-4">الرئيسية</TabsTrigger>
-            <TabsTrigger value="about" className="rounded-lg font-black px-4">عن المنصة</TabsTrigger>
-            <TabsTrigger value="guide" className="rounded-lg font-black px-4">الدليل</TabsTrigger>
-            <TabsTrigger value="sidebar" className="rounded-lg font-black px-4">القائمة الجانبية</TabsTrigger>
-            <TabsTrigger value="nav" className="rounded-lg font-black px-4">أخرى</TabsTrigger>
+        <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-full md:w-auto mx-4 max-w-[50%] md:max-w-none overflow-hidden">
+          <TabsList className="bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto flex-nowrap no-scrollbar justify-start md:justify-center">
+            <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
+            <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
+            <TabsTrigger value="guide" className="rounded-lg font-black px-4 shrink-0">الدليل</TabsTrigger>
+            <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
+            <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">أخرى</TabsTrigger>
           </TabsList>
         </Tabs>
 
         <div className="flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
             {isSaving ? <RefreshCw className="animate-spin ml-2" /> : <Save className="ml-2" />}
-            حفظ التغييرات
+            حفظ
           </Button>
         </div>
       </header>
@@ -206,8 +215,8 @@ export default function ManualEditorPage() {
               <Palette size={14} /> التصميم العام
             </h3>
             <div className="space-y-6">
-              <ColorInput label="اللون الأساسي" value={formData.primaryColor} onChange={(v) => setFormData({...formData, primaryColor: v})} />
-              <ColorInput label="لون التمييز" value={formData.accentColor} onChange={(v) => setFormData({...formData, accentColor: v})} />
+              <ColorInput label="اللون الأساسي" value={formData.primaryColor || ""} onChange={(v) => setFormData({...formData, primaryColor: v})} />
+              <ColorInput label="لون التمييز" value={formData.accentColor || ""} onChange={(v) => setFormData({...formData, accentColor: v})} />
               <div className="space-y-2">
                 <Label className="text-[10px] font-black opacity-60">نصف قطر الزوايا (Radius)</Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -251,7 +260,7 @@ export default function ManualEditorPage() {
           <div 
             className="w-full max-w-5xl bg-white shadow-[0_50px_100px_rgba(0,0,0,0.1)] overflow-hidden min-h-[1200px] transition-all duration-700"
             style={{ 
-              backgroundColor: formData.backgroundColor,
+              backgroundColor: formData.backgroundColor || "#FFFFFF",
               borderRadius: formData.borderRadius 
             }}
           >
