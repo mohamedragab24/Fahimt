@@ -32,12 +32,15 @@ const otpFlow = ai.defineFlow(
   async (input) => {
     // إنشاء رمز عشوائي من 6 أرقام
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // تسجيل الرمز في السيرفر للضرورة التقنية أثناء التطوير
+    console.log(`[OTP DEBUG] Generated code for ${input.recipient}: ${code}`);
 
-    // استخدام الذكاء الاصطناعي لصياغة الرسالة
+    // استخدام الذكاء الاصطناعي لصياغة الرسالة بشكل جذاب
     const { text } = await ai.generate({
       prompt: `أنت مساعد نظام "فهمني". المستخدم طلب رمز تحقق عبر ${input.method === 'email' ? 'البريد الإلكتروني' : 'الواتساب'}.
       الرمز المولد هو: ${code}
-      قم بصياغة رسالة احترافية باللغة العربية تخبره بالرمز وكيفية استخدامه. لا تزد عن 20 كلمة.
+      قم بصياغة رسالة احترافية قصيرة جداً باللغة العربية تخبره بالرمز. 
       المستلم: ${input.recipient}`,
     });
 
@@ -46,6 +49,7 @@ const otpFlow = ai.defineFlow(
 
     if (input.method === 'email') {
       try {
+        // تصحيح هيكلية البيانات لـ Infobip Email API
         const response = await fetch('https://3dg8lv.api.infobip.com/email/4/messages', {
           method: 'POST',
           headers: {
@@ -56,20 +60,14 @@ const otpFlow = ai.defineFlow(
           body: JSON.stringify({
             "messages": [
               {
+                "from": "mohamedmini2006@selfserve.worlds-connected.co",
                 "destinations": [
                   {
-                    "to": [
-                      {
-                        "destination": input.recipient
-                      }
-                    ]
+                    "to": input.recipient
                   }
                 ],
-                "sender": "mohamedmini2006@selfserve.worlds-connected.co",
-                "content": {
-                  "subject": "رمز التحقق - فهمني",
-                  "text": text // استخدام النص المصاغ بالذكاء الاصطناعي
-                }
+                "subject": "رمز التحقق - فهمني",
+                "text": text
               }
             ]
           })
@@ -79,20 +77,15 @@ const otpFlow = ai.defineFlow(
           sendSuccess = true;
         } else {
           const errorData = await response.json();
-          console.error('Infobip Email failed:', errorData);
+          console.error('Infobip API Error Response:', JSON.stringify(errorData));
         }
       } catch (err: any) {
-        console.error('Email API call failed:', err);
+        console.error('Network Error while calling Infobip:', err);
       }
     } else if (input.method === 'whatsapp') {
-      // محاكاة إرسال الواتساب حالياً باستخدام نفس الـ API Key إذا توفرت الخدمة
-      try {
-        console.log(`[WHATSAPP SIMULATION] Sending ${code} to ${input.recipient}`);
-        // ملاحظة: لربط واتساب حقيقي عبر Infobip، يتم استخدام endpoint مختلف مثل /whatsapp/1/message/text
-        sendSuccess = true; 
-      } catch (err) {
-        console.error('WhatsApp simulation failed:', err);
-      }
+      // محاكاة إرسال الواتساب
+      console.log(`[WHATSAPP SIMULATION] Sending ${code} to ${input.recipient}`);
+      sendSuccess = true; 
     }
 
     return {
@@ -100,7 +93,7 @@ const otpFlow = ai.defineFlow(
       code,
       message: sendSuccess 
         ? `تم إرسال الرمز بنجاح عبر ${input.method === 'email' ? 'البريد' : 'الواتساب'}.`
-        : 'فشل إرسال الرمز، يرجى التأكد من البيانات والمحاولة لاحقاً.',
+        : 'فشل إرسال الرمز حالياً، يرجى المحاولة لاحقاً أو التأكد من صحة البريد.',
     };
   }
 );
