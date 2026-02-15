@@ -2,11 +2,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { 
   ShieldCheck, 
   FileText, 
   Scale, 
-  Lock, 
   Users, 
   User, 
   BadgeCent, 
@@ -25,6 +26,14 @@ import {
 } from "lucide-react";
 
 export default function TermsPage() {
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+
+  const { data: settings } = useDoc(settingsRef);
+
   const terms = [
     {
       icon: Users,
@@ -117,10 +126,10 @@ export default function TermsPage() {
           <FileText size={48} />
         </div>
         <h1 className="text-4xl md:text-7xl font-black font-headline tracking-tight text-zinc-900">
-          شروط <span className="text-primary">الاستخدام</span>
+          <span className="text-primary">{settings?.termsTitle || "شروط الاستخدام"}</span>
         </h1>
         <p className="text-muted-foreground text-xl md:text-2xl max-w-4xl mx-auto leading-relaxed font-bold">
-          استخدامك لـ "فهمني" يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا.
+          {settings?.termsDescription || "استخدامك لـ 'فهمني' يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا."}
         </p>
       </div>
 

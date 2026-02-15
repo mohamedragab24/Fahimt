@@ -46,10 +46,9 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
           <div className="border-r-8 border-primary pr-6">
-            <h2 className="text-3xl font-black text-zinc-800 mb-4">ما هي منصة فهمني؟</h2>
+            <h2 className="text-3xl font-black text-zinc-800 mb-4">{settings?.aboutTitle || "ما هي منصة فهمني؟"}</h2>
             <p className="text-zinc-600 text-xl leading-relaxed font-medium">
-              فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية. 
-              نحن نعمل على ربط الباحثين عن المعرفة <span className="text-primary font-black">(المستفهمين)</span> بنخبة من الخبراء وأصحاب أساليب الشرح المبسط <span className="text-accent font-black">(المفهمين)</span>.
+              {settings?.aboutDescription || "فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية. نحن نعمل على ربط الباحثين عن المعرفة بنخبة من الخبراء وأصحاب أساليب الشرح المبسط."}
             </p>
           </div>
           
