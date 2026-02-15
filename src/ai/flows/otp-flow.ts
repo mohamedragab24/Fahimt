@@ -1,14 +1,15 @@
 'use server';
 /**
- * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر Infobip WhatsApp و Email.
+ * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) عبر Infobip.
+ * تم تحديث الهيكلية لتتطابق مع معايير Infobip JSON الاحترافية.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const OTPInputSchema = z.object({
-  recipient: z.string().describe('البريد الإلكتروني أو رقم الهاتف المستهدف (بصيغة دولية كاملة).'),
-  method: z.enum(['email', 'whatsapp']).describe('وسيلة الإرسال المطلوبة.'),
+  recipient: z.string().describe('البريد الإلكتروني أو رقم الهاتف المستهدف.'),
+  method: z.enum(['email', 'whatsapp']).describe('وسيلة الإرسال.'),
 });
 
 const OTPOutputSchema = z.object({
@@ -31,18 +32,16 @@ const otpFlow = ai.defineFlow(
     // إنشاء رمز عشوائي من 6 أرقام
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     
-    console.log(`[OTP SYSTEM] New Request: ${input.recipient} | Method: ${input.method} | Code: ${code}`);
+    console.log(`[OTP SYSTEM] Start Request for: ${input.recipient} | Method: ${input.method}`);
 
     let sendSuccess = false;
     let errorMessage = '';
     
-    // إعدادات Infobip بناءً على البيانات المزودة
     const apiKey = 'App d1d0cecac245ff6225debf8f02de3c36-4d903627-05b8-4656-bdc1-d3ab395a9e47';
     const baseUrl = 'pdp4k3.api.infobip.com';
 
     if (input.method === 'email') {
       try {
-        // استخدام تنسيق JSON للبريد كما في الكود المزود
         const response = await fetch(`https://${baseUrl}/email/4/messages`, {
           method: 'POST',
           headers: {
@@ -57,7 +56,7 @@ const otpFlow = ai.defineFlow(
                   {
                     "to": [
                       {
-                        "destination": input.recipient
+                        "destination": input.recipient.trim().toLowerCase()
                       }
                     ]
                   }
@@ -65,7 +64,7 @@ const otpFlow = ai.defineFlow(
                 "sender": "resraa355@selfserve.worlds-connected.co",
                 "content": {
                   "subject": "رمز التحقق - منصة فهمني",
-                  "text": `رمز التحقق الخاص بك لمنصة فهمني هو: ${code}`
+                  "text": `مرحباً، رمز التحقق الخاص بك هو: ${code}`
                 }
               }
             ]
@@ -73,13 +72,12 @@ const otpFlow = ai.defineFlow(
         });
 
         const responseData = await response.json();
-
         if (response.ok) {
           sendSuccess = true;
-          console.log(`[INFOBIP EMAIL SUCCESS] Sent to ${input.recipient}`, responseData);
+          console.log(`[INFOBIP EMAIL SUCCESS] MsgID: ${responseData.messages?.[0]?.messageId}`);
         } else {
           console.error('[INFOBIP EMAIL ERROR]', responseData);
-          errorMessage = 'فشل إرسال البريد الإلكتروني. تأكد من إعدادات الحساب.';
+          errorMessage = 'السيرفر رفض إرسال البريد، تأكد من صحة العنوان.';
         }
       } catch (err: any) {
         console.error('[OTP EMAIL FETCH ERROR]', err.message);
@@ -87,7 +85,7 @@ const otpFlow = ai.defineFlow(
       }
     } else if (input.method === 'whatsapp') {
       try {
-        // تنظيف الرقم: إزالة أي رموز غير رقمية لضمان قبول الطلب
+        // تنظيف الرقم تماماً: أرقام فقط لضمان توافق Infobip
         let formattedPhone = input.recipient.trim().replace(/\D/g, ''); 
 
         console.log(`[INFOBIP WHATSAPP ATTEMPT] Target: ${formattedPhone}`);
@@ -100,10 +98,10 @@ const otpFlow = ai.defineFlow(
             'Accept': 'application/json',
           },
           body: JSON.stringify({
-            from: "447860099299", // الرقم الافتراضي لـ Infobip (يجب تفعيله في Sandbox)
-            to: formattedPhone,
-            content: {
-              text: `رمز التحقق الخاص بك لمنصة فهمني هو: ${code}`
+            "from": "447860099299", // رقم Sandbox الافتراضي
+            "to": formattedPhone,
+            "content": {
+              "text": `رمز التحقق لمنصة فهمني هو: ${code}`
             }
           })
         });
@@ -112,14 +110,14 @@ const otpFlow = ai.defineFlow(
 
         if (response.ok) {
           sendSuccess = true;
-          console.log(`[INFOBIP WHATSAPP ACCEPTED] MessageID: ${responseData.messages?.[0]?.messageId || 'N/A'}`);
+          console.log(`[INFOBIP WHATSAPP ACCEPTED] MsgID: ${responseData.messages?.[0]?.messageId}`);
         } else {
           console.error('[INFOBIP WHATSAPP REJECTED]', responseData);
-          errorMessage = responseData.requestError?.serviceException?.text || 'تأكد من صحة رقم الواتساب وتفعيل الـ Sandbox.';
+          errorMessage = responseData.requestError?.serviceException?.text || 'تأكد من تفعيل Sandbox بإرسال كلمة START للرقم.';
         }
       } catch (err: any) {
         console.error('[INFOBIP WHATSAPP CRASH]', err.message);
-        errorMessage = 'خطأ في الاتصال بسيرفر الواتساب.';
+        errorMessage = 'خطأ في الشبكة أثناء إرسال الواتساب.';
       }
     }
 
@@ -128,7 +126,7 @@ const otpFlow = ai.defineFlow(
       code: sendSuccess ? code : '', 
       message: sendSuccess 
         ? `تم إرسال الرمز بنجاح عبر ${input.method === 'email' ? 'البريد' : 'الواتساب'}.`
-        : errorMessage || 'فشل إرسال الرمز، يرجى المحاولة لاحقاً.',
+        : errorMessage || 'فشل الإرسال، يرجى المحاولة لاحقاً.',
     };
   }
 );

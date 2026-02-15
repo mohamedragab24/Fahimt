@@ -25,24 +25,21 @@ import {
   Smartphone,
   MessageSquare,
   User,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const COUNTRIES = [
-  { code: "+20", name: "مصر", flag: "🇪🇬" },
-  { code: "+966", name: "السعودية", flag: "🇸🇦" },
-  { code: "+971", name: "الإمارات", flag: "🇦🇪" },
-  { code: "+965", name: "الكويت", flag: "🇰🇼" },
-  { code: "+974", name: "قطر", flag: "🇶🇦" },
-  { code: "+962", name: "الأردن", flag: "🇯🇴" },
-  { code: "+968", name: "عمان", flag: "🇴🇲" },
-  { code: "+973", name: "البحرين", flag: "🇧🇭" },
-  { code: "+212", name: "المغرب", flag: "🇲🇦" },
-  { code: "+213", name: "الجزائر", flag: "🇩🇿" },
-  { code: "+216", name: "تونس", flag: "🇹🇳" },
-  { code: "+218", name: "ليبيا", flag: "🇱🇾" },
+  { code: "20", name: "مصر", flag: "🇪🇬" },
+  { code: "966", name: "السعودية", flag: "🇸🇦" },
+  { code: "971", name: "الإمارات", flag: "🇦🇪" },
+  { code: "965", name: "الكويت", flag: "🇰🇼" },
+  { code: "974", name: "قطر", flag: "🇶🇦" },
+  { code: "962", name: "الأردن", flag: "🇯🇴" },
+  { code: "968", name: "عمان", flag: "🇴🇲" },
+  { code: "973", name: "البحرين", flag: "🇧🇭" },
 ];
 
 export default function LoginPage() {
@@ -54,7 +51,7 @@ export default function LoginPage() {
   const [role, setRole] = useState<"mustafhem" | "mufhem">("mustafhem");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [countryCode, setCountryCode] = useState("+20");
+  const [countryCode, setCountryCode] = useState("20");
   const [birthDate, setBirthDate] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
   const [otpMethod, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
@@ -94,35 +91,25 @@ export default function LoginPage() {
 
   const handleStartSignUp = async () => {
     if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl || !email || !password) {
-      toast({ 
-        variant: "destructive", 
-        title: "بيانات ناقصة", 
-        description: "يرجى تعبئة كافة الحقول ورفع الصورة الشخصية." 
-      });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول ورفع الصورة الشخصية." });
       return;
     }
     setIsProcessing(true);
     try {
-      // بناء الرقم الدولي الكامل: كود الدولة + الرقم بدون الصفر الأول إذا وجد
-      const cleanPhone = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
+      const cleanPhone = phoneNumber.replace(/\D/g, '').startsWith('0') ? phoneNumber.replace(/\D/g, '').substring(1) : phoneNumber.replace(/\D/g, '');
       const fullPhone = `${countryCode}${cleanPhone}`;
       const recipient = otpMethod === 'whatsapp' ? fullPhone : email;
       
-      console.log(`[CLIENT] Sending OTP via ${otpMethod} to: ${recipient}`);
-
       const result = await generateAndSendOTP({ recipient, method: otpMethod });
       if (result.success) {
         setGeneratedCode(result.code);
         setStep('verify');
-        toast({ 
-          title: "تم إرسال الرمز", 
-          description: `تحقق من حسابك في ${otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد الإلكتروني'}.` 
-        });
+        toast({ title: "تم إرسال الرمز", description: `تحقق من ${otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'}.` });
       } else {
         toast({ variant: "destructive", title: "فشل الإرسال", description: result.message });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ تقني", description: "تعذر الاتصال بخدمة التحقق." });
+      toast({ variant: "destructive", title: "خطأ", description: "تعذر الاتصال بخدمة التحقق." });
     } finally {
       setIsProcessing(false);
     }
@@ -130,17 +117,16 @@ export default function LoginPage() {
 
   const handleVerifyAndRegister = async () => {
     if (otpCode !== generatedCode) {
-      toast({ variant: "destructive", title: "رمز خاطئ", description: "الرمز الذي أدخلته غير صحيح." });
+      toast({ variant: "destructive", title: "رمز خاطئ" });
       return;
     }
     setIsProcessing(true);
     try {
       const cred = await initiateEmailSignUp(auth, email, password);
       if (cred.user) {
-        const cleanPhone = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
+        const cleanPhone = phoneNumber.replace(/\D/g, '').startsWith('0') ? phoneNumber.replace(/\D/g, '').substring(1) : phoneNumber.replace(/\D/g, '');
         const fullPhone = `${countryCode}${cleanPhone}`;
-        const userRef = doc(firestore!, "users", cred.user.uid);
-        await setDoc(userRef, {
+        await setDoc(doc(firestore!, "users", cred.user.uid), {
           id: cred.user.uid,
           fullName,
           email,
@@ -151,14 +137,13 @@ export default function LoginPage() {
           birthDate: new Date(birthDate).toISOString(),
           profilePictureUrl,
           status: "active",
-          emailVerified: true,
           createdAt: new Date().toISOString()
         });
-        toast({ title: "تم إنشاء الحساب!", description: "أهلاً بك في منصة فهمني." });
+        toast({ title: "تم إنشاء الحساب!" });
         router.push("/");
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "فشل التسجيل", description: "البريد الإلكتروني مستخدم بالفعل أو كلمة المرور ضعيفة." });
+      toast({ variant: "destructive", title: "فشل التسجيل", description: "البريد مستخدم بالفعل أو خطأ تقني." });
     } finally {
       setIsProcessing(false);
     }
@@ -167,8 +152,8 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    initiateEmailSignIn(auth, email, password).catch((err: any) => {
-      toast({ variant: "destructive", title: "خطأ في الدخول", description: "البريد أو كلمة المرور غير صحيحة." });
+    initiateEmailSignIn(auth, email, password).catch(() => {
+      toast({ variant: "destructive", title: "خطأ", description: "البيانات غير صحيحة." });
       setIsProcessing(false);
     });
   };
@@ -177,68 +162,63 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#F8FAFC]" dir="rtl">
       <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 -z-10"></div>
       
-      <Card className="w-full max-w-xl shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-4 border-white rounded-[4rem] bg-white overflow-hidden animate-in fade-in zoom-in duration-700">
+      <Card className="w-full max-w-xl shadow-2xl border-4 border-white rounded-[4rem] bg-white overflow-hidden animate-in fade-in duration-700">
         <CardHeader className="text-center pt-12 pb-6 space-y-8">
           <div className="mx-auto w-fit group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-32 md:h-40 mx-auto object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 md:h-44 mx-auto object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
             ) : (
               <div className="w-24 h-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black mx-auto shadow-2xl">ف</div>
             )}
           </div>
-          <div className="space-y-2">
-            <CardTitle className="text-4xl font-black text-zinc-900 tracking-tight flex items-center justify-center gap-3">
-              {isLogin ? "دخول المنصة" : "انضم لعائلة فهمني"}
-            </CardTitle>
-            <CardDescription className="text-lg font-bold text-zinc-500">
-              {isLogin ? "يسعدنا رؤيتك مجدداً في فهمني" : "سجل الآن وابدأ رحلتك التعليمية الفريدة"}
-            </CardDescription>
-          </div>
+          <CardTitle className="text-4xl font-black text-zinc-900 tracking-tight">
+            {isLogin ? "دخول المنصة" : "انضم لـ " + (settings?.siteTitle || "فهمني")}
+          </CardTitle>
         </CardHeader>
         
         <CardContent className="px-8 md:px-12 pb-10">
           {isLogin ? (
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label className="font-black text-md mr-2 flex items-center gap-2">البريد الإلكتروني <Mail size={18} className="text-primary" /></Label>
-                <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg focus:border-primary shadow-sm" />
+                <Label className="font-black flex items-center gap-2">البريد الإلكتروني <Mail size={18} className="text-primary" /></Label>
+                <Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-2">
-                  <Label className="font-black text-md flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary" /></Label>
-                  <Link href="/forgot-password" size="sm" className="text-sm font-black text-primary hover:underline">نسيت كلمة المرور؟</Link>
+                  <Label className="font-black flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary" /></Label>
+                  <Link href="/forgot-password" size="sm" className="text-sm font-black text-primary">نسيت كلمة المرور؟</Link>
                 </div>
-                <Input type="password" placeholder="••••••••" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg focus:border-primary shadow-sm" />
+                <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
               </div>
-              <Button type="submit" disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl shadow-xl bg-primary hover:scale-[1.02] transition-transform">
+              <Button type="submit" disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-primary shadow-xl">
                 {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تسجيل الدخول"}
               </Button>
             </form>
           ) : (
             <div className="space-y-8">
               {step === 'info' && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                   <div className="flex flex-col items-center gap-4">
                     <div className="relative cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                      <Avatar className={`h-40 w-44 border-[6px] transition-all group-hover:scale-105 ${profilePictureUrl ? 'border-primary/20 shadow-2xl' : 'border-dashed border-zinc-200 bg-zinc-50'}`}>
+                      <Avatar className={`h-40 w-44 border-[6px] transition-all group-hover:scale-105 ${profilePictureUrl ? 'border-primary/20 shadow-xl' : 'border-dashed border-zinc-200'}`}>
                         <AvatarImage src={profilePictureUrl} />
-                        <AvatarFallback className="bg-transparent"><UserCircle className="h-24 w-24 text-zinc-300" /></AvatarFallback>
+                        <AvatarFallback className="bg-transparent"><UserCircle className="h-24 w-24 text-zinc-200" /></AvatarFallback>
                       </Avatar>
-                      <div className="absolute -bottom-2 -right-2 bg-primary p-4 rounded-2xl text-white shadow-xl border-4 border-white"><Upload size={24}/></div>
+                      <div className="absolute -bottom-2 -right-2 bg-primary p-4 rounded-2xl text-white border-4 border-white shadow-lg"><Upload size={24}/></div>
                     </div>
-                    <Label className="font-black text-zinc-500 text-sm">ارفع صورتك الشخصية</Label>
+                    <Label className="font-black text-zinc-400 text-sm">ارفع صورتك الشخصية</Label>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                   </div>
                   
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">الاسم الكامل <User size={18} className="text-primary"/></Label>
-                      <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                      <Label className="font-black flex items-center gap-2">الاسم الكامل <User size={18} className="text-primary"/></Label>
+                      <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">رقم الهاتف <Smartphone size={18} className="text-primary"/></Label>
+                        <Label className="font-black flex items-center gap-2">رقم الهاتف <Smartphone size={18} className="text-primary"/></Label>
                         <div className="flex gap-2">
                           <Select value={countryCode} onValueChange={setCountryCode}>
                             <SelectTrigger className="w-[100px] h-16 rounded-2xl border-2 font-black">
@@ -247,40 +227,40 @@ export default function LoginPage() {
                             <SelectContent className="max-h-60">
                               {COUNTRIES.map((c) => (
                                 <SelectItem key={c.code} value={c.code} className="font-bold">
-                                  <span className="ml-2">{c.flag}</span> {c.code}
+                                  <span className="ml-2">{c.flag}</span> +{c.code}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-16 flex-1 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                          <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-16 flex-1 rounded-2xl border-2 font-black text-xl" />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">تاريخ الميلاد <Calendar size={18} className="text-primary"/></Label>
-                        <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg shadow-sm" />
+                        <Label className="font-black flex items-center gap-2">تاريخ الميلاد <Calendar size={18} className="text-primary"/></Label>
+                        <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">البريد الإلكتروني <Mail size={18} className="text-primary"/></Label>
-                      <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                      <Label className="font-black flex items-center gap-2">البريد الإلكتروني <Mail size={18} className="text-primary"/></Label>
+                      <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl" />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary"/></Label>
-                      <Input type="password" placeholder="أدخل كلمة مرور قوية" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                      <Label className="font-black flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary"/></Label>
+                      <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                       <div className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
-                        <Label className="text-sm font-black text-muted-foreground block mb-2">نوع الحساب</Label>
+                        <Label className="text-sm font-black text-muted-foreground block">نوع الحساب</Label>
                         <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex gap-4">
                           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border shadow-sm"><RadioGroupItem value="mustafhem" id="r1" /><Label htmlFor="r1" className="text-xs font-black cursor-pointer">مُستفهم</Label></div>
                           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border shadow-sm"><RadioGroupItem value="mufhem" id="r2" /><Label htmlFor="r2" className="text-xs font-black cursor-pointer">مُفهم</Label></div>
                         </RadioGroup>
                       </div>
                       <div className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
-                        <Label className="text-sm font-black text-muted-foreground block mb-2">الجنس</Label>
+                        <Label className="text-sm font-black text-muted-foreground block">الجنس</Label>
                         <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex gap-4">
                           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border shadow-sm"><RadioGroupItem value="male" id="g1" /><Label htmlFor="g1" className="text-xs font-black cursor-pointer">ذكر</Label></div>
                           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border shadow-sm"><RadioGroupItem value="female" id="g2" /><Label htmlFor="g2" className="text-xs font-black cursor-pointer">أنثى</Label></div>
@@ -294,20 +274,10 @@ export default function LoginPage() {
                       <ShieldCheck /> <span>اختر وسيلة تأكيد الحساب</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <Button 
-                        type="button"
-                        onClick={() => setOtpMethod('whatsapp')} 
-                        variant={otpMethod === 'whatsapp' ? 'default' : 'outline'} 
-                        className={`h-16 rounded-2xl font-black text-lg transition-all ${otpMethod === 'whatsapp' ? 'bg-primary shadow-lg scale-105' : 'bg-white'}`}
-                      >
+                      <Button onClick={() => setOtpMethod('whatsapp')} variant={otpMethod === 'whatsapp' ? 'default' : 'outline'} className={`h-16 rounded-2xl font-black text-lg transition-all ${otpMethod === 'whatsapp' ? 'bg-primary shadow-lg scale-105' : 'bg-white'}`}>
                         <MessageSquare size={20} className="ml-2"/> واتساب
                       </Button>
-                      <Button 
-                        type="button"
-                        onClick={() => setOtpMethod('email')} 
-                        variant={otpMethod === 'email' ? 'default' : 'outline'} 
-                        className={`h-16 rounded-2xl font-black text-lg transition-all ${otpMethod === 'email' ? 'bg-primary shadow-lg scale-105' : 'bg-white'}`}
-                      >
+                      <Button onClick={() => setOtpMethod('email')} variant={otpMethod === 'email' ? 'default' : 'outline'} className={`h-16 rounded-2xl font-black text-lg transition-all ${otpMethod === 'email' ? 'bg-primary shadow-lg scale-105' : 'bg-white'}`}>
                         <Mail size={20} className="ml-2"/> بريد
                       </Button>
                     </div>
@@ -322,31 +292,30 @@ export default function LoginPage() {
               {step === 'verify' && (
                 <div className="space-y-10 animate-in slide-in-from-left duration-500">
                   <div className="text-center space-y-4">
-                    <div className="bg-accent/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-accent shadow-inner animate-pulse">
+                    <div className="bg-accent/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-accent animate-pulse">
                       <ShieldCheck size={48} />
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-3xl font-black text-zinc-900">تحقق من {otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'}</h3>
-                      <p className="text-lg font-bold text-zinc-500 px-10">أرسلنا الرمز المكون من 6 أرقام إلى هاتفك.</p>
+                      <p className="text-lg font-bold text-zinc-500 px-10">أدخل الرمز المكون من 6 أرقام للمتابعة.</p>
                     </div>
                   </div>
                   <div className="space-y-6">
                     <Input 
                       maxLength={6} 
                       placeholder="0 0 0 0 0 0"
-                      className="h-24 text-5xl font-black text-center tracking-[0.4em] rounded-[2rem] border-4 border-accent/20 focus:border-accent shadow-inner bg-zinc-50"
+                      className="h-24 text-5xl font-black text-center tracking-[0.4em] rounded-[2rem] border-4 border-accent/20 bg-zinc-50"
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
                     />
-                    <Button onClick={handleVerifyAndRegister} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-2xl hover:scale-[1.02] transition-transform">
+                    <Button onClick={handleVerifyAndRegister} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-2xl">
                       {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تأكيد وتفعيل الحساب"}
                     </Button>
-                    <div className="text-center space-y-2">
-                      <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400 text-lg hover:text-zinc-600">
-                        تعديل بيانات التسجيل
-                      </Button>
-                      <p className="text-xs text-muted-foreground font-bold italic">* تأكد من تفعيل Sandbox في Infobip إذا كنت تستخدم حساباً تجريبياً.</p>
+                    <div className="p-4 bg-blue-50 rounded-2xl text-xs font-bold text-blue-700 flex items-start gap-3">
+                      <Info size={16} className="shrink-0 mt-0.5" />
+                      <p>إذا لم يصلك الرمز عبر الواتساب، تأكد من إرسال كلمة <b>START</b> للرقم <b>447860099299</b> إذا كان حسابك تجريبياً.</p>
                     </div>
+                    <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400 text-lg">تعديل البيانات</Button>
                   </div>
                 </div>
               )}
@@ -355,7 +324,7 @@ export default function LoginPage() {
         </CardContent>
         
         <CardFooter className="justify-center border-t py-10 bg-zinc-50/50">
-          <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="font-black text-primary text-xl flex items-center gap-3 hover:scale-105 transition-transform">
+          <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="font-black text-primary text-xl flex items-center gap-3">
             {isLogin ? "مستخدم جديد؟ سجل الآن" : "لديك حساب؟ سجل دخولك"}
             <ChevronRight className={`h-6 w-6 transition-transform ${!isLogin ? 'rotate-180' : ''}`} />
           </Button>
