@@ -40,6 +40,7 @@ import {
   LogOut,
   ShieldAlert,
   ChevronRight,
+  ChevronLeft,
   Gavel,
   Lock,
   Target,
@@ -62,6 +63,7 @@ export default function ManualEditorPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tabsListRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeField, setActiveField] = useState<{key: string, label: string, value: string, type: 'text' | 'textarea' | 'image'} | null>(null);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -184,6 +186,16 @@ export default function ManualEditorPage() {
     }
   };
 
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsListRef.current) {
+      const scrollAmount = 250;
+      tabsListRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري تحميل المحرر الفائق...</div>;
 
   return (
@@ -213,18 +225,47 @@ export default function ManualEditorPage() {
           </div>
         </div>
 
-        <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="w-full md:w-auto mx-4 max-w-[50%] md:max-w-none">
-          <TabsList className="bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto flex-nowrap no-scrollbar justify-start md:justify-center">
-            <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
-            <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
-            <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">قائمة المدرسين</TabsTrigger>
-            <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
-            <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
-            <TabsTrigger value="terms" className="rounded-lg font-black px-4 shrink-0">الشروط</TabsTrigger>
-            <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
-            <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Tabs with Navigation Arrows */}
+        <div className="flex-1 max-w-[60%] flex items-center gap-2 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="shrink-0 rounded-full h-10 w-10 hover:bg-zinc-100 text-zinc-400"
+            onClick={() => scrollTabs('right')}
+          >
+            <ChevronRight size={24} />
+          </Button>
+
+          <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="flex-1 overflow-hidden">
+            <div 
+              ref={tabsListRef}
+              className="overflow-x-auto no-scrollbar flex items-center"
+            >
+              <TabsList className="bg-muted/50 p-1 rounded-xl h-14 flex-nowrap shrink-0">
+                <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
+                <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
+                <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">قائمة المدرسين</TabsTrigger>
+                <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
+                <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
+                <TabsTrigger value="terms" className="rounded-lg font-black px-4 shrink-0">الشروط</TabsTrigger>
+                <TabsTrigger value="privacy" className="rounded-lg font-black px-4 shrink-0">الخصوصية</TabsTrigger>
+                <TabsTrigger value="guarantees" className="rounded-lg font-black px-4 shrink-0">الضمانات</TabsTrigger>
+                <TabsTrigger value="guide" className="rounded-lg font-black px-4 shrink-0">الدليل</TabsTrigger>
+                <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
+                <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
+              </TabsList>
+            </div>
+          </Tabs>
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="shrink-0 rounded-full h-10 w-10 hover:bg-zinc-100 text-zinc-400"
+            onClick={() => scrollTabs('left')}
+          >
+            <ChevronLeft size={24} />
+          </Button>
+        </div>
 
         <div className="flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
@@ -586,6 +627,34 @@ export default function ManualEditorPage() {
                     <NavItemEdit label="الرابط الرابع (الهيدر)" value={formData.navGuarantees} onClick={()=>handleFieldClick('navGuarantees', 'الرابط الرابع')} />
                     <NavItemEdit label="نص التذييل" value={formData.footerText} onClick={()=>handleFieldClick('footerText', 'حقوق الملكية')} />
                   </div>
+                </section>
+              )}
+
+              {currentPage === 'terms' && (
+                <section className="py-20 px-16 space-y-8">
+                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('termsTitle', 'عنوان الشروط')}>{formData.termsTitle}</h2>
+                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('termsDescription', 'وصف الشروط', 'textarea')}>{formData.termsDescription}</p>
+                </section>
+              )}
+
+              {currentPage === 'privacy' && (
+                <section className="py-20 px-16 space-y-8">
+                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('privacyTitle', 'عنوان الخصوصية')}>{formData.privacyTitle}</h2>
+                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('privacyDescription', 'وصف الخصوصية', 'textarea')}>{formData.privacyDescription}</p>
+                </section>
+              )}
+
+              {currentPage === 'guarantees' && (
+                <section className="py-20 px-16 space-y-8">
+                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('guaranteesTitle', 'عنوان الضمانات')}>{formData.guaranteesTitle}</h2>
+                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('guaranteesDescription', 'وصف الضمانات', 'textarea')}>{formData.guaranteesDescription}</p>
+                </section>
+              )}
+
+              {currentPage === 'guide' && (
+                <section className="py-20 px-16 space-y-8">
+                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('guideTitle', 'عنوان الدليل')}>{formData.guideTitle}</h2>
+                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('guideSubtitle', 'وصف الدليل', 'textarea')}>{formData.guideSubtitle}</p>
                 </section>
               )}
             </div>
