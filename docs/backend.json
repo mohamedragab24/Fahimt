@@ -39,6 +39,20 @@
         "lastUpdate": { "type": "string" }
       }
     },
+    "FloatingChat": {
+      "title": "FloatingChat",
+      "type": "object",
+      "description": "محادثة عبر النافذة العائمة.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
     "ChatMessage": {
       "title": "ChatMessage",
       "type": "object",
@@ -75,6 +89,8 @@
         "userName": { "type": "string" },
         "userEmail": { "type": "string" },
         "userPhone": { "type": "string" },
+        "age": { "type": "string" },
+        "address": { "type": "string" },
         "experience": { "type": "string" },
         "createdAt": { "type": "string" }
       }
@@ -95,6 +111,14 @@
     "/supportTickets/{ticketId}/messages/{msgId}": {
       "schema": "ChatMessage",
       "description": "رسائل الدردشة في التذاكر."
+    },
+    "/floatingChats/{chatId}": {
+      "schema": "FloatingChat",
+      "description": "المحادثات العائمة."
+    },
+    "/floatingChats/{chatId}/messages/{msgId}": {
+      "schema": "ChatMessage",
+      "description": "رسائل المحادثة العائمة."
     },
     "/jobs/{jobId}": {
       "schema": "Job",

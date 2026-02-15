@@ -21,7 +21,10 @@ import {
   Eye,
   Mail,
   Phone,
-  Calendar
+  Calendar,
+  MapPin,
+  BabyIcon,
+  UserCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +46,7 @@ export default function AdminJobs() {
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
-  const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const jobs = rawJobs ? [...rawJobs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
 
   const applicantsQuery = useMemoFirebase(() => {
     if (!firestore || !viewingApplicantsJob) return null;
@@ -88,7 +91,7 @@ export default function AdminJobs() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-4xl font-black font-headline">إدارة التوظيف</h1>
-          <p className="text-muted-foreground text-lg">نشر الوظائف ومراجعة المتقدمين لكل وظيفة.</p>
+          <p className="text-muted-foreground text-lg">نشر الوظائف ومراجعة المتقدمين (السن، العنوان، الهاتف، المهارات).</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="h-16 px-10 rounded-2xl font-black text-xl shadow-xl shadow-primary/20">
           <Plus className="ml-2 h-6 w-6" /> نشر وظيفة جديدة
@@ -126,7 +129,6 @@ export default function AdminJobs() {
         ))}
       </div>
 
-      {/* مودال نشر وظيفة */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
@@ -151,30 +153,31 @@ export default function AdminJobs() {
         </DialogContent>
       </Dialog>
 
-      {/* مودال المتقدمين */}
       <Dialog open={!!viewingApplicantsJob} onOpenChange={() => setViewingApplicantsJob(null)}>
-        <DialogContent className="sm:max-w-[800px] rounded-[3rem]" dir="rtl">
+        <DialogContent className="sm:max-w-[850px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><Users className="text-primary h-8 w-8" /> المتقدمون لوظيفة {viewingApplicantsJob?.title}</DialogTitle>
-            <DialogDescription className="text-right">مراجعة بيانات الأشخاص الذين تقدموا لهذه الوظيفة.</DialogDescription>
+            <DialogDescription className="text-right">مراجعة كامل بيانات المتقدمين (الاسم، السن، العنوان، الهاتف، المهارات).</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="h-[500px] mt-6">
-            <div className="space-y-6 px-2">
+          <ScrollArea className="h-[550px] mt-6">
+            <div className="space-y-6 px-2 pb-10">
               {applicants?.map((app: any) => (
-                <Card key={app.id} className="rounded-3xl border-2 p-6 bg-zinc-50 shadow-sm">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                    <div className="text-right">
-                      <h4 className="font-black text-xl text-zinc-900">{app.userName}</h4>
-                      <div className="flex flex-wrap gap-3 mt-2">
-                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Mail size={12}/> {app.userEmail}</span>
-                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Phone size={12}/> {app.userPhone}</span>
-                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Calendar size={12}/> {new Date(app.createdAt).toLocaleDateString('ar-EG')}</span>
+                <Card key={app.id} className="rounded-[2rem] border-2 p-8 bg-zinc-50 shadow-sm space-y-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="text-right flex-1">
+                      <h4 className="font-black text-2xl text-zinc-900 flex items-center gap-2"><UserCircle className="text-primary" /> {app.userName}</h4>
+                      <div className="flex flex-wrap gap-4 mt-3">
+                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><BabyIcon size={14}/> السن: {app.age}</span>
+                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><Phone size={14}/> {app.userPhone}</span>
+                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><Mail size={14}/> {app.userEmail}</span>
+                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><MapPin size={14}/> {app.address}</span>
                       </div>
                     </div>
+                    <Badge variant="outline" className="bg-white h-fit font-bold border-2">{new Date(app.createdAt).toLocaleDateString('ar-EG')}</Badge>
                   </div>
-                  <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-primary/20 space-y-2 text-right">
-                    <Label className="font-black text-primary">النبذة والخبرات:</Label>
-                    <p className="text-zinc-700 leading-relaxed font-medium">{app.experience}</p>
+                  <div className="p-6 bg-white rounded-2xl border-2 border-dashed border-primary/20 space-y-3 text-right">
+                    <Label className="font-black text-primary text-lg flex items-center gap-2"><GraduationCap size={20}/> المهارات والخبرات:</Label>
+                    <p className="text-zinc-700 leading-relaxed font-bold whitespace-pre-wrap">{app.experience}</p>
                   </div>
                 </Card>
               ))}

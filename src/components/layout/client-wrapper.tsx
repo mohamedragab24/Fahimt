@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from "firebase/firestore";
+import { FloatingChat } from './floating-chat';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -26,10 +27,11 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               <Header />
               <main className="flex-1 overflow-y-auto p-4 md:p-0">
                 {children}
-                <Footer /> {/* التذييل يظهر في جميع الصفحات التي تستخدم هذا الغلاف */}
+                <Footer />
               </main>
             </div>
           </div>
+          <FloatingChat />
           <Toaster />
         </SidebarProvider>
       </ThemeManager>

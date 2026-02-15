@@ -6,9 +6,8 @@ import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebas
 import { collection, query, where, addDoc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Clock, ArrowRight, Sparkles, UserCheck, CheckCircle2, Loader2 } from "lucide-react";
+import { Briefcase, Clock, ArrowRight, Sparkles, UserCheck, CheckCircle2, Loader2, MapPin, User, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,14 @@ export default function JobsPage() {
   const { toast } = useToast();
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isApplying, setIsApplying] = useState(false);
-  const [application, setApplication] = useState({ phone: "", experience: "" });
+  const [application, setApplication] = useState({ 
+    fullName: "", 
+    email: "", 
+    phone: "", 
+    age: "", 
+    address: "", 
+    experience: "" 
+  });
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -29,28 +35,30 @@ export default function JobsPage() {
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
-  const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const jobs = rawJobs ? [...rawJobs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
 
   const handleApply = async () => {
-    if (!user || !selectedJob || !application.phone || !application.experience) {
-      toast({ variant: "destructive", title: "بيانات ناقصة" });
+    if (!selectedJob || !application.fullName || !application.phone || !application.age || !application.address || !application.experience) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول المطلوبة." });
       return;
     }
     setIsApplying(true);
     try {
       await addDoc(collection(firestore, "jobs", selectedJob.id, "applications"), {
-        userId: user.uid,
-        userName: user.displayName || "متقدم للوظيفة",
-        userEmail: user.email,
+        userId: user?.uid || "guest",
+        userName: application.fullName,
+        userEmail: application.email || user?.email || "غير متوفر",
         userPhone: application.phone,
+        age: application.age,
+        address: application.address,
         experience: application.experience,
         createdAt: new Date().toISOString()
       });
-      toast({ title: "تم إرسال طلبك", description: "سنقوم بمراجعة طلبك والتواصل معك قريباً." });
-      setApplication({ phone: "", experience: "" });
+      toast({ title: "تم إرسال طلبك", description: "شكراً لاهتمامك بالانضمام إلينا. سنقوم بمراجعة طلبك والتواصل معك." });
+      setApplication({ fullName: "", email: "", phone: "", age: "", address: "", experience: "" });
       setSelectedJob(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الطلب، يرجى المحاولة لاحقاً." });
     } finally {
       setIsApplying(false);
     }
@@ -94,19 +102,39 @@ export default function JobsPage() {
       </div>
 
       <Dialog open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-        <DialogContent className="sm:max-w-[600px] rounded-[3rem]" dir="rtl">
+        <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-3xl font-black">التقدم لوظيفة: {selectedJob?.title}</DialogTitle>
             <DialogDescription className="text-right">أدخل بياناتك وسيتم التواصل معك من قبل فريق التوظيف.</DialogDescription>
           </DialogHeader>
-          <div className="py-6 space-y-6">
-            <div className="space-y-2">
-              <Label className="font-bold">رقم الهاتف للتواصل</Label>
-              <Input placeholder="01xxxxxxxxx" value={application.phone} onChange={(e)=>setApplication({...application, phone: e.target.value})} className="h-14 rounded-xl border-2" />
+          <div className="py-6 space-y-6 max-h-[60vh] overflow-y-auto px-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-bold">الاسم الكامل</Label>
+                <Input placeholder="اسمك الثلاثي" value={application.fullName} onChange={(e)=>setApplication({...application, fullName: e.target.value})} className="h-14 rounded-xl border-2" />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">السن</Label>
+                <Input type="number" placeholder="مثال: 25" value={application.age} onChange={(e)=>setApplication({...application, age: e.target.value})} className="h-14 rounded-xl border-2" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-bold">رقم الهاتف</Label>
+                <Input placeholder="01xxxxxxxxx" value={application.phone} onChange={(e)=>setApplication({...application, phone: e.target.value})} className="h-14 rounded-xl border-2" />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">البريد الإلكتروني (اختياري)</Label>
+                <Input type="email" placeholder="example@mail.com" value={application.email} onChange={(e)=>setApplication({...application, email: e.target.value})} className="h-14 rounded-xl border-2" />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label className="font-bold">نبذة عن خبراتك وأعمالك</Label>
-              <Textarea placeholder="اكتب لماذا أنت الشخص المناسب لهذه الوظيفة..." value={application.experience} onChange={(e)=>setApplication({...application, experience: e.target.value})} className="h-40 rounded-xl p-4 border-2" />
+              <Label className="font-bold">العنوان بالكامل</Label>
+              <Input placeholder="المحافظة، المدينة، الشارع" value={application.address} onChange={(e)=>setApplication({...application, address: e.target.value})} className="h-14 rounded-xl border-2" />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold">المهارات والخبرات السابقة</Label>
+              <Textarea placeholder="اكتب لماذا أنت الشخص المناسب لهذه الوظيفة وما هي خبراتك..." value={application.experience} onChange={(e)=>setApplication({...application, experience: e.target.value})} className="h-40 rounded-xl p-4 border-2" />
             </div>
           </div>
           <DialogFooter>

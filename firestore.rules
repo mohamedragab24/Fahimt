@@ -10,10 +10,6 @@ service cloud.firestore {
       );
     }
 
-    match /{document=**} {
-      allow read, write: if isMasterAdmin();
-    }
-
     function isAdmin() {
       return request.auth != null && (
         isMasterAdmin() ||
@@ -40,8 +36,8 @@ service cloud.firestore {
       allow write: if isAdmin();
       
       match /applications/{appId} {
-        allow create: if isSignedIn();
-        allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+        allow create: if true; // السماح للجميع بالتقديم
+        allow read: if isAdmin();
       }
     }
 
@@ -52,6 +48,16 @@ service cloud.firestore {
 
       match /messages/{msgId} {
         allow read, create: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/supportTickets/$(ticketId)).data.userId == request.auth.uid);
+      }
+    }
+
+    match /floatingChats/{chatId} {
+      allow create: if true;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+
+      match /messages/{msgId} {
+        allow read, create: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/floatingChats/$(chatId)).data.userId == request.auth.uid);
       }
     }
 
@@ -69,5 +75,7 @@ service cloud.firestore {
     match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
     match /appeals/{id} { allow create: if isSignedIn(); allow read, write: if isAdmin(); }
+    match /adminLogs/{id} { allow read, write: if isAdmin(); }
+    match /payoutRequests/{id} { allow read, write: if isAdmin(); }
   }
 }

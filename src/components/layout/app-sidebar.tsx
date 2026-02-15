@@ -18,7 +18,6 @@ import {
   History,
   GraduationCap,
   ImageIcon,
-  Wand2,
   CheckSquare,
   Shield,
   ShieldAlert,
@@ -26,7 +25,8 @@ import {
   RefreshCw,
   FileCheck,
   Briefcase,
-  Scale
+  Scale,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -53,7 +53,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-// تم تقليص القائمة الجانبية بناءً على طلبك
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
   { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
@@ -70,6 +69,7 @@ const adminItems = [
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
   { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
+  { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
   { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
   { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
@@ -124,8 +124,8 @@ export function AppSidebar() {
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-6">
         <Link href="/" className="flex items-center gap-3">
-          <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0">
-            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover rounded-xl" /> : "ف"}
+          <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0 overflow-hidden">
+            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
             {settings?.logoUrl ? (
