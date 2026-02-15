@@ -31,7 +31,6 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
-import { Footer } from "@/components/layout/footer";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -174,9 +173,6 @@ function LandingPage({ router, settings }: any) {
           <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-2xl md:rounded-[2rem] shadow-xl">ابدأ التعلم الآن</Button>
         </div>
       </main>
-      
-      {/* Footer is now part of the Landing Page too */}
-      <Footer />
     </div>
   );
 }

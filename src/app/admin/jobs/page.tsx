@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, doc, addDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, query, doc, addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,6 @@ import {
   Briefcase, 
   Clock, 
   Loader2, 
-  Eye, 
-  X, 
-  CheckCircle2, 
-  AlertCircle,
   ToggleLeft,
   ToggleRight
 } from "lucide-react";
@@ -40,6 +36,8 @@ export default function AdminJobs() {
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
+  
+  // ترتيب يدوي لضمان ظهور الأحدث في لوحة التحكم
   const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const handlePost = async () => {
@@ -129,7 +127,6 @@ export default function AdminJobs() {
         )}
       </div>
 
-      {/* مودال نشر وظيفة */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
           <DialogHeader>

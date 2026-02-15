@@ -3,18 +3,18 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, orderBy } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc } from "firebase/firestore";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BadgeCent, Download, Plus, History, ArrowUpRight, ArrowDownLeft, Search, CheckCircle2, XCircle, Wallet, MinusCircle, AlertCircle } from "lucide-react";
+import { BadgeCent, Download, Plus, Search, CheckCircle2, XCircle, Wallet, MinusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminFinance() {
@@ -25,7 +25,6 @@ export default function AdminFinance() {
   const [amount, setAmount] = useState("");
   const [actionType, setActionType] = useState<'deposit' | 'withdrawal'>('deposit');
   
-  // لرفض طلب السحب مع السبب
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -85,13 +84,11 @@ export default function AdminFinance() {
     if (!firestore || !targetUser || !amount) return;
     try {
       const numAmount = Number(amount);
-      const status = 'completed';
-
       await addDoc(collection(firestore, "users", targetUser.id, "transactions"), {
         amount: numAmount,
         type: actionType,
         details: actionType === 'deposit' ? 'شحن رصيد يدوي بواسطة الإدارة' : 'خصم رصيد يدوي بواسطة الإدارة',
-        status: status,
+        status: 'completed',
         timestamp: new Date().toISOString()
       });
 
@@ -114,17 +111,13 @@ export default function AdminFinance() {
   const approvePayout = async (payout: any) => {
     if (!firestore) return;
     try {
-      // 1. تحديث طلب السحب
       await updateDoc(doc(firestore, "payoutRequests", payout.id), { status: 'completed' });
-      
-      // 2. تحديث المعاملة المرتبطة في حساب المستخدم
       if (payout.transactionId) {
         await updateDoc(doc(firestore, "users", payout.userId, "transactions", payout.transactionId), {
           status: 'completed',
           details: 'تم تحويل أرباحك لمحفظتك بنجاح'
         });
       }
-      
       toast({ title: "تم التحويل", description: "تم تأكيد تحويل المبلغ بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل معالجة الطلب." });
@@ -134,20 +127,16 @@ export default function AdminFinance() {
   const rejectPayout = async () => {
     if (!firestore || !selectedPayout || !rejectionReason.trim()) return;
     try {
-      // 1. تحديث طلب السحب مع السبب
       await updateDoc(doc(firestore, "payoutRequests", selectedPayout.id), { 
         status: 'rejected',
         rejectionReason: rejectionReason 
       });
-      
-      // 2. تحديث المعاملة لتصبح مرفوضة (مما يعيد الرصيد تلقائياً في حسابات الواجهة)
       if (selectedPayout.transactionId) {
         await updateDoc(doc(firestore, "users", selectedPayout.userId, "transactions", selectedPayout.transactionId), {
           status: 'rejected',
           details: `مرفوض: ${rejectionReason}`
         });
       }
-
       setIsRejectModalOpen(false);
       setRejectionReason("");
       setSelectedPayout(null);
@@ -162,7 +151,7 @@ export default function AdminFinance() {
       <div className="flex justify-between items-center border-r-8 border-purple-500 pr-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline">إدارة المالية</h1>
-          <p className="text-muted-foreground text-lg">التحكم في الأرصدة (شحن/خصم) وإدارة طلبات السحب المتقدمة.</p>
+          <p className="text-muted-foreground text-lg">التحكم في الأرصدة وإدارة طلبات السحب.</p>
         </div>
       </div>
 
@@ -180,13 +169,13 @@ export default function AdminFinance() {
           <Card className="max-w-3xl mx-auto shadow-xl rounded-[2.5rem] overflow-hidden border-2">
             <CardHeader className="bg-purple-600 text-white p-8">
               <CardTitle className="text-2xl font-black flex items-center gap-3">
-                <BadgeCent className="h-8 w-8" /> التحكم في رصيد المستخدم
+                <BadgeCent className="h-8 w-8" /> التحكم في الرصيد
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <Label className="font-bold mb-2 block">البريد الإلكتروني أو User ID</Label>
+                  <Label className="font-bold mb-2 block">البريد الإلكتروني أو المعرف</Label>
                   <Input 
                     placeholder="مثال: name@example.com" 
                     className="h-14 rounded-xl text-lg"
@@ -218,14 +207,14 @@ export default function AdminFinance() {
                       onClick={() => setActionType('deposit')}
                       className={`h-14 text-lg font-bold rounded-xl ${actionType === 'deposit' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
-                      <Plus className="ml-2 h-5 w-5" /> شحن رصيد
+                      <Plus className="ml-2 h-5 w-5" /> شحن
                     </Button>
                     <Button 
                       variant={actionType === 'withdrawal' ? 'destructive' : 'outline'}
                       onClick={() => setActionType('withdrawal')}
                       className="h-14 text-lg font-bold rounded-xl"
                     >
-                      <MinusCircle className="ml-2 h-5 w-5" /> خصم رصيد
+                      <MinusCircle className="ml-2 h-5 w-5" /> خصم
                     </Button>
                   </div>
 
@@ -242,7 +231,7 @@ export default function AdminFinance() {
                       onClick={handleManualAction} 
                       className={`w-full h-14 text-xl font-black rounded-xl ${actionType === 'deposit' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
                     >
-                      تأكيد عملية {actionType === 'deposit' ? 'الشحن' : 'الخصم'}
+                      تأكيد العملية
                     </Button>
                   </div>
                 </div>
@@ -255,7 +244,7 @@ export default function AdminFinance() {
           <Tabs defaultValue="pending" className="w-full">
             <TabsList className="bg-transparent gap-4 mb-6">
               <TabsTrigger value="pending" className="bg-orange-50 data-[state=active]:bg-orange-500 data-[state=active]:text-white rounded-xl px-8 font-bold">
-                قيد الانتظار ({pendingPayouts?.length || 0})
+                الانتظار ({pendingPayouts?.length || 0})
               </TabsTrigger>
               <TabsTrigger value="completed" className="bg-green-50 data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-xl px-8 font-bold">
                 المكتملة ({completedPayouts?.length || 0})
@@ -266,7 +255,7 @@ export default function AdminFinance() {
             </TabsList>
 
             <TabsContent value="pending">
-              <PayoutTable payouts={pendingPayouts} onApprove={approvePayout} onReject={(p) => { setSelectedPayout(p); setIsRejectModalOpen(true); }} />
+              <PayoutTable payouts={pendingPayouts} onApprove={approvePayout} onReject={(p: any) => { setSelectedPayout(p); setIsRejectModalOpen(true); }} />
             </TabsContent>
             <TabsContent value="completed">
               <PayoutTable payouts={completedPayouts} readonly />
@@ -278,17 +267,16 @@ export default function AdminFinance() {
         </TabsContent>
       </Tabs>
 
-      {/* مودال رفض السحب */}
       <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right text-2xl font-black">رفض طلب السحب</DialogTitle>
-            <DialogDescription className="text-right">يرجى كتابة سبب الرفض، سيظهر هذا السبب للمستخدم في سجل المعاملات وسيتم إعادة الرصيد له.</DialogDescription>
+            <DialogDescription className="text-right">يرجى كتابة سبب الرفض، سيتم إخطار المستخدم وإعادة الرصيد له.</DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <Label className="font-bold mb-2 block">سبب الرفض</Label>
             <Textarea 
-              placeholder="مثلاً: رقم المحفظة غير صحيح، أو تم التحقق من نشاط مشبوه..." 
+              placeholder="مثلاً: رقم المحفظة غير صحيح..." 
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               className="h-32 rounded-xl"
@@ -313,7 +301,7 @@ function PayoutTable({ payouts, onApprove, onReject, readonly, showReason }: any
             <TableHead className="text-right font-black">المبلغ</TableHead>
             <TableHead className="text-right font-black">رقم المحفظة</TableHead>
             <TableHead className="text-right font-black">التاريخ</TableHead>
-            {showReason && <TableHead className="text-right font-black">سبب الرفض</TableHead>}
+            {showReason && <TableHead className="text-right font-black">السبب</TableHead>}
             {!readonly && <TableHead className="text-left px-8 font-black">الإجراءات</TableHead>}
           </TableRow>
         </TableHeader>
@@ -321,7 +309,7 @@ function PayoutTable({ payouts, onApprove, onReject, readonly, showReason }: any
           {payouts?.map((p: any) => (
             <TableRow key={p.id} className="h-20 hover:bg-zinc-50">
               <TableCell className="px-8">
-                <div className="flex flex-col">
+                <div className="flex flex-col text-right">
                   <span className="font-bold">{p.userName}</span>
                   <span className="text-[10px] text-muted-foreground">{p.userEmail}</span>
                 </div>
@@ -335,7 +323,7 @@ function PayoutTable({ payouts, onApprove, onReject, readonly, showReason }: any
               {!readonly && (
                 <TableCell className="px-8 text-left">
                   <div className="flex gap-2 justify-end">
-                    <Button onClick={() => onApprove(p)} size="sm" className="bg-green-600 rounded-lg hover:bg-green-700">
+                    <Button onClick={() => onApprove(p)} size="sm" className="bg-green-600 rounded-lg">
                       <CheckCircle2 className="h-4 w-4 ml-1" /> موافقة
                     </Button>
                     <Button onClick={() => onReject(p)} size="sm" variant="destructive" className="rounded-lg">
@@ -349,7 +337,7 @@ function PayoutTable({ payouts, onApprove, onReject, readonly, showReason }: any
           {(!payouts || payouts.length === 0) && (
             <TableRow>
               <TableCell colSpan={showReason ? 6 : 5} className="text-center py-20 text-muted-foreground font-bold">
-                لا توجد طلبات في هذا القسم حالياً.
+                لا توجد طلبات حالياً.
               </TableCell>
             </TableRow>
           )}

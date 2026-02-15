@@ -3,9 +3,9 @@
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, MapPin, Clock, ArrowRight, Sparkles, UserCheck } from "lucide-react";
+import { Briefcase, Clock, ArrowRight, Sparkles, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +19,8 @@ export default function JobsPage() {
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
+  
+  // فرز الوظائف برمجياً لضمان ظهورها حتى بدون فهارس مركبة
   const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
@@ -65,7 +67,9 @@ export default function JobsPage() {
                 <CardContent className="p-8 flex flex-col md:flex-row justify-between items-center gap-8">
                   <div className="space-y-4 text-right flex-1 w-full">
                     <div className="flex items-center gap-3 justify-end md:justify-start flex-wrap">
-                      <Badge variant="secondary" className="font-bold bg-muted/50">{job.type === 'full-time' ? 'دوام كامل' : job.type === 'part-time' ? 'دوام جزئي' : 'عمل حر'}</Badge>
+                      <Badge variant="secondary" className="font-bold bg-muted/50">
+                        {job.type === 'full-time' ? 'دوام كامل' : job.type === 'part-time' ? 'دوام جزئي' : 'عمل حر'}
+                      </Badge>
                       <span className="text-xs text-muted-foreground font-bold flex items-center gap-1">
                         <Clock size={12}/> {new Date(job.createdAt).toLocaleDateString('ar-EG')}
                       </span>
