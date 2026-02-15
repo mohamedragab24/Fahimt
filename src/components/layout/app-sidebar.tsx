@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -26,7 +25,8 @@ import {
   FileCheck,
   Shield,
   ShieldAlert,
-  UserCog
+  UserCog,
+  FileLock2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -60,6 +60,7 @@ const menuItems = [
   { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
+  { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
 ];
 
