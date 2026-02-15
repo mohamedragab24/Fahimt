@@ -19,7 +19,8 @@ import {
   Tag, 
   CheckCircle2, 
   Loader2,
-  X
+  X,
+  Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
