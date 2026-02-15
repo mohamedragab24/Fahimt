@@ -14,6 +14,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload, UserCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -111,7 +112,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#f8fafc]" dir="rtl">
-      <Card className="w-full max-w-lg shadow-2xl border-t-8 border-primary rounded-[2.5rem] bg-white overflow-hidden">
+      <Card className="w-full max-lg shadow-2xl border-t-8 border-primary rounded-[2.5rem] bg-white overflow-hidden">
         <CardHeader className="text-center pt-10">
           <div className="mx-auto mb-8">
             {settings?.logoUrl ? (
@@ -178,6 +179,12 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
+              <div className="flex justify-between items-center px-2 mb-1">
+                <Link href="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:underline">
+                  نسيت كلمة المرور؟
+                </Link>
+                <Label className="font-black text-xs">كلمة المرور</Label>
+              </div>
               <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-12 rounded-xl border-2" />
             </div>
 
