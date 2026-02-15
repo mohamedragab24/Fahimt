@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, query, where, doc, updateDoc, addDoc, getDocs, limit } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,27 @@ import { ShieldCheck, XCircle, CheckCircle2, AlertCircle, Search, UserCheck, Clo
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminVerification() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchedUser, setSearchedUser] = useState<any>(null);
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: adminProfile } = useDoc(userRef);
+
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
+  const canReadVerifications = adminProfile?.isAdmin || isMasterAdmin;
+
   // جلب الطلبات المعلقة
   const verQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !canReadVerifications) return null;
     return query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
-  }, [firestore]);
+  }, [firestore, canReadVerifications]);
 
   const { data: requests, isLoading } = useCollection(verQuery);
 
@@ -41,7 +52,6 @@ export default function AdminVerification() {
         targetDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
       } else {
         // محاولة البحث بالـ ID المباشر
-        const userRef = doc(firestore, "users", searchQuery);
         const userSnap = await getDocs(query(collection(firestore, "users"), where("id", "==", searchQuery), limit(1)));
         if (userSnap.size > 0) {
             targetDoc = { ...userSnap.docs[0].data(), id: userSnap.docs[0].id };
@@ -91,6 +101,10 @@ export default function AdminVerification() {
     }
   };
 
+  if (!canReadVerifications && adminProfile) {
+    return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</div>;
+  }
+
   return (
     <div className="p-6 md:p-10 space-y-12" dir="rtl">
       <div className="flex justify-between items-center border-r-8 border-orange-500 pr-6">
@@ -127,8 +141,8 @@ export default function AdminVerification() {
                   <AvatarImage src={searchedUser.profilePictureUrl} />
                   <AvatarFallback>{searchedUser.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <h4 className="font-black text-xl flex items-center gap-2">
+                <div className="text-right flex-1">
+                  <h4 className="font-black text-xl flex items-center justify-end gap-2">
                     {searchedUser.fullName}
                     {searchedUser.isVerified && <ShieldCheck className="h-5 w-5 text-blue-500 fill-blue-500/10" />}
                   </h4>
@@ -149,8 +163,8 @@ export default function AdminVerification() {
 
       {/* طلبات التوثيق المعلقة */}
       <div className="space-y-6">
-        <h3 className="text-2xl font-black flex items-center gap-3">
-          <Clock className="text-orange-500" /> طلبات معلقة ({requests?.length || 0})
+        <h3 className="text-2xl font-black flex items-center gap-3 justify-end">
+          طلبات معلقة ({requests?.length || 0}) <Clock className="text-orange-500" />
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminFinance() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchId, setSearchId] = useState("");
@@ -29,20 +30,30 @@ export default function AdminFinance() {
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: adminProfile } = useDoc(userRef);
+
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
+  const canReadFinance = adminProfile?.isAdmin || isMasterAdmin;
+
   const pendingPayoutQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !canReadFinance) return null;
     return query(collection(firestore, "payoutRequests"), where("status", "==", "pending"));
-  }, [firestore]);
+  }, [firestore, canReadFinance]);
 
   const completedPayoutQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !canReadFinance) return null;
     return query(collection(firestore, "payoutRequests"), where("status", "==", "completed"));
-  }, [firestore]);
+  }, [firestore, canReadFinance]);
 
   const rejectedPayoutQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !canReadFinance) return null;
     return query(collection(firestore, "payoutRequests"), where("status", "==", "rejected"));
-  }, [firestore]);
+  }, [firestore, canReadFinance]);
 
   const { data: rawPending } = useCollection(pendingPayoutQuery);
   const { data: rawCompleted } = useCollection(completedPayoutQuery);
@@ -145,6 +156,10 @@ export default function AdminFinance() {
       toast({ variant: "destructive", title: "خطأ", description: "فشل رفض الطلب." });
     }
   };
+
+  if (!canReadFinance && adminProfile) {
+    return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</div>;
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">

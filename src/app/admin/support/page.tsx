@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function AdminSupport() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -22,17 +23,27 @@ export default function AdminSupport() {
   const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: adminProfile } = useDoc(userRef);
+
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
+  const canReadSupport = adminProfile?.isAdmin || isMasterAdmin;
+
   const ticketsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !canReadSupport) return null;
     return query(collection(firestore, "supportTickets"), orderBy("lastUpdate", "desc"));
-  }, [firestore]);
+  }, [firestore, canReadSupport]);
 
   const { data: tickets, isLoading } = useCollection(ticketsQuery);
 
   const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !selectedTicket) return null;
+    if (!firestore || !selectedTicket || !canReadSupport) return null;
     return query(collection(firestore, "supportTickets", selectedTicket.id, "messages"), orderBy("createdAt", "asc"));
-  }, [firestore, selectedTicket]);
+  }, [firestore, selectedTicket, canReadSupport]);
 
   const { data: messages } = useCollection(messagesQuery);
 
@@ -94,6 +105,10 @@ export default function AdminSupport() {
 
   const activeTickets = filteredTickets?.filter(t => t.status !== 'closed' && t.status !== 'suspended') || [];
   const archivedTickets = filteredTickets?.filter(t => t.status === 'closed' || t.status === 'suspended') || [];
+
+  if (!canReadSupport && adminProfile) {
+    return <div className="p-20 text-center font-black opacity-30 text-2xl">عذراً، لا تملك صلاحية الوصول لمركز الدعم.</div>;
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
