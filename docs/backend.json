@@ -54,6 +54,20 @@
         "createdAt": { "type": "string" }
       }
     },
+    "Job": {
+      "title": "Job",
+      "type": "object",
+      "description": "يمثل فرصة وظيفية في المنصة.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "requirements": { "type": "string" },
+        "type": { "type": "string", "enum": ["full-time", "part-time", "project"] },
+        "status": { "type": "string", "enum": ["active", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "AppSettings": {
       "title": "AppSettings",
       "type": "object",
@@ -66,13 +80,13 @@
         "primaryColor": { "type": "string" },
         "accentColor": { "type": "string" },
         "backgroundColor": { "type": "string" },
-        "logoUrl": { "type": "string", "description": "اللوجو الرئيسي للموقع" },
-        "miniIconUrl": { "type": "string", "description": "أيقونة صغيرة للاستخدام داخل الموقع" },
-        "faviconUrl": { "type": "string", "description": "أيقونة علامة التبويب في المتصفح" },
-        "splashImageUrl": { "type": "string", "description": "صورة نافذة الترحيب المنبثقة (Splash Modal)" },
-        "landingBg": { "type": "string", "description": "خلفية صفحة الهبوط الرئيسية" },
-        "studentHero": { "type": "string", "description": "صورة واجهة الطالب" },
-        "teacherHero": { "type": "string", "description": "صورة واجهة المعلم" }
+        "logoUrl": { "type": "string" },
+        "miniIconUrl": { "type": "string" },
+        "faviconUrl": { "type": "string" },
+        "splashImageUrl": { "type": "string" },
+        "landingBg": { "type": "string" },
+        "studentHero": { "type": "string" },
+        "teacherHero": { "type": "string" }
       }
     }
   },
@@ -91,6 +105,10 @@
     "/settings/{settingId}": {
       "schema": "AppSettings",
       "description": "إعدادات المنصة."
+    },
+    "/jobs/{jobId}": {
+      "schema": "Job",
+      "description": "فرص العمل المتاحة."
     }
   }
 }

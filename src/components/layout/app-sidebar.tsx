@@ -20,17 +20,13 @@ import {
   ImageIcon,
   Wand2,
   CheckSquare,
-  Scale,
-  Palette,
-  RefreshCw,
-  FileCheck,
   Shield,
   ShieldAlert,
   UserCog,
-  FileLock2,
-  BookOpen,
-  Info,
-  FileText
+  RefreshCw,
+  FileCheck,
+  Briefcase,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,7 +39,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  SidebarSeparator as SidebarSep,
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
@@ -58,17 +53,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
+// تم تقليص القائمة الجانبية بناءً على طلبك
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
   { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
   { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
-  { title: "عن فهمني", icon: Info, href: "/about" },
-  { title: "الدليل الإرشادي", icon: BookOpen, href: "/guide" },
-  { title: "ضمان الحقوق", icon: ShieldCheck, href: "/guarantees" },
-  { title: "شروط الاستخدام", icon: FileText, href: "/terms" },
-  { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
-  { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
 ];
 
@@ -79,13 +69,9 @@ const adminItems = [
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
+  { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
   { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
-  { title: "تخصيص المنصة", icon: Palette, href: "/admin/customize" },
-  { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
   { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
-  { title: "إدارة المُفهمين", icon: Users, href: "/admin/mufahems" },
-  { title: "إدارة المُستفهمين", icon: Users, href: "/admin/mustafhems" },
-  { title: "مركز التوثيق", icon: ShieldCheck, href: "/admin/verification" },
   { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
   { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
   { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
@@ -138,11 +124,9 @@ export function AppSidebar() {
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-6">
         <Link href="/" className="flex items-center gap-3">
-          {settings?.miniIconUrl ? (
-            <img src={settings.miniIconUrl} className="h-14 w-14 object-contain rounded-xl" alt="Icon" />
-          ) : (
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-3xl font-black">ف</div>
-          )}
+          <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0">
+            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover rounded-xl" /> : "ف"}
+          </div>
           <div className="group-data-[collapsible=icon]:hidden">
             {settings?.logoUrl ? (
               <img src={settings.logoUrl} className="h-16 w-auto object-contain" alt="Site Logo" />
@@ -159,7 +143,7 @@ export function AppSidebar() {
         <div className="p-4 group-data-[collapsible=icon]:hidden">
           <div className="bg-primary/5 p-4 rounded-3xl space-y-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
+              <Avatar className="h-12 w-12 border-2 border-white shadow-md">
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback>{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>

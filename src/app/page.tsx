@@ -8,31 +8,20 @@ import {
   BookOpen, 
   ShieldCheck, 
   ShieldAlert,
-  Clock,
-  XCircle,
   LogOut,
   Scale,
-  Zap,
-  CheckCircle2,
-  FileText,
-  BadgeCent,
-  Layers,
   Wand2,
-  Sparkles,
-  Star,
   Users,
   MessageSquare,
-  User,
-  ClipboardList,
-  ImageIcon,
-  X
+  X,
+  Briefcase
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,15 +31,13 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { refineRequest } from "@/ai/flows/refine-request-flow";
-import { Progress } from "@/components/ui/progress";
+import { Footer } from "@/components/layout/footer";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [showSplash, setShowSplash] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -67,24 +54,6 @@ export default function HomePage() {
 
   const [appealReason, setAppealReason] = useState("");
   const [isSendingAppeal, setIsSendingAppeal] = useState(false);
-
-  // منطق شاشة الترحيب: تظهر فقط عند توفر الصورة وبشكل مستقر
-  useEffect(() => {
-    if (settings?.splashImageUrl) {
-      setShowSplash(true);
-      const timer = setInterval(() => {
-        setProgress((oldProgress) => {
-          if (oldProgress >= 100) {
-            clearInterval(timer);
-            setTimeout(() => setShowSplash(false), 800);
-            return 100;
-          }
-          return oldProgress + 5;
-        });
-      }, 100);
-      return () => clearInterval(timer);
-    }
-  }, [settings?.splashImageUrl]);
 
   const handleSendAppeal = async () => {
     if (!appealReason.trim() || !firestore || !user) return;
@@ -111,32 +80,6 @@ export default function HomePage() {
     return null;
   }
 
-  if (showSplash && settings?.splashImageUrl) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-xl animate-in fade-in duration-500">
-        <div className="relative w-full max-w-md p-8 text-center space-y-8 animate-in zoom-in-95 duration-500">
-          <button 
-            onClick={() => setShowSplash(false)}
-            className="absolute -top-4 -right-4 bg-white p-2 rounded-full shadow-lg hover:bg-zinc-100 transition-colors z-50"
-          >
-            <X size={20} />
-          </button>
-          <div className="relative aspect-square w-64 mx-auto overflow-hidden rounded-[3.5rem] shadow-2xl border-8 border-white ring-8 ring-primary/10">
-            <img 
-              src={settings.splashImageUrl} 
-              alt="Welcome" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-3xl font-black text-primary">{settings.siteTitle || "فهمني"}</h2>
-            <Progress value={progress} className="h-2 w-full bg-primary/10" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (!user || !profile) {
     return <LandingPage router={router} settings={settings} />;
   }
@@ -146,18 +89,15 @@ export default function HomePage() {
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
         <Card className="w-full max-w-2xl shadow-2xl rounded-[3rem] border-t-8 border-red-600 overflow-hidden bg-white">
           <CardHeader className="text-center p-10 bg-red-50">
-            <div className="bg-red-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-red-600 mb-6">
-              <XCircle size={60} />
-            </div>
             <CardTitle className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك</CardTitle>
           </CardHeader>
           <CardContent className="p-10 space-y-8">
             <div className="p-6 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-4">
               <h4 className="text-xl font-black flex items-center gap-2"><Scale className="text-red-600" /> تقديم طعن</h4>
               <Textarea placeholder="اكتب رسالتك..." className="h-40 rounded-xl" value={appealReason} onChange={(e) => setAppealReason(e.target.value)} />
-              <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600">إرسال طعن</Button>
+              <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600 font-bold">إرسال طعن</Button>
             </div>
-            <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-14">خروج</Button>
+            <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-14 font-bold">خروج</Button>
           </CardContent>
         </Card>
       </div>
@@ -168,13 +108,14 @@ export default function HomePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
         <Card className="w-full max-w-2xl shadow-2xl rounded-[4rem] border-t-8 border-orange-500 overflow-hidden bg-white text-center">
-          <CardHeader className="pt-16 pb-10 space-y-6">
+          <CardHeader className="pt-16 pb-10 space-y-6 text-center">
             <div className="bg-orange-100 w-32 h-32 rounded-[2.5rem] flex items-center justify-center mx-auto text-orange-600 shadow-inner">
               <ShieldAlert size={80} className="animate-pulse" />
             </div>
             <CardTitle className="text-5xl font-black text-zinc-900">حسابك قيد المراجعة</CardTitle>
           </CardHeader>
           <CardContent className="px-12 pb-16 space-y-10">
+            <p className="text-lg text-muted-foreground font-medium">نحن بصدد مراجعة بيانات ملفك الشخصي لضمان جودة المنصة. ستتلقى إشعاراً فور تفعيل حسابك.</p>
             <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-16 rounded-2xl text-xl font-bold border-2">
               <LogOut className="ml-2 h-6 w-6" /> تسجيل الخروج والعودة لاحقاً
             </Button>
@@ -210,34 +151,32 @@ export default function HomePage() {
 function LandingPage({ router, settings }: any) {
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   return (
-    <div className="relative min-h-screen bg-black font-body overflow-hidden" dir="rtl">
+    <div className="relative min-h-screen bg-black font-body overflow-hidden flex flex-col" dir="rtl">
       <div className="absolute inset-0 z-0">
         <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.4]" />
       </div>
-      <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between">
+      <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
           <Button variant="ghost" onClick={() => router.push('/login')} className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 font-black rounded-full px-6 md:px-8">دخول</Button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-right">
-            <span className="text-primary font-black text-2xl md:text-3xl block leading-none">{settings?.siteTitle || "فهمني"}</span>
-          </div>
+          <span className="text-primary font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden">
-            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="icon" /> : "ف"}
+            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
           </div>
         </div>
       </header>
-      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-20 md:pt-32">
+      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-32">
         <div className="max-w-5xl space-y-8 md:space-y-12">
           <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight">{settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}</h1>
           <p className="text-xl md:text-4xl text-zinc-300 font-bold opacity-90">{settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}</p>
           <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-2xl md:rounded-[2rem] shadow-xl">ابدأ التعلم الآن</Button>
         </div>
       </main>
-      <footer className="absolute bottom-8 left-0 w-full z-10 text-center text-white/40 font-bold text-sm">
-        {settings?.footerText || "جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤"}
-      </footer>
+      
+      {/* Footer is now part of the Landing Page too */}
+      <Footer />
     </div>
   );
 }
@@ -344,7 +283,7 @@ function MustafhemView({ profile }: any) {
           {featuredTeachers?.map(t => (
             <Card key={t.id} className="rounded-[2.5rem] border-2 bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer" onClick={() => router.push(`/teachers`)}>
               <CardContent className="p-6 flex flex-col items-center text-center">
-                <Image src={t.profilePictureUrl || "https://picsum.photos/seed/avatar/200/200"} width={80} height={80} alt="T" className="rounded-3xl border-4 border-white shadow-lg mb-4" />
+                <img src={t.profilePictureUrl || "https://picsum.photos/seed/avatar/200/200"} width={80} height={80} alt="T" className="rounded-3xl border-4 border-white shadow-lg mb-4" />
                 <h4 className="font-black text-lg">{t.fullName}</h4>
                 <p className="text-xs font-bold text-muted-foreground">{t.specialization || "خبير تعليمي"}</p>
               </CardContent>

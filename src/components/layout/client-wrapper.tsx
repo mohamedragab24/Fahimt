@@ -5,10 +5,11 @@ import React, { useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc } from "firebase/firestore";
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               <Header />
               <main className="flex-1 overflow-y-auto p-4 md:p-0">
                 {children}
+                <Footer /> {/* التذييل يظهر في جميع الصفحات التي تستخدم هذا الغلاف */}
               </main>
             </div>
           </div>
@@ -63,12 +65,9 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث الأيقونة حصراً من faviconUrl
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
-
-          // حذف جميع الأيقونات الحالية (المنافسة) لضمان السيادة الكاملة لشعارك
           const existingIcons = document.querySelectorAll("link[rel*='icon']");
           existingIcons.forEach(el => el.remove());
 
@@ -86,7 +85,6 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
             document.head.appendChild(link);
           });
         };
-        
         updateFavicon(settings.faviconUrl);
       }
 

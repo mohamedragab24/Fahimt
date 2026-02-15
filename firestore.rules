@@ -3,8 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. صلاحيات المسؤول الماستر المطلقة (أولوية قصوى)
-    // حساب mohamed76y@gmail.com هو صاحب المنصة ويملك صلاحية كاملة على كل شيء
+    // 1. صلاحيات المسؤول الماستر المطلقة
     function isMasterAdmin() {
       return request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
@@ -12,12 +11,11 @@ service cloud.firestore {
       );
     }
 
-    // القاعدة الذهبية: المسؤول الماستر له حق الوصول الكامل والنهائي لكل شيء في البداية
     match /{document=**} {
       allow read, write: if isMasterAdmin();
     }
 
-    // 2. التحقق مما إذا كان المستخدم مسؤولاً (للمساعدين)
+    // 2. التحقق مما إذا كان المستخدم مسؤولاً
     function isAdmin() {
       return request.auth != null && (
         isMasterAdmin() ||
@@ -41,6 +39,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // الوظائف
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ملفات المستخدمين
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -53,7 +57,7 @@ service cloud.firestore {
       }
     }
 
-    // الاستفهامات (الطلبات)
+    // الاستفهامات
     match /istifhams/{istifhamId} {
       allow create: if isNotBlocked();
       allow read: if true;
@@ -61,13 +65,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // الإعدادات العامة والأصول - مسموح لأي مسؤول أو الماستر بتغييرها
+    // الإعدادات العامة
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin() || isMasterAdmin();
     }
 
-    // القواعد العامة للمجموعات الأخرى
     match /notifications/{id} { allow read, write: if isSignedIn(); }
     match /payoutRequests/{id} { allow read, write: if isAdmin(); }
     match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
