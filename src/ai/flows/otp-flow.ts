@@ -58,31 +58,42 @@ const otpFlow = ai.defineFlow(
         console.error('[OTP EMAIL ERROR]', err);
       }
     } else if (input.method === 'whatsapp') {
-      // إرسال عبر Twilio WhatsApp بناءً على تعليمات المستخدم
       try {
         const twilio = require('twilio');
         const accountSid = 'ACa8b9d0d5714688e35f53b9e769c82695';
-        const authToken = process.env.TWILIO_AUTH_TOKEN || 'App 0287a4d3a664e2ae2a09ed0f9982ab46-cd21866e-50a3-4a7d-8050-03a7d7fec5a3'; // استخدام Token المستخدم أو fallback
+        // التوكين يجب أن يكون صالحاً من حساب Twilio الخاص بك
+        const authToken = process.env.TWILIO_AUTH_TOKEN; 
+        
+        if (!authToken) {
+          console.error("[TWILIO ERROR] Auth Token is missing in environment variables.");
+          return { success: false, code, message: 'خطأ في إعدادات الخادم (Token مفقود).' };
+        }
+
         const client = twilio(accountSid, authToken);
+
+        // معالجة رقم الهاتف ليكون بصيغة دولية صحيحة (مثال: 012... يصبح +2012...)
+        let rawPhone = input.recipient.trim();
+        let formattedPhone = rawPhone;
+        
+        if (rawPhone.startsWith('01')) {
+          formattedPhone = '+20' + rawPhone.substring(1);
+        } else if (!rawPhone.startsWith('+')) {
+          formattedPhone = '+' + rawPhone;
+        }
 
         const message = await client.messages.create({
           from: 'whatsapp:+14155238886',
           contentSid: 'HX229f5a04fd0510ce1b071852155d3e75',
           contentVariables: JSON.stringify({ "1": code }),
-          to: `whatsapp:${input.recipient.startsWith('+') ? input.recipient : '+' + input.recipient}`
+          to: `whatsapp:${formattedPhone}`
         });
 
         if (message.sid) {
           sendSuccess = true;
-          console.log(`[TWILIO SUCCESS] SID: ${message.sid}`);
+          console.log(`[TWILIO SUCCESS] SID: ${message.sid} to ${formattedPhone}`);
         }
-      } catch (err) {
-        console.error('[TWILIO ERROR]', err);
-        // محاكاة النجاح في حالة عدم وجود Token صالح أثناء التطوير لضمان عدم توقف العمل
-        if (process.env.NODE_ENV === 'development') {
-          console.log("SIMULATING SUCCESS FOR WHATSAPP IN DEV");
-          sendSuccess = true;
-        }
+      } catch (err: any) {
+        console.error('[TWILIO ERROR]', err.message);
       }
     }
 
@@ -91,7 +102,7 @@ const otpFlow = ai.defineFlow(
       code,
       message: sendSuccess 
         ? `تم إرسال الرمز بنجاح عبر ${input.method === 'email' ? 'البريد' : 'الواتساب'}.`
-        : 'فشل إرسال الرمز، يرجى المحاولة لاحقاً.',
+        : 'فشل إرسال الرمز، يرجى التأكد من صحة البيانات أو المحاولة لاحقاً.',
     };
   }
 );
