@@ -57,39 +57,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-const menuItems = [
-  { title: "الرئيسية", icon: Home, href: "/" },
-  { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
-  { title: "أعمال المفهمين", icon: ImageIcon, href: "/portfolio" },
-  { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
-  { title: "المحفظة", icon: Wallet, href: "/wallet" },
-  { title: "الإعدادات", icon: Settings, href: "/profile" },
-];
-
-const adminItems = [
-  { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
-  { title: "المحرر المرئي", icon: Edit3, href: "/admin/manual-editor" },
-  { title: "الإدارة بالذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
-  { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
-  { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
-  { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
-  { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
-  { title: "مراجعة أعمال المفهمين", icon: FileSearch, href: "/admin/portfolio-approvals" },
-  { title: "إدارة معرض الأعمال", icon: GalleryVertical, href: "/admin/portfolio-management" },
-  { title: "أقسام المفهمين", icon: Layers, href: "/admin/teacher-categories" },
-  { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
-  { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
-  { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
-  { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
-  { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
-  { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
-  { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
-  { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
-  { title: "تخصيص الهوية", icon: Settings, href: "/admin/customize" },
-  { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
-  { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
-];
-
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -111,6 +78,15 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
+  const menuItems = [
+    { title: settings?.sideHome || "الرئيسية", icon: Home, href: "/" },
+    { title: settings?.sideTeachers || "المُفهمين", icon: GraduationCap, href: "/teachers" },
+    { title: settings?.sidePortfolio || "أعمال المفهمين", icon: ImageIcon, href: "/portfolio" },
+    { title: settings?.sideRequests || "استفهاماتي", icon: ClipboardList, href: "/requests" },
+    { title: settings?.sideWallet || "المحفظة", icon: Wallet, href: "/wallet" },
+    { title: settings?.sideSettings || "الإعدادات", icon: Settings, href: "/profile" },
+  ];
+
   const handleLogout = async () => {
     await signOut(auth);
     setOpenMobile(false);
@@ -130,6 +106,30 @@ export function AppSidebar() {
   };
 
   if (!user) return null;
+
+  const adminItems = [
+    { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+    { title: "المحرر المرئي", icon: Edit3, href: "/admin/manual-editor" },
+    { title: "الإدارة بالذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
+    { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
+    { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
+    { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
+    { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
+    { title: "مراجعة أعمال المفهمين", icon: FileSearch, href: "/admin/portfolio-approvals" },
+    { title: "إدارة معرض الأعمال", icon: GalleryVertical, href: "/admin/portfolio-management" },
+    { title: "أقسام المفهمين", icon: Layers, href: "/admin/teacher-categories" },
+    { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
+    { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
+    { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
+    { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
+    { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
+    { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
+    { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
+    { title: "إدارة الأقسام", icon: Layers, href: "/admin/categories" },
+    { title: "تخصيص الهوية", icon: Settings, href: "/admin/customize" },
+    { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
+    { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
+  ];
 
   return (
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
@@ -164,7 +164,7 @@ export function AppSidebar() {
               </div>
             </div>
             <button onClick={toggleRole} className="w-full h-10 rounded-xl text-xs font-bold border-2 border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
-              <RefreshCw className="h-3 w-3" /> تبديل إلى {profile?.role === 'mufhem' ? 'مُستفهم' : 'مُفهم'}
+              <RefreshCw className="h-3 w-3" /> {profile?.role === 'mufhem' ? (settings?.sideToggleToStudent || "تبديل إلى مُستفهم") : (settings?.sideToggleToTeacher || "تبديل إلى مُفهم")}
             </button>
           </div>
         </div>
@@ -187,7 +187,7 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="h-14 rounded-2xl">
                     <LayoutDashboard className="h-6 w-6 text-accent" />
-                    <span className="font-black text-lg group-data-[collapsible=icon]:hidden">لوحة المسؤول</span>
+                    <span className="font-black text-lg group-data-[collapsible=icon]:hidden">{settings?.sideAdmin || "لوحة المسؤول"}</span>
                     <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -211,7 +211,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         <SidebarMenuButton onClick={handleLogout} className="h-14 rounded-2xl text-destructive">
           <LogOut className="h-6 w-6" />
-          <span className="font-black text-lg group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
+          <span className="font-black text-lg group-data-[collapsible=icon]:hidden">{settings?.sideLogout || "تسجيل الخروج"}</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

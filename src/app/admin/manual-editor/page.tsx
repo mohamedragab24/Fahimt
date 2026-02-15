@@ -29,14 +29,21 @@ import {
   LayoutTemplate,
   Monitor,
   Smartphone,
-  CheckCircle2
+  CheckCircle2,
+  Menu,
+  Home,
+  GraduationCap,
+  ClipboardList,
+  Wallet,
+  Settings,
+  LayoutDashboard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav';
+type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar';
 
 export default function ManualEditorPage() {
   const firestore = useFirestore();
@@ -74,6 +81,17 @@ export default function ManualEditorPage() {
     navAbout: "عن المنصة",
     navGuide: "الدليل",
     navGuarantees: "الضمانات",
+    // Sidebar Labels
+    sideHome: "الرئيسية",
+    sideTeachers: "المُفهمين",
+    sidePortfolio: "أعمال المفهمين",
+    sideRequests: "استفهاماتي",
+    sideWallet: "المحفظة",
+    sideSettings: "الإعدادات",
+    sideAdmin: "لوحة المسؤول",
+    sideLogout: "تسجيل الخروج",
+    sideToggleToStudent: "تبديل إلى مُستفهم",
+    sideToggleToTeacher: "تبديل إلى مُفهم",
     // Pages Content
     aboutTitle: "ما هي منصة فهمني؟",
     aboutDescription: "فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية.",
@@ -166,8 +184,8 @@ export default function ManualEditorPage() {
             <TabsTrigger value="home" className="rounded-lg font-black px-4">الرئيسية</TabsTrigger>
             <TabsTrigger value="about" className="rounded-lg font-black px-4">عن المنصة</TabsTrigger>
             <TabsTrigger value="guide" className="rounded-lg font-black px-4">الدليل</TabsTrigger>
-            <TabsTrigger value="guarantees" className="rounded-lg font-black px-4">الضمانات</TabsTrigger>
-            <TabsTrigger value="nav" className="rounded-lg font-black px-4">الروابط</TabsTrigger>
+            <TabsTrigger value="sidebar" className="rounded-lg font-black px-4">القائمة الجانبية</TabsTrigger>
+            <TabsTrigger value="nav" className="rounded-lg font-black px-4">أخرى</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -191,19 +209,17 @@ export default function ManualEditorPage() {
               <ColorInput label="لون التمييز" value={formData.accentColor} onChange={(v) => setFormData({...formData, accentColor: v})} />
               <div className="space-y-2">
                 <Label className="text-[10px] font-black opacity-60">نصف قطر الزوايا (Radius)</Label>
-                <Select value={formData.borderRadius} onValueChange={(v)=>setFormData({...formData, borderRadius: v})}>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["0px", "0.5rem", "1rem", "2rem", "3rem"].map(r => (
-                      <button 
-                        key={r} 
-                        onClick={()=>setFormData({...formData, borderRadius: r})}
-                        className={`h-10 rounded-lg border-2 text-[10px] font-bold ${formData.borderRadius === r ? 'border-primary bg-primary/5 text-primary' : 'border-zinc-100 text-zinc-400'}`}
-                      >
-                        {r === "0px" ? "حادة" : r}
-                      </button>
-                    ))}
-                  </div>
-                </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  {["0px", "0.5rem", "1rem", "2rem", "3rem"].map(r => (
+                    <button 
+                      key={r} 
+                      onClick={()=>setFormData({...formData, borderRadius: r})}
+                      className={`h-10 rounded-lg border-2 text-[10px] font-bold ${formData.borderRadius === r ? 'border-primary bg-primary/5 text-primary' : 'border-zinc-100 text-zinc-400'}`}
+                    >
+                      {r === "0px" ? "حادة" : r}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -263,7 +279,7 @@ export default function ManualEditorPage() {
                     className="font-black text-sm text-zinc-400 cursor-pointer hover:text-primary"
                     onClick={() => handleFieldClick(key, 'اسم رابط التنقل')}
                   >
-                    {(formData as any)[key]}
+                    {(formData as any)[key] || ""}
                   </span>
                 ))}
                 <div 
@@ -357,39 +373,46 @@ export default function ManualEditorPage() {
                 </section>
               )}
 
-              {currentPage === 'guide' && (
-                <section className="py-32 px-16 space-y-12">
-                  <div className="text-center space-y-6">
-                    <div 
-                      className="bg-primary/10 w-24 h-24 flex items-center justify-center mx-auto text-primary shadow-inner mb-6"
-                      style={{ borderRadius: formData.borderRadius }}
-                    >
-                      <BookOpen size={48} />
+              {currentPage === 'sidebar' && (
+                <section className="py-20 px-16 flex justify-center">
+                  <Card className="w-80 border-2 shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+                    <div className="p-8 border-b flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white font-black text-2xl">ف</div>
+                      <span className="font-black text-2xl text-primary">{formData.siteTitle}</span>
                     </div>
-                    <h2 
-                      className="text-6xl font-black cursor-pointer hover:text-primary transition-all"
-                      onClick={() => handleFieldClick('guideTitle', 'عنوان الدليل الإرشادي')}
-                    >
-                      {formData.guideTitle}
-                    </h2>
-                    <p 
-                      className="text-2xl font-bold opacity-60 max-w-2xl mx-auto cursor-pointer hover:bg-black/5 p-2 rounded-xl transition-all"
-                      onClick={() => handleFieldClick('guideSubtitle', 'الوصف الفرعي للدليل')}
-                    >
-                      {formData.guideSubtitle}
-                    </p>
-                  </div>
+                    <div className="p-4 space-y-2">
+                      <SidebarItem icon={Home} label={formData.sideHome} onClick={() => handleFieldClick('sideHome', 'زر الرئيسية')} />
+                      <SidebarItem icon={GraduationCap} label={formData.sideTeachers} onClick={() => handleFieldClick('sideTeachers', 'زر المفهمين')} />
+                      <SidebarItem icon={ImageIcon} label={formData.sidePortfolio} onClick={() => handleFieldClick('sidePortfolio', 'زر أعمال المفهمين')} />
+                      <SidebarItem icon={ClipboardList} label={formData.sideRequests} onClick={() => handleFieldClick('sideRequests', 'زر استفهاماتي')} />
+                      <SidebarItem icon={Wallet} label={formData.sideWallet} onClick={() => handleFieldClick('sideWallet', 'زر المحفظة')} />
+                      <SidebarItem icon={Settings} label={formData.sideSettings} onClick={() => handleFieldClick('sideSettings', 'زر الإعدادات')} />
+                      <div className="pt-4 border-t mt-4">
+                        <SidebarItem icon={LayoutDashboard} label={formData.sideAdmin} onClick={() => handleFieldClick('sideAdmin', 'عنوان لوحة المسؤول')} color="text-accent" />
+                      </div>
+                      <div className="pt-4 space-y-2">
+                        <div 
+                          className="p-3 bg-primary/5 rounded-xl border-2 border-dashed border-primary/20 text-center cursor-pointer hover:bg-primary/10"
+                          onClick={() => handleFieldClick('sideToggleToTeacher', 'نص زر تبديل الدور')}
+                        >
+                          <span className="text-[10px] font-black text-primary">{formData.sideToggleToTeacher}</span>
+                        </div>
+                        <SidebarItem icon={LogOut} label={formData.sideLogout} onClick={() => handleFieldClick('sideLogout', 'زر الخروج')} color="text-red-500" />
+                      </div>
+                    </div>
+                  </Card>
                 </section>
               )}
 
               {currentPage === 'nav' && (
                 <section className="py-32 px-16 space-y-12">
-                  <h2 className="text-4xl font-black text-center mb-12">تعديل نصوص الروابط والتذييل</h2>
+                  <h2 className="text-4xl font-black text-center mb-12">تعديل نصوص إضافية</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <NavItemEdit label="الرابط الأول (الهيدر)" value={formData.navHome} onClick={()=>handleFieldClick('navHome', 'الرابط الأول')} />
                     <NavItemEdit label="الرابط الثاني (الهيدر)" value={formData.navAbout} onClick={()=>handleFieldClick('navAbout', 'الرابط الثاني')} />
                     <NavItemEdit label="الرابط الثالث (الهيدر)" value={formData.navGuide} onClick={()=>handleFieldClick('navGuide', 'الرابط الثالث')} />
                     <NavItemEdit label="الرابط الرابع (الهيدر)" value={formData.navGuarantees} onClick={()=>handleFieldClick('navGuarantees', 'الرابط الرابع')} />
+                    <NavItemEdit label="نص التذييل" value={formData.footerText} onClick={()=>handleFieldClick('footerText', 'حقوق الملكية')} />
                   </div>
                 </section>
               )}
@@ -506,6 +529,19 @@ function NavItemEdit({ label, value, onClick }: any) {
           <Edit3 size={16} />
         </Button>
       </div>
+    </div>
+  );
+}
+
+function SidebarItem({ icon: Icon, label, onClick, color }: any) {
+  return (
+    <div 
+      className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-muted transition-all group"
+      onClick={onClick}
+    >
+      <Icon size={20} className={color || "text-primary"} />
+      <span className={`font-black text-sm ${color || "text-zinc-700"}`}>{label}</span>
+      <Edit3 size={12} className="ml-auto opacity-0 group-hover:opacity-100 text-zinc-300" />
     </div>
   );
 }
