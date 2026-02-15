@@ -2,21 +2,32 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
+import { collection, query, orderBy, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout } from "lucide-react";
+import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export default function GlobalPortfolioPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // جلب بيانات المستخدم الحالي للتحقق من الرتبة
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: profile } = useDoc(userRef);
 
   // جلب كافة الأعمال من كل المفهمين مرتبة حسب الأحدث
   const portfolioQuery = useMemoFirebase(() => {
@@ -54,14 +65,25 @@ export default function GlobalPortfolioPage() {
           <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية والمشاريع المنفذة.</p>
         </div>
         
-        <div className="relative w-full md:w-96">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <Input 
-            placeholder="ابحث عن عمل أو مدرس..." 
-            className="h-14 pr-12 rounded-2xl border-none shadow-sm bg-white focus:ring-2 focus:ring-primary/20 text-lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Input 
+              placeholder="ابحث عن عمل أو مدرس..." 
+              className="h-14 pr-12 rounded-2xl border-none shadow-sm bg-white focus:ring-2 focus:ring-primary/20 text-lg"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {profile?.role === 'mufhem' && (
+            <Button 
+              onClick={() => router.push('/portfolio/add')}
+              className="h-14 px-8 rounded-2xl font-black bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 flex gap-2"
+            >
+              <Plus size={20} /> إضافة عمل جديد
+            </Button>
+          )}
         </div>
       </div>
 
@@ -147,7 +169,7 @@ export default function GlobalPortfolioPage() {
                   <p className="text-primary font-bold text-lg mt-1">{selectedItem?.teacher?.specialization || "خبير تعليمي"}</p>
                 </div>
                 <Button 
-                  onClick={() => window.location.href = `/teachers?id=${selectedItem?.teacher?.id}`}
+                  onClick={() => router.push(`/teachers?id=${selectedItem?.teacher?.id}`)}
                   variant="outline" 
                   className="rounded-2xl h-14 px-8 border-2 font-black shadow-lg"
                 >
