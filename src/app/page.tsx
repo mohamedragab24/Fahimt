@@ -18,7 +18,11 @@ import {
   ImageIcon,
   Plus,
   Target,
-  FileText
+  FileText,
+  Clock,
+  Timer,
+  Video,
+  Calendar
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -207,8 +211,8 @@ function MustafhemView({ profile }: any) {
   const pendingIstifhamsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(10)) : null, [firestore, profile.id]);
   const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
-  const featuredTeachersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "users"), where("role", "==", "mufhem"), where("isVerified", "==", true), limit(4)) : null, [firestore]);
-  const { data: featuredTeachers } = useCollection(featuredTeachersQuery);
+  const upcomingSessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "accepted"), limit(10)) : null, [firestore, profile.id]);
+  const { data: upcomingSessions } = useCollection(upcomingSessionsQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
@@ -267,28 +271,26 @@ function MustafhemView({ profile }: any) {
                 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-2">
-                    <Label className="font-black">عنوان الاستفهام (بحد أقصى 100 كلمة)</Label>
-                    <span className={`text-xs font-bold ${countWords(newIstifham.title) > 100 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.title)} / 100</span>
+                    <span className={`text-[10px] font-black ${countWords(newIstifham.title) > 100 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.title)} / 100 كلمة</span>
+                    <Label className="font-black">عنوان الاستفهام</Label>
                   </div>
                   <Input placeholder="عنوان مختصر وواضح..." value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-2">
-                    <Label className="font-black">تفاصيل الاستفهام (بحد أقصى 1000 كلمة)</Label>
-                    <div className="flex items-center gap-4">
-                      <span className={`text-xs font-bold ${countWords(newIstifham.description) > 1000 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.description)} / 1000</span>
-                    </div>
+                    <span className={`text-[10px] font-black ${countWords(newIstifham.description) > 1000 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.description)} / 1000 كلمة</span>
+                    <Label className="font-black">تفاصيل الاستفهام</Label>
                   </div>
                   <Textarea placeholder="اشرح مشكلتك بالتفصيل..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-2">
+                    <span className={`text-[10px] font-black ${countWords(newIstifham.goal) > 200 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.goal)} / 200 كلمة</span>
                     <Label className="font-black text-primary flex items-center gap-2">
-                      <Target size={16}/> هدف الاستفهام (بحد أقصى 200 كلمة)
+                      هدف الاستفهام <Target size={16}/>
                     </Label>
-                    <span className={`text-xs font-bold ${countWords(newIstifham.goal) > 200 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.goal)} / 200</span>
                   </div>
                   <Textarea placeholder="ما هو الشيء الذي إذا حققه المدرس تعتبر أنك فهمت تماماً؟" value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" />
                 </div>
@@ -327,23 +329,39 @@ function MustafhemView({ profile }: any) {
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
-      <div className="space-y-6">
-        <h3 className="text-2xl font-black border-r-8 border-accent pr-6">خبراء متميزون</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredTeachers?.map(t => (
-            <Card key={t.id} className="rounded-[2.5rem] border-2 bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer" onClick={() => router.push(`/teachers`)}>
-              <CardContent className="p-6 flex flex-col items-center text-center">
-                <img src={t.profilePictureUrl || "https://picsum.photos/seed/avatar/200/200"} width={80} height={80} alt="T" className="rounded-3xl border-4 border-white shadow-lg mb-4" />
-                <h4 className="font-black text-lg">{t.fullName}</h4>
-                <p className="text-xs font-bold text-muted-foreground">{t.specialization || "خبير تعليمي"}</p>
-              </CardContent>
-            </Card>
-          ))}
+
+      {upcomingSessions && upcomingSessions.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black border-r-8 border-primary pr-6 flex items-center gap-3">
+            <Video className="text-primary" /> محاضرات قريبة
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {upcomingSessions.map(ist => (
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-primary/10 bg-white p-6 shadow-lg hover:border-primary transition-all">
+                <Badge className="bg-green-100 text-green-600 mb-4">تم القبول - جاهزة للبدء</Badge>
+                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
+                    <Calendar size={14} /> {new Date(ist.meetingTime).toLocaleDateString('ar-EG')}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
+                    <Clock size={14} /> {new Date(ist.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-dashed mt-4">
+                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black">دخول المحاضرة الآن</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
       {pendingIstifhams && pendingIstifhams.length > 0 && (
         <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6">بانتظار المراجعة</h3>
+          <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6 flex items-center gap-3">
+            <Timer className="text-orange-500" /> طلبات بانتظار المراجعة
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingIstifhams.map(ist => (
               <Card key={ist.id} className="rounded-[2.5rem] border-2 border-orange-100 bg-white p-6 shadow-lg">
@@ -351,6 +369,7 @@ function MustafhemView({ profile }: any) {
                 <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
                 <div className="pt-4 border-t border-dashed mt-4 flex justify-between items-center">
                   <span className="font-black text-primary">{ist.amount} ج.م</span>
+                  <span className="text-[10px] font-bold text-muted-foreground">أرسل منذ لحظات</span>
                 </div>
               </Card>
             ))}
