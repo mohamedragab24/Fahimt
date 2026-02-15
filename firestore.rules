@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. صلاحيات المسؤول الماستر المطلقة
     function isMasterAdmin() {
       return request.auth != null && (
         request.auth.token.email == "mohamed76y@gmail.com" || 
@@ -15,7 +14,6 @@ service cloud.firestore {
       allow read, write: if isMasterAdmin();
     }
 
-    // 2. التحقق مما إذا كان المستخدم مسؤولاً
     function isAdmin() {
       return request.auth != null && (
         isMasterAdmin() ||
@@ -28,56 +26,48 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isNotBlocked() {
-      return isSignedIn() && (
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status != "blocked"
-      );
-    }
-
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // الوظائف
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
     match /jobs/{jobId} {
       allow read: if true;
       allow write: if isAdmin();
-    }
-
-    // ملفات المستخدمين
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if (isOwner(userId) || isAdmin()) && isNotBlocked();
-
-      match /transactions/{transactionId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create: if isNotBlocked();
-        allow update, delete: if isAdmin();
+      
+      match /applications/{appId} {
+        allow create: if isSignedIn();
+        allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
       }
     }
 
-    // الاستفهامات
-    match /istifhams/{istifhamId} {
-      allow create: if isNotBlocked();
-      allow read: if true;
-      allow update: if isNotBlocked() || isAdmin();
-      allow delete: if isAdmin();
+    match /supportTickets/{ticketId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+
+      match /messages/{msgId} {
+        allow read, create: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/supportTickets/$(ticketId)).data.userId == request.auth.uid);
+      }
     }
 
-    // الإعدادات العامة
-    match /settings/{settingId} {
+    match /istifhams/{id} {
       allow read: if true;
-      allow write: if isAdmin() || isMasterAdmin();
+      allow write: if isSignedIn();
     }
 
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
     match /notifications/{id} { allow read, write: if isSignedIn(); }
-    match /payoutRequests/{id} { allow read, write: if isAdmin(); }
     match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /verificationRequests/{id} { allow read, write: if isAdmin(); }
-    match /adminLogs/{id} { allow read, write: if isAdmin(); }
-    match /supportTickets/{id} { allow read, write: if isSignedIn(); }
-    match /appeals/{id} { allow read, write: if isSignedIn(); }
     match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /appeals/{id} { allow create: if isSignedIn(); allow read, write: if isAdmin(); }
   }
 }

@@ -14,79 +14,69 @@
         "birthDate": { "type": "string", "format": "date-time" },
         "role": { "type": "string", "enum": ["mufhem", "mustafhem"] },
         "profilePictureUrl": { "type": "string", "format": "uri" },
-        "isProfileApproved": { "type": "boolean", "description": "هل تم اعتماد الصورة والبيانات من الإدارة." },
+        "isProfileApproved": { "type": "boolean" },
         "specialization": { "type": "string" },
         "bio": { "type": "string" },
         "isVerified": { "type": "boolean" },
         "status": { "type": "string", "enum": ["active", "blocked"] },
-        "banReason": { "type": "string", "description": "سبب حظر الحساب إن وجد." },
-        "bannedAt": { "type": "string", "format": "date-time" },
-        "bannedBy": { "type": "string", "description": "الجهة التي قامت بالحظر (system أو admin)." },
         "isAdmin": { "type": "boolean" },
-        "password": { "type": "string", "description": "كلمة المرور المحفوظة (لأغراض الإدارة فقط)." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "fullName", "email", "role", "gender"]
     },
-    "Istifham": {
-      "title": "Istifham",
+    "SupportTicket": {
+      "title": "SupportTicket",
       "type": "object",
-      "description": "يمثل استفهام (طلب تعليمي) مقدم من مستفهم.",
+      "description": "تذكرة دعم فني.",
       "properties": {
         "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "amount": { "type": "number" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "subject": { "type": "string" },
         "category": { "type": "string" },
-        "categorySub": { "type": "string" },
-        "categoryOption": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending_approval", "active", "accepted", "completed", "canceled"] },
-        "mustafhemId": { "type": "string" },
-        "mustafhemName": { "type": "string" },
-        "mustafhemGender": { "type": "string" },
-        "mufhemId": { "type": "string" },
-        "mufhemName": { "type": "string" },
-        "meetingTime": { "type": "string", "format": "date-time" },
-        "attachmentUrl": { "type": "string" },
-        "recordingUrl": { "type": "string", "description": "رابط تسجيل المحاضرة صوت وصورة." },
-        "rating": { "type": "number" },
-        "review": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
+        "createdAt": { "type": "string" },
+        "lastUpdate": { "type": "string" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "رسالة داخل دردشة الدعم.",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
         "createdAt": { "type": "string" }
       }
     },
     "Job": {
       "title": "Job",
       "type": "object",
-      "description": "يمثل فرصة وظيفية في المنصة.",
+      "description": "فرصة وظيفية.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string" },
         "description": { "type": "string" },
         "requirements": { "type": "string" },
-        "type": { "type": "string", "enum": ["full-time", "part-time", "project"] },
-        "status": { "type": "string", "enum": ["active", "closed"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
       }
     },
-    "AppSettings": {
-      "title": "AppSettings",
+    "JobApplication": {
+      "title": "JobApplication",
       "type": "object",
-      "description": "إعدادات المنصة والهوية البصرية والأصول.",
+      "description": "طلب تقدم لوظيفة.",
       "properties": {
-        "siteTitle": { "type": "string" },
-        "heroTitle": { "type": "string" },
-        "heroSubtitle": { "type": "string" },
-        "footerText": { "type": "string" },
-        "primaryColor": { "type": "string" },
-        "accentColor": { "type": "string" },
-        "backgroundColor": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "miniIconUrl": { "type": "string" },
-        "faviconUrl": { "type": "string" },
-        "splashImageUrl": { "type": "string" },
-        "landingBg": { "type": "string" },
-        "studentHero": { "type": "string" },
-        "teacherHero": { "type": "string" }
+        "jobId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userPhone": { "type": "string" },
+        "experience": { "type": "string" },
+        "createdAt": { "type": "string" }
       }
     }
   },
@@ -98,17 +88,21 @@
       "schema": "UserProfile",
       "description": "ملفات المستخدمين."
     },
-    "/istifhams/{istifhamId}": {
-      "schema": "Istifham",
-      "description": "الاستفهامات التعليمية."
+    "/supportTickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "تذاكر الدعم."
     },
-    "/settings/{settingId}": {
-      "schema": "AppSettings",
-      "description": "إعدادات المنصة."
+    "/supportTickets/{ticketId}/messages/{msgId}": {
+      "schema": "ChatMessage",
+      "description": "رسائل الدردشة في التذاكر."
     },
     "/jobs/{jobId}": {
       "schema": "Job",
-      "description": "فرص العمل المتاحة."
+      "description": "الوظائف المتاحة."
+    },
+    "/jobs/{jobId}/applications/{appId}": {
+      "schema": "JobApplication",
+      "description": "المتقدمون للوظائف."
     }
   }
 }

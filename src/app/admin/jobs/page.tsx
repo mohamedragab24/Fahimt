@@ -16,12 +16,18 @@ import {
   Clock, 
   Loader2, 
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Users,
+  Eye,
+  Mail,
+  Phone,
+  Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function AdminJobs() {
   const firestore = useFirestore();
@@ -29,6 +35,7 @@ export default function AdminJobs() {
   const [isPosting, setIsPosting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newJob, setNewJob] = useState({ title: "", description: "", requirements: "", type: "full-time" });
+  const [viewingApplicantsJob, setViewingApplicantsJob] = useState<any>(null);
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -36,15 +43,17 @@ export default function AdminJobs() {
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
-  
-  // ترتيب يدوي لضمان ظهور الأحدث في لوحة التحكم
   const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  const applicantsQuery = useMemoFirebase(() => {
+    if (!firestore || !viewingApplicantsJob) return null;
+    return query(collection(firestore, "jobs", viewingApplicantsJob.id, "applications"));
+  }, [firestore, viewingApplicantsJob]);
+
+  const { data: applicants } = useCollection(applicantsQuery);
+
   const handlePost = async () => {
-    if (!firestore || !newJob.title || !newJob.description) {
-      toast({ variant: "destructive", title: "بيانات ناقصة" });
-      return;
-    }
+    if (!firestore || !newJob.title || !newJob.description) return;
     setIsPosting(true);
     try {
       await addDoc(collection(firestore, "jobs"), {
@@ -52,11 +61,11 @@ export default function AdminJobs() {
         status: "active",
         createdAt: new Date().toISOString()
       });
-      toast({ title: "تم نشر الوظيفة", description: "الوظيفة متاحة الآن للجميع في صفحة الوظائف." });
+      toast({ title: "تم نشر الوظيفة" });
       setNewJob({ title: "", description: "", requirements: "", type: "full-time" });
       setIsModalOpen(false);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في النشر" });
+      toast({ variant: "destructive", title: "خطأ" });
     } finally {
       setIsPosting(false);
     }
@@ -64,30 +73,22 @@ export default function AdminJobs() {
 
   const toggleStatus = async (id: string, current: string) => {
     if (!firestore) return;
-    try {
-      await updateDoc(doc(firestore, "jobs", id), { status: current === 'active' ? 'closed' : 'active' });
-      toast({ title: "تم التحديث" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل التحديث" });
-    }
+    await updateDoc(doc(firestore, "jobs", id), { status: current === 'active' ? 'closed' : 'active' });
+    toast({ title: "تم تحديث الحالة" });
   };
 
   const handleDelete = async (id: string) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, "jobs", id));
-      toast({ title: "تم الحذف نهائياً" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الحذف" });
-    }
+    await deleteDoc(doc(firestore, "jobs", id));
+    toast({ title: "تم الحذف" });
   };
 
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
-          <h1 className="text-4xl font-black font-headline">إدارة الوظائف</h1>
-          <p className="text-muted-foreground text-lg">نشر فرص عمل جديدة وإدارة الطلبات الحالية.</p>
+          <h1 className="text-4xl font-black font-headline">إدارة التوظيف</h1>
+          <p className="text-muted-foreground text-lg">نشر الوظائف ومراجعة المتقدمين لكل وظيفة.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="h-16 px-10 rounded-2xl font-black text-xl shadow-xl shadow-primary/20">
           <Plus className="ml-2 h-6 w-6" /> نشر وظيفة جديدة
@@ -98,11 +99,11 @@ export default function AdminJobs() {
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-black text-2xl">جاري تحميل سجل الوظائف...</div>
         ) : jobs?.map((job) => (
-          <Card key={job.id} className={`rounded-[2.5rem] border-2 transition-all shadow-md overflow-hidden bg-white ${job.status === 'closed' ? 'opacity-60 grayscale' : ''}`}>
+          <Card key={job.id} className={`rounded-[2.5rem] border-2 transition-all shadow-md overflow-hidden bg-white ${job.status === 'closed' ? 'opacity-60' : ''}`}>
             <CardContent className="p-8 flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="space-y-3 text-right flex-1">
                 <div className="flex items-center gap-3 justify-end md:justify-start">
-                  <Badge className={`font-bold ${job.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                  <Badge className={job.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}>
                     {job.status === 'active' ? 'نشطة' : 'مغلقة'}
                   </Badge>
                   <span className="text-xs text-muted-foreground font-bold">{new Date(job.createdAt).toLocaleString('ar-EG')}</span>
@@ -112,66 +113,76 @@ export default function AdminJobs() {
               </div>
               
               <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setViewingApplicantsJob(job)} className="h-12 rounded-xl font-bold border-2 bg-blue-50 text-blue-600 border-blue-200">
+                  <Users className="ml-2 h-5 w-5" /> المتقدمون
+                </Button>
                 <Button variant="outline" onClick={() => toggleStatus(job.id, job.status)} className="h-12 rounded-xl font-bold border-2">
                   {job.status === 'active' ? <><ToggleRight className="ml-2 text-green-600" /> إغلاق</> : <><ToggleLeft className="ml-2 text-muted-foreground" /> تفعيل</>}
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(job.id)} className="h-12 rounded-xl font-bold">
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <Button variant="destructive" onClick={() => handleDelete(job.id)} className="h-12 rounded-xl font-bold"><Trash2 className="h-5 w-5" /></Button>
               </div>
             </CardContent>
           </Card>
         ))}
-        {!isLoading && jobs?.length === 0 && (
-          <div className="py-20 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد وظائف منشورة حالياً.</div>
-        )}
       </div>
 
+      {/* مودال نشر وظيفة */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
-              <Briefcase className="text-primary h-8 w-8" /> نشر فرصة وظيفية
-            </DialogTitle>
-            <DialogDescription className="text-right">أدخل بيانات الوظيفة المطلوبة لتظهر في صفحة الوظائف العامة.</DialogDescription>
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><Briefcase className="text-primary h-8 w-8" /> نشر فرصة وظيفية</DialogTitle>
           </DialogHeader>
-          
           <div className="py-6 space-y-6 max-h-[60vh] overflow-y-auto px-2">
-            <div className="space-y-2">
-              <Label className="font-bold">مسمى الوظيفة</Label>
-              <Input placeholder="مثال: مطور تطبيقات فلاتر" value={newJob.title} onChange={(e) => setNewJob({...newJob, title: e.target.value})} className="h-14 rounded-xl border-2" />
-            </div>
-            
+            <div className="space-y-2"><Label className="font-bold">مسمى الوظيفة</Label><Input placeholder="مثال: مطور تطبيقات" value={newJob.title} onChange={(e) => setNewJob({...newJob, title: e.target.value})} className="h-14 rounded-xl border-2" /></div>
             <div className="space-y-2">
               <Label className="font-bold">نوع الدوام</Label>
               <Select value={newJob.type} onValueChange={(v) => setNewJob({...newJob, type: v})}>
-                <SelectTrigger className="h-14 rounded-xl border-2">
-                  <SelectValue placeholder="اختر النوع" />
-                </SelectTrigger>
+                <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر النوع" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full-time">دوام كامل (Full-time)</SelectItem>
-                  <SelectItem value="part-time">دوام جزئي (Part-time)</SelectItem>
-                  <SelectItem value="project">عمل بالمشروع (Freelance)</SelectItem>
+                  <SelectItem value="full-time">دوام كامل</SelectItem>
+                  <SelectItem value="part-time">دوام جزئي</SelectItem>
+                  <SelectItem value="project">بالمشروع</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label className="font-bold">وصف الوظيفة</Label>
-              <Textarea placeholder="اشرح طبيعة العمل والمهام..." value={newJob.description} onChange={(e) => setNewJob({...newJob, description: e.target.value})} className="h-32 rounded-xl border-2 p-4" />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="font-bold">المتطلبات والشروط</Label>
-              <Textarea placeholder="أهم المهارات والخبرات المطلوبة..." value={newJob.requirements} onChange={(e) => setNewJob({...newJob, requirements: e.target.value})} className="h-32 rounded-xl border-2 p-4" />
-            </div>
+            <div className="space-y-2"><Label className="font-bold">وصف الوظيفة</Label><Textarea placeholder="اشرح المهام..." value={newJob.description} onChange={(e) => setNewJob({...newJob, description: e.target.value})} className="h-32 rounded-xl border-2" /></div>
           </div>
+          <DialogFooter><Button onClick={handlePost} disabled={isPosting} className="w-full h-16 rounded-2xl font-black text-xl">{isPosting ? "جاري النشر..." : "نشر الآن"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <DialogFooter>
-            <Button onClick={handlePost} disabled={isPosting} className="w-full h-16 rounded-2xl font-black text-xl shadow-lg">
-              {isPosting ? <><Loader2 className="animate-spin ml-2" /> جاري النشر...</> : "نشر الوظيفة الآن"}
-            </Button>
-          </DialogFooter>
+      {/* مودال المتقدمين */}
+      <Dialog open={!!viewingApplicantsJob} onOpenChange={() => setViewingApplicantsJob(null)}>
+        <DialogContent className="sm:max-w-[800px] rounded-[3rem]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><Users className="text-primary h-8 w-8" /> المتقدمون لوظيفة {viewingApplicantsJob?.title}</DialogTitle>
+            <DialogDescription className="text-right">مراجعة بيانات الأشخاص الذين تقدموا لهذه الوظيفة.</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] mt-6">
+            <div className="space-y-6 px-2">
+              {applicants?.map((app: any) => (
+                <Card key={app.id} className="rounded-3xl border-2 p-6 bg-zinc-50 shadow-sm">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div className="text-right">
+                      <h4 className="font-black text-xl text-zinc-900">{app.userName}</h4>
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Mail size={12}/> {app.userEmail}</span>
+                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Phone size={12}/> {app.userPhone}</span>
+                        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Calendar size={12}/> {new Date(app.createdAt).toLocaleDateString('ar-EG')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-primary/20 space-y-2 text-right">
+                    <Label className="font-black text-primary">النبذة والخبرات:</Label>
+                    <p className="text-zinc-700 leading-relaxed font-medium">{app.experience}</p>
+                  </div>
+                </Card>
+              ))}
+              {(!applicants || applicants.length === 0) && (
+                <div className="py-20 text-center opacity-30 font-black text-2xl">لا يوجد متقدمون بعد لهذه الوظيفة.</div>
+              )}
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
