@@ -7,26 +7,15 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
 /**
- * تهيئة الفايربيز مع مراعاة بيئات البناء المختلفة (Vercel vs Firebase App Hosting).
+ * تهيئة الفايربيز بشكل مستقر لضمان عدم حدوث تضارب في الحالة الداخلية للـ SDK.
  */
 export function initializeFirebase() {
-  if (getApps().length > 0) return getSdks(getApp());
+  let firebaseApp: FirebaseApp;
 
-  let firebaseApp;
-  
-  // التحقق مما إذا كنا في بيئة استضافة الفايربيز الرسمية لتجنب رسائل الخطأ في Vercel
-  const isFirebaseHosting = typeof window !== 'undefined' && 
-    (window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app'));
-
-  if (isFirebaseHosting && process.env.NODE_ENV === 'production') {
-    try {
-      // المحاولة فقط إذا كان الاحتمال كبيراً للنجاح (استضافة فايربيز)
-      firebaseApp = initializeApp();
-    } catch (e) {
-      firebaseApp = initializeApp(firebaseConfig);
-    }
+  if (getApps().length > 0) {
+    firebaseApp = getApp();
   } else {
-    // في Vercel أو التطوير المحلي، نستخدم الإعدادات مباشرة
+    // استخدام الإعدادات المباشرة دائماً لضمان استقرار الاتصال في كافة البيئات
     firebaseApp = initializeApp(firebaseConfig);
   }
 

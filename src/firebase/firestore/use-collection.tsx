@@ -23,7 +23,7 @@ export interface UseCollectionResult<T> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Robust implementation to avoid SDK internal assertion errors during rapid re-renders.
+ * Improved to handle SDK internal state stability.
  */
 export function useCollection<T = any>(
   memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
@@ -34,15 +34,10 @@ export function useCollection<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Cleanup previous listener immediately and safely
+    // 1. Cleanup previous listener
     if (unsubscribeRef.current) {
-      try {
-        const unsub = unsubscribeRef.current;
-        unsubscribeRef.current = null;
-        unsub();
-      } catch (e) {
-        // Silent catch for internal SDK cleanup errors
-      }
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
     }
 
     if (!memoizedTargetRefOrQuery) {
@@ -57,67 +52,66 @@ export function useCollection<T = any>(
 
     let isMounted = true;
 
-    try {
-      const unsubscribe = onSnapshot(
-        memoizedTargetRefOrQuery,
-        (snapshot: QuerySnapshot<DocumentData>) => {
-          if (!isMounted) return;
-          const results: WithId<T>[] = [];
-          snapshot.forEach((doc) => {
-            results.push({ ...(doc.data() as T), id: doc.id });
-          });
-          setData(results);
-          setError(null);
-          setIsLoading(false);
-        },
-        (err: FirestoreError) => {
-          if (!isMounted) return;
-          
-          if (err.code === 'permission-denied') {
-            const path = 'path' in memoizedTargetRefOrQuery 
-              ? memoizedTargetRefOrQuery.path 
-              : 'query-result';
+    // Small delay before attaching to allow SDK to settle if just unsubscribed
+    const timer = setTimeout(() => {
+      if (!isMounted) return;
 
-            const contextualError = new FirestorePermissionError({
-              operation: 'list',
-              path: path,
+      try {
+        const unsubscribe = onSnapshot(
+          memoizedTargetRefOrQuery,
+          (snapshot: QuerySnapshot<DocumentData>) => {
+            if (!isMounted) return;
+            const results: WithId<T>[] = [];
+            snapshot.forEach((doc) => {
+              results.push({ ...(doc.data() as T), id: doc.id });
             });
-            setError(contextualError);
-            setData(null);
+            setData(results);
+            setError(null);
             setIsLoading(false);
+          },
+          (err: FirestoreError) => {
+            if (!isMounted) return;
             
-            // Critical: Delay emission to let SDK finish its internal state cycle
-            // This prevents the "Unexpected state" assertion error in some versions
-            setTimeout(() => {
-              if (isMounted) {
-                errorEmitter.emit('permission-error', contextualError);
-              }
-            }, 500);
-          } else {
-            setError(err);
-            setIsLoading(false);
-          }
-        }
-      );
+            if (err.code === 'permission-denied') {
+              const path = 'path' in memoizedTargetRefOrQuery 
+                ? memoizedTargetRefOrQuery.path 
+                : 'query-result';
 
-      unsubscribeRef.current = unsubscribe;
-    } catch (err: any) {
-      if (isMounted) {
-        setIsLoading(false);
-        setError(err);
+              const contextualError = new FirestorePermissionError({
+                operation: 'list',
+                path: path,
+              });
+              setError(contextualError);
+              setData(null);
+              setIsLoading(false);
+              
+              setTimeout(() => {
+                if (isMounted) {
+                  errorEmitter.emit('permission-error', contextualError);
+                }
+              }, 500);
+            } else {
+              setError(err);
+              setIsLoading(false);
+            }
+          }
+        );
+
+        unsubscribeRef.current = unsubscribe;
+      } catch (err: any) {
+        if (isMounted) {
+          setIsLoading(false);
+          setError(err);
+        }
       }
-    }
+    }, 10);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
       if (unsubscribeRef.current) {
-        const unsub = unsubscribeRef.current;
+        unsubscribeRef.current();
         unsubscribeRef.current = null;
-        try {
-          unsub();
-        } catch (e) {
-          // Prevent unhandled rejection during unmount
-        }
       }
     };
   }, [memoizedTargetRefOrQuery]);

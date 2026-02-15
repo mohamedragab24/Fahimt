@@ -22,7 +22,7 @@ export interface UseDocResult<T> {
 
 /**
  * React hook to subscribe to a single Firestore document in real-time.
- * Robust implementation to avoid SDK internal assertion errors during rapid re-renders.
+ * Improved to handle SDK internal state stability.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
@@ -33,15 +33,9 @@ export function useDoc<T = any>(
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Standard robust cleanup
     if (unsubscribeRef.current) {
-      try {
-        const unsub = unsubscribeRef.current;
-        unsubscribeRef.current = null;
-        unsub();
-      } catch (e) {
-        // Silent catch
-      }
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
     }
 
     if (!memoizedDocRef) {
@@ -56,62 +50,61 @@ export function useDoc<T = any>(
 
     let isMounted = true;
 
-    try {
-      const unsubscribe = onSnapshot(
-        memoizedDocRef,
-        (snapshot: DocumentSnapshot<DocumentData>) => {
-          if (!isMounted) return;
-          if (snapshot.exists()) {
-            setData({ ...(snapshot.data() as T), id: snapshot.id });
-          } else {
-            setData(null);
+    const timer = setTimeout(() => {
+      if (!isMounted) return;
+
+      try {
+        const unsubscribe = onSnapshot(
+          memoizedDocRef,
+          (snapshot: DocumentSnapshot<DocumentData>) => {
+            if (!isMounted) return;
+            if (snapshot.exists()) {
+              setData({ ...(snapshot.data() as T), id: snapshot.id });
+            } else {
+              setData(null);
+            }
+            setError(null);
+            setIsLoading(false);
+          },
+          (err: FirestoreError) => {
+            if (!isMounted) return;
+            
+            if (err.code === 'permission-denied') {
+              const contextualError = new FirestorePermissionError({
+                operation: 'get',
+                path: memoizedDocRef.path,
+              });
+              setError(contextualError);
+              setData(null);
+              setIsLoading(false);
+
+              setTimeout(() => {
+                if (isMounted) {
+                  errorEmitter.emit('permission-error', contextualError);
+                }
+              }, 500);
+            } else {
+              setError(err);
+              setIsLoading(false);
+            }
           }
-          setError(null);
+        );
+
+        unsubscribeRef.current = unsubscribe;
+      } catch (err: any) {
+        if (isMounted) {
           setIsLoading(false);
-        },
-        (err: FirestoreError) => {
-          if (!isMounted) return;
-          
-          if (err.code === 'permission-denied') {
-            const contextualError = new FirestorePermissionError({
-              operation: 'get',
-              path: memoizedDocRef.path,
-            });
-            setError(contextualError);
-            setData(null);
-            setIsLoading(false);
-
-            // Delay for SDK stability
-            setTimeout(() => {
-              if (isMounted) {
-                errorEmitter.emit('permission-error', contextualError);
-              }
-            }, 500);
-          } else {
-            setError(err);
-            setIsLoading(false);
-          }
+          setError(err);
         }
-      );
-
-      unsubscribeRef.current = unsubscribe;
-    } catch (err: any) {
-      if (isMounted) {
-        setIsLoading(false);
-        setError(err);
       }
-    }
+    }, 10);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
       if (unsubscribeRef.current) {
-        const unsub = unsubscribeRef.current;
+        unsubscribeRef.current();
         unsubscribeRef.current = null;
-        try {
-          unsub();
-        } catch (e) {
-          // Prevent unhandled rejection during unmount
-        }
       }
     };
   }, [memoizedDocRef]);
