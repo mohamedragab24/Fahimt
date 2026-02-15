@@ -68,40 +68,30 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث أيقونة المتصفح (Favicon) بشكل ديناميكي مع كسر التخزين المؤقت (Cache Busting)
+      // تحديث أيقونة المتصفح (Favicon) بطريقة آمنة لا تسبب أخطاء DOM
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
           
-          // إضافة timestamp لضمان تحميل الصورة الجديدة وعدم استخدام الكاش
           const cacheBuster = settings.updatedAt ? encodeURIComponent(settings.updatedAt) : Date.now();
           const finalUrl = url.startsWith('data:') ? url : `${url}${url.includes('?') ? '&' : '?'}v=${cacheBuster}`;
 
-          // تنظيف كافة الأيقونات القديمة تماماً
-          const selectors = [
-            "link[rel='icon']",
-            "link[rel='shortcut icon']",
-            "link[rel='apple-touch-icon']",
-            "link[rel='image_src']"
-          ];
-          selectors.forEach(sel => {
-            const el = document.querySelectorAll(sel);
-            el.forEach(e => e.remove());
-          });
-
-          // إنشاء الروابط الجديدة
-          const iconConfigs = [
-            { rel: 'icon', type: 'image/png' },
-            { rel: 'shortcut icon', type: 'image/x-icon' },
-            { rel: 'apple-touch-icon', type: 'image/png' }
-          ];
-
-          iconConfigs.forEach(config => {
-            const link = document.createElement('link');
-            link.rel = config.rel;
-            link.type = config.type;
-            link.href = finalUrl;
-            document.head.appendChild(link);
+          const rels = ['icon', 'shortcut icon', 'apple-touch-icon'];
+          
+          rels.forEach(rel => {
+            // البحث عن الوسوم الحالية بدلاً من حذفها لمنع أخطاء React Parent/Child
+            const existingLinks = document.querySelectorAll(`link[rel*='${rel}']`);
+            if (existingLinks.length > 0) {
+              existingLinks.forEach(link => {
+                (link as HTMLLinkElement).href = finalUrl;
+              });
+            } else {
+              // إنشاء وسم جديد فقط إذا لم يكن موجوداً
+              const link = document.createElement('link');
+              link.rel = rel;
+              link.href = finalUrl;
+              document.head.appendChild(link);
+            }
           });
         };
         updateFavicon(settings.faviconUrl);
