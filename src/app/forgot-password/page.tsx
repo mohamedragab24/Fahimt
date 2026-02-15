@@ -10,9 +10,9 @@ import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight, ArrowLeft } from "lucide-react";
+import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight } from "lucide-react";
 import { doc } from "firebase/firestore";
-import Link from "link";
+import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
