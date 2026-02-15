@@ -103,9 +103,13 @@ export default function LoginPage() {
     }
     setIsProcessing(true);
     try {
-      const fullPhone = phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber}`;
+      // بناء الرقم الدولي الكامل: كود الدولة + الرقم بدون الصفر الأول إذا وجد
+      const cleanPhone = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
+      const fullPhone = `${countryCode}${cleanPhone}`;
       const recipient = otpMethod === 'whatsapp' ? fullPhone : email;
       
+      console.log(`[CLIENT] Sending OTP via ${otpMethod} to: ${recipient}`);
+
       const result = await generateAndSendOTP({ recipient, method: otpMethod });
       if (result.success) {
         setGeneratedCode(result.code);
@@ -133,7 +137,8 @@ export default function LoginPage() {
     try {
       const cred = await initiateEmailSignUp(auth, email, password);
       if (cred.user) {
-        const fullPhone = phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber}`;
+        const cleanPhone = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
+        const fullPhone = `${countryCode}${cleanPhone}`;
         const userRef = doc(firestore!, "users", cred.user.uid);
         await setDoc(userRef, {
           id: cred.user.uid,
@@ -153,7 +158,7 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "فشل التسجيل", description: "البريد الإلكتروني مستخدم بالفعل." });
+      toast({ variant: "destructive", title: "فشل التسجيل", description: "البريد الإلكتروني مستخدم بالفعل أو كلمة المرور ضعيفة." });
     } finally {
       setIsProcessing(false);
     }
@@ -322,7 +327,7 @@ export default function LoginPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-3xl font-black text-zinc-900">تحقق من {otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'}</h3>
-                      <p className="text-lg font-bold text-zinc-500 px-10">أرسلنا الرمز المكون من 6 أرقام إلى {otpMethod === 'whatsapp' ? (phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber}`) : email}</p>
+                      <p className="text-lg font-bold text-zinc-500 px-10">أرسلنا الرمز المكون من 6 أرقام إلى هاتفك.</p>
                     </div>
                   </div>
                   <div className="space-y-6">
@@ -336,9 +341,12 @@ export default function LoginPage() {
                     <Button onClick={handleVerifyAndRegister} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-2xl hover:scale-[1.02] transition-transform">
                       {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تأكيد وتفعيل الحساب"}
                     </Button>
-                    <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400 text-lg hover:text-zinc-600">
-                      تعديل بيانات التسجيل
-                    </Button>
+                    <div className="text-center space-y-2">
+                      <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400 text-lg hover:text-zinc-600">
+                        تعديل بيانات التسجيل
+                      </Button>
+                      <p className="text-xs text-muted-foreground font-bold italic">* تأكد من تفعيل Sandbox في Infobip إذا كنت تستخدم حساباً تجريبياً.</p>
+                    </div>
                   </div>
                 </div>
               )}
