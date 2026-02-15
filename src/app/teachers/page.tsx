@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldCheck, Star, Search, MapPin, User, Briefcase } from "lucide-react";
+import { ShieldCheck, Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,6 @@ export default function TeachersPage() {
 
   const { data: teacherPortfolio } = useCollection(portfolioQuery);
 
-  // استعلام لحساب عدد المشاريع المكتملة
   const completedProjectsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;
     return query(
@@ -159,8 +158,17 @@ export default function TeachersPage() {
                   <h5 className="text-xl font-black text-zinc-800 border-r-4 border-accent pr-3">معرض الأعمال</h5>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {teacherPortfolio.map(item => (
-                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm group relative">
-                        <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Portfolio" />
+                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm group relative bg-black">
+                        {item.mediaType === 'video' ? (
+                          <div className="w-full h-full relative">
+                            <video src={item.mediaUrl} className="w-full h-full object-cover" muted playsInline />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <PlayCircle className="text-white/80 h-10 w-10" />
+                            </div>
+                          </div>
+                        ) : (
+                          <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Portfolio" />
+                        )}
                       </div>
                     ))}
                   </div>

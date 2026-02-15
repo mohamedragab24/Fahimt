@@ -20,7 +20,8 @@ import {
   CheckCircle2, 
   Loader2,
   X,
-  Plus
+  Plus,
+  Video
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,13 +39,13 @@ export default function AddPortfolioWork() {
   const router = useRouter();
   const { toast } = useToast();
   const thumbInputRef = useRef<HTMLInputElement>(null);
-  const filesInputRef = useRef<HTMLInputElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     thumbnail: "",
+    mediaType: "image" as "image" | "video",
     completionDate: "",
     skills: [] as string[],
     agreed: false
@@ -55,9 +56,10 @@ export default function AddPortfolioWork() {
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const type = file.type.startsWith('video') ? 'video' : 'image';
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, thumbnail: reader.result as string }));
+        setFormData(prev => ({ ...prev, thumbnail: reader.result as string, mediaType: type }));
       };
       reader.readAsDataURL(file);
     }
@@ -88,6 +90,7 @@ export default function AddPortfolioWork() {
         title: formData.title,
         description: formData.description,
         mediaUrl: formData.thumbnail,
+        mediaType: formData.mediaType,
         completionDate: formData.completionDate,
         skills: formData.skills,
         createdAt: new Date().toISOString()
@@ -104,20 +107,18 @@ export default function AddPortfolioWork() {
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10" dir="rtl">
-      {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
         <button onClick={() => router.push('/')} className="hover:text-primary transition-colors">الرئيسية</button>
         <ChevronRight size={14} />
         <button onClick={() => router.push('/portfolio')} className="hover:text-primary transition-colors">أعمالي</button>
       </nav>
 
-      <h1 className="text-4xl font-black text-zinc-900">إضافة عمل جديد</h1>
+      <h1 className="text-4xl font-black text-zinc-900">إضافة عمل جديد (صورة أو فيديو)</h1>
 
       <Card className="shadow-2xl rounded-[2.5rem] border-2 overflow-hidden bg-white">
         <CardContent className="p-10 space-y-10">
           <form onSubmit={handleSubmit} className="space-y-10">
             
-            {/* Title */}
             <div className="space-y-3">
               <Label className="text-lg font-black flex items-center gap-2">
                 عنوان العمل <span className="text-red-500">*</span>
@@ -128,33 +129,37 @@ export default function AddPortfolioWork() {
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
               />
-              <p className="text-xs text-muted-foreground font-medium px-2">أدرج عنواناً موجزاً يصف العمل بشكل دقيق.</p>
             </div>
 
-            {/* Thumbnail */}
             <div className="space-y-3">
               <Label className="text-lg font-black flex items-center gap-2">
-                صورة مصغرة <span className="text-red-500">*</span>
+                الملف المرئي (صورة أو فيديو) <span className="text-red-500">*</span>
               </Label>
               <div 
                 onClick={() => thumbInputRef.current?.click()}
-                className={`relative h-48 rounded-[2rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${formData.thumbnail ? 'border-primary/20 bg-primary/5' : 'border-zinc-200 hover:border-primary/40 bg-zinc-50'}`}
+                className={`relative h-64 rounded-[2rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${formData.thumbnail ? 'border-primary/20 bg-black' : 'border-zinc-200 hover:border-primary/40 bg-zinc-50'}`}
               >
                 {formData.thumbnail ? (
-                  <img src={formData.thumbnail} className="w-full h-full object-cover" alt="Thumbnail" />
+                  formData.mediaType === 'video' ? (
+                    <video src={formData.thumbnail} className="w-full h-full object-contain" autoPlay muted loop playsInline />
+                  ) : (
+                    <img src={formData.thumbnail} className="w-full h-full object-contain" alt="Thumbnail" />
+                  )
                 ) : (
                   <>
-                    <div className="bg-white p-4 rounded-3xl shadow-sm text-zinc-400 mb-3"><Upload size={32} /></div>
-                    <p className="font-black text-zinc-500">اسحب الصورة إلى هنا</p>
+                    <div className="bg-white p-4 rounded-3xl shadow-sm text-zinc-400 mb-3 flex gap-2">
+                      <ImageIcon size={32} />
+                      <Video size={32} />
+                    </div>
+                    <p className="font-black text-zinc-500">اسحب الصورة أو الفيديو هنا</p>
                     <p className="text-xs text-zinc-400 font-bold">أو انقر للاختيار يدوياً</p>
                   </>
                 )}
               </div>
-              <input type="file" ref={thumbInputRef} className="hidden" accept="image/*" onChange={handleThumbnailChange} />
-              <p className="text-xs text-muted-foreground font-medium px-2">أضف صورة جذابة معبرة عن العمل.</p>
+              <input type="file" ref={thumbInputRef} className="hidden" accept="image/*,video/*" onChange={handleThumbnailChange} />
+              <p className="text-xs text-muted-foreground font-medium px-2">يمكنك رفع صورة تعبيرية أو مقطع فيديو لشرح مهارتك.</p>
             </div>
 
-            {/* Description */}
             <div className="space-y-3">
               <Label className="text-lg font-black flex items-center gap-2">
                 وصف العمل <span className="text-red-500">*</span>
@@ -165,21 +170,8 @@ export default function AddPortfolioWork() {
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
-              <p className="text-xs text-muted-foreground font-medium px-2">وضح نوع العمل، ميزاته وطريقة تنفيذه.</p>
             </div>
 
-            {/* Work Files (Simulated UI) */}
-            <div className="space-y-3">
-              <Label className="text-lg font-black">صور وملفات العمل</Label>
-              <div className="h-32 rounded-[2rem] border-4 border-dashed border-zinc-100 bg-zinc-50/50 flex flex-col items-center justify-center text-zinc-300">
-                <div className="bg-white p-2 rounded-2xl mb-2"><Upload size={20} /></div>
-                <p className="text-sm font-black">اسحب الملفات إلى هنا</p>
-                <p className="text-[10px] font-bold">أو انقر للاختيار يدوياً</p>
-              </div>
-              <p className="text-xs text-muted-foreground font-medium px-2">أضف صور أو ملفات بحد أقصى 20 مرفق.</p>
-            </div>
-
-            {/* Completion Date */}
             <div className="space-y-3">
               <Label className="text-lg font-black">تاريخ الإنجاز</Label>
               <div className="relative">
@@ -193,7 +185,6 @@ export default function AddPortfolioWork() {
               </div>
             </div>
 
-            {/* Skills */}
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-lg font-black">المهارات</Label>
@@ -203,7 +194,6 @@ export default function AddPortfolioWork() {
                   value={skillInput}
                   onChange={(e) => setSkillsInput(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground font-medium px-2">حدد المهارات والأدوات التي استخدمتها لإنجاز العمل.</p>
               </div>
 
               <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 border-zinc-100 space-y-4">
@@ -223,7 +213,6 @@ export default function AddPortfolioWork() {
               </div>
             </div>
 
-            {/* Terms */}
             <div className="pt-10 border-t-2 border-dashed space-y-6">
               <h5 className="text-xl font-black">تأكيد الشروط</h5>
               <div className="flex items-start gap-4 p-6 bg-primary/5 rounded-3xl border-2 border-primary/10">
@@ -239,14 +228,13 @@ export default function AddPortfolioWork() {
               </div>
             </div>
 
-            {/* Submit */}
             <div className="pt-6">
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
                 className="w-full h-20 rounded-[1.5rem] text-2xl font-black bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isSubmitting ? <><Loader2 className="ml-3 animate-spin" /> جاري النشر...</> : "أضف العمل"}
+                {isSubmitting ? <><Loader2 className="ml-3 animate-spin" /> جاري النشر...</> : "نشر العمل الآن"}
               </Button>
             </div>
           </form>

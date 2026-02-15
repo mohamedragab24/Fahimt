@@ -6,7 +6,7 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout } from "lucide-react";
+import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout, PlayCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,7 +20,6 @@ export default function GlobalPortfolioPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
-  // جلب كافة الأعمال من كل المفهمين مرتبة حسب الأحدث
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "portfolio"), orderBy("createdAt", "desc"));
@@ -28,7 +27,6 @@ export default function GlobalPortfolioPage() {
 
   const { data: portfolioItems, isLoading: isPortfolioLoading } = useCollection(portfolioQuery);
 
-  // جلب كافة المستخدمين لربط الأعمال بأصحابها
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "users"));
@@ -47,13 +45,12 @@ export default function GlobalPortfolioPage() {
 
   return (
     <div className="p-6 md:p-10 space-y-12 bg-[#f9f9f9] min-h-screen" dir="rtl">
-      {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto">
         <div className="space-y-2 text-right w-full md:w-auto">
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
             <Layout className="text-primary" /> أعمال المفهمين
           </h1>
-          <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية والمشاريع المنفذة.</p>
+          <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية (صور وفيديو) من خبرائنا.</p>
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
@@ -69,7 +66,6 @@ export default function GlobalPortfolioPage() {
         </div>
       </div>
 
-      {/* Portfolio Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {isPortfolioLoading ? (
           <div className="col-span-full py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل المعرض...</div>
@@ -78,18 +74,32 @@ export default function GlobalPortfolioPage() {
           return (
             <div key={item.id} className="space-y-4 group cursor-pointer" onClick={() => setSelectedItem({ ...item, teacher })}>
               <div className="relative aspect-[16/10] rounded-[1.5rem] overflow-hidden shadow-md bg-zinc-200">
-                <img 
-                  src={item.mediaUrl} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+                {item.mediaType === 'video' ? (
+                  <div className="relative w-full h-full">
+                    <video 
+                      src={item.mediaUrl} 
+                      className="w-full h-full object-cover" 
+                      muted 
+                      playsInline
+                      onMouseEnter={(e) => e.currentTarget.play()}
+                      onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
+                      <PlayCircle className="text-white h-12 w-12 drop-shadow-lg" />
+                    </div>
+                  </div>
+                ) : (
+                  <img 
+                    src={item.mediaUrl} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
                 
-                {/* Featured Badge */}
                 <Badge className="absolute top-4 right-4 bg-[#FFC107] text-zinc-900 font-black hover:bg-[#FFC107] border-none px-4 py-1.5 rounded-lg text-xs">
-                  مميز
+                  {item.mediaType === 'video' ? 'فيديو' : 'مميز'}
                 </Badge>
 
-                {/* Teacher Avatar Overlay */}
                 <div className="absolute bottom-4 right-4">
                   <Avatar className="h-12 w-12 border-4 border-white shadow-xl">
                     <AvatarImage src={teacher?.profilePictureUrl} />
@@ -105,7 +115,7 @@ export default function GlobalPortfolioPage() {
                   {item.title}
                 </h3>
                 <p className="text-sm text-zinc-400 font-bold">
-                  {teacher?.specialization || "تصميم وأعمال تعليمية"}
+                  {teacher?.specialization || "خبير تعليمي"}
                 </p>
               </div>
             </div>
@@ -119,16 +129,25 @@ export default function GlobalPortfolioPage() {
         )}
       </div>
 
-      {/* Details Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="sm:max-w-[800px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
           <ScrollArea className="max-h-[90vh]">
             <div className="p-0 relative bg-zinc-900 flex items-center justify-center min-h-[400px]">
-              <img 
-                src={selectedItem?.mediaUrl} 
-                className="max-w-full h-auto max-h-[600px] object-contain"
-                alt="Portfolio Detail"
-              />
+              {selectedItem?.mediaType === 'video' ? (
+                <video 
+                  src={selectedItem.mediaUrl} 
+                  className="max-w-full h-auto max-h-[600px]" 
+                  controls 
+                  autoPlay 
+                  playsInline 
+                />
+              ) : (
+                <img 
+                  src={selectedItem?.mediaUrl} 
+                  className="max-w-full h-auto max-h-[600px] object-contain"
+                  alt="Portfolio Detail"
+                />
+              )}
             </div>
             <div className="p-10 space-y-8 bg-white">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-8">

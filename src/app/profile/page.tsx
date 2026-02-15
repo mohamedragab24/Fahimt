@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from "@/firebase";
 import { doc, collection, addDoc, query, where, orderBy, deleteDoc } from "firebase/firestore";
@@ -39,7 +39,6 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useDoc(userRef);
 
-  // جلب أعمال المفهم
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, "portfolio"), where("mufhemId", "==", user.uid), orderBy("createdAt", "desc"));
@@ -112,6 +111,7 @@ export default function ProfilePage() {
   const handleAddPortfolio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && firestore && user) {
+      const type = file.type.startsWith('video') ? 'video' : 'image';
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
@@ -119,6 +119,7 @@ export default function ProfilePage() {
           mufhemId: user.uid,
           title: "عمل جديد",
           mediaUrl: base64,
+          mediaType: type,
           createdAt: new Date().toISOString()
         });
         toast({ title: "تمت إضافة العمل", description: "سيظهر العمل في ملفك الشخصي للطلاب." });
@@ -236,16 +237,25 @@ export default function ProfilePage() {
       {profile.role === 'mufhem' && (
         <div className="space-y-8">
           <div className="flex justify-between items-center">
-            <h3 className="text-3xl font-black border-r-8 border-accent pr-6">معرض أعمالك</h3>
+            <h3 className="text-3xl font-black border-r-8 border-accent pr-6">معرض أعمالك (صور وفيديو)</h3>
             <Button onClick={() => portfolioInputRef.current?.click()} className="bg-accent h-14 rounded-xl font-bold">
               <Plus className="ml-2" /> إضافة عمل جديد
             </Button>
-            <input type="file" ref={portfolioInputRef} className="hidden" accept="image/*" onChange={handleAddPortfolio} />
+            <input type="file" ref={portfolioInputRef} className="hidden" accept="image/*,video/*" onChange={handleAddPortfolio} />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {portfolioItems?.map(item => (
-              <Card key={item.id} className="group relative aspect-square rounded-3xl overflow-hidden shadow-lg border-2 hover:border-accent transition-all">
-                <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Work" />
+              <Card key={item.id} className="group relative aspect-square rounded-3xl overflow-hidden shadow-lg border-2 hover:border-accent transition-all bg-black">
+                {item.mediaType === 'video' ? (
+                  <div className="w-full h-full relative">
+                    <video src={item.mediaUrl} className="w-full h-full object-cover" muted playsInline />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <PlayCircle className="text-white h-8 w-8" />
+                    </div>
+                  </div>
+                ) : (
+                  <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Work" />
+                )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <Button variant="destructive" size="icon" onClick={() => handleDeletePortfolio(item.id)} className="h-12 w-12 rounded-xl"><Trash2 /></Button>
                 </div>
@@ -253,7 +263,7 @@ export default function ProfilePage() {
             ))}
             {(!portfolioItems || portfolioItems.length === 0) && (
               <div className="col-span-full py-16 text-center border-4 border-dashed rounded-[2rem] text-muted-foreground font-bold">
-                أضف أعمالك السابقة (صور شهادات، نماذج شرح) لزيادة ثقة الطلاب بك.
+                أضف أعمالك السابقة (صور أو فيديوهات) لزيادة ثقة الطلاب بك.
               </div>
             )}
           </div>
