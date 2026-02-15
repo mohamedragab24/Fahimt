@@ -23,8 +23,9 @@ import {
   Phone,
   Calendar,
   MapPin,
-  BabyIcon,
-  UserCircle
+  Baby,
+  UserCircle,
+  GraduationCap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +43,12 @@ export default function AdminJobs() {
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // تم تبسيط الاستعلام لضمان جلب البيانات دون الحاجة لفهارس يدوية في البداية
     return query(collection(firestore, "jobs"));
   }, [firestore]);
 
   const { data: rawJobs, isLoading } = useCollection(jobsQuery);
+  // الترتيب يتم في الذاكرة لضمان العمل الفوري
   const jobs = rawJobs ? [...rawJobs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
 
   const applicantsQuery = useMemoFirebase(() => {
@@ -167,7 +170,7 @@ export default function AdminJobs() {
                     <div className="text-right flex-1">
                       <h4 className="font-black text-2xl text-zinc-900 flex items-center gap-2"><UserCircle className="text-primary" /> {app.userName}</h4>
                       <div className="flex flex-wrap gap-4 mt-3">
-                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><BabyIcon size={14}/> السن: {app.age}</span>
+                        <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><Baby size={14}/> السن: {app.age}</span>
                         <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><Phone size={14}/> {app.userPhone}</span>
                         <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><Mail size={14}/> {app.userEmail}</span>
                         <span className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 text-zinc-600"><MapPin size={14}/> {app.address}</span>
