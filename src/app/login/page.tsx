@@ -14,7 +14,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { sendEmailVerification } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, UserCircle, Mail, ShieldCheck, CheckCircle2, Loader2, KeyRound, UserPlus, LogIn, ChevronRight, Lock } from "lucide-react";
+import { Upload, UserCircle, Mail, ShieldCheck, CheckCircle2, Loader2, KeyRound, UserPlus, LogIn, ChevronRight, Lock, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -70,7 +70,7 @@ export default function LoginPage() {
         setIsProcessing(false);
       });
     } else {
-      if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl) {
+      if (!fullName || !phoneNumber || !birthDate || !profilePictureUrl || !email || !password) {
         toast({ 
           variant: "destructive", 
           title: "بيانات ناقصة", 
@@ -142,88 +142,112 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50/50" dir="rtl">
       <Card className="w-full max-w-lg shadow-[0_30px_80px_rgba(0,0,0,0.12)] border-none rounded-[3.5rem] bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <CardHeader className="text-center pt-14 pb-6 space-y-8">
-          <div className="mx-auto mb-2 group transition-transform hover:scale-105 duration-500">
+        <CardHeader className="text-center pt-10 pb-4 space-y-6">
+          <div className="mx-auto group transition-transform hover:scale-105 duration-500">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-36 md:h-48 mx-auto object-contain" alt="Logo" />
+              <img src={settings.logoUrl} className="h-32 md:h-40 mx-auto object-contain" alt="Logo" />
             ) : (
-              <div className="w-28 h-28 bg-primary rounded-[2.5rem] flex items-center justify-center text-white text-6xl font-black mx-auto shadow-2xl">ف</div>
+              <div className="w-24 h-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black mx-auto shadow-2xl">ف</div>
             )}
           </div>
-          <div className="space-y-2">
-            <CardTitle className="text-4xl font-black text-zinc-900 flex items-center justify-center gap-3">
-              {isLogin ? <LogIn className="text-primary h-9 w-9" /> : <UserPlus className="text-accent h-9 w-9" />}
+          <div className="space-y-1">
+            <CardTitle className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center justify-center gap-3">
+              {isLogin ? <LogIn className="text-primary h-8 w-8" /> : <UserPlus className="text-accent h-8 w-8" />}
               {isLogin ? "تسجيل الدخول" : "إنشاء حساب"}
             </CardTitle>
-            <CardDescription className="text-xl font-bold text-muted-foreground px-10">
+            <CardDescription className="text-lg font-bold text-muted-foreground">
               {isLogin ? "أهلاً بك في عالم الفهم والتميز" : "ابدأ رحلتك التعليمية معنا الآن"}
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="px-12 pb-12">
-          <form onSubmit={handleAuth} className="space-y-8">
-            <div className="space-y-4">
-              <Label className="font-black text-lg mr-2 flex items-center gap-3 text-zinc-700">
-                <Mail size={22} className="text-primary" /> البريد الإلكتروني
-              </Label>
-              <Input type="email" placeholder="أدخل بريدك الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl bg-zinc-50/50 focus:bg-white shadow-inner" />
-            </div>
-
+        <CardContent className="px-10 pb-10">
+          <form onSubmit={handleAuth} className="space-y-6">
             {!isLogin && (
-              <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="flex flex-col items-center py-4">
+              <div className="space-y-6 animate-in fade-in duration-500">
+                {/* 1. الصورة الشخصية */}
+                <div className="flex flex-col items-center py-2">
                   <div className="relative cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                    <Avatar className={`h-40 w-44 border-8 transition-all ${profilePictureUrl ? 'border-primary/20' : 'border-dashed border-zinc-200'}`}>
+                    <Avatar className={`h-36 w-36 border-8 transition-all ${profilePictureUrl ? 'border-primary/20' : 'border-dashed border-zinc-200'}`}>
                       <AvatarImage src={profilePictureUrl} />
-                      <AvatarFallback className="bg-zinc-50 text-zinc-300"><UserCircle className="h-24 w-24" /></AvatarFallback>
+                      <AvatarFallback className="bg-zinc-50 text-zinc-300"><UserCircle className="h-20 w-20" /></AvatarFallback>
                     </Avatar>
-                    <div className="absolute bottom-2 right-2 bg-primary p-4 rounded-2xl text-white shadow-2xl border-4 border-white transition-transform group-hover:rotate-12"><Upload size={24}/></div>
+                    <div className="absolute bottom-1 right-1 bg-primary p-3 rounded-xl text-white shadow-2xl border-4 border-white transition-transform group-hover:rotate-12"><Upload size={20}/></div>
                   </div>
-                  <Label className="mt-6 text-sm font-black text-primary uppercase tracking-[0.2em]">رفع صورتك الشخصية</Label>
+                  <Label className="mt-4 text-xs font-black text-primary uppercase tracking-[0.2em]">رفع صورتك الشخصية</Label>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
                 
-                <div className="space-y-3">
-                  <Label className="font-black text-lg mr-2 text-zinc-700">الاسم الكامل</Label>
-                  <Input placeholder="أدخل اسمك كما سيظهر للآخرين" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
+                {/* 2. الاسم الكامل */}
+                <div className="space-y-2">
+                  <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">الاسم الكامل <UserCircle size={18} className="text-primary"/></Label>
+                  <Input placeholder="أدخل اسمك كما سيظهر للآخرين" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-14 rounded-xl border-2 font-black text-lg shadow-sm" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="font-black text-lg mr-2 text-zinc-700">رقم الهاتف</Label>
-                    <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
+                {/* 3. الهاتف و 4. تاريخ الميلاد */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">رقم الهاتف <Smartphone size={18} className="text-primary"/></Label>
+                    <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-14 rounded-xl border-2 font-black text-lg shadow-sm" />
                   </div>
-                  <div className="space-y-3">
-                    <Label className="font-black text-lg mr-2 text-zinc-700">تاريخ الميلاد</Label>
-                    <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
+                  <div className="space-y-2">
+                    <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">تاريخ الميلاد <Calendar size={18} className="text-primary"/></Label>
+                    <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black text-lg shadow-sm" />
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-zinc-50 rounded-[2.5rem] space-y-4 border border-zinc-100 shadow-sm">
-                    <Label className="font-black text-xs text-muted-foreground block text-center uppercase tracking-widest">نوع الحساب</Label>
-                    <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4 p-3 bg-white rounded-2xl border hover:border-primary cursor-pointer group">
-                        <RadioGroupItem value="mustafhem" id="r1" className="h-5 w-5"/>
-                        <Label htmlFor="r1" className="text-lg font-black cursor-pointer group-hover:text-primary">مُستفهم</Label>
+            {/* 5. البريد الإلكتروني */}
+            <div className="space-y-2">
+              <Label className="font-black text-md mr-2 flex items-center gap-2 text-zinc-700">
+                البريد الإلكتروني <Mail size={18} className="text-primary" />
+              </Label>
+              <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-14 rounded-xl border-2 font-black text-lg bg-zinc-50/50 focus:bg-white shadow-inner" />
+            </div>
+
+            {/* 6. كلمة المرور */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-2">
+                <Label className="font-black text-md text-zinc-700 flex items-center gap-2">
+                  كلمة المرور <KeyRound size={18} className="text-primary" />
+                </Label>
+                {isLogin && (
+                  <Link href="/forgot-password" size="sm" className="text-xs font-black text-primary hover:underline">
+                    نسيت كلمة المرور؟
+                  </Link>
+                )}
+              </div>
+              <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-14 rounded-xl border-2 font-black text-lg bg-zinc-50/50 focus:bg-white shadow-inner" />
+            </div>
+
+            {!isLogin && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                {/* 7. نوع الحساب و 8. الجنس */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-zinc-50 rounded-[2rem] space-y-3 border border-zinc-100 shadow-sm">
+                    <Label className="font-black text-[10px] text-muted-foreground block text-center uppercase tracking-widest">نوع الحساب</Label>
+                    <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border hover:border-primary cursor-pointer group">
+                        <RadioGroupItem value="mustafhem" id="r1" className="h-4 w-4"/>
+                        <Label htmlFor="r1" className="text-sm font-black cursor-pointer group-hover:text-primary">مُستفهم</Label>
                       </div>
-                      <div className="flex items-center gap-4 p-3 bg-white rounded-2xl border hover:border-primary cursor-pointer group">
-                        <RadioGroupItem value="mufhem" id="r2" className="h-5 w-5"/>
-                        <Label htmlFor="r2" className="text-lg font-black cursor-pointer group-hover:text-primary">مُفهم</Label>
+                      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border hover:border-primary cursor-pointer group">
+                        <RadioGroupItem value="mufhem" id="r2" className="h-4 w-4"/>
+                        <Label htmlFor="r2" className="text-sm font-black cursor-pointer group-hover:text-primary">مُفهم</Label>
                       </div>
                     </RadioGroup>
                   </div>
-                  <div className="p-6 bg-zinc-50 rounded-[2.5rem] space-y-4 border border-zinc-100 shadow-sm">
-                    <Label className="font-black text-xs text-muted-foreground block text-center uppercase tracking-widest">الجنس</Label>
-                    <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4 p-3 bg-white rounded-2xl border hover:border-primary cursor-pointer group">
-                        <RadioGroupItem value="male" id="g1" className="h-5 w-5"/>
-                        <Label htmlFor="g1" className="text-lg font-black cursor-pointer group-hover:text-primary">ذكر</Label>
+                  <div className="p-4 bg-zinc-50 rounded-[2rem] space-y-3 border border-zinc-100 shadow-sm">
+                    <Label className="font-black text-[10px] text-muted-foreground block text-center uppercase tracking-widest">الجنس</Label>
+                    <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border hover:border-primary cursor-pointer group">
+                        <RadioGroupItem value="male" id="g1" className="h-4 w-4"/>
+                        <Label htmlFor="g1" className="text-sm font-black cursor-pointer group-hover:text-primary">ذكر</Label>
                       </div>
-                      <div className="flex items-center gap-4 p-3 bg-white rounded-2xl border hover:border-primary cursor-pointer group">
-                        <RadioGroupItem value="female" id="g2" className="h-5 w-5"/>
-                        <Label htmlFor="g2" className="text-lg font-black cursor-pointer group-hover:text-primary">أنثى</Label>
+                      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border hover:border-primary cursor-pointer group">
+                        <RadioGroupItem value="female" id="g2" className="h-4 w-4"/>
+                        <Label htmlFor="g2" className="text-sm font-black cursor-pointer group-hover:text-primary">أنثى</Label>
                       </div>
                     </RadioGroup>
                   </div>
@@ -231,30 +255,16 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center px-2">
-                <Label className="font-black text-lg text-zinc-700 flex items-center gap-3">
-                  <KeyRound size={22} className="text-primary" /> كلمة المرور
-                </Label>
-                {isLogin && (
-                  <Link href="/forgot-password" size="sm" className="text-sm font-black text-primary hover:underline">
-                    نسيت كلمة المرور؟
-                  </Link>
-                )}
-              </div>
-              <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl bg-zinc-50/50 focus:bg-white shadow-inner" />
-            </div>
-
-            <Button type="submit" disabled={isProcessing} className={`w-full h-20 text-3xl font-black rounded-[2rem] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 ${isLogin ? 'bg-primary' : 'bg-accent'}`}>
-              {isProcessing ? <Loader2 className="animate-spin h-10 w-10" /> : (isLogin ? "دخول المنصة" : "إنشاء الحساب الآن")}
+            <Button type="submit" disabled={isProcessing} className={`w-full h-16 text-2xl font-black rounded-[1.5rem] shadow-xl transition-all hover:scale-[1.02] active:scale-95 mt-4 ${isLogin ? 'bg-primary' : 'bg-accent'}`}>
+              {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : (isLogin ? "دخول المنصة" : "إنشاء الحساب الآن")}
             </Button>
           </form>
         </CardContent>
         
-        <CardFooter className="justify-center border-t py-10 bg-zinc-50/50">
-          <Button variant="link" onClick={() => { setIsLogin(!isLogin); setIsVerifySent(false); }} className="font-black text-primary text-xl hover:underline flex items-center gap-2">
+        <CardFooter className="justify-center border-t py-8 bg-zinc-50/50">
+          <Button variant="link" onClick={() => { setIsLogin(!isLogin); setIsVerifySent(false); }} className="font-black text-primary text-lg hover:underline flex items-center gap-2">
             {isLogin ? "ليس لديك حساب؟ انضم إلينا" : "لديك حساب بالفعل؟ سجل دخولك"}
-            <ChevronRight className={`h-6 w-6 ${!isLogin ? 'rotate-180' : ''}`} />
+            <ChevronRight className={`h-5 w-5 ${!isLogin ? 'rotate-180' : ''}`} />
           </Button>
         </CardFooter>
       </Card>
