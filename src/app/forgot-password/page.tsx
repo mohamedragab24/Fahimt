@@ -10,7 +10,7 @@ import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, ArrowRight, ShieldKeyhole } from "lucide-react";
+import { Mail, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
 
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
               <img src={settings.logoUrl} className="h-24 md:h-32 mx-auto object-contain" alt="Logo" />
             ) : (
               <div className="bg-primary/10 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner">
-                <ShieldKeyhole size={48} />
+                <ShieldCheck size={48} />
               </div>
             )}
           </div>
