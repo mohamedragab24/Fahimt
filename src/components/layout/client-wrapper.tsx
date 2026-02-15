@@ -68,16 +68,28 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث أيقونة المتصفح (Favicon) بشكل ديناميكي من الفايربيز
+      // تحديث أيقونة المتصفح (Favicon) بشكل ديناميكي مع كسر التخزين المؤقت (Cache Busting)
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
           
-          // تنظيف الأيقونات القديمة لمنع التداخل
-          const existingIcons = document.querySelectorAll("link[rel*='icon']");
-          existingIcons.forEach(el => el.remove());
+          // إضافة timestamp لضمان تحميل الصورة الجديدة وعدم استخدام الكاش
+          const cacheBuster = settings.updatedAt ? encodeURIComponent(settings.updatedAt) : Date.now();
+          const finalUrl = url.startsWith('data:') ? url : `${url}${url.includes('?') ? '&' : '?'}v=${cacheBuster}`;
 
-          // إنشاء روابط الأيقونات الجديدة
+          // تنظيف كافة الأيقونات القديمة تماماً
+          const selectors = [
+            "link[rel='icon']",
+            "link[rel='shortcut icon']",
+            "link[rel='apple-touch-icon']",
+            "link[rel='image_src']"
+          ];
+          selectors.forEach(sel => {
+            const el = document.querySelectorAll(sel);
+            el.forEach(e => e.remove());
+          });
+
+          // إنشاء الروابط الجديدة
           const iconConfigs = [
             { rel: 'icon', type: 'image/png' },
             { rel: 'shortcut icon', type: 'image/x-icon' },
@@ -88,7 +100,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
             const link = document.createElement('link');
             link.rel = config.rel;
             link.type = config.type;
-            link.href = url;
+            link.href = finalUrl;
             document.head.appendChild(link);
           });
         };
