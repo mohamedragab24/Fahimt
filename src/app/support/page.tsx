@@ -16,15 +16,17 @@ import {
   History, 
   Bot, 
   Sparkles, 
-  Accordion, 
-  AccordionItem, 
-  AccordionTrigger, 
-  AccordionContent,
   Info,
   User,
   GraduationCap,
   Plus
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -221,7 +223,7 @@ export default function SupportPage() {
               {generalFaqs.map((faq, i) => (
                 <AccordionItem key={i} value={`gen-${i}`} className="border-2 rounded-[1.5rem] px-6 bg-white overflow-hidden shadow-sm hover:border-primary/20 transition-all">
                   <AccordionTrigger className="text-right text-lg font-black py-6 hover:no-underline">{faq.q}</AccordionTrigger>
-                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 border-t pt-4">
+                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 pt-4">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
@@ -239,7 +241,7 @@ export default function SupportPage() {
               {studentFaqs.map((faq, i) => (
                 <AccordionItem key={i} value={`std-${i}`} className="border-2 rounded-[1.5rem] px-6 bg-white overflow-hidden shadow-sm hover:border-green-500/20 transition-all">
                   <AccordionTrigger className="text-right text-lg font-black py-6 hover:no-underline">{faq.q}</AccordionTrigger>
-                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 border-t pt-4">
+                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 pt-4">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
@@ -257,7 +259,7 @@ export default function SupportPage() {
               {teacherFaqs.map((faq, i) => (
                 <AccordionItem key={i} value={`tch-${i}`} className="border-2 rounded-[1.5rem] px-6 bg-white overflow-hidden shadow-sm hover:border-accent/20 transition-all">
                   <AccordionTrigger className="text-right text-lg font-black py-6 hover:no-underline">{faq.q}</AccordionTrigger>
-                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 border-t pt-4">
+                  <AccordionContent className="text-right text-zinc-600 text-lg leading-relaxed font-medium pb-6 pt-4">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
