@@ -26,7 +26,9 @@ import {
   FileCheck,
   Briefcase,
   Scale,
-  MessageCircle
+  MessageCircle,
+  FileSearch,
+  GalleryVertical
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -68,6 +70,8 @@ const adminItems = [
   { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
   { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
+  { title: "مراجعة أعمال المفهمين", icon: FileSearch, href: "/admin/portfolio-approvals" },
+  { title: "إدارة معرض الأعمال", icon: GalleryVertical, href: "/admin/portfolio-management" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
   { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
   { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },

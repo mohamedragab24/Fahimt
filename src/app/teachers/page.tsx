@@ -27,7 +27,12 @@ export default function TeachersPage() {
 
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;
-    return query(collection(firestore, "portfolio"), where("mufhemId", "==", selectedTeacher.id), orderBy("createdAt", "desc"));
+    return query(
+      collection(firestore, "portfolio"), 
+      where("mufhemId", "==", selectedTeacher.id),
+      where("status", "==", "approved"),
+      orderBy("createdAt", "desc")
+    );
   }, [firestore, selectedTeacher?.id]);
 
   const { data: teacherPortfolio } = useCollection(portfolioQuery);

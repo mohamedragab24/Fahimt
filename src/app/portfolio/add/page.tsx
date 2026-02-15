@@ -93,10 +93,11 @@ export default function AddPortfolioWork() {
         mediaType: formData.mediaType,
         completionDate: formData.completionDate,
         skills: formData.skills,
+        status: "pending_approval",
         createdAt: new Date().toISOString()
       });
 
-      toast({ title: "تمت الإضافة بنجاح", description: "تم نشر عملك الجديد في المعرض." });
+      toast({ title: "تم الإرسال للمراجعة", description: "سيتم نشر عملك فور مراجعته من قبل الإدارة." });
       router.push("/portfolio");
     } catch (err) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ العمل، يرجى المحاولة لاحقاً." });

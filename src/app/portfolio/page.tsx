@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, where } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout, PlayCircle } from "lucide-react";
@@ -22,7 +22,11 @@ export default function GlobalPortfolioPage() {
 
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "portfolio"), orderBy("createdAt", "desc"));
+    return query(
+      collection(firestore, "portfolio"), 
+      where("status", "==", "approved"),
+      orderBy("createdAt", "desc")
+    );
   }, [firestore]);
 
   const { data: portfolioItems, isLoading: isPortfolioLoading } = useCollection(portfolioQuery);
@@ -50,7 +54,7 @@ export default function GlobalPortfolioPage() {
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
             <Layout className="text-primary" /> أعمال المفهمين
           </h1>
-          <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية (صور وفيديو) من خبرائنا.</p>
+          <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية (صور وفيديو) من خبرائنا الموثقين.</p>
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
