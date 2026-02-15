@@ -29,7 +29,8 @@ import {
   UserCog,
   FileLock2,
   BookOpen,
-  Info
+  Info,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,6 +66,7 @@ const menuItems = [
   { title: "عن فهمني", icon: Info, href: "/about" },
   { title: "الدليل الإرشادي", icon: BookOpen, href: "/guide" },
   { title: "ضمان الحقوق", icon: ShieldCheck, href: "/guarantees" },
+  { title: "شروط الاستخدام", icon: FileText, href: "/terms" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
