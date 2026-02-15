@@ -265,7 +265,7 @@ export default function AddPortfolioWork() {
                   id="agreed" 
                   checked={formData.agreed} 
                   onCheckedChange={(checked) => setFormData({...formData, agreed: !!checked})}
-                  className="mt-1 h-6 w-6 rounded-lg"
+                  className="mt-1 h-6 w-6 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                 />
               </div>
             </div>

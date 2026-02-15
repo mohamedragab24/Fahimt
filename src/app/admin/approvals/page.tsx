@@ -206,11 +206,11 @@ export default function AdminApprovals() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
-                  <span className="text-[10px] font-black text-muted-foreground block">البريد الإلكتروني</span>
+                  <Label className="text-[10px] font-black text-muted-foreground block">البريد الإلكتروني</Label>
                   <span className="font-bold text-sm">{selectedUser.email}</span>
                 </div>
                 <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
-                  <span className="text-[10px] font-black text-muted-foreground block">رقم الهاتف</span>
+                  <Label className="text-[10px] font-black text-muted-foreground block">رقم الهاتف</Label>
                   <span className="font-bold text-sm">{selectedUser.phoneNumber}</span>
                 </div>
               </div>
@@ -238,11 +238,11 @@ export default function AdminApprovals() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
-                  <span className="text-[10px] font-black text-muted-foreground block">الميزانية</span>
+                  <Label className="text-[10px] font-black text-muted-foreground block">الميزانية</Label>
                   <span className="font-bold text-lg text-primary">{selectedIstifham.amount} ج.م</span>
                 </div>
                 <div className="p-4 bg-zinc-50 rounded-2xl border text-right">
-                  <span className="text-[10px] font-black text-muted-foreground block">الموعد</span>
+                  <Label className="text-[10px] font-black text-muted-foreground block">الموعد</Label>
                   <span className="font-bold text-sm">{new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')}</span>
                 </div>
               </div>
