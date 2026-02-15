@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -26,7 +27,8 @@ import {
   Shield,
   ShieldAlert,
   UserCog,
-  FileLock2
+  FileLock2,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -59,6 +61,7 @@ const menuItems = [
   { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
   { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
+  { title: "الدليل الإرشادي", icon: BookOpen, href: "/guide" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
