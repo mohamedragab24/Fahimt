@@ -32,7 +32,6 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
             </div>
           </div>
           <FloatingChat />
-          {/* تم إلغاء النافذة الترحيبية من هنا */}
           <Toaster />
         </SidebarProvider>
       </ThemeManager>
@@ -53,6 +52,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
     if (settings) {
       const root = document.documentElement;
       
+      // تحديث الألوان الأساسية
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
         if (hsl) root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
@@ -68,22 +68,26 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
+      // تحديث أيقونة المتصفح (Favicon) بشكل ديناميكي
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
+          
+          // إزالة الأيقونات القديمة لضمان التحديث اللحظي
           const existingIcons = document.querySelectorAll("link[rel*='icon']");
           existingIcons.forEach(el => el.remove());
 
-          const iconTypes = [
+          // إضافة الأيقونة الجديدة لكافة أنواع المتصفحات والأجهزة
+          const iconConfigs = [
             { rel: 'icon', type: 'image/png' },
-            { rel: 'shortcut icon', type: 'image/png' },
+            { rel: 'shortcut icon', type: 'image/x-icon' },
             { rel: 'apple-touch-icon', type: 'image/png' }
           ];
 
-          iconTypes.forEach(type => {
+          iconConfigs.forEach(config => {
             const link = document.createElement('link');
-            link.rel = type.rel;
-            link.type = type.type;
+            link.rel = config.rel;
+            link.type = config.type;
             link.href = url;
             document.head.appendChild(link);
           });
@@ -91,6 +95,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         updateFavicon(settings.faviconUrl);
       }
 
+      // تحديث عنوان الموقع
       if (settings.siteTitle) {
         document.title = settings.siteTitle;
       }

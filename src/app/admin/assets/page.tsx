@@ -29,6 +29,12 @@ export default function AdminAssets() {
     const file = e.target.files?.[0];
     if (file && activeKey && firestore) {
       setUploadingKey(activeKey);
+      
+      // التنبيه بحجم الصورة للأيقونات
+      if (activeKey === 'faviconUrl' && file.size > 500 * 1024) {
+        toast({ variant: "destructive", title: "تنبيه الحجم", description: "أيقونة المتصفح يجب أن تكون صغيرة الحجم (أقل من 500 ك.ب) لضمان سرعة التحميل." });
+      }
+
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
@@ -38,7 +44,7 @@ export default function AdminAssets() {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          toast({ title: "تم التحديث!", description: "تم رفع الملف بنجاح وتحديث قاعدة البيانات." });
+          toast({ title: "تم التحديث!", description: "تم تغيير الصورة بنجاح وستظهر في كافة المتصفحات الآن." });
         } catch (err) {
           console.error(err);
           toast({ variant: "destructive", title: "خطأ", description: "فشل التحديث، تأكد من صلاحياتك." });
@@ -62,10 +68,10 @@ export default function AdminAssets() {
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري تحميل مركز التحكم بالأصول...</div>;
 
   const assetItems = [
+    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'هذه هي الصورة الصغيرة التي تظهر في أعلى لسان المتصفح وبجانب رابط الموقع.', icon: Globe },
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
     { key: 'miniIconUrl', label: 'الأيقونة المصغرة (UI)', desc: 'تظهر بجانب الاسم في القائمة الجانبية والهيدر.', icon: Layout },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق (Verified Badge)', desc: 'تظهر بجانب أسماء المفهمين الموثقين.', icon: ShieldCheck },
-    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في علامة تبويب المتصفح (Tab).', icon: Globe },
     { key: 'splashImageUrl', label: 'نافذة الترحيب المنبثقة (Splash)', desc: 'تظهر للمستخدم كـ Welcome Modal عند فتح الموقع.', icon: Zap },
     { key: 'landingBg', label: 'خلفية صفحة الهبوط', desc: 'الصورة الكبيرة خلف عنوان الموقع الرئيسي.', icon: Monitor },
     { key: 'studentHero', label: 'صورة واجهة الطالب', desc: 'تظهر في لوحة تحكم الطلاب (Mustafhems).', icon: Users },
@@ -91,11 +97,11 @@ export default function AdminAssets() {
         {assetItems.map((item) => {
           const currentImage = settings?.[item.key] || getFallbackImage(item.key);
           return (
-            <Card key={item.key} className="shadow-2xl rounded-[3rem] border-2 border-primary/5 overflow-hidden bg-white hover:border-primary/20 transition-all group">
-              <CardHeader className="bg-muted/20 p-8 border-b">
+            <Card key={item.key} className={`shadow-2xl rounded-[3rem] border-2 border-primary/5 overflow-hidden bg-white hover:border-primary/20 transition-all group ${item.key === 'faviconUrl' ? 'border-accent/20' : ''}`}>
+              <CardHeader className={`${item.key === 'faviconUrl' ? 'bg-accent/5' : 'bg-muted/20'} p-8 border-b`}>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-4 rounded-3xl text-primary group-hover:scale-110 transition-transform">
+                    <div className={`${item.key === 'faviconUrl' ? 'bg-accent text-white' : 'bg-primary/10 text-primary'} p-4 rounded-3xl group-hover:scale-110 transition-transform shadow-lg`}>
                       <item.icon size={32} />
                     </div>
                     <div>
@@ -106,10 +112,10 @@ export default function AdminAssets() {
                   <Button 
                     onClick={() => { setActiveKey(item.key); fileInputRef.current?.click(); }}
                     disabled={uploadingKey === item.key}
-                    className="h-16 px-10 rounded-[1.5rem] font-black text-xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all"
+                    className={`h-16 px-10 rounded-[1.5rem] font-black text-xl shadow-xl transition-all ${item.key === 'faviconUrl' ? 'bg-accent hover:bg-accent/90' : 'bg-primary hover:bg-primary/90'}`}
                   >
                     {uploadingKey === item.key ? <RefreshCw className="animate-spin ml-2" /> : <Upload className="ml-2 h-6 w-6" />}
-                    رفع صورة جديدة
+                    تغيير الأيقونة الآن
                   </Button>
                 </div>
               </CardHeader>
@@ -117,15 +123,22 @@ export default function AdminAssets() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
-                      <AlertCircle size={14} /> المعاينة الحالية
+                      <AlertCircle size={14} /> المعاينة الحالية في المتصفح
                     </div>
-                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'h-48' : 'aspect-video'}`}>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'faviconUrl' || item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'verifiedBadgeUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
-                        <img 
-                          src={currentImage} 
-                          alt={item.label} 
-                          className={`${item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'faviconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
-                        />
+                        <div className="relative group/img">
+                          <img 
+                            src={currentImage} 
+                            alt={item.label} 
+                            className={`${item.key === 'faviconUrl' ? 'h-16 w-16 object-contain' : item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                          />
+                          {item.key === 'faviconUrl' && (
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/img:opacity-100 transition-opacity whitespace-nowrap">
+                              هكذا ستظهر في لسان المتصفح
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
                           <ImageIcon size={64} />
@@ -135,14 +148,14 @@ export default function AdminAssets() {
                     </div>
                   </div>
 
-                  <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center text-center space-y-6">
-                    <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl text-primary">
+                  <div className={`p-10 rounded-[3rem] border-2 border-dashed flex flex-col items-center justify-center text-center space-y-6 ${item.key === 'faviconUrl' ? 'bg-accent/5 border-accent/20' : 'bg-primary/5 border-primary/20'}`}>
+                    <div className={`w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl ${item.key === 'faviconUrl' ? 'text-accent' : 'text-primary'}`}>
                       <CheckCircle2 size={40} className="animate-bounce" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-2xl font-black text-primary">مزامنة فورية</h4>
+                      <h4 className={`text-2xl font-black ${item.key === 'faviconUrl' ? 'text-accent' : 'text-primary'}`}>تحديث فوري</h4>
                       <p className="text-zinc-600 font-bold leading-relaxed">
-                        بمجرد الحفظ، سيتم تحديث هذا الأصل في قاعدة البيانات وظهوره لجميع المستخدمين في نفس اللحظة.
+                        عند تغيير أيقونة المتصفح، سيقوم النظام بتحديثها تلقائياً لكل المستخدمين. قد تحتاج لعمل Refresh واحد فقط لتراها بنفسك في المتصفح.
                       </p>
                     </div>
                   </div>
