@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -31,22 +32,26 @@ export default function AdminFinance() {
 
   const pendingPayoutQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "payoutRequests"), where("status", "==", "pending"), orderBy("timestamp", "desc"));
+    return query(collection(firestore, "payoutRequests"), where("status", "==", "pending"));
   }, [firestore]);
 
   const completedPayoutQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "payoutRequests"), where("status", "==", "completed"), orderBy("timestamp", "desc"));
+    return query(collection(firestore, "payoutRequests"), where("status", "==", "completed"));
   }, [firestore]);
 
   const rejectedPayoutQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "payoutRequests"), where("status", "==", "rejected"), orderBy("timestamp", "desc"));
+    return query(collection(firestore, "payoutRequests"), where("status", "==", "rejected"));
   }, [firestore]);
 
-  const { data: pendingPayouts } = useCollection(pendingPayoutQuery);
-  const { data: completedPayouts } = useCollection(completedPayoutQuery);
-  const { data: rejectedPayouts } = useCollection(rejectedPayoutQuery);
+  const { data: rawPending } = useCollection(pendingPayoutQuery);
+  const { data: rawCompleted } = useCollection(completedPayoutQuery);
+  const { data: rawRejected } = useCollection(rejectedPayoutQuery);
+
+  const pendingPayouts = rawPending?.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const completedPayouts = rawCompleted?.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const rejectedPayouts = rawRejected?.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const handleSearch = async () => {
     if (!firestore || !searchId.trim()) {

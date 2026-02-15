@@ -36,10 +36,11 @@ export default function AdminJobs() {
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "jobs"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "jobs"));
   }, [firestore]);
 
-  const { data: jobs, isLoading } = useCollection(jobsQuery);
+  const { data: rawJobs, isLoading } = useCollection(jobsQuery);
+  const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const handlePost = async () => {
     if (!firestore || !newJob.title || !newJob.description) {

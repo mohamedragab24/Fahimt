@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { askPlatformAssistant } from "@/ai/flows/platform-assistant-flow";
 
 export default function SupportPage() {
@@ -47,7 +47,7 @@ export default function SupportPage() {
   const generalFaqs = [
     { q: "ما هي منصة فهمني وما الذي يميزها؟", a: "منصة فهمني هي وسيط تقني يربط بين المستفهم (من يبحث عن معلومة أو شرح سريع) و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." },
     { q: "كيف تضمن المنصة خصوصية المستخدمين؟", a: "تتبع المنصة سياسة صارمة؛ فالمستفهم الذكر لا يظهر استفهامه إلا للمفهمين الذكور، والعكس صحيح للإناث. كما أننا نراجع يدوياً كافة الصور الشخصية ونصوص الاستفهامات قبل نشرها لضمان بيئة آمنة." },
-    { q: "هل يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", a: "نعم، بضغطة زر واحدة من القائمة الجانبية يمكنك التحول من واجهة المستفهم لطلب المساعدة إلى واجهة المفهم لتقديم عروضك ومساعدة الآخرين، دون الحاجة لإنشاء حسابين." },
+    { q: "هل يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", a: "نعم، بضغطة زر واحدة يمكنك التحول من واجهة المستفهم لطلب المساعدة إلى واجهة المفهم لتقديم عروضك ومساعدة الآخرين، دون الحاجة لإنشاء حسابين." },
     { q: "ما هي الموضوعات الممنوع الاستفهام عنها؟", a: "يمنع منعاً باتاً التطرق للسياسة، الفتاوى الدينية، الاستشارات الطبية أو القانونية التي يترتب عليها علاج أو إجراء، وكل ما يخالف الشريعة الإسلامية أو القوانين العامة." },
     { q: "ما هو الإجراء المتبع في حال حدوث خلاف أثناء الجلسة؟", a: "تعتمد المنصة على تسجيل الجلسة كمرجع أساسي. في حال وجود شكوى، يقوم فريق الدعم الفني بمراجعة التسجيل والتحكيم بين الطرفين بناءً على محتوى الشرح." }
   ];
@@ -81,10 +81,11 @@ export default function SupportPage() {
 
   const ticketsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, "supportTickets"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "supportTickets"), where("userId", "==", user.uid));
   }, [firestore, user]);
 
-  const { data: tickets, isLoading } = useCollection(ticketsQuery);
+  const { data: rawTickets, isLoading } = useCollection(ticketsQuery);
+  const tickets = rawTickets?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const handleAiAsk = async () => {
     if (!aiQuery.trim()) return;

@@ -2,7 +2,7 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, MapPin, Clock, ArrowRight, Sparkles, UserCheck } from "lucide-react";
@@ -15,10 +15,11 @@ export default function JobsPage() {
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "jobs"), where("status", "==", "active"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "jobs"), where("status", "==", "active"));
   }, [firestore]);
 
-  const { data: jobs, isLoading } = useCollection(jobsQuery);
+  const { data: rawJobs, isLoading } = useCollection(jobsQuery);
+  const jobs = rawJobs?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-16 mb-20" dir="rtl">
