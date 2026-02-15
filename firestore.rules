@@ -30,6 +30,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId) || isAdmin();
+
+      match /transactions/{txId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
+      }
     }
 
     match /jobs/{jobId} {
@@ -66,7 +71,9 @@ service cloud.firestore {
 
     match /istifhams/{id} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.mustafhemId || request.auth.uid == resource.data.mufhemId || isAdmin());
+      allow delete: if isAdmin();
     }
 
     match /settings/{id} {
@@ -76,14 +83,39 @@ service cloud.firestore {
     
     match /verificationRequests/{id} {
       allow create: if isSignedIn();
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update, delete: if isAdmin();
     }
     
-    match /notifications/{id} { allow read, write: if isSignedIn(); }
-    match /portfolio/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /appeals/{id} { allow create: if isSignedIn(); allow read, write: if isAdmin(); }
-    match /adminLogs/{id} { allow read, write: if isAdmin(); }
-    match /payoutRequests/{id} { allow read, write: if isAdmin(); }
-  }
-}
+    match /notifications/{id} { 
+      allow create: if isAdmin();
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow delete: if isAdmin();
+    }
+
+    match /portfolio/{id} { 
+      allow read: if true; 
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
+      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
+    }
+
+    match /categories/{id} { 
+      allow read: if true; 
+      allow write: if isAdmin(); 
+    }
+
+    match /appeals/{id} { 
+      allow create: if isSignedIn(); 
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update, delete: if isAdmin();
+    }
+
+    match /adminLogs/{id} { 
+      allow read, write: if isAdmin(); 
+    }
+
+    match /payoutRequests/{id} { 
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
