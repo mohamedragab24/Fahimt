@@ -64,6 +64,7 @@ const menuItems = [
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "عن فهمني", icon: Info, href: "/about" },
   { title: "الدليل الإرشادي", icon: BookOpen, href: "/guide" },
+  { title: "ضمان الحقوق", icon: ShieldCheck, href: "/guarantees" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
