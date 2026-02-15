@@ -34,9 +34,10 @@
         "userName": { "type": "string" },
         "subject": { "type": "string" },
         "category": { "type": "string" },
-        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
+        "status": { "type": "string", "enum": ["open", "replied", "closed", "suspended"] },
         "createdAt": { "type": "string" },
-        "lastUpdate": { "type": "string" }
+        "lastUpdate": { "type": "string" },
+        "rating": { "type": "number" }
       }
     },
     "FloatingChat": {
@@ -48,7 +49,8 @@
         "userId": { "type": "string" },
         "userName": { "type": "string" },
         "lastMessage": { "type": "string" },
-        "status": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
+        "rating": { "type": "number" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       }
@@ -61,6 +63,7 @@
         "senderId": { "type": "string" },
         "senderName": { "type": "string" },
         "text": { "type": "string" },
+        "attachmentUrl": { "type": "string" },
         "isAdmin": { "type": "boolean" },
         "createdAt": { "type": "string" }
       }

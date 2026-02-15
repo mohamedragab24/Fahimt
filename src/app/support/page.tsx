@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, addDoc, doc, updateDoc, orderBy } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,7 +23,8 @@ import {
   Send,
   Clock,
   ChevronRight,
-  Hash
+  Hash,
+  Paperclip
 } from "lucide-react";
 import {
   Accordion,
@@ -45,16 +46,11 @@ export default function SupportPage() {
   const [newTicket, setNewTicket] = useState({ subject: "", category: "technical", message: "" });
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [chatMessage, setChatMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
-
-  // الأسئلة الشائعة
-  const generalFaqs = [
-    { q: "ما هي منصة فهمني وما الذي يميزها؟", a: "منصة فهمني هي وسيط تقني يربط بين المستفهم و المفهم. ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين." },
-    { q: "كيف تضمن المنصة خصوصية المستخدمين؟", a: "تتبع المنصة سياسة صارمة؛ فالمستفهم الذكر لا يظهر استفهامه إلا للمفهمين الذكور، والعكس صحيح للإناث." }
-  ];
 
   const ticketsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -113,13 +109,15 @@ export default function SupportPage() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!chatMessage.trim() || !firestore || !user || !selectedTicket) return;
+  const handleSendMessage = async (attachmentBase64?: string) => {
+    if (!chatMessage.trim() && !attachmentBase64) return;
+    if (!firestore || !user || !selectedTicket) return;
     try {
       await addDoc(collection(firestore, "supportTickets", selectedTicket.id, "messages"), {
         senderId: user.uid,
         senderName: user.displayName || "مستخدم",
         text: chatMessage,
+        attachmentUrl: attachmentBase64 || null,
         isAdmin: false,
         createdAt: new Date().toISOString()
       });
@@ -130,6 +128,17 @@ export default function SupportPage() {
       setChatMessage("");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ في الإرسال" });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleSendMessage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -149,7 +158,7 @@ export default function SupportPage() {
           <DialogContent className="sm:max-w-[550px] rounded-[2.5rem]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="text-right text-3xl font-black">كيف نساعدك؟</DialogTitle>
-              <DialogDescription className="text-right font-bold">افتح تذكرة جديدة وسنرد عليك في أقرب وقت.</DialogDescription>
+              <DialogDescription className="text-right font-bold">أخبرنا بمشكلتك وسيقوم فريقنا بحلها في أقرب وقت.</DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-6">
               <div className="space-y-2 text-right">
@@ -216,8 +225,8 @@ export default function SupportPage() {
                   <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Hash size={12}/> {selectedTicket.id}</p>
                 </div>
               </div>
-              <Badge className={selectedTicket.status === 'open' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}>
-                {selectedTicket.status === 'open' ? 'بانتظار الرد' : 'تم الرد'}
+              <Badge className={selectedTicket.status === 'open' ? 'bg-orange-100 text-orange-600' : selectedTicket.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-blue-100 text-blue-600'}>
+                {selectedTicket.status === 'open' ? 'بانتظار الرد' : selectedTicket.status === 'suspended' ? 'معلقة' : 'تم الرد'}
               </Badge>
             </div>
             <ScrollArea className="h-[400px] p-6 bg-zinc-50/50">
@@ -225,7 +234,10 @@ export default function SupportPage() {
                 {messages?.map((msg: any) => (
                   <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
                     <div className={`max-w-[80%] p-4 rounded-3xl shadow-sm ${msg.isAdmin ? 'bg-white border text-zinc-800' : 'bg-primary text-white'}`}>
-                      <p className="font-bold text-sm">{msg.text}</p>
+                      {msg.text && <p className="font-bold text-sm">{msg.text}</p>}
+                      {msg.attachmentUrl && (
+                        <img src={msg.attachmentUrl} className="mt-2 rounded-xl max-w-full h-auto cursor-pointer border-4 border-white/10" alt="Attachment" />
+                      )}
                       <span className="text-[10px] opacity-50 block mt-1">{new Date(msg.createdAt).toLocaleTimeString('ar-EG')}</span>
                     </div>
                   </div>
@@ -234,8 +246,12 @@ export default function SupportPage() {
             </ScrollArea>
             <div className="p-6 border-t bg-white">
               <div className="flex gap-2">
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl">
+                  <Paperclip size={24} />
+                </Button>
                 <Input placeholder="اكتب رسالتك هنا..." className="h-14 rounded-xl border-2" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
-                <Button onClick={handleSendMessage} className="h-14 px-6 rounded-xl"><Send size={20}/></Button>
+                <Button onClick={() => handleSendMessage()} className="h-14 px-6 rounded-xl"><Send size={20}/></Button>
               </div>
             </div>
           </Card>
@@ -244,8 +260,8 @@ export default function SupportPage() {
             {tickets?.map((t) => (
               <Card key={t.id} className="shadow-lg border-2 rounded-[2rem] overflow-hidden bg-white hover:shadow-xl transition-all cursor-pointer" onClick={() => setSelectedTicket(t)}>
                 <CardHeader className="bg-muted/10 p-6 flex flex-row justify-between items-center">
-                  <Badge className={`px-4 py-1 rounded-xl font-bold ${t.status === 'open' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                    {t.status === 'open' ? 'بانتظار الرد' : 'تم الرد'}
+                  <Badge className={`px-4 py-1 rounded-xl font-bold ${t.status === 'open' ? 'bg-orange-100 text-orange-600' : t.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {t.status === 'open' ? 'بانتظار الرد' : t.status === 'suspended' ? 'معلقة' : 'تم الرد'}
                   </Badge>
                   <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Hash size={10}/> {t.id.slice(0, 8)}</span>
                 </CardHeader>
