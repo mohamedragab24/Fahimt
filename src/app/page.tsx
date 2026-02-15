@@ -131,6 +131,8 @@ export default function HomePage() {
     );
   }
 
+  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+
   return (
     <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
@@ -139,7 +141,9 @@ export default function HomePage() {
             <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
-              {profile.isVerified && <ShieldCheck className="text-blue-500 h-10 w-10" />}
+              {profile.isVerified && (
+                <img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10" data-ai-hint="verified badge" />
+              )}
             </div>
           </div>
           <div className="flex flex-col items-center bg-muted/20 p-8 rounded-3xl shrink-0">

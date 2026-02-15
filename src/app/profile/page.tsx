@@ -18,6 +18,7 @@ import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlo
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Textarea } from "@/components/ui/textarea";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
@@ -170,6 +171,8 @@ export default function ProfilePage() {
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
   if (!profile) return <div className="p-10 text-center font-bold">يرجى تسجيل الدخول لعرض الملف الشخصي.</div>;
 
+  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-r-8 border-primary pr-6">
@@ -196,7 +199,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 space-y-3 text-center md:text-right">
               <h2 className="text-3xl md:text-4xl font-black flex items-center justify-center md:justify-start gap-3">
-                {formData.fullName} {profile.isVerified && <ShieldCheck className="text-blue-500 h-8 w-8" />}
+                {formData.fullName} {profile.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-8 w-8" data-ai-hint="verified badge" />}
               </h2>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <Badge className="px-4 py-1 text-md font-black">{profile.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}</Badge>
@@ -273,7 +276,7 @@ export default function ProfilePage() {
       {profile.role === 'mufhem' && !profile.isVerified && (
         <Card className="rounded-[2.5rem] border-2 border-dashed border-blue-200 bg-blue-50/50 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="bg-white p-4 rounded-3xl shadow-sm text-blue-600"><ShieldCheck size={40}/></div>
+            <div className="bg-white p-4 rounded-3xl shadow-sm text-blue-600"><img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10" data-ai-hint="verified badge" /></div>
             <div>
               <h4 className="text-2xl font-black text-blue-900">طلب توثيق الحساب (شارة زرقاء)</h4>
               <p className="text-blue-700 font-bold">احصل على ثقة الطالب المباشرة وزيادة في قبول استفهاماتك.</p>

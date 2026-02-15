@@ -5,13 +5,14 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldCheck, Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
+import { Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function TeachersPage() {
   const firestore = useFirestore();
@@ -53,6 +54,8 @@ export default function TeachersPage() {
     t.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+
   return (
     <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -85,7 +88,7 @@ export default function TeachersPage() {
                 <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
                 <h3 className="text-lg font-bold text-zinc-800 flex items-center gap-1">
                   {teacher.fullName}
-                  {teacher.isVerified && <ShieldCheck className="h-4 w-4 text-blue-500 fill-blue-500" />}
+                  {teacher.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-4 w-4" data-ai-hint="verified badge" />}
                 </h3>
               </div>
               <div className="flex items-center gap-1 text-zinc-500 text-sm font-medium">
@@ -125,7 +128,7 @@ export default function TeachersPage() {
                 <div className="text-right flex-1">
                   <h4 className="text-2xl font-black flex items-center gap-2">
                     {selectedTeacher?.fullName}
-                    {selectedTeacher?.isVerified && <ShieldCheck className="h-6 w-6 text-blue-500" />}
+                    {selectedTeacher?.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-6 w-6" data-ai-hint="verified badge" />}
                   </h4>
                   <Badge className="bg-primary/10 text-primary border-none mt-2 px-4 py-1 font-bold">
                     {selectedTeacher?.specialization || "خبير عام"}
@@ -145,7 +148,7 @@ export default function TeachersPage() {
                   <p className="text-2xl font-black text-blue-700">{completedProjects?.length || 0}</p>
                 </div>
                 <div className="bg-zinc-100 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
-                  <ShieldCheck className="text-zinc-500 mb-1" size={20} />
+                  <img src={verifiedBadgeUrl} alt="Status" className="h-5 w-5 mb-1" data-ai-hint="verified badge" />
                   <p className="text-xs text-zinc-600 font-bold">الحالة</p>
                   <p className="text-lg font-black text-zinc-700">{selectedTeacher?.isVerified ? "موثق" : "نشط"}</p>
                 </div>

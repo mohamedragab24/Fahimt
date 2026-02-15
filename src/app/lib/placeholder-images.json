@@ -24,6 +24,12 @@
       "description": "Person reading book with glowing lightbulb idea",
       "imageUrl": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920",
       "imageHint": "book lightbulb"
+    },
+    {
+      "id": "verified-badge",
+      "description": "Blue verified badge icon",
+      "imageUrl": "https://img.icons8.com/fluency/48/verified-badge.png",
+      "imageHint": "verified badge"
     }
   ]
 }

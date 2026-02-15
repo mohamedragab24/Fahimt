@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function Header() {
   const { user, auth } = useFirebase();
@@ -84,6 +85,8 @@ export function Header() {
   };
 
   if (!user) return null;
+
+  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -177,7 +180,9 @@ export function Header() {
                 <div className="hidden md:flex flex-col text-left items-end">
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-black leading-none group-hover:text-primary transition-colors">{profile?.fullName || "جاري التحميل..."}</span>
-                    {profile?.role === 'mufhem' && <ShieldCheck className="h-3 w-3 text-primary" />}
+                    {profile?.role === 'mufhem' && profile?.isVerified && (
+                      <img src={verifiedBadgeUrl} alt="Verified" className="h-3 w-3" data-ai-hint="verified badge" />
+                    )}
                   </div>
                   <span className="text-[10px] text-accent font-black mt-1 uppercase tracking-tighter">
                     {profile?.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح"}
