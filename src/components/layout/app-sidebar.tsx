@@ -28,7 +28,8 @@ import {
   ShieldAlert,
   UserCog,
   FileLock2,
-  BookOpen
+  BookOpen,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,6 +62,7 @@ const menuItems = [
   { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
   { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
+  { title: "عن فهمني", icon: Info, href: "/about" },
   { title: "الدليل الإرشادي", icon: BookOpen, href: "/guide" },
   { title: "الدعم الفني", icon: LifeBuoy, href: "/support" },
   { title: "سياسة الخصوصية", icon: FileLock2, href: "/privacy" },
