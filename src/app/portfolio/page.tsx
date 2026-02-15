@@ -3,21 +3,22 @@
 
 import { useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, getDocs, doc } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ShieldCheck, Eye, ImageIcon, User } from "lucide-react";
+import { Search, ShieldCheck, Eye, ImageIcon, User, Clock, Layout } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export default function GlobalPortfolioPage() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
-  // جلب كافة الأعمال من كل المفهمين
+  // جلب كافة الأعمال من كل المفهمين مرتبة حسب الأحدث
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "portfolio"), orderBy("createdAt", "desc"));
@@ -25,7 +26,7 @@ export default function GlobalPortfolioPage() {
 
   const { data: portfolioItems, isLoading: isPortfolioLoading } = useCollection(portfolioQuery);
 
-  // جلب كافة المستخدمين لربط الأعمال بأصحابها (تبسيط للنموذج)
+  // جلب كافة المستخدمين لربط الأعمال بأصحابها
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "users"));
@@ -43,88 +44,90 @@ export default function GlobalPortfolioPage() {
   });
 
   return (
-    <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
-      <div className="text-center space-y-6 max-w-4xl mx-auto">
-        <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
-          <ImageIcon size={40} />
+    <div className="p-6 md:p-10 space-y-12 bg-[#f9f9f9] min-h-screen" dir="rtl">
+      {/* Header & Search */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto">
+        <div className="space-y-2 text-right w-full md:w-auto">
+          <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
+            <Layout className="text-primary" /> أعمال المفهمين
+          </h1>
+          <p className="text-muted-foreground font-bold">تصفح أحدث النماذج التعليمية والمشاريع المنفذة.</p>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tight text-zinc-900">معرض أعمال المفهمين</h1>
-        <p className="text-muted-foreground text-xl font-bold max-w-2xl mx-auto">
-          استكشف مهارات وخبرات نخبة المعلمين العرب من خلال نماذج واقعية من أعمالهم.
-        </p>
         
-        <div className="relative mt-10 max-w-2xl mx-auto">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-6 w-6" />
+        <div className="relative w-full md:w-96">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث عن تخصص، عمل، أو اسم مفهم..." 
-            className="h-16 pr-14 rounded-2xl shadow-lg border-2 bg-white focus:border-primary text-lg font-medium"
+            placeholder="ابحث عن عمل أو مدرس..." 
+            className="h-14 pr-12 rounded-2xl border-none shadow-sm bg-white focus:ring-2 focus:ring-primary/20 text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+      {/* Portfolio Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {isPortfolioLoading ? (
-          <div className="col-span-full py-20 text-center animate-pulse font-black text-2xl opacity-30">جاري تجميع الإبداعات...</div>
+          <div className="col-span-full py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل المعرض...</div>
         ) : filteredItems?.map((item) => {
           const teacher = allUsers?.find(u => u.id === item.mufhemId);
           return (
-            <Card key={item.id} className="group relative rounded-[2.5rem] overflow-hidden shadow-xl border-none bg-white transition-all hover:scale-[1.02] hover:shadow-2xl">
-              <div className="aspect-[4/5] relative overflow-hidden">
+            <div key={item.id} className="space-y-4 group cursor-pointer" onClick={() => setSelectedItem({ ...item, teacher })}>
+              <div className="relative aspect-[16/10] rounded-[1.5rem] overflow-hidden shadow-md bg-zinc-200">
                 <img 
                   src={item.mediaUrl} 
                   alt={item.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-8 text-right">
-                  <Button 
-                    onClick={() => setSelectedItem({ ...item, teacher })}
-                    className="w-full bg-white text-zinc-900 hover:bg-primary hover:text-white rounded-2xl h-14 font-black text-lg shadow-xl"
-                  >
-                    <Eye className="ml-2" /> عرض العمل بالكامل
-                  </Button>
+                
+                {/* Featured Badge */}
+                <Badge className="absolute top-4 right-4 bg-[#FFC107] text-zinc-900 font-black hover:bg-[#FFC107] border-none px-4 py-1.5 rounded-lg text-xs">
+                  مميز
+                </Badge>
+
+                {/* Teacher Avatar Overlay */}
+                <div className="absolute bottom-4 right-4">
+                  <Avatar className="h-12 w-12 border-4 border-white shadow-xl">
+                    <AvatarImage src={teacher?.profilePictureUrl} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-black">
+                      {teacher?.fullName?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
               </div>
               
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-xl font-black text-zinc-800 line-clamp-1">{item.title}</h3>
-                <div className="flex items-center gap-3 pt-2 border-t border-dashed">
-                  <Avatar className="h-10 w-10 border-2 border-white shadow-md">
-                    <AvatarImage src={teacher?.profilePictureUrl} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-black">{teacher?.fullName?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-right overflow-hidden">
-                    <p className="font-bold text-sm text-zinc-900 truncate flex items-center gap-1">
-                      {teacher?.fullName || "مفهم مجهول"}
-                      {teacher?.isVerified && <ShieldCheck className="h-3 w-3 text-blue-500 fill-blue-500/10" />}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground font-bold truncate">{teacher?.specialization || "خبير تعليمي"}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="px-2 space-y-1 text-right">
+                <h3 className="font-black text-lg text-zinc-800 leading-tight group-hover:text-primary transition-colors line-clamp-1">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-zinc-400 font-bold">
+                  {teacher?.specialization || "تصميم وأعمال تعليمية"}
+                </p>
+              </div>
+            </div>
           );
         })}
+        
         {(!filteredItems || filteredItems.length === 0) && !isPortfolioLoading && (
           <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border-4 border-dashed border-zinc-200">
-            <p className="text-3xl font-black text-zinc-300">لا توجد أعمال تطابق بحثك حالياً.</p>
+            <p className="text-2xl font-black text-zinc-300">لا توجد أعمال مطابقة للبحث حالياً.</p>
           </div>
         )}
       </div>
 
+      {/* Details Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+        <DialogContent className="sm:max-w-[800px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
           <ScrollArea className="max-h-[90vh]">
-            <div className="p-0 relative">
+            <div className="p-0 relative bg-zinc-900 flex items-center justify-center min-h-[400px]">
               <img 
                 src={selectedItem?.mediaUrl} 
-                className="w-full h-auto max-h-[600px] object-contain bg-zinc-900"
+                className="max-w-full h-auto max-h-[600px] object-contain"
                 alt="Portfolio Detail"
               />
             </div>
             <div className="p-10 space-y-8 bg-white">
-              <div className="flex items-center justify-between border-b pb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-8">
                 <h2 className="text-3xl font-black text-zinc-900">{selectedItem?.title}</h2>
                 <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
                   <Clock className="h-4 w-4" /> {selectedItem?.createdAt ? new Date(selectedItem.createdAt).toLocaleDateString('ar-EG') : "-"}
@@ -154,10 +157,10 @@ export default function GlobalPortfolioPage() {
 
               <div className="space-y-4">
                 <h5 className="text-xl font-black text-zinc-800 flex items-center gap-2">
-                  <User size={20} className="text-primary" /> نبذة عن هذا العمل
+                  <User size={20} className="text-primary" /> وصف العمل
                 </h5>
                 <p className="text-zinc-600 text-lg leading-relaxed font-medium bg-zinc-50 p-6 rounded-2xl italic">
-                  "{selectedItem?.description || "هذا العمل يعبر عن المهارات التعليمية العالية التي يمتلكها المفهم في تخصصه، وهو نموذج حقيقي لما يمكن تقديمه في الجلسات المباشرة."}"
+                  "{selectedItem?.description || "هذا العمل يمثل مهارة الخبير في تبسيط المعلومات وتقديمها بأسلوب تعليمي مميز."}"
                 </p>
               </div>
             </div>
@@ -165,26 +168,5 @@ export default function GlobalPortfolioPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function Clock({ className, ...props }: any) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      {...props}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
   );
 }
