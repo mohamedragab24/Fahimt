@@ -72,6 +72,7 @@ const adminItems = [
   { title: "الطلبات قيد المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
   { title: "مراجعة أعمال المفهمين", icon: FileSearch, href: "/admin/portfolio-approvals" },
   { title: "إدارة معرض الأعمال", icon: GalleryVertical, href: "/admin/portfolio-management" },
+  { title: "أقسام المفهمين", icon: Layers, href: "/admin/teacher-categories" },
   { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
   { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
   { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
