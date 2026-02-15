@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldCheck, Star, Search, MapPin, User } from "lucide-react";
+import { ShieldCheck, Star, Search, MapPin, User, Briefcase } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,18 @@ export default function TeachersPage() {
   }, [firestore, selectedTeacher?.id]);
 
   const { data: teacherPortfolio } = useCollection(portfolioQuery);
+
+  // استعلام لحساب عدد المشاريع المكتملة
+  const completedProjectsQuery = useMemoFirebase(() => {
+    if (!firestore || !selectedTeacher?.id) return null;
+    return query(
+      collection(firestore, "istifhams"), 
+      where("mufhemId", "==", selectedTeacher.id),
+      where("status", "==", "completed")
+    );
+  }, [firestore, selectedTeacher?.id]);
+
+  const { data: completedProjects } = useCollection(completedProjectsQuery);
 
   const filteredTeachers = teachers?.filter(t => 
     t.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,6 +129,24 @@ export default function TeachersPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
+                  <Star className="text-yellow-500 mb-1" size={20} />
+                  <p className="text-xs text-green-600 font-bold">التقييم العام</p>
+                  <p className="text-2xl font-black text-green-700">5.0</p>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
+                  <Briefcase className="text-blue-500 mb-1" size={20} />
+                  <p className="text-xs text-blue-600 font-bold">مشاريع منفذة</p>
+                  <p className="text-2xl font-black text-blue-700">{completedProjects?.length || 0}</p>
+                </div>
+                <div className="bg-zinc-100 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
+                  <ShieldCheck className="text-zinc-500 mb-1" size={20} />
+                  <p className="text-xs text-zinc-600 font-bold">الحالة</p>
+                  <p className="text-lg font-black text-zinc-700">{selectedTeacher?.isVerified ? "موثق" : "نشط"}</p>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <h5 className="text-xl font-black text-zinc-800 border-r-4 border-primary pr-3">النبذة التعريفية</h5>
                 <div className="p-6 bg-zinc-50 rounded-2xl text-lg leading-relaxed text-zinc-600 italic">
@@ -129,24 +159,13 @@ export default function TeachersPage() {
                   <h5 className="text-xl font-black text-zinc-800 border-r-4 border-accent pr-3">معرض الأعمال</h5>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {teacherPortfolio.map(item => (
-                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm">
-                        <img src={item.mediaUrl} className="w-full h-full object-cover" alt="Portfolio" />
+                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm group relative">
+                        <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Portfolio" />
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 p-4 rounded-2xl text-center">
-                  <p className="text-xs text-green-600 font-bold mb-1">التقييم العام</p>
-                  <p className="text-2xl font-black text-green-700">5.0</p>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-2xl text-center">
-                  <p className="text-xs text-blue-600 font-bold mb-1">الحالة</p>
-                  <p className="text-2xl font-black text-blue-700">{selectedTeacher?.isVerified ? "موثق" : "نشط"}</p>
-                </div>
-              </div>
             </div>
           </ScrollArea>
         </DialogContent>
