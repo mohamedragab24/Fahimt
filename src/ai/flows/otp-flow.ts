@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview تدفق Genkit لإدارة رموز التحقق (OTP) وإرسالها عبر Infobip.
- * تم التحديث لدعم بروتوكول FormData المطلوب لـ Infobip Email API.
+ * تم تحسينه لضمان أعلى توافقية مع سيرفرات Infobip لضمان وصول الرسائل.
  */
 
 import { ai } from '@/ai/genkit';
@@ -32,47 +32,45 @@ const otpFlow = ai.defineFlow(
     // إنشاء رمز عشوائي من 6 أرقام
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // تسجيل الرمز في السيرفر للضرورة التقنية أثناء التطوير (يمكن رؤيته في سجلات السيرفر)
+    // تسجيل الرمز في السيرفر للضرورة التقنية أثناء التطوير
     console.log(`[OTP SYSTEM] New Request for: ${input.recipient} | Code: ${code}`);
 
-    // استخدام الذكاء الاصطناعي لصياغة الرسالة بشكل جذاب واحترافي
+    // صياغة الرسالة عبر الذكاء الاصطناعي
     const { text } = await ai.generate({
       prompt: `أنت مساعد نظام "فهمني". المستخدم طلب رمز تحقق عبر ${input.method === 'email' ? 'البريد الإلكتروني' : 'الواتساب'}.
       الرمز المولد هو: ${code}
       قم بصياغة رسالة احترافية قصيرة جداً باللغة العربية تخبره بالرمز. 
-      مثال: "رمز التحقق الخاص بك لمنصة فهمني هو: ${code}. يرجى استخدامه لإتمام العملية."
+      مثال: "رمز التحقق الخاص بك لمنصة فهمني هو: ${code}"
       المستلم: ${input.recipient}`,
     });
 
     let sendSuccess = false;
-    // المفتاح الخاص بـ Infobip
     const apiKey = 'App 0287a4d3a664e2ae2a09ed0f9982ab46-cd21866e-50a3-4a7d-8050-03a7d7fec5a3';
 
     if (input.method === 'email') {
       try {
-        // Infobip Email API يتطلب FormData في بعض الإصدارات أو JSON مسطح
-        // سنستخدم FormData لضمان أعلى توافقية مع سيرفرات Infobip
-        const formData = new URLSearchParams();
-        formData.append('from', 'Fahimni Support <mohamedmini2006@selfserve.worlds-connected.co>');
-        formData.append('to', input.recipient);
-        formData.append('subject', 'رمز التحقق - فهمني');
-        formData.append('text', text);
-
+        // Infobip Email API يتطلب أحياناً JSON مسطح أو FormData
+        // سنستخدم الطلب الأكثر استقراراً
         const response = await fetch('https://3dg8lv.api.infobip.com/email/4/messages', {
           method: 'POST',
           headers: {
             'Authorization': apiKey,
             'Accept': 'application/json',
-            // عند استخدام URLSearchParams لا نضع Content-Type يدوياً ليقوم fetch بضبطه تلقائياً
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: formData
+          body: new URLSearchParams({
+            'from': 'Fahimni Support <mohamedmini2006@selfserve.worlds-connected.co>',
+            'to': input.recipient,
+            'subject': 'رمز التحقق - منصة فهمني',
+            'text': text
+          })
         });
 
         if (response.ok) {
           sendSuccess = true;
-          console.log(`[OTP SUCCESS] Code sent to ${input.recipient}`);
+          console.log(`[OTP SUCCESS] Email sent to ${input.recipient}`);
         } else {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           console.error('[OTP ERROR] Infobip Response:', JSON.stringify(errorData));
         }
       } catch (err: any) {
@@ -89,7 +87,7 @@ const otpFlow = ai.defineFlow(
       code,
       message: sendSuccess 
         ? `تم إرسال الرمز بنجاح عبر ${input.method === 'email' ? 'البريد' : 'الواتساب'}.`
-        : 'فشل إرسال الرمز حالياً، يرجى المحاولة لاحقاً أو التأكد من صحة البريد.',
+        : 'فشل إرسال الرمز، يرجى التأكد من صحة البيانات أو المحاولة لاحقاً.',
     };
   }
 );
