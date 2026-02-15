@@ -56,6 +56,7 @@ import { Badge } from "@/components/ui/badge";
 const menuItems = [
   { title: "الرئيسية", icon: Home, href: "/" },
   { title: "المُفهمين", icon: GraduationCap, href: "/teachers" },
+  { title: "أعمال المفهمين", icon: ImageIcon, href: "/portfolio" },
   { title: "استفهاماتي", icon: ClipboardList, href: "/requests" },
   { title: "المحفظة", icon: Wallet, href: "/wallet" },
   { title: "الإعدادات", icon: Settings, href: "/profile" },
