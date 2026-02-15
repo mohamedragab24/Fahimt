@@ -19,7 +19,8 @@ import {
   Loader2,
   X,
   Plus,
-  Video
+  Video,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,9 +51,25 @@ export default function AddPortfolioWork() {
 
   const [skillInput, setSkillsInput] = useState("");
 
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  };
+
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // الحد الأقصى 50 ميجابايت
+      const maxSize = 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({
+          variant: "destructive",
+          title: "الملف كبير جداً",
+          description: "يرجى اختيار ملف (صورة أو فيديو) بحجم أقل من 50 ميجابايت."
+        });
+        if (thumbInputRef.current) thumbInputRef.current.value = "";
+        return;
+      }
+
       const type = file.type.startsWith('video') ? 'video' : 'image';
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -75,6 +92,27 @@ export default function AddPortfolioWork() {
     e.preventDefault();
     if (!firestore || !user) return;
 
+    const titleWords = countWords(formData.title);
+    const descWords = countWords(formData.description);
+
+    if (titleWords > 100) {
+      toast({
+        variant: "destructive",
+        title: "العنوان طويل جداً",
+        description: `لقد كتبت ${titleWords} كلمة، والحد الأقصى هو 100 كلمة.`
+      });
+      return;
+    }
+
+    if (descWords > 600) {
+      toast({
+        variant: "destructive",
+        title: "الوصف طويل جداً",
+        description: `لقد كتبت ${descWords} كلمة، والحد الأقصى هو 600 كلمة.`
+      });
+      return;
+    }
+
     if (!formData.thumbnail || !formData.title || !formData.description || !formData.agreed) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة الحقول الأساسية وتأكيد ملكية العمل." });
       return;
@@ -90,7 +128,6 @@ export default function AddPortfolioWork() {
         mediaType: formData.mediaType,
         completionDate: formData.completionDate,
         skills: formData.skills,
-        // العمل يكون قيد المراجعة دائماً عند الإنشاء
         status: "pending_approval", 
         createdAt: new Date().toISOString()
       });
@@ -120,12 +157,15 @@ export default function AddPortfolioWork() {
           <form onSubmit={handleSubmit} className="space-y-10">
             
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">
-                عنوان العمل <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-muted-foreground">الحد الأقصى: 100 كلمة (كتبت: {countWords(formData.title)})</span>
+                <Label className="text-lg font-black flex items-center gap-2 justify-end">
+                  عنوان العمل <span className="text-red-500">*</span>
+                </Label>
+              </div>
               <Input 
                 placeholder="مثال: شرح أساسيات الجبر الخطي"
-                className="h-14 rounded-2xl border-2 font-bold text-right"
+                className={`h-14 rounded-2xl border-2 font-bold text-right ${countWords(formData.title) > 100 ? 'border-red-500' : ''}`}
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
               />
@@ -152,7 +192,7 @@ export default function AddPortfolioWork() {
                       <Video size={32} />
                     </div>
                     <p className="font-black text-zinc-500 text-center">اسحب الصورة أو الفيديو هنا</p>
-                    <p className="text-xs text-zinc-400 font-bold">أو انقر للاختيار يدوياً</p>
+                    <p className="text-xs text-zinc-400 font-bold">بحد أقصى 50 ميجابايت</p>
                   </>
                 )}
               </div>
@@ -160,12 +200,15 @@ export default function AddPortfolioWork() {
             </div>
 
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">
-                وصف العمل <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-muted-foreground">الحد الأقصى: 600 كلمة (كتبت: {countWords(formData.description)})</span>
+                <Label className="text-lg font-black flex items-center gap-2 justify-end">
+                  وصف العمل <span className="text-red-500">*</span>
+                </Label>
+              </div>
               <Textarea 
                 placeholder="وضح مهاراتك التي تظهر في هذا العمل..."
-                className="h-48 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed text-right"
+                className={`h-48 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed text-right ${countWords(formData.description) > 600 ? 'border-red-500' : ''}`}
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
