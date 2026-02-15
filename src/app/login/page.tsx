@@ -28,10 +28,27 @@ import {
   Smartphone,
   MessageSquare,
   User,
-  Info
+  Info,
+  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const COUNTRIES = [
+  { code: "+20", name: "مصر", flag: "🇪🇬" },
+  { code: "+966", name: "السعودية", flag: "🇸🇦" },
+  { code: "+971", name: "الإمارات", flag: "🇦🇪" },
+  { code: "+965", name: "الكويت", flag: "🇰🇼" },
+  { code: "+974", name: "قطر", flag: "🇶🇦" },
+  { code: "+962", name: "الأردن", flag: "🇯🇴" },
+  { code: "+968", name: "عمان", flag: "🇴🇲" },
+  { code: "+973", name: "البحرين", flag: "🇧🇭" },
+  { code: "+212", name: "المغرب", flag: "🇲🇦" },
+  { code: "+213", name: "الجزائر", flag: "🇩🇿" },
+  { code: "+216", name: "تونس", flag: "🇹🇳" },
+  { code: "+218", name: "ليبيا", flag: "🇱🇾" },
+];
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -42,6 +59,7 @@ export default function LoginPage() {
   const [role, setRole] = useState<"mustafhem" | "mufhem">("mustafhem");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+20");
   const [birthDate, setBirthDate] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
   const [otpMethod, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
@@ -90,7 +108,9 @@ export default function LoginPage() {
     }
     setIsProcessing(true);
     try {
-      const recipient = otpMethod === 'whatsapp' ? phoneNumber : email;
+      const fullPhone = phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber}`;
+      const recipient = otpMethod === 'whatsapp' ? fullPhone : email;
+      
       const result = await generateAndSendOTP({ recipient, method: otpMethod });
       if (result.success) {
         setGeneratedCode(result.code);
@@ -118,12 +138,13 @@ export default function LoginPage() {
     try {
       const cred = await initiateEmailSignUp(auth, email, password);
       if (cred.user) {
+        const fullPhone = phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber}`;
         const userRef = doc(firestore!, "users", cred.user.uid);
         await setDoc(userRef, {
           id: cred.user.uid,
           fullName,
           email,
-          phoneNumber,
+          phoneNumber: fullPhone,
           role,
           gender,
           isProfileApproved: false,
@@ -214,18 +235,32 @@ export default function LoginPage() {
                     {/* 2. الاسم الكامل */}
                     <div className="space-y-2">
                       <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">الاسم الكامل <User size={18} className="text-primary"/></Label>
-                      <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e)=>setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                      <Input placeholder="أدخل اسمك الثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
                     </div>
 
                     {/* 3. رقم الهاتف وتاريخ الميلاد */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">رقم الهاتف <Smartphone size={18} className="text-primary"/></Label>
-                        <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                        <div className="flex gap-2">
+                          <Select value={countryCode} onValueChange={setCountryCode}>
+                            <SelectTrigger className="w-[100px] h-16 rounded-2xl border-2 font-black">
+                              <SelectValue placeholder="الرمز" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {COUNTRIES.map((c) => (
+                                <SelectItem key={c.code} value={c.code} className="font-bold">
+                                  <span className="ml-2">{c.flag}</span> {c.code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input placeholder="01xxxxxxxxx" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="h-16 flex-1 rounded-2xl border-2 font-black text-xl shadow-sm" />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label className="font-black text-md mr-2 text-zinc-700 flex items-center gap-2">تاريخ الميلاد <Calendar size={18} className="text-primary"/></Label>
-                        <Input type="date" value={birthDate} onChange={(e)=>setBirthDate(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg shadow-sm" />
+                        <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg shadow-sm" />
                       </div>
                     </div>
 
@@ -300,7 +335,7 @@ export default function LoginPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-3xl font-black text-zinc-900">تحقق من {otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'}</h3>
-                      <p className="text-lg font-bold text-zinc-500 px-10">أرسلنا الرمز المكون من 6 أرقام إلى {otpMethod === 'whatsapp' ? phoneNumber : email}</p>
+                      <p className="text-lg font-bold text-zinc-500 px-10">أرسلنا الرمز المكون من 6 أرقام إلى {otpMethod === 'whatsapp' ? (phoneNumber.startsWith("+") ? phoneNumber : `${countryCode}${phoneNumber}`) : email}</p>
                     </div>
                   </div>
                   <div className="space-y-6">

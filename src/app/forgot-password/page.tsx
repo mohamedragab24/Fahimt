@@ -10,14 +10,31 @@ import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight, Lock, Sparkles, MessageSquare } from "lucide-react";
+import { Mail, Loader2, ShieldCheck, CheckCircle2, ChevronRight, Lock, Sparkles, MessageSquare, Smartphone } from "lucide-react";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const COUNTRIES = [
+  { code: "+20", name: "مصر", flag: "🇪🇬" },
+  { code: "+966", name: "السعودية", flag: "🇸🇦" },
+  { code: "+971", name: "الإمارات", flag: "🇦🇪" },
+  { code: "+965", name: "الكويت", flag: "🇰🇼" },
+  { code: "+974", name: "قطر", flag: "🇶🇦" },
+  { code: "+962", name: "الأردن", flag: "🇯🇴" },
+  { code: "+968", name: "عمان", flag: "🇴🇲" },
+  { code: "+973", name: "البحرين", flag: "🇧🇭" },
+  { code: "+212", name: "المغرب", flag: "🇲🇦" },
+  { code: "+213", name: "الجزائر", flag: "🇩🇿" },
+  { code: "+216", name: "تونس", flag: "🇹🇳" },
+  { code: "+218", name: "ليبيا", flag: "🇱🇾" },
+];
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+20");
   const [method, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
   const [step, setStep] = useState<'input' | 'verify' | 'success'>('input');
   const [otpCode, setOtpCode] = useState("");
@@ -34,7 +51,9 @@ export default function ForgotPasswordPage() {
   const { data: settings } = useDoc(settingsRef);
 
   const handleSendOTP = async () => {
-    const recipient = method === 'whatsapp' ? phone : email;
+    const fullPhone = phone.startsWith("+") ? phone : `${countryCode}${phone.startsWith("0") ? phone.substring(1) : phone}`;
+    const recipient = method === 'whatsapp' ? fullPhone : email;
+    
     if (!recipient) {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
@@ -119,14 +138,28 @@ export default function ForgotPasswordPage() {
                   {method === 'whatsapp' ? 'رقم الهاتف المسجل' : 'البريد الإلكتروني'}
                 </Label>
                 {method === 'whatsapp' ? (
-                  <Input placeholder="01xxxxxxxxx" value={phone} onChange={(e)=>setPhone(e.target.value)} className="h-16 rounded-2xl border-2 font-black text-2xl" />
+                  <div className="flex gap-2">
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger className="w-[100px] h-16 rounded-2xl border-2 font-black">
+                        <SelectValue placeholder="الرمز" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code} className="font-bold">
+                            <span className="ml-2">{c.flag}</span> {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="01xxxxxxxxx" value={phone} onChange={(e)=>setPhone(e.target.value)} className="h-16 flex-1 rounded-2xl border-2 font-black text-2xl shadow-sm" />
+                  </div>
                 ) : (
-                  <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-16 rounded-2xl border-2 font-black text-xl" />
+                  <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-16 rounded-2xl border-2 font-black text-xl shadow-sm" />
                 )}
                 {method === 'whatsapp' && (
                   <div className="space-y-2">
                     <Label className="font-black text-sm opacity-50">البريد (لإرسال الرابط النهائي)</Label>
-                    <Input type="email" placeholder="بريدك الإلكتروني" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 rounded-xl border-2 font-bold" />
+                    <Input type="email" placeholder="بريدك الإلكتروني المرتبط بالحساب" value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 rounded-xl border-2 font-bold" />
                   </div>
                 )}
               </div>

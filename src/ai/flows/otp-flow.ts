@@ -8,7 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const OTPInputSchema = z.object({
-  recipient: z.string().describe('البريد الإلكتروني أو رقم الهاتف المستهدف.'),
+  recipient: z.string().describe('البريد الإلكتروني أو رقم الهاتف المستهدف (بصيغة دولية كاملة).'),
   method: z.enum(['email', 'whatsapp']).describe('وسيلة الإرسال المطلوبة.'),
 });
 
@@ -61,7 +61,6 @@ const otpFlow = ai.defineFlow(
       try {
         const twilio = require('twilio');
         const accountSid = 'ACa8b9d0d5714688e35f53b9e769c82695';
-        // التوكين يجب أن يكون صالحاً من حساب Twilio الخاص بك
         const authToken = process.env.TWILIO_AUTH_TOKEN; 
         
         if (!authToken) {
@@ -71,14 +70,10 @@ const otpFlow = ai.defineFlow(
 
         const client = twilio(accountSid, authToken);
 
-        // معالجة رقم الهاتف ليكون بصيغة دولية صحيحة (مثال: 012... يصبح +2012...)
-        let rawPhone = input.recipient.trim();
-        let formattedPhone = rawPhone;
-        
-        if (rawPhone.startsWith('01')) {
-          formattedPhone = '+20' + rawPhone.substring(1);
-        } else if (!rawPhone.startsWith('+')) {
-          formattedPhone = '+' + rawPhone;
+        // تنظيف الرقم من أي مسافات أو رموز غير مرغوبة والتأكد من وجود +
+        let formattedPhone = input.recipient.trim().replace(/\s+/g, '');
+        if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+' + formattedPhone;
         }
 
         const message = await client.messages.create({
