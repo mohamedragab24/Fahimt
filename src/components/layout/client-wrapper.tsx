@@ -11,6 +11,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from "firebase/firestore";
 import { FloatingChat } from './floating-chat';
+import { WelcomeModal } from './welcome-modal';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
             </div>
           </div>
           <FloatingChat />
+          <WelcomeModal />
           <Toaster />
         </SidebarProvider>
       </ThemeManager>
