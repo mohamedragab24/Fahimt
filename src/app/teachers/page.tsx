@@ -2,7 +2,7 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, where, orderBy, doc } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
@@ -32,17 +32,20 @@ export default function TeachersPage() {
 
   const { data: teachers, isLoading } = useCollection(teachersQuery);
 
+  // تبسيط الاستعلام لتجنب الحاجة لفهرس مركب
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;
     return query(
       collection(firestore, "portfolio"), 
       where("mufhemId", "==", selectedTeacher.id),
-      where("status", "==", "approved"),
-      orderBy("createdAt", "desc")
+      where("status", "==", "approved")
     );
   }, [firestore, selectedTeacher?.id]);
 
-  const { data: teacherPortfolio } = useCollection(portfolioQuery);
+  const { data: rawPortfolio } = useCollection(portfolioQuery);
+  const teacherPortfolio = rawPortfolio 
+    ? [...rawPortfolio].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) 
+    : [];
 
   const completedProjectsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedTeacher?.id) return null;

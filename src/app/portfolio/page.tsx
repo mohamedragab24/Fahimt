@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, where } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ShieldCheck, Clock, Layout, PlayCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,16 @@ export default function GlobalPortfolioPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
-  // عرض الأعمال المعتمدة فقط
+  // عرض الأعمال المعتمدة فقط - تبسيط الاستعلام لتجنب الحاجة لفهرس مركب
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
       collection(firestore, "portfolio"), 
-      where("status", "==", "approved"),
-      orderBy("createdAt", "desc")
+      where("status", "==", "approved")
     );
   }, [firestore]);
 
-  const { data: portfolioItems, isLoading: isPortfolioLoading } = useCollection(portfolioQuery);
+  const { data: rawPortfolioItems, isLoading: isPortfolioLoading } = useCollection(portfolioQuery);
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -37,6 +36,11 @@ export default function GlobalPortfolioPage() {
   }, [firestore]);
 
   const { data: allUsers } = useCollection(usersQuery);
+
+  // الترتيب والفلترة في الذاكرة لضمان العمل الفوري
+  const portfolioItems = rawPortfolioItems 
+    ? [...rawPortfolioItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) 
+    : [];
 
   const filteredItems = portfolioItems?.filter(item => {
     const teacher = allUsers?.find(u => u.id === item.mufhemId);
