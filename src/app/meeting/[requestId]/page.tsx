@@ -7,12 +7,13 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { Video, Star, Loader2, Info, ShieldAlert, MessageSquare } from "lucide-react";
+import { Video, Star, Loader2, Info, ShieldAlert, MessageSquare, Record, CircleDot, StopCircle, CloudUpload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadRecordingToDrive } from "@/app/actions/upload-recording";
 
 declare global {
   interface Window {
@@ -33,7 +34,14 @@ export default function MeetingPage() {
   const { toast } = useToast();
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
   const [api, setApi] = useState<any>(null);
+  const [meetingStarted, setMeetingStarted] = useState(false);
   
+  // Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   // UI States
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState<RatingFlow>('goal');
@@ -60,6 +68,61 @@ export default function MeetingPage() {
 
   const { data: profile } = useDoc(userRef);
 
+  // بدء التسجيل (يطلب مشاركة الشاشة)
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        setIsUploading(true);
+        toast({ title: "جاري معالجة التسجيل...", description: "يرجى الانتظار حتى يتم رفع المحاضرة لـ Google Drive." });
+        
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append('file', blob);
+        
+        const fileName = `Fahimni_Lecture_${requestId}_${new Date().getTime()}.webm`;
+        const result = await uploadRecordingToDrive(formData, fileName);
+        
+        setIsUploading(false);
+        if (result.success) {
+          toast({ title: "تم رفع المحاضرة!", description: "تم حفظ التسجيل في Google Drive بنجاح." });
+        } else {
+          toast({ variant: "destructive", title: "فشل الرفع", description: result.message });
+        }
+
+        // إغلاق كافة الـ tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start(1000);
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setMeetingStarted(true);
+      startMeeting();
+    } catch (err) {
+      console.error("Recording error:", err);
+      toast({ variant: "destructive", title: "تنبيه الرقابة", description: "يجب تفعيل تسجيل الشاشة للدخول للمحاضرة لضمان حقك." });
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
   // نظام الرقابة الصوتية التلقائي
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window && user && profile) {
@@ -83,7 +146,6 @@ export default function MeetingPage() {
       };
 
       recognition.onerror = () => {
-        // إعادة التشغيل في حال الخطأ لضمان استمرار الرقابة
         try { recognition.start(); } catch(e) {}
       };
 
@@ -116,11 +178,12 @@ export default function MeetingPage() {
     });
 
     if (api) api.executeCommand('hangup');
+    handleStopRecording();
     router.push("/");
   };
 
   useEffect(() => {
-    if (requestRef && profile && requestId) {
+    if (requestRef && profile && requestId && meetingStarted) {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
@@ -128,7 +191,7 @@ export default function MeetingPage() {
         recordingUrl: `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`
       });
     }
-  }, [requestRef, profile, requestId]);
+  }, [requestRef, profile, requestId, meetingStarted]);
 
   const startMeeting = () => {
     if (window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
@@ -148,12 +211,12 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
           enableWelcomePage: false,
-          autoRecord: true,
+          autoRecord: false, // نستخدم تسجيل الشاشة المخصص لدينا
         },
         interfaceConfigOverwrite: {
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+            'fodeviceselection', 'hangup', 'profile', 'chat',
             'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview', 'help', 'mute-everyone'
           ],
         }
@@ -162,6 +225,7 @@ export default function MeetingPage() {
       setApi(newApi);
 
       newApi.addEventListener('videoConferenceLeft', () => {
+        handleStopRecording();
         setShowRatingDialog(true);
       });
     }
@@ -227,11 +291,10 @@ export default function MeetingPage() {
     <div className="flex flex-col h-screen bg-black overflow-hidden" dir="rtl">
       <Script 
         src="https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/external_api.js" 
-        onLoad={startMeeting}
       />
       
       <div className="bg-red-500 text-white text-center py-2 font-black text-sm md:text-lg animate-pulse shadow-lg z-[60]">
-        الجلسة مسجلة لضمان حقك وجودة الخدمة
+        {isRecording ? "المحاضرة قيد التسجيل والتوثيق الآن" : "التزم بآداب الحوار؛ الجلسة خاضعة للرقابة"}
       </div>
 
       <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-zinc-800 z-50">
@@ -240,29 +303,64 @@ export default function MeetingPage() {
             <Video className="text-primary h-5 w-5" />
           </div>
           <h1 className="text-white font-bold truncate max-w-[200px] md:max-w-md">{request?.title}</h1>
+          {isRecording && <Badge className="bg-red-600 text-white animate-pulse"><CircleDot size={12} className="ml-1" /> تسجيل مفعل</Badge>}
         </div>
         
         <div className="flex items-center gap-3">
           <Button 
             variant="destructive" 
             size="sm" 
+            disabled={!meetingStarted || isUploading}
             onClick={() => { 
               if (!isStudent) {
                 toast({ variant: "destructive", title: "تنبيه للمفهم", description: "يجب على الطالب إنهاء الجلسة أولاً لضمان حفظ سجل الرقابة والتقييم وتحويل أرباحك." });
               } else {
                 api?.executeCommand('hangup'); 
+                handleStopRecording();
               }
             }} 
             className="rounded-full px-6 font-black shadow-lg"
           >
-            إنهاء الجلسة
+            {isUploading ? <><Loader2 className="animate-spin ml-2" /> جاري الحفظ...</> : "إنهاء المحاضرة"}
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 relative bg-zinc-950">
-        <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
+      <div className="flex-1 relative bg-zinc-950 flex flex-col items-center justify-center">
+        {!meetingStarted ? (
+          <Card className="w-full max-w-lg rounded-[2.5rem] p-10 bg-white shadow-2xl text-center space-y-8 animate-in zoom-in">
+            <div className="bg-blue-100 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto text-blue-600 shadow-inner">
+              <ShieldAlert size={48} />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black text-zinc-900">بدء المحاضرة الموثقة</h2>
+              <p className="text-muted-foreground font-bold leading-relaxed px-6">
+                لسلامتك وحفظ حقوقك المالية والمعرفية، يجب تفعيل "تسجيل الشاشة" قبل الدخول. سيتم رفع الفيديو تلقائياً لـ Google Drive عند الانتهاء.
+              </p>
+            </div>
+            <Button 
+              onClick={handleStartRecording} 
+              className="w-full h-20 rounded-3xl font-black text-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20"
+            >
+              <CircleDot className="ml-3 h-8 w-8 animate-pulse" /> بدء تسجيل المحاضرة والدخول
+            </Button>
+            <p className="text-xs text-zinc-400 font-bold">* اختر "هذا التبويب" (This Tab) أو "الشاشة كاملة" عند الطلب.</p>
+          </Card>
+        ) : (
+          <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
+        )}
       </div>
+
+      {isUploading && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white space-y-6">
+          <CloudUpload size={80} className="text-primary animate-bounce" />
+          <div className="text-center space-y-2">
+            <h3 className="text-3xl font-black">جاري رفع تسجيل المحاضرة</h3>
+            <p className="text-xl opacity-70">يتم الآن تأمين النسخة الاحتياطية في Google Drive...</p>
+          </div>
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      )}
 
       <Dialog open={showRatingDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-8" dir="rtl">
