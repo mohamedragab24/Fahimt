@@ -73,13 +73,12 @@ export default function MeetingPage() {
 
   const handleStartRecording = async () => {
     try {
-      // طلب مشاركة الشاشة مع الصوت
+      // طلب مشاركة الشاشة مع الصوت (هذا هو المفتاح للتسجيل التلقائي صوت وصورة)
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 30 } },
         audio: true,
       });
 
-      // تحديد أفضل صيغة مدعومة (تلقائياً يحولها النظام لـ MP4-compatible blob)
       const options = { mimeType: 'video/webm;codecs=vp9,opus' };
       const recorder = new MediaRecorder(stream, options);
       chunksRef.current = [];
@@ -93,6 +92,13 @@ export default function MeetingPage() {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         const fileName = `Recorded_Lecture_${requestId}_${Date.now()}.webm`;
         const storagePath = `recordings/${requestId}/${fileName}`;
+        
+        if (!storage) {
+          console.error("Storage not initialized");
+          setIsUploading(false);
+          return;
+        }
+
         const fileRef = ref(storage, storagePath);
 
         try {
@@ -105,7 +111,7 @@ export default function MeetingPage() {
             }, 
             (error) => {
               console.error("Upload failed:", error);
-              toast({ variant: "destructive", title: "فشل الرفع", description: "تعذر حفظ التسجيل في السجلات السحابية." });
+              toast({ variant: "destructive", title: "فشل الرفع السحابي", description: "تعذر حفظ التسجيل في Firebase Storage." });
               setIsUploading(false);
             }, 
             async () => {
@@ -118,7 +124,7 @@ export default function MeetingPage() {
                 });
               }
               setIsUploading(false);
-              toast({ title: "تم التوثيق السحابي", description: "المحاضرة محفوظة الآن في سجلات الرقابة." });
+              toast({ title: "تم التوثيق السحابي بنجاح ✅", description: "المحاضرة محفوظة الآن في سجلات الرقابة." });
             }
           );
         } catch (err) {
@@ -129,7 +135,7 @@ export default function MeetingPage() {
         }
       };
 
-      recorder.start(1000); // التقاط أجزاء كل ثانية لضمان الاستقرار
+      recorder.start(1000);
       setMediaRecorder(recorder);
       setIsRecording(true);
       setMeetingStarted(true);
@@ -139,7 +145,7 @@ export default function MeetingPage() {
       toast({ 
         variant: "destructive", 
         title: "تنبيه الرقابة الصارمة", 
-        description: "يجب تفعيل 'مشاركة الشاشة' للدخول للمحاضرة؛ هذا الإجراء يحمي حقك المالي ويوثق الجلسة." 
+        description: "يجب تفعيل 'مشاركة الشاشة' (Screen Share) لتتمكن من دخول المحاضرة؛ هذا الإجراء يحمي حقك المالي ويوثق الجلسة." 
       });
     }
   };
@@ -306,7 +312,7 @@ export default function MeetingPage() {
               <div className="space-y-3">
                 <h2 className="text-3xl font-black text-zinc-900">بدء التوثيق السحابي</h2>
                 <p className="text-muted-foreground font-bold leading-relaxed">
-                  سيتم تسجيل المحاضرة تلقائياً ورفعها لـ Firebase Storage. يرجى الضغط على الزر أدناه ثم اختيار "شاشة كاملة" للمتابعة.
+                  سيتم تسجيل المحاضرة تلقائياً ورفعها لـ Firebase Storage. يرجى الضغط على الزر أدناه ثم اختيار "شاشة كاملة" (Full Screen) مع مشاركة الصوت للمتابعة.
                 </p>
               </div>
               <Button onClick={handleStartRecording} className="w-full h-20 rounded-3xl font-black text-2xl bg-primary shadow-xl hover:scale-105 transition-all">
