@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText, AlertCircle, MessageSquare } from "lucide-react";
+import { Video, ShieldCheck, User, Calendar, Clock, Star, ShieldAlert, BadgeCent, PlayCircle, FileText, AlertCircle, MessageSquare, CloudOff } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -30,7 +29,7 @@ export default function AdminSessionsReview() {
     if (!firestore || !canReadSessions) return null;
     return query(
       collection(firestore, "istifhams"), 
-      where("status", "in", ["accepted", "completed"])
+      where("status", "in", ["accepted", "completed", "pending_review"])
     );
   }, [firestore, canReadSessions]);
 
@@ -46,12 +45,12 @@ export default function AdminSessionsReview() {
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-blue-600 pr-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="text-right">
-          <h1 className="text-4xl font-black font-headline text-zinc-900">سجلات الرقابة الإدارية</h1>
-          <p className="text-muted-foreground text-lg">مراجعة المحاضرات صوت وصورة والتقييمات المسجلة لحفظ الحقوق.</p>
+          <h1 className="text-4xl font-black font-headline text-zinc-900">سجلات الرقابة والتوثيق</h1>
+          <p className="text-muted-foreground text-lg">مراجعة المحاضرات المسجلة على Firebase Storage والتحقق من التقييمات.</p>
         </div>
         <div className="bg-blue-50 p-4 rounded-2xl border-2 border-dashed border-blue-200 flex items-center gap-3 text-blue-700">
           <ShieldCheck />
-          <span className="font-black">نظام الرقابة بالفيديو مفعّل</span>
+          <span className="font-black">نظام التوثيق السحابي (Firebase) مفعّل</span>
         </div>
       </div>
 
@@ -61,7 +60,7 @@ export default function AdminSessionsReview() {
             <TableRow>
               <TableHead className="text-right px-8 font-black text-zinc-900">المحاضرة</TableHead>
               <TableHead className="text-right font-black text-zinc-900">الأطراف</TableHead>
-              <TableHead className="text-right font-black text-zinc-900">المبلغ</TableHead>
+              <TableHead className="text-right font-black text-zinc-900">التوثيق</TableHead>
               <TableHead className="text-right font-black text-zinc-900">التقييم</TableHead>
               <TableHead className="text-left px-8 font-black text-zinc-900">الإجراء</TableHead>
             </TableRow>
@@ -83,105 +82,127 @@ export default function AdminSessionsReview() {
                     <span className="font-bold text-accent flex items-center gap-1 justify-end"><ShieldCheck size={14}/> {session.mufhemName || 'بانتظار المفهم'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="font-black text-primary text-right">{session.amount} ج.م</TableCell>
                 <TableCell className="text-right">
-                  {session.rating ? (
+                  {session.isRecorded ? (
+                    <Badge className="bg-green-100 text-green-600 border-none font-black flex items-center gap-1 w-fit mr-auto">
+                      <PlayCircle size={12} /> مسجلة
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-zinc-400 font-bold flex items-center gap-1 w-fit mr-auto">
+                      <CloudOff size={12} /> لا يوجد تسجيل
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {session.hasComplaint && <Badge variant="destructive" className="ml-2">شكوى</Badge>}
+                  {session.understandingRating ? (
                     <div className="flex items-center gap-1 text-yellow-500 font-black justify-end">
-                      <Star size={16} className="fill-current" /> {session.rating}.0
+                      <Star size={16} className="fill-current" /> {session.understandingRating}.0
                     </div>
-                  ) : <span className="text-muted-foreground italic text-xs font-bold">لم تقيم بعد</span>}
+                  ) : <span className="text-muted-foreground italic text-xs font-bold">لم تقيم</span>}
                 </TableCell>
                 <TableCell className="px-8 text-left">
                   <Button 
                     variant="default" 
                     size="sm" 
+                    disabled={!session.recordingUrl}
                     className="rounded-xl gap-2 font-black shadow-lg bg-blue-600 hover:bg-blue-700" 
                     onClick={() => setSelectedSession(session)}
                   >
-                    <PlayCircle size={16} /> مراجعة المحاضرة
+                    <PlayCircle size={16} /> مراجعة الفيديو
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
-            {(!sessions || sessions.length === 0) && !isLoading && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-black opacity-30 text-xl">لا توجد محاضرات في الأرشيف حالياً.</TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </Card>
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DialogContent className="sm:max-w-[800px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
-          <DialogHeader className="px-8 pt-8 text-right">
+        <DialogContent className="sm:max-w-[900px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="px-10 pt-10 text-right">
             <DialogTitle className="text-right text-3xl font-black flex items-center gap-3 justify-end">
-              <ShieldCheck className="text-primary h-8 w-8" /> تقرير المحاضرة الرقابي
+              <ShieldCheck className="text-primary h-10 w-10" /> تقرير المحاضرة (Firebase Storage)
             </DialogTitle>
-            <DialogDescription className="text-right text-lg">مراجعة أحداث الجلسة صوت وصورة لضمان حقوق الطرفين.</DialogDescription>
+            <DialogDescription className="text-right text-lg">مراجعة المحتوى الموثق صوت وصورة لفض النزاعات أو ضمان الجودة.</DialogDescription>
           </DialogHeader>
           
-          <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto bg-white">
+          <div className="p-10 space-y-10 max-h-[75vh] overflow-y-auto bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
-                <User className="text-primary" />
-                <div className="text-right flex-1"><span className="text-[10px] block font-black">المستفهم</span><span className="font-bold">{selectedSession?.mustafhemName}</span></div>
+              <div className="p-6 bg-zinc-50 rounded-3xl border flex items-center gap-4">
+                <User className="text-primary h-8 w-8" />
+                <div className="text-right flex-1"><span className="text-xs block font-black text-muted-foreground uppercase">المستفهم</span><span className="font-black text-xl">{selectedSession?.mustafhemName}</span></div>
               </div>
-              <div className="p-4 bg-zinc-50 rounded-2xl border flex items-center gap-4">
-                <ShieldCheck className="text-accent" />
-                <div className="text-right flex-1"><span className="text-[10px] block font-black">المفهم</span><span className="font-bold">{selectedSession?.mufhemName}</span></div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3 text-blue-600 justify-end"><Video /> تسجيل المحاضرة (فيديو مدمج)</h4>
-              <div className="aspect-video bg-black rounded-3xl overflow-hidden relative group shadow-2xl border-4 border-zinc-100">
-                <iframe 
-                  src={selectedSession?.recordingUrl || `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${selectedSession?.id}#config.startWithAudioMuted=true&config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.readOnly=true`} 
-                  className="w-full h-full border-none"
-                  allow="autoplay; fullscreen; microphone; camera; display-capture"
-                />
-              </div>
-              <div className="p-4 bg-blue-50 rounded-2xl flex items-center gap-3 text-blue-700 text-sm font-bold">
-                <AlertCircle size={18} />
-                <p>يتم عرض أحداث المحاضرة صوت وصورة من خلال "غرفة الرقابة الآمنة" داخل المنصة.</p>
+              <div className="p-6 bg-zinc-50 rounded-3xl border flex items-center gap-4">
+                <ShieldCheck className="text-accent h-8 w-8" />
+                <div className="text-right flex-1"><span className="text-xs block font-black text-muted-foreground uppercase">المفهم</span><span className="font-black text-xl">{selectedSession?.mufhemName}</span></div>
               </div>
             </div>
 
-            <div className="p-8 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-3 justify-end"><Star className="text-yellow-500 fill-yellow-500" /> تقييم الطالب النهائي</h4>
-              {selectedSession?.rating ? (
-                <div className="space-y-4">
-                  <div className="flex gap-2 justify-end">
-                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-6 w-6 ${selectedSession.rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
+            <div className="space-y-6">
+              <h4 className="text-2xl font-black flex items-center gap-3 text-blue-600 justify-end"><Video className="h-8 w-8" /> الفيديو المسجل للمحاضرة</h4>
+              <div className="aspect-video bg-black rounded-[2.5rem] overflow-hidden relative group shadow-2xl border-[10px] border-zinc-100">
+                {selectedSession?.recordingUrl ? (
+                  <video 
+                    src={selectedSession.recordingUrl} 
+                    className="w-full h-full" 
+                    controls 
+                    playsInline 
+                    autoPlay={false}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 space-y-4">
+                    <CloudOff size={64} />
+                    <p className="text-xl font-black">تعذر تحميل الفيديو أو لم يتم الرفع بنجاح</p>
                   </div>
-                  <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border text-right">
-                    "{selectedSession.review || "لا توجد ملاحظات مكتوبة من قبل الطالب."}"
-                  </p>
+                )}
+              </div>
+              <div className="p-6 bg-blue-50 rounded-3xl flex items-start gap-4 text-blue-700 text-md font-bold border-2 border-dashed border-blue-200">
+                <AlertCircle size={24} className="shrink-0 mt-1" />
+                <p>هذا الفيديو مرفوع على Firebase Storage بشكل آمن. يمكنك التحكم في سرعة التشغيل أو تكبير الشاشة للمراجعة الدقيقة.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 border-dashed space-y-6">
+                <h4 className="text-xl font-black flex items-center gap-3 justify-end text-zinc-800"><Star className="text-yellow-500 fill-yellow-500" /> تقييمات الطالب</h4>
+                <div className="space-y-4">
+                  <RatingStat label="مدى الفهم" value={selectedSession?.understandingRating} />
+                  <RatingStat label="أسلوب المعلم" value={selectedSession?.teacherStyleRating} />
+                  <RatingStat label="جودة التقنية" value={selectedSession?.platformTechRating} />
                 </div>
-              ) : (
-                <p className="text-muted-foreground font-bold italic text-right">لم يتم وضع تقييم نهائي بعد.</p>
-              )}
+              </div>
+
+              <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 border-dashed space-y-4">
+                <h4 className="text-xl font-black flex items-center gap-3 justify-end text-zinc-800"><MessageSquare className="text-primary" /> ملاحظات ختامية</h4>
+                <p className="text-lg italic font-medium text-zinc-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border text-right min-h-[120px]">
+                  "{selectedSession?.review || "لا توجد ملاحظات مكتوبة."}"
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="p-8 bg-zinc-50 border-t flex justify-end">
-            <Button onClick={() => setSelectedSession(null)} className="rounded-2xl px-10 h-14 font-black text-lg">إغلاق التقرير</Button>
+          <div className="p-10 bg-zinc-50 border-t flex justify-between items-center">
+            {selectedSession?.hasComplaint && (
+              <Badge variant="destructive" className="h-12 px-8 rounded-2xl text-lg font-black animate-pulse shadow-lg">
+                تنبيه: يوجد شكوى رسمية معلقة
+              </Badge>
+            )}
+            <Button onClick={() => setSelectedSession(null)} className="rounded-2xl px-14 h-16 font-black text-xl shadow-xl">إغلاق التقرير</Button>
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
 
-      <div className="p-10 bg-zinc-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-10 shadow-2xl">
-        <div className="bg-blue-500/20 p-8 rounded-[2rem] shrink-0">
-          <ShieldAlert size={60} className="text-blue-400" />
-        </div>
-        <div className="space-y-4 text-right">
-          <h3 className="text-3xl font-black">نظام الرقابة صوت وصورة</h3>
-          <p className="text-zinc-400 font-medium leading-relaxed max-w-4xl text-lg">
-            يتم توثيق كافة المحاضرات صوت وصورة لضمان حقوق الطلاب والمعلمين. في حال وجود أي نزاع، يمكن للإدارة مراجعة التسجيلات واتخاذ القرارات العادلة بناءً على ما حدث في الجلسة المسجلة.
-          </p>
-        </div>
+function RatingStat({ label, value }: { label: string, value?: number }) {
+  return (
+    <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
+      <div className="flex gap-1">
+        {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${Number(value) >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
       </div>
+      <span className="font-bold text-zinc-600">{label}</span>
     </div>
   );
 }
