@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -50,7 +51,9 @@ import {
   Plus,
   Share2,
   Globe,
-  SearchCode
+  SearchCode,
+  Zap,
+  Code2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -86,17 +89,16 @@ export default function ManualEditorPage() {
     accentColor: "#FF7043",
     backgroundColor: "#F8FAFC",
     borderRadius: "1rem",
-    // SEO
+    // SEO Settings
     metaTitle: "فهمني - منصة التعلم الذكي",
-    metaDescription: "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين",
+    metaDescription: "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل الخبرات والمعرفة.",
+    metaKeywords: "تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, مفهم, مستفهم",
+    googleSiteVerification: "",
     ogImageUrl: "",
     // Images
     logoUrl: "",
     landingBg: "",
     aboutImage: "",
-    // Buttons
-    btnHeroStart: "ابدأ الآن",
-    btnHeroLearn: "عن المنصة",
     // Nav Labels
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
@@ -124,7 +126,7 @@ export default function ManualEditorPage() {
     guaranteesDescription: "نحن في 'فهمني' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
     guideTitle: "الدليل الإرشادي",
     guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
-    // New Dashboard Content
+    // Dashboards
     studentDashboardTitle: "عندك سؤال؟ اطرح استفهامك الآن",
     studentDashboardBtn: "طلب استفهام جديد",
     teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
@@ -155,7 +157,7 @@ export default function ManualEditorPage() {
         ...formData,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة فوراً." });
+      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة وتجهيز إعدادات SEO." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ التغييرات." });
     } finally {
@@ -205,15 +207,10 @@ export default function ManualEditorPage() {
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse text-2xl">جاري تحميل المحرر الفائق...</div>;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-zinc-100" dir="rtl">
+    <div className="flex flex-col h-screen overflow-hidden bg-zinc-100 font-body" dir="rtl">
       <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
       
@@ -223,9 +220,9 @@ export default function ManualEditorPage() {
             <LayoutTemplate size={32} />
           </div>
           <div className="hidden md:block">
-            <h1 className="text-2xl font-black">المحرر المرئي الفائق</h1>
+            <h1 className="text-2xl font-black">المحرر الفائق و SEO</h1>
             <p className="text-xs text-muted-foreground font-bold flex items-center gap-1">
-              <MousePointer2 size={12} /> اضغط على أي عنصر لتعديله
+              <Zap size={12} className="text-accent" /> تحكم كامل في الظهور والبحث
             </p>
           </div>
         </div>
@@ -241,15 +238,15 @@ export default function ManualEditorPage() {
                 <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
                 <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
                 <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Share2 size={14}/></TabsTrigger>
-                <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">قائمة المدرسين</TabsTrigger>
+                <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">المدرسين</TabsTrigger>
                 <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
+                <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
+                <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
                 <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
                 <TabsTrigger value="terms" className="rounded-lg font-black px-4 shrink-0">الشروط</TabsTrigger>
                 <TabsTrigger value="privacy" className="rounded-lg font-black px-4 shrink-0">الخصوصية</TabsTrigger>
                 <TabsTrigger value="guarantees" className="rounded-lg font-black px-4 shrink-0">الضمانات</TabsTrigger>
                 <TabsTrigger value="guide" className="rounded-lg font-black px-4 shrink-0">الدليل</TabsTrigger>
-                <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
-                <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
               </TabsList>
             </div>
           </Tabs>
@@ -262,7 +259,7 @@ export default function ManualEditorPage() {
         <div className="flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
             {isSaving ? <RefreshCw className="animate-spin ml-2" /> : <Save className="ml-2" />}
-            حفظ التغييرات
+            حفظ الإعدادات
           </Button>
         </div>
       </header>
@@ -271,13 +268,13 @@ export default function ManualEditorPage() {
         <aside className="w-80 bg-white border-l overflow-y-auto p-6 space-y-8 shrink-0 shadow-xl z-40">
           <div className="space-y-4">
             <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Palette size={14} /> التصميم العام
+              <Palette size={14} /> الهوية والتصميم
             </h3>
             <div className="space-y-6">
               <ColorInput label="اللون الأساسي" value={formData.primaryColor || ""} onChange={(v) => setFormData({...formData, primaryColor: v})} />
               <ColorInput label="لون التمييز" value={formData.accentColor || ""} onChange={(v) => setFormData({...formData, accentColor: v})} />
               <div className="space-y-2">
-                <Label className="text-[10px] font-black opacity-60">نصف قطر الزوايا (Radius)</Label>
+                <Label className="text-[10px] font-black opacity-60">نصف قطر الزوايا</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {["0px", "0.5rem", "1rem", "2rem", "3rem"].map(r => (
                     <button 
@@ -295,12 +292,12 @@ export default function ManualEditorPage() {
 
           <div className="space-y-4 pt-6 border-t">
             <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <ImageIcon size={14} /> صور الهوية
+              <ImageIcon size={14} /> الأصول الرسومية
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <ImageThumb label="اللوجو" value={formData.logoUrl} onClick={() => handleFieldClick('logoUrl', 'شعار المنصة', 'image')} />
+              <ImageThumb label="اللوجو الرئيسي" value={formData.logoUrl} onClick={() => handleFieldClick('logoUrl', 'شعار المنصة', 'image')} />
               <ImageThumb label="خلفية الهيرو" value={formData.landingBg} onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')} />
-              <ImageThumb label="صورة SEO" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
+              <ImageThumb label="صورة المشاركة" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
             </div>
           </div>
         </aside>
@@ -313,6 +310,7 @@ export default function ManualEditorPage() {
               borderRadius: formData.borderRadius 
             }}
           >
+            {/* Header Preview */}
             <nav className="h-24 border-b flex items-center justify-between px-12 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center gap-4">
                 <div 
@@ -343,6 +341,7 @@ export default function ManualEditorPage() {
               </div>
             </nav>
 
+            {/* Page Previews */}
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               {currentPage === 'home' && (
                 <section className="relative">
@@ -373,11 +372,16 @@ export default function ManualEditorPage() {
               {currentPage === 'seo' && (
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-accent pr-6">
-                    <h2 className="text-4xl font-black text-zinc-900">معاينة الروابط (SEO & Sharing)</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور موقعك عند مشاركة الرابط على واتساب ومنصات التواصل.</p>
+                    <h2 className="text-4xl font-black text-zinc-900">معاينة المشاركة والبحث (SEO)</h2>
+                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> في جوجل وواتساب.</p>
                   </div>
 
+                  {/* Social Preview Card Simulation */}
                   <div className="max-w-2xl mx-auto bg-[#F0F2F5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                    <div className="p-4 bg-white border-b flex items-center gap-3">
+                      <div className="bg-green-500 p-2 rounded-full text-white"><Share2 size={16}/></div>
+                      <span className="font-bold text-sm text-zinc-500">معاينة الرابط في تطبيقات التواصل</span>
+                    </div>
                     <div className="aspect-[1.91/1] bg-zinc-200 relative group cursor-pointer" onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')}>
                       {formData.ogImageUrl ? (
                         <img src={formData.ogImageUrl} className="w-full h-full object-cover" />
@@ -408,35 +412,48 @@ export default function ManualEditorPage() {
                     </div>
                   </div>
 
+                  {/* Advanced SEO Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-                    <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-4">
-                      <Label className="font-black text-lg flex items-center gap-2"><Globe className="text-accent"/> عنوان الصفحة (Title)</Label>
-                      <Input value={formData.metaTitle} onChange={(e)=>setFormData({...formData, metaTitle: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
+                    <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-6">
+                      <h4 className="font-black text-xl flex items-center gap-2"><Globe className="text-primary"/> الأساسيات (Meta Tags)</h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="font-black text-xs opacity-60">العنوان التعريفي (Title)</Label>
+                          <Input value={formData.metaTitle} onChange={(e)=>setFormData({...formData, metaTitle: e.target.value})} className="h-12 rounded-xl border-2 font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="font-black text-xs opacity-60">الوصف التعريفي (Description)</Label>
+                          <Textarea value={formData.metaDescription} onChange={(e)=>setFormData({...formData, metaDescription: e.target.value})} className="h-24 rounded-xl border-2 font-medium" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-4">
-                      <Label className="font-black text-lg flex items-center gap-2"><SearchCode className="text-accent"/> وصف الصفحة (Description)</Label>
-                      <Textarea value={formData.metaDescription} onChange={(e)=>setFormData({...formData, metaDescription: e.target.value})} className="h-32 rounded-xl border-2 font-medium" />
+
+                    <div className="p-8 bg-zinc-900 rounded-3xl text-white space-y-6">
+                      <h4 className="font-black text-xl flex items-center gap-2"><Code2 className="text-accent"/> تقنيات التصدر (Advanced)</h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="font-black text-xs text-white/60">الكلمات المفتاحية (Keywords - مفصولة بفاصلة)</Label>
+                          <Input value={formData.metaKeywords} onChange={(e)=>setFormData({...formData, metaKeywords: e.target.value})} className="h-12 rounded-xl border-2 border-white/10 bg-white/5 text-white font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="font-black text-xs text-white/60">Google Search Console Verification ID</Label>
+                          <Input placeholder="مثال: google-site-verification=..." value={formData.googleSiteVerification} onChange={(e)=>setFormData({...formData, googleSiteVerification: e.target.value})} className="h-12 rounded-xl border-2 border-white/10 bg-white/5 text-white font-mono" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </section>
               )}
 
-              {currentPage === 'dashboards' && (
-                <section className="p-12 space-y-20">
-                  <div className="space-y-8">
-                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest border-r-4 border-primary pr-3">معاينة لوحة المستفهم</h3>
-                    <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-primary/5 hover:border-primary/20 transition-all">
-                      <div className="space-y-4 text-right">
-                        <h2 className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-primary transition-colors" onClick={() => handleFieldClick('studentDashboardTitle', 'عنوان لوحة المستفهم')}>
-                          {formData.studentDashboardTitle}
-                        </h2>
-                        <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl" onClick={() => handleFieldClick('studentDashboardBtn', 'نص زر طلب استفهام')}>
-                          {formData.studentDashboardBtn}
-                        </Button>
-                      </div>
-                      <BookOpen size={100} className="text-primary opacity-20" />
-                    </div>
-                  </div>
+              {/* Other Pages Sim... */}
+              {currentPage === 'about' && (
+                <section className="p-16 space-y-12">
+                  <h2 className="text-5xl font-black text-center" onClick={() => handleFieldClick('aboutTitle', 'عنوان صفحة عن المنصة')}>
+                    {formData.aboutTitle}
+                  </h2>
+                  <p className="text-2xl text-zinc-600 leading-relaxed text-center max-w-4xl mx-auto" onClick={() => handleFieldClick('aboutDescription', 'وصف صفحة عن المنصة', 'textarea')}>
+                    {formData.aboutDescription}
+                  </p>
                 </section>
               )}
             </div>
@@ -456,6 +473,7 @@ export default function ManualEditorPage() {
         </main>
       </div>
 
+      {/* Field Edit Dialog */}
       <Dialog open={!!activeField && activeField.type !== 'image'} onOpenChange={() => setActiveField(null)}>
         <DialogContent className="sm:max-w-[700px] rounded-[3.5rem] border-none shadow-2xl p-12" dir="rtl">
           <DialogHeader>
@@ -499,7 +517,7 @@ function ColorInput({ label, value, onChange }: { label: string, value: string, 
     <div className="space-y-3">
       <Label className="text-[10px] font-black opacity-60 pr-2">{label}</Label>
       <div className="flex gap-3">
-        <div className="relative h-14 w-14 rounded-2xl overflow-hidden border-2 shadow-inner group">
+        <div className="relative h-14 w-14 rounded-2xl overflow-hidden border-2 shadow-inner">
           <input 
             type="color" 
             value={value || "#000000"} 
@@ -532,19 +550,6 @@ function ImageThumb({ label, value, onClick }: any) {
           <ImageIcon size={24} className="text-zinc-300" />
         )}
       </div>
-    </div>
-  );
-}
-
-function SidebarItem({ icon: Icon, label, onClick, color }: any) {
-  return (
-    <div 
-      className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-muted transition-all group"
-      onClick={onClick}
-    >
-      <Icon size={20} className={color || "text-primary"} />
-      <span className={`font-black text-sm ${color || "text-zinc-700"}`}>{label}</span>
-      <Edit3 size={12} className="ml-auto opacity-0 group-hover:opacity-100 text-zinc-300" />
     </div>
   );
 }
