@@ -5,6 +5,19 @@ import { ClientWrapper } from '@/components/layout/client-wrapper';
 export const metadata: Metadata = {
   title: 'فهمني - منصة التعلم الذكي',
   description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  openGraph: {
+    title: 'فهمني - منصة التعلم الذكي',
+    description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين',
+    type: 'website',
+    locale: 'ar_EG',
+    siteName: 'فهمني',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'فهمني - منصة التعلم الذكي',
+    description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين',
+  },
 };
 
 export default function RootLayout({

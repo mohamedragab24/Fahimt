@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -48,7 +47,10 @@ import {
   Video,
   Star,
   Search,
-  Plus
+  Plus,
+  Share2,
+  Globe,
+  SearchCode
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -57,7 +59,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list';
+type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo';
 
 export default function ManualEditorPage() {
   const firestore = useFirestore();
@@ -84,6 +86,10 @@ export default function ManualEditorPage() {
     accentColor: "#FF7043",
     backgroundColor: "#F8FAFC",
     borderRadius: "1rem",
+    // SEO
+    metaTitle: "فهمني - منصة التعلم الذكي",
+    metaDescription: "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين",
+    ogImageUrl: "",
     // Images
     logoUrl: "",
     landingBg: "",
@@ -211,7 +217,6 @@ export default function ManualEditorPage() {
       `}</style>
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
       
-      {/* Header Toolbar */}
       <header className="h-24 bg-white border-b flex items-center justify-between px-8 shrink-0 shadow-sm z-50">
         <div className="flex items-center gap-6">
           <div className="bg-primary/10 p-3 rounded-2xl text-primary">
@@ -225,25 +230,17 @@ export default function ManualEditorPage() {
           </div>
         </div>
 
-        {/* Tabs with Navigation Arrows */}
         <div className="flex-1 max-w-[60%] flex items-center gap-2 px-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="shrink-0 rounded-full h-10 w-10 hover:bg-zinc-100 text-zinc-400"
-            onClick={() => scrollTabs('right')}
-          >
+          <Button variant="ghost" size="icon" className="shrink-0 rounded-full h-10 w-10 text-zinc-400" onClick={() => scrollTabs('right')}>
             <ChevronRight size={24} />
           </Button>
 
           <Tabs value={currentPage} onValueChange={(v) => setCurrentPage(v as PageType)} className="flex-1 overflow-hidden">
-            <div 
-              ref={tabsListRef}
-              className="overflow-x-auto no-scrollbar flex items-center"
-            >
+            <div ref={tabsListRef} className="overflow-x-auto no-scrollbar flex items-center">
               <TabsList className="bg-muted/50 p-1 rounded-xl h-14 flex-nowrap shrink-0">
                 <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
                 <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
+                <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Share2 size={14}/></TabsTrigger>
                 <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">قائمة المدرسين</TabsTrigger>
                 <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
                 <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>
@@ -257,12 +254,7 @@ export default function ManualEditorPage() {
             </div>
           </Tabs>
 
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="shrink-0 rounded-full h-10 w-10 hover:bg-zinc-100 text-zinc-400"
-            onClick={() => scrollTabs('left')}
-          >
+          <Button variant="ghost" size="icon" className="shrink-0 rounded-full h-10 w-10 text-zinc-400" onClick={() => scrollTabs('left')}>
             <ChevronLeft size={24} />
           </Button>
         </div>
@@ -276,7 +268,6 @@ export default function ManualEditorPage() {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Controls */}
         <aside className="w-80 bg-white border-l overflow-y-auto p-6 space-y-8 shrink-0 shadow-xl z-40">
           <div className="space-y-4">
             <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
@@ -309,21 +300,11 @@ export default function ManualEditorPage() {
             <div className="grid grid-cols-2 gap-4">
               <ImageThumb label="اللوجو" value={formData.logoUrl} onClick={() => handleFieldClick('logoUrl', 'شعار المنصة', 'image')} />
               <ImageThumb label="خلفية الهيرو" value={formData.landingBg} onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')} />
+              <ImageThumb label="صورة SEO" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
             </div>
-          </div>
-
-          <div className="p-6 bg-zinc-900 rounded-[2rem] text-white space-y-4 mt-6">
-            <div className="flex items-center gap-2 text-primary">
-              <Sparkles size={18} />
-              <h4 className="font-black text-sm">ذكاء التعديل</h4>
-            </div>
-            <p className="text-[10px] font-bold text-zinc-400 leading-relaxed italic">
-              "بمجرد الضغط على زر الحفظ العلوي، سيتم تغيير شكل وتجربة المنصة لكافة المستخدمين في أقل من ثانية واحدة."
-            </p>
           </div>
         </aside>
 
-        {/* Live Preview Area */}
         <main className="flex-1 bg-zinc-200/50 p-10 overflow-y-auto flex flex-col items-center">
           <div 
             className="w-full max-w-5xl bg-white shadow-[0_50px_100px_rgba(0,0,0,0.1)] overflow-hidden min-h-[1200px] transition-all duration-700"
@@ -332,12 +313,11 @@ export default function ManualEditorPage() {
               borderRadius: formData.borderRadius 
             }}
           >
-            {/* Nav Preview */}
             <nav className="h-24 border-b flex items-center justify-between px-12 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center gap-4">
                 <div 
                   style={{ backgroundColor: formData.primaryColor, borderRadius: `calc(${formData.borderRadius} / 2)` }} 
-                  className="w-12 h-12 flex items-center justify-center text-white font-black text-2xl shadow-lg cursor-pointer hover:scale-110 transition-transform overflow-hidden"
+                  className="w-12 h-12 flex items-center justify-center text-white font-black text-2xl shadow-lg cursor-pointer overflow-hidden"
                   onClick={() => handleFieldClick('logoUrl', 'الشعار المربع', 'image')}
                 >
                   {formData.logoUrl ? <img src={formData.logoUrl} className="w-full h-full object-cover" /> : "ف"}
@@ -360,16 +340,9 @@ export default function ManualEditorPage() {
                     {(formData as any)[key] || ""}
                   </span>
                 ))}
-                <div 
-                  style={{ backgroundColor: formData.primaryColor, borderRadius: `calc(${formData.borderRadius} / 3)` }} 
-                  className="px-6 py-2 text-white text-xs font-black shadow-lg"
-                >
-                  حساب جديد
-                </div>
               </div>
             </nav>
 
-            {/* Dynamic Page Content */}
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               {currentPage === 'home' && (
                 <section className="relative">
@@ -393,21 +366,56 @@ export default function ManualEditorPage() {
                     >
                       {formData.heroSubtitle}
                     </p>
-                    <div className="pt-12 flex justify-center gap-8">
-                      <div 
-                        style={{ backgroundColor: formData.primaryColor, borderRadius: formData.borderRadius }} 
-                        className="h-24 px-16 rounded-[2.5rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl cursor-pointer hover:scale-105 transition-all"
-                        onClick={() => handleFieldClick('btnHeroStart', 'نص زر البداية')}
-                      >
-                        {formData.btnHeroStart}
+                  </div>
+                </section>
+              )}
+
+              {currentPage === 'seo' && (
+                <section className="p-16 space-y-12">
+                  <div className="space-y-4 border-r-8 border-accent pr-6">
+                    <h2 className="text-4xl font-black text-zinc-900">معاينة الروابط (SEO & Sharing)</h2>
+                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور موقعك عند مشاركة الرابط على واتساب ومنصات التواصل.</p>
+                  </div>
+
+                  <div className="max-w-2xl mx-auto bg-[#F0F2F5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                    <div className="aspect-[1.91/1] bg-zinc-200 relative group cursor-pointer" onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')}>
+                      {formData.ogImageUrl ? (
+                        <img src={formData.ogImageUrl} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+                          <ImageIcon size={64} />
+                          <p className="font-black mt-2">اضغط لرفع صورة المعاينة</p>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Upload className="text-white h-12 w-12" />
                       </div>
-                      <div 
-                        className="h-24 px-16 rounded-[2.5rem] border-4 border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-3xl text-white cursor-pointer hover:bg-white/20 transition-all"
-                        style={{ borderRadius: formData.borderRadius }}
-                        onClick={() => handleFieldClick('btnHeroLearn', 'نص زر المعرفة')}
+                    </div>
+                    <div className="p-6 space-y-2 bg-white text-right">
+                      <h4 
+                        className="text-2xl font-black text-zinc-900 cursor-pointer hover:text-accent"
+                        onClick={() => handleFieldClick('metaTitle', 'عنوان محركات البحث')}
                       >
-                        {formData.btnHeroLearn}
-                      </div>
+                        {formData.metaTitle}
+                      </h4>
+                      <p 
+                        className="text-zinc-500 font-medium cursor-pointer hover:text-zinc-800"
+                        onClick={() => handleFieldClick('metaDescription', 'وصف محركات البحث', 'textarea')}
+                      >
+                        {formData.metaDescription}
+                      </p>
+                      <p className="text-[10px] text-blue-500 font-mono mt-4">https://{formData.siteTitle.toLowerCase()}.com</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                    <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-4">
+                      <Label className="font-black text-lg flex items-center gap-2"><Globe className="text-accent"/> عنوان الصفحة (Title)</Label>
+                      <Input value={formData.metaTitle} onChange={(e)=>setFormData({...formData, metaTitle: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
+                    </div>
+                    <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-4">
+                      <Label className="font-black text-lg flex items-center gap-2"><SearchCode className="text-accent"/> وصف الصفحة (Description)</Label>
+                      <Textarea value={formData.metaDescription} onChange={(e)=>setFormData({...formData, metaDescription: e.target.value})} className="h-32 rounded-xl border-2 font-medium" />
                     </div>
                   </div>
                 </section>
@@ -415,251 +423,24 @@ export default function ManualEditorPage() {
 
               {currentPage === 'dashboards' && (
                 <section className="p-12 space-y-20">
-                  {/* Student View Simulation */}
                   <div className="space-y-8">
                     <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest border-r-4 border-primary pr-3">معاينة لوحة المستفهم</h3>
                     <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-primary/5 hover:border-primary/20 transition-all">
                       <div className="space-y-4 text-right">
-                        <h2 
-                          className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-primary transition-colors"
-                          onClick={() => handleFieldClick('studentDashboardTitle', 'عنوان لوحة المستفهم')}
-                        >
+                        <h2 className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-primary transition-colors" onClick={() => handleFieldClick('studentDashboardTitle', 'عنوان لوحة المستفهم')}>
                           {formData.studentDashboardTitle}
                         </h2>
-                        <Button 
-                          size="lg" 
-                          className="h-16 px-10 text-xl font-black rounded-2xl"
-                          onClick={() => handleFieldClick('studentDashboardBtn', 'نص زر طلب استفهام')}
-                        >
+                        <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl" onClick={() => handleFieldClick('studentDashboardBtn', 'نص زر طلب استفهام')}>
                           {formData.studentDashboardBtn}
                         </Button>
                       </div>
                       <BookOpen size={100} className="text-primary opacity-20" />
                     </div>
                   </div>
-
-                  {/* Teacher View Simulation */}
-                  <div className="space-y-8">
-                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest border-r-4 border-accent pr-3">معاينة لوحة المفهم</h3>
-                    <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-accent/5 hover:border-accent/20 transition-all">
-                      <div className="space-y-4 text-right">
-                        <h2 
-                          className="text-4xl font-black text-zinc-800 cursor-pointer hover:text-accent transition-colors"
-                          onClick={() => handleFieldClick('teacherDashboardTitle', 'عنوان لوحة المفهم')}
-                        >
-                          {formData.teacherDashboardTitle}
-                        </h2>
-                        <p 
-                          className="text-muted-foreground font-bold text-lg max-w-xl cursor-pointer hover:text-zinc-900"
-                          onClick={() => handleFieldClick('teacherDashboardSubtitle', 'وصف لوحة المفهم')}
-                        >
-                          {formData.teacherDashboardSubtitle}
-                        </p>
-                        <Button 
-                          size="lg" 
-                          className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90"
-                          onClick={() => handleFieldClick('teacherDashboardBtn', 'نص زر إضافة عمل')}
-                        >
-                          {formData.teacherDashboardBtn} <Plus className="mr-2" />
-                        </Button>
-                      </div>
-                      <ImageIcon size={100} className="text-accent opacity-20" />
-                    </div>
-                  </div>
-
-                  {/* Create Request Modal Simulation */}
-                  <div className="space-y-8 pt-10 border-t">
-                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest text-center">معاينة نموذج إنشاء طلب (Modal)</h3>
-                    <div className="max-w-2xl mx-auto bg-white border-4 border-zinc-100 rounded-[3rem] shadow-2xl p-10 space-y-8">
-                      <h4 
-                        className="text-3xl font-black text-center cursor-pointer hover:text-primary"
-                        onClick={() => handleFieldClick('createIstifhamTitle', 'عنوان نافذة الطلب')}
-                      >
-                        {formData.createIstifhamTitle}
-                      </h4>
-                      <div className="space-y-4">
-                        <div className="h-14 bg-zinc-50 rounded-2xl border-2 border-dashed"></div>
-                        <div className="h-32 bg-zinc-50 rounded-2xl border-2 border-dashed"></div>
-                        <div className="h-24 bg-primary/5 rounded-2xl border-2 border-dashed border-primary/20"></div>
-                      </div>
-                      <Button 
-                        className="w-full h-16 text-xl font-black rounded-2xl shadow-xl"
-                        onClick={() => handleFieldClick('createIstifhamBtn', 'نص زر إرسال الطلب')}
-                      >
-                        {formData.createIstifhamBtn}
-                      </Button>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'teachers_list' && (
-                <section className="p-12 space-y-12">
-                  <div className="text-center space-y-8 max-w-3xl mx-auto">
-                    <h1 
-                      className="text-5xl font-black tracking-tight text-zinc-800 cursor-pointer hover:text-primary transition-all"
-                      onClick={() => handleFieldClick('teachersListTitle', 'عنوان صفحة المدرسين')}
-                    >
-                      {formData.teachersListTitle}
-                    </h1>
-                    <div 
-                      className="relative max-w-xl mx-auto h-16 bg-white rounded-2xl border-2 shadow-sm flex items-center px-6 text-zinc-400 font-bold cursor-pointer hover:border-primary"
-                      onClick={() => handleFieldClick('teachersListSearchPlaceholder', 'نص البحث عن مدرس')}
-                    >
-                      <Search className="ml-4 h-5 w-5" />
-                      {formData.teachersListSearchPlaceholder}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-6">
-                    {[1,2,3].map(i => (
-                      <Card key={i} className="rounded-xl p-6 bg-white text-center space-y-4 opacity-50 grayscale">
-                        <Avatar className="h-20 w-20 mx-auto border-2"><AvatarFallback>خ</AvatarFallback></Avatar>
-                        <div className="h-4 w-24 bg-zinc-100 mx-auto rounded"></div>
-                        <div className="h-10 w-full bg-blue-500 rounded-lg"></div>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'portfolio_list' && (
-                <section className="p-12 space-y-12">
-                  <div className="space-y-4 border-r-8 border-primary pr-6">
-                    <h1 
-                      className="text-4xl font-black text-zinc-900 cursor-pointer hover:text-primary transition-all"
-                      onClick={() => handleFieldClick('portfolioListTitle', 'عنوان معرض الأعمال')}
-                    >
-                      {formData.portfolioListTitle}
-                    </h1>
-                    <p 
-                      className="text-muted-foreground font-bold text-xl cursor-pointer hover:text-zinc-900"
-                      onClick={() => handleFieldClick('portfolioListSubtitle', 'وصف معرض الأعمال')}
-                    >
-                      {formData.portfolioListSubtitle}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-10">
-                    {[1,2].map(i => (
-                      <div key={i} className="space-y-4 opacity-40">
-                        <div className="aspect-video bg-zinc-200 rounded-[2rem]"></div>
-                        <div className="h-6 w-48 bg-zinc-300 rounded"></div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'about' && (
-                <section className="py-32 px-16 space-y-20">
-                  <div className="flex flex-col md:flex-row gap-16 items-center">
-                    <div className="flex-1 space-y-8 text-right">
-                      <div 
-                        className="bg-primary/10 w-24 h-24 flex items-center justify-center text-primary shadow-inner mb-6"
-                        style={{ borderRadius: `calc(${formData.borderRadius} / 1.5)` }}
-                      >
-                        <Info size={48} />
-                      </div>
-                      <h2 
-                        className="text-6xl font-black cursor-pointer hover:text-primary transition-all leading-tight"
-                        onClick={() => handleFieldClick('aboutTitle', 'عنوان صفحة عن المنصة')}
-                      >
-                        {formData.aboutTitle}
-                      </h2>
-                      <p 
-                        className="text-2xl leading-relaxed font-bold text-zinc-600 cursor-pointer hover:bg-black/5 p-8 border-r-8 border-primary transition-all"
-                        onClick={() => handleFieldClick('aboutDescription', 'محتوى صفحة عن المنصة', 'textarea')}
-                      >
-                        {formData.aboutDescription}
-                      </p>
-                    </div>
-                    <div className="flex-1 w-full aspect-square relative group">
-                      <img 
-                        src={formData.aboutImage || "https://placehold.co/600x600?text=About+Fahimni"} 
-                        className="w-full h-full object-cover shadow-2xl cursor-pointer group-hover:scale-[1.02] transition-all"
-                        style={{ borderRadius: formData.borderRadius }}
-                        onClick={() => handleFieldClick('aboutImage', 'صورة صفحة عن المنصة', 'image')}
-                      />
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'sidebar' && (
-                <section className="py-20 px-16 flex justify-center bg-zinc-50">
-                  <Card className="w-80 border-2 shadow-2xl rounded-[3rem] overflow-hidden bg-white">
-                    <div className="p-8 border-b flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white font-black text-2xl">ف</div>
-                      <span className="font-black text-2xl text-primary">{formData.siteTitle}</span>
-                    </div>
-                    <div className="p-4 space-y-2">
-                      <SidebarItem icon={Home} label={formData.sideHome} onClick={() => handleFieldClick('sideHome', 'زر الرئيسية')} />
-                      <SidebarItem icon={GraduationCap} label={formData.sideTeachers} onClick={() => handleFieldClick('sideTeachers', 'زر المفهمين')} />
-                      <SidebarItem icon={ImageIcon} label={formData.sidePortfolio} onClick={() => handleFieldClick('sidePortfolio', 'زر أعمال المفهمين')} />
-                      <SidebarItem icon={ClipboardList} label={formData.sideRequests} onClick={() => handleFieldClick('sideRequests', 'زر استفهاماتي')} />
-                      <SidebarItem icon={Wallet} label={formData.sideWallet} onClick={() => handleFieldClick('sideWallet', 'زر المحفظة')} />
-                      <SidebarItem icon={Settings} label={formData.sideSettings} onClick={() => handleFieldClick('sideSettings', 'زر الإعدادات')} />
-                      <div className="pt-4 border-t mt-4">
-                        <SidebarItem icon={LayoutDashboard} label={formData.sideAdmin} onClick={() => handleFieldClick('sideAdmin', 'عنوان لوحة المسؤول')} color="text-accent" />
-                      </div>
-                      <div className="pt-4 space-y-2">
-                        <div 
-                          className="p-3 bg-primary/5 rounded-xl border-2 border-dashed border-primary/20 text-center cursor-pointer hover:bg-primary/10"
-                          onClick={() => handleFieldClick('sideToggleToTeacher', 'نص زر تبديل الدور')}
-                        >
-                          <span className="text-[10px] font-black text-primary">{formData.sideToggleToTeacher}</span>
-                        </div>
-                        <SidebarItem icon={LogOut} label={formData.sideLogout} onClick={() => handleFieldClick('sideLogout', 'زر الخروج')} color="text-red-500" />
-                      </div>
-                    </div>
-                  </Card>
-                </section>
-              )}
-
-              {currentPage === 'nav' && (
-                <section className="py-32 px-16 space-y-12">
-                  <h2 className="text-4xl font-black text-center mb-12">تعديل نصوص إضافية</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <NavItemEdit label="الرابط الأول (الهيدر)" value={formData.navHome} onClick={()=>handleFieldClick('navHome', 'الرابط الأول')} />
-                    <NavItemEdit label="الرابط الثاني (الهيدر)" value={formData.navAbout} onClick={()=>handleFieldClick('navAbout', 'الرابط الثاني')} />
-                    <NavItemEdit label="الرابط الثالث (الهيدر)" value={formData.navGuide} onClick={()=>handleFieldClick('navGuide', 'الرابط الثالث')} />
-                    <NavItemEdit label="الرابط الرابع (الهيدر)" value={formData.navGuarantees} onClick={()=>handleFieldClick('navGuarantees', 'الرابط الرابع')} />
-                    <NavItemEdit label="نص التذييل" value={formData.footerText} onClick={()=>handleFieldClick('footerText', 'حقوق الملكية')} />
-                  </div>
-                </section>
-              )}
-
-              {currentPage === 'terms' && (
-                <section className="py-20 px-16 space-y-8">
-                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('termsTitle', 'عنوان الشروط')}>{formData.termsTitle}</h2>
-                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('termsDescription', 'وصف الشروط', 'textarea')}>{formData.termsDescription}</p>
-                </section>
-              )}
-
-              {currentPage === 'privacy' && (
-                <section className="py-20 px-16 space-y-8">
-                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('privacyTitle', 'عنوان الخصوصية')}>{formData.privacyTitle}</h2>
-                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('privacyDescription', 'وصف الخصوصية', 'textarea')}>{formData.privacyDescription}</p>
-                </section>
-              )}
-
-              {currentPage === 'guarantees' && (
-                <section className="py-20 px-16 space-y-8">
-                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('guaranteesTitle', 'عنوان الضمانات')}>{formData.guaranteesTitle}</h2>
-                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('guaranteesDescription', 'وصف الضمانات', 'textarea')}>{formData.guaranteesDescription}</p>
-                </section>
-              )}
-
-              {currentPage === 'guide' && (
-                <section className="py-20 px-16 space-y-8">
-                  <h2 className="text-4xl font-black text-right cursor-pointer hover:text-primary" onClick={() => handleFieldClick('guideTitle', 'عنوان الدليل')}>{formData.guideTitle}</h2>
-                  <p className="text-xl text-zinc-600 leading-relaxed text-right cursor-pointer hover:bg-zinc-100 p-4 rounded-xl" onClick={() => handleFieldClick('guideSubtitle', 'وصف الدليل', 'textarea')}>{formData.guideSubtitle}</p>
                 </section>
               )}
             </div>
 
-            {/* Footer Preview */}
             <footer className="mt-20 py-16 border-t px-12 flex flex-col md:flex-row justify-between items-center bg-zinc-900 text-white rounded-t-[5rem]">
               <div className="flex items-center gap-4">
                 <div style={{ backgroundColor: formData.primaryColor }} className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white">ف</div>
@@ -670,16 +451,11 @@ export default function ManualEditorPage() {
                   {formData.footerText}
                 </div>
               </div>
-              <div className="flex gap-6 opacity-20">
-                <div className="w-10 h-10 rounded-full bg-white"></div>
-                <div className="w-10 h-10 rounded-full bg-white"></div>
-              </div>
             </footer>
           </div>
         </main>
       </div>
 
-      {/* Editor Dialog */}
       <Dialog open={!!activeField && activeField.type !== 'image'} onOpenChange={() => setActiveField(null)}>
         <DialogContent className="sm:max-w-[700px] rounded-[3.5rem] border-none shadow-2xl p-12" dir="rtl">
           <DialogHeader>
@@ -755,20 +531,6 @@ function ImageThumb({ label, value, onClick }: any) {
         ) : (
           <ImageIcon size={24} className="text-zinc-300" />
         )}
-      </div>
-    </div>
-  );
-}
-
-function NavItemEdit({ label, value, onClick }: any) {
-  return (
-    <div className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-3">
-      <Label className="font-black text-zinc-400 text-xs">{label}</Label>
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
-        <span className="font-black text-zinc-800">{value}</span>
-        <Button size="sm" variant="ghost" onClick={onClick} className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10">
-          <Edit3 size={16} />
-        </Button>
       </div>
     </div>
   );
