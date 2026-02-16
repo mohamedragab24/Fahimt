@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview تدفق إرسال الإشعارات والتذكيرات عبر الواتساب والبريد.
- * تم تحسين الهيكلية لضمان وصول الرسائل عبر Infobip.
+ * @fileOverview تدفق إرسال الإشعارات والتذكيرات المطور.
+ * يوفر تقارير أخطاء تفصيلية للمسؤول عند فشل الإرسال.
  */
 
 import { ai } from '@/ai/genkit';
@@ -22,7 +22,7 @@ const messagingFlow = ai.defineFlow(
   {
     name: 'messagingFlow',
     inputSchema: MessagingInputSchema,
-    outputSchema: z.object({ success: z.boolean(), message: z.string() }),
+    outputSchema: z.object({ success: z.boolean(), message: z.string(), rawError: z.any().optional() }),
   },
   async (input) => {
     const apiKey = 'App d1d0cecac245ff6225debf8f02de3c36-4d903627-05b8-4656-bdc1-d3ab395a9e47';
@@ -40,18 +40,28 @@ const messagingFlow = ai.defineFlow(
           body: JSON.stringify({
             "messages": [{
               "from": "resraa355@selfserve.worlds-connected.co",
-              "destinations": [{ "to": input.recipient }],
+              "destinations": [{ "to": input.recipient.trim().toLowerCase() }],
               "subject": input.subject || "تنبيه من منصة فهمني",
               "text": input.body
             }]
           })
         });
-        const data = await res.json();
-        return { 
-          success: res.ok, 
-          message: res.ok ? 'تم الإرسال بنجاح' : (data.requestError?.serviceException?.text || 'خطأ في سيرفر البريد') 
-        };
-      } catch { return { success: false, message: 'فشل الاتصال بسيرفر البريد' }; }
+        
+        let data;
+        try { data = await res.json(); } catch { data = { error: 'Invalid JSON response' }; }
+
+        if (res.ok) {
+          return { success: true, message: 'تم إرسال البريد بنجاح.' };
+        } else {
+          return { 
+            success: false, 
+            message: data.requestError?.serviceException?.text || 'رفض سيرفر البريد الطلب.',
+            rawError: data 
+          };
+        }
+      } catch (err: any) { 
+        return { success: false, message: 'فشل الاتصال التقني بسيرفر البريد.', rawError: err.message }; 
+      }
     } else {
       try {
         const cleanPhone = input.recipient.replace(/\D/g, '');
@@ -68,14 +78,24 @@ const messagingFlow = ai.defineFlow(
             "content": { "text": input.body }
           })
         });
-        const data = await res.json();
-        const isInternalOk = data.messages?.[0]?.status?.groupName !== 'REJECTED';
+
+        let data;
+        try { data = await res.json(); } catch { data = { error: 'Invalid JSON response' }; }
+
+        const isRejected = data.messages?.[0]?.status?.groupName === 'REJECTED';
         
-        return { 
-          success: res.ok && isInternalOk, 
-          message: (res.ok && isInternalOk) ? 'تم الإرسال بنجاح' : (data.messages?.[0]?.status?.description || data.requestError?.serviceException?.text || 'خطأ في الواتساب')
-        };
-      } catch { return { success: false, message: 'فشل الاتصال بسيرفر الواتساب' }; }
+        if (res.ok && !isRejected) {
+          return { success: true, message: 'تم إرسال رسالة الواتساب بنجاح.' };
+        } else {
+          return { 
+            success: false, 
+            message: data.messages?.[0]?.status?.description || data.requestError?.serviceException?.text || 'فشل إرسال الواتساب.',
+            rawError: data
+          };
+        }
+      } catch (err: any) { 
+        return { success: false, message: 'فشل الاتصال التقني بسيرفر الواتساب.', rawError: err.message }; 
+      }
     }
   }
 );

@@ -1,7 +1,6 @@
 'use server';
 /**
- * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) عبر Infobip.
- * تم تصحيح هيكلية الـ JSON لتتوافق مع متطلبات سيرفرات Infobip.
+ * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) مع نظام تتبع أخطاء.
  */
 
 import { ai } from '@/ai/genkit';
@@ -16,6 +15,7 @@ const OTPOutputSchema = z.object({
   success: z.boolean().describe('هل تم إرسال الرمز بنجاح.'),
   code: z.string().describe('الرمز الذي تم إنشاؤه.'),
   message: z.string().describe('رسالة توضح حالة العملية.'),
+  debugInfo: z.any().optional().describe('بيانات تقنية للتشخيص.'),
 });
 
 export async function generateAndSendOTP(input: z.infer<typeof OTPInputSchema>) {
@@ -29,12 +29,7 @@ const otpFlow = ai.defineFlow(
     outputSchema: OTPOutputSchema,
   },
   async (input) => {
-    // إنشاء رمز عشوائي من 6 أرقام
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    let sendSuccess = false;
-    let errorMessage = '';
-    
     const apiKey = 'App d1d0cecac245ff6225debf8f02de3c36-4d903627-05b8-4656-bdc1-d3ab395a9e47';
     const baseUrl = 'pdp4k3.api.infobip.com';
 
@@ -51,9 +46,7 @@ const otpFlow = ai.defineFlow(
             "messages": [
               {
                 "from": "resraa355@selfserve.worlds-connected.co",
-                "destinations": [
-                  { "to": input.recipient.trim().toLowerCase() }
-                ],
+                "destinations": [{ "to": input.recipient.trim().toLowerCase() }],
                 "subject": "رمز التحقق - منصة فهمني",
                 "text": `مرحباً، رمز التحقق الخاص بك في منصة فهمني هو: ${code}`
               }
@@ -61,19 +54,18 @@ const otpFlow = ai.defineFlow(
           })
         });
 
-        const responseData = await response.json();
+        const data = await response.json();
         if (response.ok) {
-          sendSuccess = true;
+          return { success: true, code, message: 'تم إرسال كود التحقق للبريد.' };
         } else {
-          errorMessage = responseData.requestError?.serviceException?.text || 'السيرفر رفض إرسال البريد.';
+          return { success: false, code: '', message: 'سيرفر البريد رفض الطلب.', debugInfo: data };
         }
       } catch (err: any) {
-        errorMessage = 'خطأ في الاتصال بسيرفر البريد.';
+        return { success: false, code: '', message: 'خطأ في الاتصال بسيرفر البريد.', debugInfo: err.message };
       }
-    } else if (input.method === 'whatsapp') {
+    } else {
       try {
         const formattedPhone = input.recipient.trim().replace(/\D/g, ''); 
-
         const response = await fetch(`https://${baseUrl}/whatsapp/1/message/text`, {
           method: 'POST',
           headers: {
@@ -84,34 +76,26 @@ const otpFlow = ai.defineFlow(
           body: JSON.stringify({
             "from": "447860099299",
             "to": formattedPhone,
-            "content": {
-              "text": `رمز التحقق لمنصة فهمني هو: ${code}`
-            }
+            "content": { "text": `رمز التحقق لمنصة فهمني هو: ${code}` }
           })
         });
 
-        const responseData = await response.json();
-        if (response.ok) {
-          if (responseData.messages?.[0]?.status?.groupName === 'REJECTED') {
-            sendSuccess = false;
-            errorMessage = responseData.messages[0].status.description || 'تم رفض الإرسال من قبل المزود.';
-          } else {
-            sendSuccess = true;
-          }
+        const data = await response.json();
+        const isRejected = data.messages?.[0]?.status?.groupName === 'REJECTED';
+
+        if (response.ok && !isRejected) {
+          return { success: true, code, message: 'تم إرسال كود التحقق للواتساب.' };
         } else {
-          errorMessage = responseData.requestError?.serviceException?.text || 'خطأ في إعدادات الواتساب.';
+          return { 
+            success: false, 
+            code: '', 
+            message: data.messages?.[0]?.status?.description || 'فشل إرسال رسالة الواتساب.', 
+            debugInfo: data 
+          };
         }
       } catch (err: any) {
-        errorMessage = 'خطأ في الشبكة أثناء إرسال الواتساب.';
+        return { success: false, code: '', message: 'خطأ في شبكة الواتساب.', debugInfo: err.message };
       }
     }
-
-    return {
-      success: sendSuccess,
-      code: sendSuccess ? code : '', 
-      message: sendSuccess 
-        ? `تم إرسال الرمز بنجاح عبر ${input.method === 'email' ? 'البريد' : 'الواتساب'}.`
-        : errorMessage || 'فشل الإرسال، يرجى المحاولة لاحقاً.',
-    };
   }
 );

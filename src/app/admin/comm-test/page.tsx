@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Send, Loader2, CheckCircle2, AlertCircle, Smartphone } from "lucide-react";
+import { MessageSquare, Mail, Send, Loader2, CheckCircle2, AlertCircle, Smartphone, Bug } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sendNotification } from "@/ai/flows/messaging-flow";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -17,6 +17,7 @@ export default function CommTestPage() {
   const [subject, setSubject] = useState("رسالة تجريبية من منصة فهمني");
   const [body, setBody] = useState("مرحباً، هذه رسالة تجريبية لاختبار نظام التنبيهات في المنصة.");
   const [isSending, setIsSending] = useState(false);
+  const [debugResult, setDebugResult] = useState<any>(null);
   const { toast } = useToast();
 
   const handleTestSend = async () => {
@@ -26,6 +27,7 @@ export default function CommTestPage() {
     }
 
     setIsSending(true);
+    setDebugResult(null);
     try {
       const result = await sendNotification({
         recipient: recipient.trim(),
@@ -37,6 +39,7 @@ export default function CommTestPage() {
       if (result.success) {
         toast({ title: "تم الإرسال بنجاح!", description: result.message });
       } else {
+        setDebugResult(result.rawError);
         toast({ 
           variant: "destructive", 
           title: "فشل الإرسال", 
@@ -64,7 +67,7 @@ export default function CommTestPage() {
             <CardTitle className="text-2xl font-black flex items-center gap-3">
               <Send className="text-primary" /> إرسال تنبيه تجريبي
             </CardTitle>
-            <CardDescription className="text-zinc-400">تأكد من ربط حساب Infobip قبل البدء.</CardDescription>
+            <CardDescription className="text-zinc-400">تأكد من إعدادات Infobip قبل البدء.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
             <div className="space-y-4">
@@ -102,9 +105,6 @@ export default function CommTestPage() {
                   {method === 'whatsapp' ? <Smartphone size={20} /> : <Mail size={20} />}
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground font-bold px-2">
-                * ملاحظة: رقم الواتساب يجب أن يبدأ بكود الدولة بدون علامة + (مثال: 2010...).
-              </p>
             </div>
 
             {method === 'email' && (
@@ -149,30 +149,32 @@ export default function CommTestPage() {
             <ul className="space-y-4 text-blue-800 font-bold text-sm">
               <li className="flex items-start gap-3">
                 <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>بالنسبة للواتساب، تأكد أن الرقم الذي ترسل له قد أرسل كلمة <b>START</b> للرقم <b>447860099299</b> أولاً.</p>
+                <p>بالنسبة للواتساب، تأكد أن الرقم قد أرسل كلمة <b>START</b> للرقم <b>447860099299</b> أولاً لتفعيل الـ Sandbox.</p>
               </li>
               <li className="flex items-start gap-3">
                 <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>تم تحسين هيكلية الطلب لتتوافق مع Infobip JSON API لضمان استقرار الإرسال.</p>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>في حال فشل الإرسال، سيظهر لك السبب التقني القادم من السيرفر مباشرة في إشعار الخطأ.</p>
+                <p>رقم الهاتف يجب أن يبدأ بكود الدولة (مثال: 2010... لمصر) وبدون علامة +.</p>
               </li>
             </ul>
           </div>
 
-          <Card className="rounded-[2.5rem] border-2 border-green-200 bg-green-50 overflow-hidden">
-            <CardContent className="p-8 flex items-center gap-6">
-              <div className="bg-white p-4 rounded-3xl text-green-600 shadow-sm border border-green-100">
-                <CheckCircle2 size={40} />
-              </div>
-              <div className="text-right">
-                <h5 className="font-black text-green-900 text-xl">نظام التنبيهات مطور</h5>
-                <p className="text-green-800 font-bold mt-1 text-sm">تم تحديث كود الربط ليدعم الهيكلية الجديدة لـ Infobip 2024.</p>
-              </div>
-            </CardContent>
-          </Card>
+          {debugResult && (
+            <Card className="rounded-[2.5rem] border-2 border-red-200 bg-red-50 overflow-hidden animate-in fade-in zoom-in">
+              <CardHeader className="bg-red-100 p-6 border-b border-red-200">
+                <CardTitle className="text-lg font-black text-red-900 flex items-center gap-2">
+                  <Bug size={20} /> تفاصيل الخطأ التقني (للديناصورات فقط)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <pre className="text-[10px] font-mono bg-white p-4 rounded-xl overflow-x-auto text-red-600 max-h-60">
+                  {JSON.stringify(debugResult, null, 2)}
+                </pre>
+                <p className="mt-4 text-xs font-bold text-red-800 italic">
+                  * ابحث عن حقل "description" أو "text" داخل هذا الكود لمعرفة السبب الحقيقي للفشل.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
