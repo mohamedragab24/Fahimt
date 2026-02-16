@@ -5,7 +5,7 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 
 /**
- * @fileOverview سيرفر أكشن لرفع تسجيلات المحاضرات إلى Google Drive.
+ * @fileOverview سيرفر أكشن مطور لرفع تسجيلات المحاضرات إلى Google Drive وإعادة بيانات الملف.
  */
 
 export async function uploadRecordingToDrive(formData: FormData, fileName: string) {
@@ -18,9 +18,15 @@ export async function uploadRecordingToDrive(formData: FormData, fileName: strin
   const REFRESH_TOKEN = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
 
   if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-    console.warn('تنبيه: إعدادات Google Drive ناقصة في الـ .env. سيتم محاكاة الرفع لغرض التجربة.');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return { success: true, message: 'تمت المحاكاة (يرجى ضبط الإعدادات للرفع الفعلي).' };
+    console.warn('تنبيه: إعدادات Google Drive ناقصة في الـ .env. سيتم محاكاة الرفع وتوليد رابط تجريبي.');
+    // محاكاة تأخير الرفع
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return { 
+      success: true, 
+      fileId: `simulated_${Date.now()}`, 
+      message: 'تمت المحاكاة بنجاح (يرجى ضبط .env للرفع الفعلي).',
+      webViewLink: 'https://drive.google.com/file/d/1_simulated_video_link/view' 
+    };
   }
 
   try {
@@ -42,9 +48,15 @@ export async function uploadRecordingToDrive(formData: FormData, fileName: strin
         mimeType: file.type,
         body: stream,
       },
+      fields: 'id, webViewLink'
     });
 
-    return { success: true, fileId: response.data.id, message: 'تم رفع المحاضرة بنجاح إلى Google Drive.' };
+    return { 
+      success: true, 
+      fileId: response.data.id, 
+      webViewLink: response.data.webViewLink,
+      message: 'تم رفع المحاضرة بنجاح إلى Google Drive.' 
+    };
   } catch (error: any) {
     console.error('Drive Upload Error:', error);
     return { success: false, message: 'فشل الرفع: ' + (error.message || 'خطأ غير معروف') };

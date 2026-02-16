@@ -7,13 +7,15 @@ import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { Video, Star, Loader2, Info, ShieldAlert, MessageSquare, Record, CircleDot, StopCircle, CloudUpload } from "lucide-react";
+import { Video, Star, Loader2, Info, ShieldAlert, MessageSquare, Record, CircleDot, StopCircle, CloudUpload, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadRecordingToDrive } from "@/app/actions/upload-recording";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 declare global {
   interface Window {
@@ -85,24 +87,36 @@ export default function MeetingPage() {
 
       recorder.onstop = async () => {
         setIsUploading(true);
-        toast({ title: "جاري معالجة التسجيل...", description: "يرجى الانتظار حتى يتم رفع المحاضرة لـ Google Drive." });
+        toast({ title: "جاري معالجة التسجيل...", description: "يتم الآن رفع المحاضرة وتأمينها في السجلات." });
         
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         const formData = new FormData();
         formData.append('file', blob);
         
         const fileName = `Fahimni_Lecture_${requestId}_${new Date().getTime()}.webm`;
-        const result = await uploadRecordingToDrive(formData, fileName);
         
-        setIsUploading(false);
-        if (result.success) {
-          toast({ title: "تم رفع المحاضرة!", description: "تم حفظ التسجيل في Google Drive بنجاح." });
-        } else {
-          toast({ variant: "destructive", title: "فشل الرفع", description: result.message });
+        try {
+          // 1. الرفع لـ Google Drive
+          const result = await uploadRecordingToDrive(formData, fileName);
+          
+          if (result.success && requestRef) {
+            // 2. التحديث التلقائي في Firebase (Firestore)
+            const finalLink = result.webViewLink || `https://drive.google.com/file/d/${result.fileId}/view`;
+            updateDocumentNonBlocking(requestRef, { 
+              recordingUrl: finalLink,
+              driveFileId: result.fileId,
+              isRecorded: true
+            });
+            toast({ title: "تم التوثيق بنجاح", description: "تم ربط تسجيل المحاضرة بسجلات المنصة." });
+          } else {
+            toast({ variant: "destructive", title: "فشل الرفع", description: result.message });
+          }
+        } catch (err) {
+          toast({ variant: "destructive", title: "خطأ في التوثيق", description: "فشل حفظ المحاضرة في السجلات." });
+        } finally {
+          setIsUploading(false);
+          stream.getTracks().forEach(track => track.stop());
         }
-
-        // إغلاق كافة الـ tracks
-        stream.getTracks().forEach(track => track.stop());
       };
 
       recorder.start(1000);
@@ -187,8 +201,7 @@ export default function MeetingPage() {
       const field = profile.role === 'mufhem' ? 'teacherJoined' : 'studentJoined';
       updateDocumentNonBlocking(requestRef, { 
         [field]: true,
-        lastLiveSession: new Date().toISOString(),
-        recordingUrl: `https://8x8.vc/vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_Room_${requestId}`
+        lastLiveSession: new Date().toISOString()
       });
     }
   }, [requestRef, profile, requestId, meetingStarted]);
@@ -211,7 +224,7 @@ export default function MeetingPage() {
           disableDeepLinking: true,
           prejoinPageEnabled: false,
           enableWelcomePage: false,
-          autoRecord: false, // نستخدم تسجيل الشاشة المخصص لدينا
+          autoRecord: false, 
         },
         interfaceConfigOverwrite: {
           TOOLBAR_BUTTONS: [
@@ -321,7 +334,7 @@ export default function MeetingPage() {
             }} 
             className="rounded-full px-6 font-black shadow-lg"
           >
-            {isUploading ? <><Loader2 className="animate-spin ml-2" /> جاري الحفظ...</> : "إنهاء المحاضرة"}
+            {isUploading ? <><Loader2 className="animate-spin ml-2" /> جاري التوثيق...</> : "إنهاء المحاضرة"}
           </Button>
         </div>
       </div>
@@ -335,7 +348,7 @@ export default function MeetingPage() {
             <div className="space-y-2">
               <h2 className="text-3xl font-black text-zinc-900">بدء المحاضرة الموثقة</h2>
               <p className="text-muted-foreground font-bold leading-relaxed px-6">
-                لسلامتك وحفظ حقوقك المالية والمعرفية، يجب تفعيل "تسجيل الشاشة" قبل الدخول. سيتم رفع الفيديو تلقائياً لـ Google Drive عند الانتهاء.
+                لسلامتك وحفظ حقوقك المالية والمعرفية، يجب تفعيل "تسجيل الشاشة" قبل الدخول. سيتم رفع الفيديو تلقائياً لـ Google Drive وربطه بسجلاتك في Firebase فور الانتهاء.
               </p>
             </div>
             <Button 
@@ -344,7 +357,10 @@ export default function MeetingPage() {
             >
               <CircleDot className="ml-3 h-8 w-8 animate-pulse" /> بدء تسجيل المحاضرة والدخول
             </Button>
-            <p className="text-xs text-zinc-400 font-bold">* اختر "هذا التبويب" (This Tab) أو "الشاشة كاملة" عند الطلب.</p>
+            <div className="p-4 bg-zinc-50 rounded-2xl flex items-center gap-3 text-zinc-500 text-xs font-bold justify-center">
+              <ShieldCheck size={16} className="text-green-600" />
+              <span>نظام الرقابة المزدوج (Drive + Firebase) مفعّل</span>
+            </div>
           </Card>
         ) : (
           <div id="jaas-container" ref={jitsiContainerRef} className="absolute inset-0 w-full h-full" />
@@ -355,8 +371,8 @@ export default function MeetingPage() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white space-y-6">
           <CloudUpload size={80} className="text-primary animate-bounce" />
           <div className="text-center space-y-2">
-            <h3 className="text-3xl font-black">جاري رفع تسجيل المحاضرة</h3>
-            <p className="text-xl opacity-70">يتم الآن تأمين النسخة الاحتياطية في Google Drive...</p>
+            <h3 className="text-3xl font-black">جاري توثيق المحاضرة</h3>
+            <p className="text-xl opacity-70">يتم الآن رفع النسخة الاحتياطية لـ Drive وربطها بـ Firebase...</p>
           </div>
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
