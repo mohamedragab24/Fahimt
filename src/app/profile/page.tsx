@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from "@/firebase";
 import { doc, collection, addDoc, query, where, orderBy, deleteDoc } from "firebase/firestore";
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Textarea } from "@/components/ui/textarea";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
@@ -46,6 +47,12 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useDoc(userRef);
 
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
+  }, [firestore]);
+  const { data: allCategories } = useCollection(categoriesQuery);
+
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, "portfolio"), where("mufhemId", "==", user.uid), orderBy("createdAt", "desc"));
@@ -59,6 +66,7 @@ export default function ProfilePage() {
     birthDate: "",
     profilePictureUrl: "",
     specialization: "",
+    specializationSub: "",
     bio: ""
   });
 
@@ -70,6 +78,7 @@ export default function ProfilePage() {
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
         profilePictureUrl: profile.profilePictureUrl || "",
         specialization: profile.specialization || "",
+        specializationSub: profile.specializationSub || "",
         bio: profile.bio || ""
       });
     }
@@ -127,9 +136,10 @@ export default function ProfilePage() {
           title: "عمل جديد",
           mediaUrl: base64,
           mediaType: type,
+          status: "pending_approval",
           createdAt: new Date().toISOString()
         });
-        toast({ title: "تمت إضافة العمل", description: "سيظهر العمل في ملفك الشخصي للطلاب." });
+        toast({ title: "تمت إضافة العمل", description: "سيظهر العمل في ملفك الشخصي فور مراجعته." });
       };
       reader.readAsDataURL(file);
     }
@@ -149,6 +159,7 @@ export default function ProfilePage() {
       birthDate: formData.birthDate,
       profilePictureUrl: formData.profilePictureUrl,
       specialization: formData.specialization,
+      specializationSub: formData.specializationSub,
       bio: formData.bio
     });
     toast({ title: "تم التحديث", description: "تم حفظ التغييرات بنجاح." });
@@ -178,6 +189,10 @@ export default function ProfilePage() {
   if (!profile) return <div className="p-10 text-center font-bold">يرجى تسجيل الدخول لعرض الملف الشخصي.</div>;
 
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
+  
+  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const currentMainCatId = allCategories?.find(c => c.name === formData.specialization)?.id;
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === currentMainCatId) || [];
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
@@ -223,17 +238,36 @@ export default function ProfilePage() {
               <Label className="font-black text-lg">رقم الهاتف (واتساب)</Label>
               <Input value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
             </div>
+            
             {profile.role === 'mufhem' && (
-              <div className="md:col-span-2 space-y-3">
-                <Label className="font-black text-lg">التخصص (Portfolio)</Label>
-                <Input placeholder="مثال: رياضيات ثانوي، لغات، برمجة..." value={formData.specialization} onChange={(e)=>setFormData({...formData, specialization: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
-              </div>
-            )}
-            {profile.role === 'mufhem' && (
-              <div className="md:col-span-2 space-y-3">
-                <Label className="font-black text-lg">نبذة تعريفية للطلاب</Label>
-                <Textarea value={formData.bio} onChange={(e)=>setFormData({...formData, bio: e.target.value})} className="h-32 rounded-xl border-2 p-4 text-lg font-medium" />
-              </div>
+              <>
+                <div className="space-y-3">
+                  <Label className="font-black text-lg flex items-center gap-2">القسم الرئيسي <Layers size={16} className="text-primary"/></Label>
+                  <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v, specializationSub: ""})}>
+                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold">
+                      <SelectValue placeholder="اختر القسم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label className="font-black text-lg flex items-center gap-2">التخصص الدقيق <GraduationCap size={16} className="text-accent"/></Label>
+                  <Select value={formData.specializationSub} onValueChange={(v) => setFormData({...formData, specializationSub: v})}>
+                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold">
+                      <SelectValue placeholder="اختر التخصص" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2 space-y-3">
+                  <Label className="font-black text-lg">نبذة تعريفية للطلاب</Label>
+                  <Textarea value={formData.bio} onChange={(e)=>setFormData({...formData, bio: e.target.value})} className="h-32 rounded-xl border-2 p-4 text-lg font-medium" />
+                </div>
+              </>
             )}
           </div>
 
@@ -265,6 +299,11 @@ export default function ProfilePage() {
                 ) : (
                   <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Work" />
                 )}
+                <div className="absolute top-2 right-2">
+                  <Badge className={item.status === 'approved' ? 'bg-green-500' : 'bg-orange-500'}>
+                    {item.status === 'approved' ? 'منشور' : 'قيد المراجعة'}
+                  </Badge>
+                </div>
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <Button variant="destructive" size="icon" onClick={() => handleDeletePortfolio(item.id)} className="h-12 w-12 rounded-xl"><Trash2 /></Button>
                 </div>

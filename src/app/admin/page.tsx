@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,7 +15,9 @@ import {
   Activity,
   ArrowUpRight,
   Wallet,
-  Users2
+  Users2,
+  Star,
+  Download
 } from "lucide-react";
 import { 
   BarChart, 
@@ -51,7 +54,9 @@ export default function AdminDashboard() {
     pendingVerifications: 0,
     totalVolume: 0,
     platformRevenue: 0,
-    totalUsers: 0
+    totalUsers: 0,
+    pendingPayouts: 0,
+    avgRating: 5.0
   });
 
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
@@ -63,7 +68,7 @@ export default function AdminDashboard() {
   }, [user, isUserLoading, router]);
 
   useEffect(() => {
-    const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+    const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
     if (!isProfileLoading && profile && !profile.isAdmin && !isMasterAdmin) {
       router.push("/");
     }
@@ -78,18 +83,28 @@ export default function AdminDashboard() {
         const verQuery = query(collection(firestore, "verificationRequests"), where("status", "==", "pending"));
         const completedRequestsQuery = query(collection(firestore, "istifhams"), where("status", "==", "completed"));
         const lastRequestsQuery = query(collection(firestore, "istifhams"), orderBy("createdAt", "desc"), limit(5));
+        const payoutQuery = query(collection(firestore, "payoutRequests"), where("status", "==", "pending"));
 
-        const [mufSnap, musSnap, verSnap, completedSnap, lastSnap] = await Promise.all([
+        const [mufSnap, musSnap, verSnap, completedSnap, lastSnap, payoutSnap] = await Promise.all([
           getDocs(mufQuery),
           getDocs(musQuery),
           getDocs(verQuery),
           getDocs(completedRequestsQuery),
-          getDocs(lastRequestsQuery)
+          getDocs(lastRequestsQuery),
+          getDocs(payoutQuery)
         ]);
 
         let totalVolume = 0;
+        let totalRatings = 0;
+        let ratedCount = 0;
+
         completedSnap.forEach(doc => {
-          totalVolume += (doc.data().amount || 0);
+          const d = doc.data();
+          totalVolume += (d.amount || 0);
+          if (d.rating) {
+            totalRatings += d.rating;
+            ratedCount++;
+          }
         });
 
         const platformRevenue = totalVolume * 0.2;
@@ -100,7 +115,9 @@ export default function AdminDashboard() {
           pendingVerifications: verSnap.size,
           totalVolume: totalVolume,
           platformRevenue: platformRevenue,
-          totalUsers: mufSnap.size + musSnap.size
+          totalUsers: mufSnap.size + musSnap.size,
+          pendingPayouts: payoutSnap.size,
+          avgRating: ratedCount > 0 ? totalRatings / ratedCount : 5.0
         });
 
         setRecentRequests(lastSnap.docs.map(doc => ({ ...doc.data(), id: doc.id })));
@@ -114,7 +131,7 @@ export default function AdminDashboard() {
 
   if (isUserLoading || isProfileLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري التحقق من صلاحيات المسؤول...</div>;
   
-  const isMasterAdmin = user?.email === "mohamed76y@gmail.com";
+  const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   if (!profile?.isAdmin && !isMasterAdmin) return null;
 
   const chartData = [
@@ -126,11 +143,11 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-r-8 border-primary pr-6">
-        <div className="space-y-1">
+        <div className="space-y-1 text-right">
           <h1 className="text-4xl font-black font-headline">نظرة عامة على النظام</h1>
           <p className="text-muted-foreground text-lg">تحليل شامل للإحصائيات، المستخدمين، والإيرادات المالية الحقيقية.</p>
         </div>
-        <div className="flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-2xl">
+        <div className="flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-2xl shadow-sm border border-primary/10">
           <Activity className="text-primary animate-pulse" />
           <span className="font-bold text-primary">النظام يعمل بكفاءة عالية</span>
         </div>
@@ -138,16 +155,16 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="إجمالي المستخدمين" value={stats.totalUsers} icon={Users2} color="bg-blue-500" />
-        <StatCard title="طلبات توثيق" value={stats.pendingVerifications} icon={ShieldCheck} color="bg-orange-500" />
-        <StatCard title="إجمالي المبالغ المتداولة" value={`${stats.totalVolume.toLocaleString()} ج.م`} icon={Wallet} color="bg-purple-600" />
+        <StatCard title="طلبات سحب معلقة" value={stats.pendingPayouts} icon={Download} color="bg-orange-500" />
+        <StatCard title="معدل تقييم المنصة" value={stats.avgRating.toFixed(1)} icon={Star} color="bg-yellow-500" />
         <StatCard title="صافي إيرادات التطبيق" value={`${stats.platformRevenue.toLocaleString()} ج.م`} icon={BadgeCent} color="bg-green-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <Card className="shadow-2xl rounded-[2.5rem] border-2 p-6 bg-white">
           <CardHeader>
-            <CardTitle className="font-black text-2xl flex items-center gap-3">
-              <TrendingUp className="text-primary" /> توزيع الإيرادات والسيولة
+            <CardTitle className="font-black text-2xl flex items-center gap-3 justify-end">
+              توزيع الإيرادات والسيولة <TrendingUp className="text-primary" />
             </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
@@ -156,12 +173,12 @@ export default function AdminDashboard() {
                 <BarChart data={chartData} layout="vertical" margin={{ right: 40, left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} strokeOpacity={0.1} />
                   <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={100} tick={{ fontWeight: 'bold' }} />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontWeight: 'bold' }} orientation="right" />
                   <Tooltip 
                     contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
                     formatter={(value: any) => [`${value.toLocaleString()} ج.م`, 'المبلغ']}
                   />
-                  <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={40}>
+                  <Bar dataKey="value" radius={[10, 0, 0, 10]} barSize={40}>
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -174,11 +191,11 @@ export default function AdminDashboard() {
 
         <Card className="shadow-2xl rounded-[2.5rem] border-2 overflow-hidden bg-white">
           <CardHeader className="bg-muted/30 border-b p-6">
-            <CardTitle className="font-black text-xl flex items-center gap-3">
-              <Clock className="text-primary" /> آخر الاستفهامات المنفذة
+            <CardTitle className="font-black text-xl flex items-center gap-3 justify-end">
+              آخر الاستفهامات المنفذة <Clock className="text-primary" />
             </CardTitle>
           </CardHeader>
-          <Table>
+          <Table dir="rtl">
             <TableHeader className="bg-muted/10 h-12">
               <TableRow>
                 <TableHead className="text-right font-bold">الاستفهام</TableHead>
@@ -216,7 +233,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="space-y-6">
-        <h3 className="text-2xl font-black border-r-8 border-accent pr-6">توزيع القوى العاملة والسيولة</h3>
+        <h3 className="text-2xl font-black border-r-8 border-accent pr-6 text-right">توزيع القوى العاملة والسيولة</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card className="rounded-[2rem] border-2 shadow-lg p-8 bg-zinc-900 text-white">
             <div className="flex justify-between items-center mb-6">
@@ -225,16 +242,16 @@ export default function AdminDashboard() {
               </div>
               <ArrowUpRight className="text-green-500 h-8 w-8" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 text-right">
               <p className="text-zinc-400 font-bold">إجمالي سيولة المنصة</p>
               <h2 className="text-5xl font-black tabular-nums">{stats.totalVolume.toLocaleString()} <span className="text-lg">ج.م</span></h2>
             </div>
             <div className="mt-8 pt-8 border-t border-white/10 grid grid-cols-2 gap-4">
-              <div>
+              <div className="text-right">
                 <p className="text-xs text-zinc-500">منصة (20%)</p>
                 <p className="text-xl font-bold">{stats.platformRevenue.toLocaleString()}</p>
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-xs text-zinc-500">مفهمين (80%)</p>
                 <p className="text-xl font-bold">{(stats.totalVolume - stats.platformRevenue).toLocaleString()}</p>
               </div>
@@ -242,13 +259,13 @@ export default function AdminDashboard() {
           </Card>
 
           <Card className="rounded-[2rem] border-2 shadow-lg p-8 bg-white flex flex-col justify-center gap-6">
-            <div className="flex items-center gap-6">
-              <div className="bg-blue-100 p-4 rounded-2xl">
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-              <div>
+            <div className="flex items-center gap-6 justify-end">
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground font-bold">توزع المستخدمين</p>
                 <p className="text-2xl font-black">المفهمين: {stats.mufahems} | المستفهمين: {stats.mustafhems}</p>
+              </div>
+              <div className="bg-blue-100 p-4 rounded-2xl">
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
             </div>
             <div className="h-4 bg-muted rounded-full overflow-hidden flex">
@@ -262,7 +279,7 @@ export default function AdminDashboard() {
               ></div>
             </div>
             <p className="text-xs text-center font-bold text-muted-foreground">
-              نسبة المفهمين للمستفهمين هي {Math.round((stats.mufahems / (stats.mustafhems || 1)) * 100)}%
+              نسبة المفهمين للمستفهمين هي {stats.mustafhems > 0 ? Math.round((stats.mufahems / stats.mustafhems) * 100) : 0}%
             </p>
           </Card>
         </div>
@@ -274,13 +291,13 @@ export default function AdminDashboard() {
 function StatCard({ title, value, icon: Icon, color }: any) {
   return (
     <Card className="shadow-lg border-2 border-transparent hover:border-primary/20 transition-all rounded-[2rem] overflow-hidden bg-white">
-      <CardContent className="p-8 flex items-center gap-6">
-        <div className={`${color} p-4 rounded-2xl shadow-lg shadow-black/10`}>
-          <Icon className="text-white h-8 w-8" />
-        </div>
-        <div className="space-y-1">
+      <CardContent className="p-8 flex items-center gap-6 justify-end">
+        <div className="space-y-1 text-right">
           <p className="text-sm font-bold text-muted-foreground">{title}</p>
           <h3 className="text-2xl md:text-3xl font-black tabular-nums">{value}</h3>
+        </div>
+        <div className={`${color} p-4 rounded-2xl shadow-lg shadow-black/10`}>
+          <Icon className="text-white h-8 w-8" />
         </div>
       </CardContent>
     </Card>

@@ -24,14 +24,10 @@ import {
   Clock,
   ChevronRight,
   Hash,
-  Paperclip
+  Paperclip,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -111,7 +107,7 @@ export default function SupportPage() {
 
   const handleSendMessage = async (attachmentBase64?: string) => {
     if (!chatMessage.trim() && !attachmentBase64) return;
-    if (!firestore || !user || !selectedTicket) return;
+    if (!firestore || !user || !selectedTicket || selectedTicket.status === 'closed') return;
     try {
       await addDoc(collection(firestore, "supportTickets", selectedTicket.id, "messages"), {
         senderId: user.uid,
@@ -128,6 +124,17 @@ export default function SupportPage() {
       setChatMessage("");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ في الإرسال" });
+    }
+  };
+
+  const closeTicket = async () => {
+    if (!firestore || !selectedTicket) return;
+    try {
+      await updateDoc(doc(firestore, "supportTickets", selectedTicket.id), { status: 'closed' });
+      toast({ title: "تم إغلاق التذكرة بنجاح" });
+      setSelectedTicket(null);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ" });
     }
   };
 
@@ -222,12 +229,19 @@ export default function SupportPage() {
                 <Button variant="ghost" onClick={() => setSelectedTicket(null)}><ChevronRight className="ml-2" /> العودة</Button>
                 <div className="text-right">
                   <h4 className="font-black text-lg">{selectedTicket.subject}</h4>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Hash size={12}/> {selectedTicket.id}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Hash size={12}/> {selectedTicket.id.slice(0,8)}</p>
                 </div>
               </div>
-              <Badge className={selectedTicket.status === 'open' ? 'bg-orange-100 text-orange-600' : selectedTicket.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-blue-100 text-blue-600'}>
-                {selectedTicket.status === 'open' ? 'بانتظار الرد' : selectedTicket.status === 'suspended' ? 'معلقة' : 'تم الرد'}
-              </Badge>
+              <div className="flex items-center gap-3">
+                {selectedTicket.status !== 'closed' && (
+                  <Button variant="outline" size="sm" onClick={closeTicket} className="rounded-xl font-bold border-green-500 text-green-600 hover:bg-green-50">
+                    <CheckCircle2 size={16} className="ml-1" /> تم الحل
+                  </Button>
+                )}
+                <Badge className={selectedTicket.status === 'open' ? 'bg-orange-100 text-orange-600' : selectedTicket.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-green-100 text-green-600'}>
+                  {selectedTicket.status === 'open' ? 'بانتظار الرد' : selectedTicket.status === 'suspended' ? 'معلقة' : 'تم الرد/مغلقة'}
+                </Badge>
+              </div>
             </div>
             <ScrollArea className="h-[400px] p-6 bg-zinc-50/50">
               <div className="space-y-4">
@@ -247,11 +261,11 @@ export default function SupportPage() {
             <div className="p-6 border-t bg-white">
               <div className="flex gap-2">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl">
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl" disabled={selectedTicket.status === 'closed'}>
                   <Paperclip size={24} />
                 </Button>
-                <Input placeholder="اكتب رسالتك هنا..." className="h-14 rounded-xl border-2" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
-                <Button onClick={() => handleSendMessage()} className="h-14 px-6 rounded-xl"><Send size={20}/></Button>
+                <Input placeholder={selectedTicket.status === 'closed' ? "هذه التذكرة مغلقة" : "اكتب ردك هنا..."} className="h-14 rounded-xl border-2" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} disabled={selectedTicket.status === 'closed'} />
+                <Button onClick={() => handleSendMessage()} className="h-14 px-6 rounded-xl" disabled={selectedTicket.status === 'closed'}><Send size={20}/></Button>
               </div>
             </div>
           </Card>
@@ -260,7 +274,7 @@ export default function SupportPage() {
             {tickets?.map((t) => (
               <Card key={t.id} className="shadow-lg border-2 rounded-[2rem] overflow-hidden bg-white hover:shadow-xl transition-all cursor-pointer" onClick={() => setSelectedTicket(t)}>
                 <CardHeader className="bg-muted/10 p-6 flex flex-row justify-between items-center">
-                  <Badge className={`px-4 py-1 rounded-xl font-bold ${t.status === 'open' ? 'bg-orange-100 text-orange-600' : t.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <Badge className={`px-4 py-1 rounded-xl font-bold ${t.status === 'open' ? 'bg-orange-100 text-orange-600' : t.status === 'suspended' ? 'bg-zinc-100 text-zinc-600' : 'bg-green-100 text-green-600'}`}>
                     {t.status === 'open' ? 'بانتظار الرد' : t.status === 'suspended' ? 'معلقة' : 'تم الرد'}
                   </Badge>
                   <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Hash size={10}/> {t.id.slice(0, 8)}</span>
