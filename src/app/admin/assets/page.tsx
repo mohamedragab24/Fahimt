@@ -42,7 +42,7 @@ export default function AdminAssets() {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          toast({ title: "تم التحديث!", description: "تم تغيير الصورة بنجاح وستظهر في كافة المتصفحات الآن." });
+          toast({ title: "تم التحديث!", description: "تم تغيير الصورة بنجاح وستظهر في كافة الأنظمة الآن." });
         } catch (err) {
           console.error(err);
           toast({ variant: "destructive", title: "خطأ", description: "فشل التحديث، تأكد من صلاحياتك." });
