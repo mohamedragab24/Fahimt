@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) مع نظام تتبع أخطاء.
+ * يستخدم FormData للبريد لضمان استقرار الخدمة.
  */
 
 import { ai } from '@/ai/genkit';
@@ -35,23 +36,19 @@ const otpFlow = ai.defineFlow(
 
     if (input.method === 'email') {
       try {
-        const response = await fetch(`https://${baseUrl}/email/4/messages`, {
+        const formData = new FormData();
+        formData.append('from', 'resraa355@selfserve.worlds-connected.co');
+        formData.append('to', input.recipient.trim().toLowerCase());
+        formData.append('subject', 'رمز التحقق - منصة فهمني');
+        formData.append('text', `مرحباً، رمز التحقق الخاص بك في منصة فهمني هو: ${code}`);
+
+        const response = await fetch(`https://${baseUrl}/email/3/send`, {
           method: 'POST',
           headers: {
             'Authorization': apiKey,
-            'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          body: JSON.stringify({
-            "messages": [
-              {
-                "from": "resraa355@selfserve.worlds-connected.co",
-                "destinations": [{ "to": input.recipient.trim().toLowerCase() }],
-                "subject": "رمز التحقق - منصة فهمني",
-                "text": `مرحباً، رمز التحقق الخاص بك في منصة فهمني هو: ${code}`
-              }
-            ]
-          })
+          body: formData
         });
 
         const data = await response.json();

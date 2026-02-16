@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview تدفق إرسال الإشعارات والتذكيرات المطور.
- * يوفر تقارير أخطاء تفصيلية للمسؤول عند فشل الإرسال.
+ * يستخدم FormData للبريد الإلكتروني لضمان التوافق مع Infobip API.
  */
 
 import { ai } from '@/ai/genkit';
@@ -30,21 +30,19 @@ const messagingFlow = ai.defineFlow(
 
     if (input.method === 'email') {
       try {
-        const res = await fetch(`https://${baseUrl}/email/4/messages`, {
+        const formData = new FormData();
+        formData.append('from', 'resraa355@selfserve.worlds-connected.co');
+        formData.append('to', input.recipient.trim().toLowerCase());
+        formData.append('subject', input.subject || "تنبيه من منصة فهمني");
+        formData.append('text', input.body);
+
+        const res = await fetch(`https://${baseUrl}/email/3/send`, {
           method: 'POST',
           headers: { 
-            'Authorization': apiKey, 
-            'Content-Type': 'application/json',
+            'Authorization': apiKey,
             'Accept': 'application/json'
           },
-          body: JSON.stringify({
-            "messages": [{
-              "from": "resraa355@selfserve.worlds-connected.co",
-              "destinations": [{ "to": input.recipient.trim().toLowerCase() }],
-              "subject": input.subject || "تنبيه من منصة فهمني",
-              "text": input.body
-            }]
-          })
+          body: formData
         });
         
         let data;
