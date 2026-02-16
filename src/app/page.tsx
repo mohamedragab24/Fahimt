@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,12 +21,13 @@ import {
   Clock,
   Timer,
   Video,
-  Calendar
+  Calendar,
+  BellRing
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc, getDocs, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { sendNotification } from "@/ai/flows/messaging-flow";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -190,7 +191,6 @@ function LandingPage({ router, settings }: any) {
 
 function MustafhemView({ profile, settings }: any) {
   const firestore = useFirestore();
-  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
     title: "", 
@@ -411,11 +411,37 @@ function MufhemView({ profile, settings }: any) {
     fetchStats();
   }, [firestore, profile.id]);
 
-  const handleAccept = (ist: any) => {
+  const handleAccept = async (ist: any) => {
     if (!firestore) return;
-    updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { status: "accepted", mufhemId: profile.id, mufhemName: profile.fullName });
-    toast({ title: "تم قبول الطلب" });
-    router.push(`/requests/${ist.id}`);
+    try {
+      // 1. تحديث حالة الطلب في Firestore
+      updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { 
+        status: "accepted", 
+        mufhemId: profile.id, 
+        mufhemName: profile.fullName 
+      });
+
+      // 2. جلب بيانات المستفهم لإرسال "التذكير"
+      const mustafhemSnap = await getDoc(doc(firestore, "users", ist.mustafhemId));
+      if (mustafhemSnap.exists()) {
+        const mData = mustafhemSnap.data();
+        const reminderBody = `أهلاً ${mData.fullName}، يسعدنا إبلاغك بأن الخبير "${profile.fullName}" قد قبل استفهامك: "${ist.title}". يمكنك الدخول للمنصة الآن لبدء المحاضرة.`;
+        
+        // إرسال تذكير واتساب
+        if (mData.phoneNumber) {
+          sendNotification({ recipient: mData.phoneNumber, method: 'whatsapp', body: reminderBody });
+        }
+        // إرسال تذكير بريد
+        if (mData.email) {
+          sendNotification({ recipient: mData.email, method: 'email', subject: 'تذكير: تم قبول استفهامك!', body: reminderBody });
+        }
+      }
+
+      toast({ title: "تم قبول الطلب وإرسال تذكير للمستفهم" });
+      router.push(`/requests/${ist.id}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في معالجة الطلب" });
+    }
   };
 
   return (
@@ -447,7 +473,10 @@ function MufhemView({ profile, settings }: any) {
       </div>
 
       <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b"><h3 className="text-xl font-black">الاستفهامات المتاحة</h3></div>
+        <div className="p-6 border-b flex items-center justify-between">
+          <h3 className="text-xl font-black">الاستفهامات المتاحة</h3>
+          <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-2"><BellRing size={14}/> تذكير الطلبات مفعل</Badge>
+        </div>
         <div className="divide-y">
           {isLoading ? <div className="p-20 text-center animate-pulse">جاري التحميل...</div> : istifhams?.map(ist => (
             <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>

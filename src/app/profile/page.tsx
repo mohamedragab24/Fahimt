@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle, Layers } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle, Layers, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from "@/firebase";
 import { doc, collection, addDoc, query, where, orderBy, deleteDoc } from "firebase/firestore";
@@ -28,11 +27,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+  
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [otpMethod, setOtpMethod] = useState<'email' | 'whatsapp'>('email');
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -84,20 +84,26 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  const handleSendOTP = async () => {
-    if (!user?.email) return;
+  const handleSendOTP = async (method: 'email' | 'whatsapp') => {
+    const recipient = method === 'email' ? user?.email : formData.phone;
+    if (!recipient) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى التأكد من البريد أو الهاتف." });
+      return;
+    }
+    
     setIsSendingOtp(true);
+    setOtpMethod(method);
     try {
-      const result = await generateAndSendOTP({ recipient: user.email, method: 'email' });
+      const result = await generateAndSendOTP({ recipient, method });
       if (result.success) {
         setGeneratedCode(result.code);
         setShowOtpDialog(true);
-        toast({ title: "تم إرسال الرمز", description: "يرجى التحقق من بريدك الإلكتروني." });
+        toast({ title: "تم إرسال الرمز", description: `تحقق من ${method === 'email' ? 'بريدك' : 'الواتساب'}.` });
       } else {
-        toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الرمز." });
+        toast({ variant: "destructive", title: "خطأ", description: result.message });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
+      toast({ variant: "destructive", title: "خطأ فني" });
     } finally {
       setIsSendingOtp(false);
     }
@@ -105,9 +111,11 @@ export default function ProfilePage() {
 
   const handleVerifyOTP = () => {
     if (otpCode === generatedCode && userRef) {
-      updateDocumentNonBlocking(userRef, { emailVerified: true });
+      const field = otpMethod === 'email' ? 'emailVerified' : 'whatsappVerified';
+      updateDocumentNonBlocking(userRef, { [field]: true });
       setShowOtpDialog(false);
-      toast({ title: "تم التوثيق!", description: "تم التحقق من بريدك الإلكتروني بنجاح." });
+      setOtpCode("");
+      toast({ title: "تم التوثيق بنجاح!" });
     } else {
       toast({ variant: "destructive", title: "رمز خاطئ" });
     }
@@ -124,33 +132,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddPortfolio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && firestore && user) {
-      const type = file.type.startsWith('video') ? 'video' : 'image';
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        addDocumentNonBlocking(collection(firestore, "portfolio"), {
-          mufhemId: user.uid,
-          title: "عمل جديد",
-          mediaUrl: base64,
-          mediaType: type,
-          status: "pending_approval",
-          createdAt: new Date().toISOString()
-        });
-        toast({ title: "تمت إضافة العمل", description: "سيظهر العمل في ملفك الشخصي فور مراجعته." });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDeletePortfolio = (id: string) => {
-    if (!firestore) return;
-    deleteDocumentNonBlocking(doc(firestore, "portfolio", id));
-    toast({ title: "تم الحذف" });
-  };
-
   const handleSave = () => {
     if (!userRef) return;
     updateDocumentNonBlocking(userRef, {
@@ -165,31 +146,10 @@ export default function ProfilePage() {
     toast({ title: "تم التحديث", description: "تم حفظ التغييرات بنجاح." });
   };
 
-  const handleRequestVerification = async () => {
-    if (!firestore || !user || !profile) return;
-    setIsVerifying(true);
-    try {
-      await addDoc(collection(firestore, "verificationRequests"), {
-        userId: user.uid,
-        userName: profile.fullName,
-        userEmail: profile.email,
-        profilePictureUrl: profile.profilePictureUrl,
-        status: "pending",
-        timestamp: new Date().toISOString()
-      });
-      toast({ title: "تم إرسال الطلب", description: "سيتم مراجعة بياناتك لتوثيق الحساب." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
   if (isLoading) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل البيانات...</div>;
   if (!profile) return <div className="p-10 text-center font-bold">يرجى تسجيل الدخول لعرض الملف الشخصي.</div>;
 
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
-  
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const currentMainCatId = allCategories?.find(c => c.name === formData.specialization)?.id;
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === currentMainCatId) || [];
@@ -199,7 +159,7 @@ export default function ProfilePage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-r-8 border-primary pr-6">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tight">الملف الشخصي</h1>
-          <p className="text-muted-foreground text-lg">إدارة بياناتك {profile.role === 'mufhem' ? 'ومهنيتك التعليمية' : 'الخاصة'}.</p>
+          <p className="text-muted-foreground text-lg">إدارة بياناتك والتحقق من وسائل التواصل.</p>
         </div>
         <Button variant="outline" onClick={() => signOut(auth).then(()=>router.push("/login"))} className="rounded-2xl h-14 border-2 font-bold px-8">
           <LogOut className="ml-2" /> خروج
@@ -211,7 +171,7 @@ export default function ProfilePage() {
         <CardContent className="px-8 md:px-16 pb-16 relative">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-8 -mt-20 mb-12">
             <div className="relative group">
-              <Avatar className="h-44 w-44 border-8 border-white shadow-2xl transition-transform hover:scale-105">
+              <Avatar className="h-44 w-44 border-8 border-white shadow-2xl">
                 <AvatarImage src={formData.profilePictureUrl} />
                 <AvatarFallback className="text-4xl font-black bg-primary/10 text-primary">{formData.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
@@ -220,11 +180,12 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 space-y-3 text-center md:text-right">
               <h2 className="text-3xl md:text-4xl font-black flex items-center justify-center md:justify-start gap-3">
-                {formData.fullName} {profile.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-8 w-8" data-ai-hint="verified badge" />}
+                {formData.fullName} {profile.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-8 w-8" />}
               </h2>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <Badge className="px-4 py-1 text-md font-black">{profile.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}</Badge>
-                {profile.emailVerified && <Badge className="bg-green-100 text-green-600 border-none">بريد موثق</Badge>}
+                {profile.emailVerified && <Badge className="bg-green-100 text-green-600 border-none flex items-center gap-1"><Check size={12}/> بريد موثق</Badge>}
+                {profile.whatsappVerified && <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-1"><MessageSquare size={12}/> واتساب موثق</Badge>}
               </div>
             </div>
           </div>
@@ -236,31 +197,31 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-3">
               <Label className="font-black text-lg">رقم الهاتف (واتساب)</Label>
-              <Input value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
+              <div className="flex gap-2">
+                <Input value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="h-14 rounded-xl border-2 font-bold flex-1" />
+                {!profile.whatsappVerified && (
+                  <Button onClick={() => handleSendOTP('whatsapp')} disabled={isSendingOtp} variant="outline" className="h-14 rounded-xl border-2 font-black text-blue-600 border-blue-200 bg-blue-50">توثيق الرقم</Button>
+                )}
+              </div>
             </div>
             
+            <div className="space-y-3">
+              <Label className="font-black text-lg">البريد الإلكتروني</Label>
+              <div className="flex gap-2">
+                <Input value={user?.email || ""} disabled className="h-14 rounded-xl border-2 font-bold flex-1 opacity-60" />
+                {!profile.emailVerified && (
+                  <Button onClick={() => handleSendOTP('email')} disabled={isSendingOtp} variant="outline" className="h-14 rounded-xl border-2 font-black text-green-600 border-green-200 bg-green-50">توثيق البريد</Button>
+                )}
+              </div>
+            </div>
+
             {profile.role === 'mufhem' && (
               <>
                 <div className="space-y-3">
-                  <Label className="font-black text-lg flex items-center gap-2">القسم الرئيسي <Layers size={16} className="text-primary"/></Label>
+                  <Label className="font-black text-lg flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
                   <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v, specializationSub: ""})}>
-                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold">
-                      <SelectValue placeholder="اختر القسم" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3">
-                  <Label className="font-black text-lg flex items-center gap-2">التخصص الدقيق <GraduationCap size={16} className="text-accent"/></Label>
-                  <Select value={formData.specializationSub} onValueChange={(v) => setFormData({...formData, specializationSub: v})}>
-                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold">
-                      <SelectValue placeholder="اختر التخصص" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                    <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-3">
@@ -272,78 +233,21 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-12 flex justify-center md:justify-end">
-            <Button onClick={handleSave} className="h-16 px-12 rounded-2xl font-black text-xl shadow-xl hover:scale-105 transition-all"><Save className="ml-2" /> حفظ كافة التعديلات</Button>
+            <Button onClick={handleSave} className="h-16 px-12 rounded-2xl font-black text-xl shadow-xl"><Save className="ml-2" /> حفظ التعديلات</Button>
           </div>
         </CardContent>
       </Card>
 
-      {profile.role === 'mufhem' && (
-        <div className="space-y-8">
-          <div className="flex justify-between items-center">
-            <h3 className="text-3xl font-black border-r-8 border-accent pr-6">معرض أعمالك (صور وفيديو)</h3>
-            <Button onClick={() => portfolioInputRef.current?.click()} className="bg-accent h-14 rounded-xl font-bold">
-              <Plus className="ml-2" /> إضافة عمل جديد
-            </Button>
-            <input type="file" ref={portfolioInputRef} className="hidden" accept="image/*,video/*" onChange={handleAddPortfolio} />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {portfolioItems?.map(item => (
-              <Card key={item.id} className="group relative aspect-square rounded-3xl overflow-hidden shadow-lg border-2 hover:border-accent transition-all bg-black">
-                {item.mediaType === 'video' ? (
-                  <div className="w-full h-full relative">
-                    <video src={item.mediaUrl} className="w-full h-full object-cover" muted playsInline />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                      <PlayCircle className="text-white h-8 w-8" />
-                    </div>
-                  </div>
-                ) : (
-                  <img src={item.mediaUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Work" />
-                )}
-                <div className="absolute top-2 right-2">
-                  <Badge className={item.status === 'approved' ? 'bg-green-500' : 'bg-orange-500'}>
-                    {item.status === 'approved' ? 'منشور' : 'قيد المراجعة'}
-                  </Badge>
-                </div>
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Button variant="destructive" size="icon" onClick={() => handleDeletePortfolio(item.id)} className="h-12 w-12 rounded-xl"><Trash2 /></Button>
-                </div>
-              </Card>
-            ))}
-            {(!portfolioItems || portfolioItems.length === 0) && (
-              <div className="col-span-full py-16 text-center border-4 border-dashed rounded-[2rem] text-muted-foreground font-bold">
-                أضف أعمالك السابقة (صور أو فيديوهات) لزيادة ثقة الطلاب بك.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {profile.role === 'mufhem' && !profile.isVerified && (
-        <Card className="rounded-[2.5rem] border-2 border-dashed border-blue-200 bg-blue-50/50 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-4 rounded-3xl shadow-sm text-blue-600"><img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10" data-ai-hint="verified badge" /></div>
-            <div>
-              <h4 className="text-2xl font-black text-blue-900">طلب توثيق الحساب (شارة زرقاء)</h4>
-              <p className="text-blue-700 font-bold">احصل على ثقة الطالب المباشرة وزيادة في قبول استفهاماتك.</p>
-            </div>
-          </div>
-          <Button onClick={handleRequestVerification} disabled={isVerifying} className="bg-blue-600 h-16 px-10 rounded-2xl font-black text-lg shadow-lg">
-            {isVerifying ? "جاري الإرسال..." : "اطلب توثيق الآن"}
-          </Button>
-        </Card>
-      )}
-
       <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
-        <DialogContent className="rounded-[2rem]" dir="rtl">
+        <DialogContent className="rounded-[2.5rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-2xl font-black">تحقق من بريدك</DialogTitle>
-            <DialogDescription className="text-right">أدخل الرمز المكون من 6 أرقام الذي أرسلناه لبريدك الإلكتروني.</DialogDescription>
+            <DialogTitle className="text-right text-3xl font-black">رمز التحقق</DialogTitle>
+            <DialogDescription className="text-right font-bold">أدخل الرمز المكون من 6 أرقام لتأكيد {otpMethod === 'email' ? 'البريد' : 'الواتساب'}.</DialogDescription>
           </DialogHeader>
-          <div className="py-6 space-y-4">
-            <Label className="font-bold">رمز التحقق</Label>
-            <Input maxLength={6} className="h-16 text-3xl font-black tracking-[1em] text-center rounded-2xl" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
+          <div className="py-8 space-y-6">
+            <Input maxLength={6} className="h-20 text-5xl font-black tracking-[0.5em] text-center rounded-[2rem] border-4 border-primary/20" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
+            <Button onClick={handleVerifyOTP} className="w-full h-16 text-xl font-black rounded-2xl shadow-lg">تأكيد الرمز الآن</Button>
           </div>
-          <DialogFooter><Button onClick={handleVerifyOTP} className="w-full h-14 text-xl font-bold rounded-xl">تحقق الآن</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
