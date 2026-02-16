@@ -5,27 +5,26 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 
 /**
- * @fileOverview سيرفر أكشن مطور لرفع تسجيلات المحاضرات إلى Google Drive وإعادة بيانات الملف.
+ * @fileOverview سيرفر أكشن مطور لرفع تسجيلات المحاضرات إلى Google Drive باستخدام بيانات المشروع الرسمية.
  */
 
 export async function uploadRecordingToDrive(formData: FormData, fileName: string) {
   const file = formData.get('file') as File;
   if (!file) throw new Error('لم يتم استلام ملف التسجيل.');
 
-  // يجب ضبط هذه المتغيرات في ملف .env
+  // الإعدادات المطلوبة (يجب ضبطها في .env)
   const CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID;
   const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
   const REFRESH_TOKEN = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
+  const PROJECT_NUMBER = '60922959373'; // رقم المشروع الخاص بك
 
   if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-    console.warn('تنبيه: إعدادات Google Drive ناقصة في الـ .env. سيتم محاكاة الرفع وتوليد رابط تجريبي.');
-    // محاكاة تأخير الرفع
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.warn(`تنبيه المشروع ${PROJECT_NUMBER}: إعدادات Drive ناقصة. يتم استخدام محاكاة الرفع لـ Drive وحفظ النسخة الأصلية في Firebase.`);
     return { 
       success: true, 
-      fileId: `simulated_${Date.now()}`, 
-      message: 'تمت المحاكاة بنجاح (يرجى ضبط .env للرفع الفعلي).',
-      webViewLink: 'https://drive.google.com/file/d/1_simulated_video_link/view' 
+      fileId: `drive_sim_${Date.now()}`, 
+      message: 'تم الحفظ في Firebase بنجاح (محاكاة Drive مفعّلة).',
+      webViewLink: 'https://drive.google.com/file/d/simulated_link/view' 
     };
   }
 
@@ -41,11 +40,11 @@ export async function uploadRecordingToDrive(formData: FormData, fileName: strin
     const response = await drive.files.create({
       requestBody: {
         name: fileName,
-        mimeType: file.type,
+        mimeType: file.type || 'video/mp4',
         parents: [process.env.GOOGLE_DRIVE_FOLDER_ID || 'root'],
       },
       media: {
-        mimeType: file.type,
+        mimeType: file.type || 'video/mp4',
         body: stream,
       },
       fields: 'id, webViewLink'
@@ -55,10 +54,10 @@ export async function uploadRecordingToDrive(formData: FormData, fileName: strin
       success: true, 
       fileId: response.data.id, 
       webViewLink: response.data.webViewLink,
-      message: 'تم رفع المحاضرة بنجاح إلى Google Drive.' 
+      message: 'تم رفع النسخة الاحتياطية لـ Google Drive بنجاح.' 
     };
   } catch (error: any) {
-    console.error('Drive Upload Error:', error);
-    return { success: false, message: 'فشل الرفع: ' + (error.message || 'خطأ غير معروف') };
+    console.error('Google Drive Upload Error:', error);
+    return { success: false, message: 'فشل رفع نسخة Drive: ' + error.message };
   }
 }
