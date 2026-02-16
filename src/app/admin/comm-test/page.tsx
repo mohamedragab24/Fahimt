@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -36,9 +35,14 @@ export default function CommTestPage() {
       });
 
       if (result.success) {
-        toast({ title: "تم الإرسال بنجاح!", description: "وصلت الرسالة إلى نظام الإرسال بنجاح." });
+        toast({ title: "تم الإرسال بنجاح!", description: result.message });
       } else {
-        toast({ variant: "destructive", title: "فشل الإرسال", description: result.message });
+        toast({ 
+          variant: "destructive", 
+          title: "فشل الإرسال", 
+          description: result.message,
+          duration: 6000 
+        });
       }
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ تقني", description: "تعذر الاتصال بسيرفر المراسلات." });
@@ -142,18 +146,18 @@ export default function CommTestPage() {
             <h4 className="text-2xl font-black text-blue-900 flex items-center gap-3">
               <AlertCircle className="text-blue-600" /> تنبيهات هامة للاختبار
             </h4>
-            <ul className="space-y-4 text-blue-800 font-bold">
+            <ul className="space-y-4 text-blue-800 font-bold text-sm">
               <li className="flex items-start gap-3">
                 <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>بالنسبة للواتساب، تأكد أن الرقم الذي ترسل له قد أرسل كلمة <b>START</b> للرقم <b>447860099299</b> إذا كنت تستخدم الوضع التجريبي (Sandbox).</p>
+                <p>بالنسبة للواتساب، تأكد أن الرقم الذي ترسل له قد أرسل كلمة <b>START</b> للرقم <b>447860099299</b> أولاً.</p>
               </li>
               <li className="flex items-start gap-3">
                 <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>البريد الإلكتروني يتم إرساله من العنوان الرسمي المعتمد في Infobip.</p>
+                <p>تم تحسين هيكلية الطلب لتتوافق مع Infobip JSON API لضمان استقرار الإرسال.</p>
               </li>
               <li className="flex items-start gap-3">
                 <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
-                <p>أي فشل في الإرسال سيظهر لك سببه بوضوح في إشعار الخطأ.</p>
+                <p>في حال فشل الإرسال، سيظهر لك السبب التقني القادم من السيرفر مباشرة في إشعار الخطأ.</p>
               </li>
             </ul>
           </div>
@@ -164,8 +168,8 @@ export default function CommTestPage() {
                 <CheckCircle2 size={40} />
               </div>
               <div className="text-right">
-                <h5 className="font-black text-green-900 text-xl">نظام التنبيهات متصل</h5>
-                <p className="text-green-800 font-bold mt-1">المنصة مرتبطة حالياً بـ Infobip API وجاهزة لإرسال إشعارات الاستفهامات.</p>
+                <h5 className="font-black text-green-900 text-xl">نظام التنبيهات مطور</h5>
+                <p className="text-green-800 font-bold mt-1 text-sm">تم تحديث كود الربط ليدعم الهيكلية الجديدة لـ Infobip 2024.</p>
               </div>
             </CardContent>
           </Card>

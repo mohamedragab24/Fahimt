@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview تدفق إرسال الإشعارات والتذكيرات عبر الواتساب والبريد.
+ * تم تحسين الهيكلية لضمان وصول الرسائل عبر Infobip.
  */
 
 import { ai } from '@/ai/genkit';
@@ -31,31 +32,50 @@ const messagingFlow = ai.defineFlow(
       try {
         const res = await fetch(`https://${baseUrl}/email/4/messages`, {
           method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+          headers: { 
+            'Authorization': apiKey, 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
             "messages": [{
               "from": "resraa355@selfserve.worlds-connected.co",
               "destinations": [{ "to": input.recipient }],
-              "content": { "subject": input.subject || "تنبيه من منصة فهمني", "text": input.body }
+              "subject": input.subject || "تنبيه من منصة فهمني",
+              "text": input.body
             }]
           })
         });
-        return { success: res.ok, message: res.ok ? 'تم الإرسال' : 'خطأ في السيرفر' };
-      } catch { return { success: false, message: 'فشل الاتصال' }; }
+        const data = await res.json();
+        return { 
+          success: res.ok, 
+          message: res.ok ? 'تم الإرسال بنجاح' : (data.requestError?.serviceException?.text || 'خطأ في سيرفر البريد') 
+        };
+      } catch { return { success: false, message: 'فشل الاتصال بسيرفر البريد' }; }
     } else {
       try {
         const cleanPhone = input.recipient.replace(/\D/g, '');
         const res = await fetch(`https://${baseUrl}/whatsapp/1/message/text`, {
           method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+          headers: { 
+            'Authorization': apiKey, 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
             "from": "447860099299",
             "to": cleanPhone,
             "content": { "text": input.body }
           })
         });
-        return { success: res.ok, message: res.ok ? 'تم الإرسال' : 'خطأ في الواتساب' };
-      } catch { return { success: false, message: 'فشل الاتصال' }; }
+        const data = await res.json();
+        const isInternalOk = data.messages?.[0]?.status?.groupName !== 'REJECTED';
+        
+        return { 
+          success: res.ok && isInternalOk, 
+          message: (res.ok && isInternalOk) ? 'تم الإرسال بنجاح' : (data.messages?.[0]?.status?.description || data.requestError?.serviceException?.text || 'خطأ في الواتساب')
+        };
+      } catch { return { success: false, message: 'فشل الاتصال بسيرفر الواتساب' }; }
     }
   }
 );
