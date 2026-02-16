@@ -30,7 +30,8 @@ import {
   FileSearch,
   GalleryVertical,
   Edit3,
-  Wand2
+  Wand2,
+  Mail
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -129,6 +130,7 @@ export function AppSidebar() {
     { title: "تخصيص الهوية", icon: Settings, href: "/admin/customize" },
     { title: "إدارة الصور", icon: ImageIcon, href: "/admin/assets" },
     { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
+    { title: "اختبار المراسلات", icon: Mail, href: "/admin/comm-test" },
   ];
 
   return (
