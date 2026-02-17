@@ -22,7 +22,8 @@ import {
   DollarSign,
   Zap,
   Wallet,
-  Play
+  Play,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { sendNotification } from "@/ai/flows/messaging-flow";
 
 export default function RequestDetailsPage() {
   const { requestId } = useParams();
@@ -79,43 +79,10 @@ export default function RequestDetailsPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  const checkBalanceAndPay = async (targetAmount: number) => {
-    if (!firestore || !currentUser?.uid) return false;
-    const txSnap = await getDocs(collection(firestore, "users", currentUser.uid, "transactions"));
-    let balance = 0;
-    txSnap.forEach(doc => {
-      const d = doc.data();
-      if (d.status !== 'rejected') {
-        if (d.type === 'deposit' || d.type === 'earning') balance += d.amount;
-        else balance -= d.amount;
-      }
-    });
-
-    if (balance < targetAmount) {
-      toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن المحفظة للمتابعة." });
-      router.push(`/wallet?amount=${targetAmount - balance}&requestId=${request?.id}`);
-      return false;
-    }
-
-    // خصم المبلغ
-    await addDoc(collection(firestore, "users", currentUser.uid, "transactions"), {
-      amount: targetAmount,
-      type: 'payment',
-      details: `دفع مقابل استفهام: ${request?.title}`,
-      status: 'completed',
-      timestamp: new Date().toISOString()
-    });
-    return true;
-  };
-
-  const handlePayAcceptedRequest = async () => {
-    if (!request || !requestRef) return;
-    const success = await checkBalanceAndPay(request.amount);
-    if (success) {
-      await updateDoc(requestRef, { status: 'paid', paidAt: new Date().toISOString() });
-      toast({ title: "تم الدفع بنجاح!", description: "يمكنك الآن دخول المحاضرة." });
-      router.push(`/meeting/${request.id}`);
-    }
+  const goToCheckout = (customOfferId?: string) => {
+    let url = `/checkout/${requestId}`;
+    if (customOfferId) url += `?offerId=${customOfferId}`;
+    router.push(url);
   };
 
   const handleSubmitOffer = async () => {
@@ -150,24 +117,6 @@ export default function RequestDetailsPage() {
     }
   };
 
-  const handleAcceptOffer = async (offer: any) => {
-    if (!firestore || !requestRef) return;
-    const success = await checkBalanceAndPay(offer.amount);
-    if (success) {
-      await updateDoc(requestRef, {
-        status: "paid",
-        mufhemId: offer.mufhemId,
-        mufhemName: offer.mufhemName,
-        amount: offer.amount,
-        acceptedOfferId: offer.id,
-        paidAt: new Date().toISOString()
-      });
-      await updateDoc(doc(firestore, "istifhams", request.id, "offers", offer.id), { status: "accepted" });
-      toast({ title: "تم الدفع والقبول!", description: "المحاضرة جاهزة للبدء." });
-      router.push(`/meeting/${request.id}`);
-    }
-  };
-
   if (isLoading) return <div className="p-20 text-center animate-pulse font-bold">جاري تحميل تفاصيل الاستفهام...</div>;
   if (!request) return <div className="p-20 text-center font-bold text-red-500">الاستفهام غير موجود.</div>;
 
@@ -193,10 +142,10 @@ export default function RequestDetailsPage() {
                   <div className="bg-blue-50 p-8 rounded-[2rem] border-2 border-blue-200 flex flex-col md:flex-row items-center justify-between gap-6 animate-pulse">
                     <div className="text-right">
                       <h4 className="text-xl font-black text-blue-900">المفهم "{request.mufhemName}" قبل طلبك!</h4>
-                      <p className="text-blue-700 font-bold">يرجى دفع الرصيد المحجوز لبدء المحاضرة فوراً.</p>
+                      <p className="text-blue-700 font-bold">يرجى إتمام الدفع لفتح غرفة المحاضرة فوراً.</p>
                     </div>
-                    <Button onClick={handlePayAcceptedRequest} className="h-16 px-10 rounded-2xl bg-blue-600 text-white font-black text-xl shadow-xl flex items-center gap-2">
-                      <Wallet size={24}/> ادفع {request.amount} ج.م وابدأ
+                    <Button onClick={() => goToCheckout()} className="h-16 px-10 rounded-2xl bg-blue-600 text-white font-black text-xl shadow-xl flex items-center gap-2">
+                      <CreditCard size={24}/> ادفع {request.amount} ج.م وابدأ
                     </Button>
                   </div>
                 )}
@@ -237,7 +186,7 @@ export default function RequestDetailsPage() {
                         </div>
                         <div className="shrink-0 flex flex-col items-center gap-4">
                           <div className="text-center"><p className="text-[10px] font-black text-muted-foreground">القيمة</p><h5 className="text-2xl font-black text-primary">{offer.amount} ج.م</h5></div>
-                          {request.status === 'active' && <Button onClick={() => handleAcceptOffer(offer)} className="h-12 px-8 rounded-xl font-black bg-green-600"><Wallet size={16} className="ml-2"/> ادفع واقبل</Button>}
+                          {request.status === 'active' && <Button onClick={() => goToCheckout(offer.id)} className="h-12 px-8 rounded-xl font-black bg-green-600"><CreditCard size={16} className="ml-2"/> قبول الدفع</Button>}
                           {offer.status === 'accepted' && <Badge className="bg-green-100 text-green-600 h-10 px-6 rounded-xl">عرض مقبول</Badge>}
                         </div>
                       </CardContent>
