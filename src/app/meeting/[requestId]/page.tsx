@@ -7,28 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
   Video, 
   Star, 
   Loader2, 
   ShieldCheck, 
-  CircleDot, 
-  CloudUpload, 
-  ShieldAlert, 
-  Wallet, 
   Lock,
   Monitor,
-  AlertCircle,
-  Info
+  Play,
+  MessageSquare,
+  ShieldAlert
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { uploadRecordingToDrive } from "@/app/actions/upload-recording";
 
 declare global {
   interface Window {
@@ -39,24 +33,18 @@ declare global {
 type RatingFlow = 'goal' | 'ratings' | 'complaint_ask';
 
 /**
- * صفحة المحاضرة المباشرة مع نظام التوثيق السحابي الإلزامي.
+ * صفحة المحاضرة المباشرة - تم تبسيطها لتبدأ فوراً دون طلب مشاركة الشاشة.
  */
 export default function MeetingPage() {
   const { requestId } = useParams();
   const router = useRouter();
-  const { user, storage } = useFirebase();
+  const { user } = useFirebase();
   const firestore = useFirestore();
   const { toast } = useToast();
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
   const [api, setApi] = useState<any>(null);
   const [meetingStarted, setMeetingStarted] = useState(false);
   
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState<RatingFlow>('goal');
   
@@ -78,95 +66,42 @@ export default function MeetingPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  const handleStartRecording = async () => {
+  // بدء المحاضرة فوراً عند الضغط على الزر
+  const handleStartMeeting = () => {
     if (request?.status !== 'paid' && !profile?.isAdmin) {
       toast({ variant: "destructive", title: "تنبيه الأمان", description: "لا يمكن بدء المحاضرة قبل إتمام عملية الدفع." });
       return;
     }
-
-    try {
-      // نطلب من المستخدم مشاركة الشاشة لغرض التوثيق الأمني للجلسة
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: 30 } },
-        audio: true,
-      });
-
-      let mimeType = 'video/webm;codecs=vp9,opus';
-      if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
-
-      const recorder = new MediaRecorder(stream, { mimeType });
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = async () => {
-        setIsUploading(true);
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        const fileName = `Lecture_${requestId}_${Date.now()}.mp4`;
-        
-        if (storage) {
-          const fileRef = ref(storage, `recordings/${requestId}/${fileName}`);
-          const uploadTask = uploadBytesResumable(fileRef, blob);
-
-          uploadTask.on('state_changed', 
-            (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
-            null, 
-            async () => {
-              const fbUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              const formData = new FormData();
-              formData.append('file', blob, fileName);
-              const driveResult = await uploadRecordingToDrive(formData, fileName);
-
-              if (requestRef) {
-                updateDocumentNonBlocking(requestRef, { 
-                  recordingUrl: fbUrl,
-                  driveUrl: driveResult.webViewLink || null,
-                  isRecorded: true
-                });
-              }
-              setIsUploading(false);
-              toast({ title: "تم التوثيق السحابي بنجاح" });
-            }
-          );
-        }
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      recorder.start(1000);
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-      setMeetingStarted(true);
-      startMeeting();
-    } catch (err) {
-      // هذا الخطأ يظهر إذا رفض المستخدم مشاركة الشاشة
-      toast({ 
-        variant: "destructive", 
-        title: "إذن التوثيق مطلوب", 
-        description: "يجب الموافقة على مشاركة الشاشة (النافذة الحالية) لتفعيل نظام الرقابة والتوثيق المباشر." 
-      });
-    }
+    setMeetingStarted(true);
   };
 
-  const startMeeting = () => {
-    if (window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
+  useEffect(() => {
+    if (meetingStarted && window.JitsiMeetExternalAPI && jitsiContainerRef.current && profile && request) {
       const options = {
         roomName: `vpaas-magic-cookie-1fbd16d85bf84be0aaba7317c17f25dd/Fahimni_${requestId}`,
         width: "100%",
         height: "100%",
         parentNode: jitsiContainerRef.current,
         userInfo: { displayName: profile.fullName, email: profile.email },
-        configOverwrite: { prejoinPageEnabled: false }
+        configOverwrite: { 
+          prejoinPageEnabled: false,
+          disableInviteFunctions: true
+        },
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+            'fittowindow', 'chat', 'raisehand', 'videoquality', 'filmstrip',
+            'shortcuts', 'tileview', 'videobackgroundblur', 'help', 'mute-everyone'
+          ],
+        }
       };
       const newApi = new window.JitsiMeetExternalAPI("8x8.vc", options);
       setApi(newApi);
       newApi.addEventListener('videoConferenceLeft', () => {
-        if (mediaRecorder?.state !== 'inactive') mediaRecorder?.stop();
         setShowRatingDialog(true);
       });
     }
-  };
+  }, [meetingStarted, profile, request, requestId]);
 
   const handleFinishSession = async (isComplaint: boolean = false) => {
     setIsSubmitting(true);
@@ -196,14 +131,12 @@ export default function MeetingPage() {
   if (request?.status !== 'paid' && !profile?.isAdmin) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-zinc-900 text-white p-6 text-center space-y-8" dir="rtl">
-        <div className="bg-red-500/20 p-10 rounded-[3rem] border-4 border-dashed border-red-500 animate-pulse">
+        <div className="bg-red-500/20 p-10 rounded-[3rem] border-4 border-dashed border-red-500">
           <Lock size={80} className="mx-auto text-red-500" />
         </div>
-        <h2 className="text-4xl font-black">المحاضرة غير متاحة بعد</h2>
-        <p className="text-xl text-zinc-400 max-w-lg">يجب على المستفهم إتمام عملية الدفع أولاً لكي تفتح غرفة المحاضرة ويتم تفعيل نظام التوثيق.</p>
-        <Button onClick={() => router.push(profile?.role === 'mustafhem' ? `/requests/${requestId}` : '/')} className="h-16 px-12 rounded-2xl text-xl font-black bg-primary">
-          {profile?.role === 'mustafhem' ? "الذهاب لصفحة الدفع" : "العودة للرئيسية"}
-        </Button>
+        <h2 className="text-4xl font-black">بانتظار تفعيل المحاضرة</h2>
+        <p className="text-xl text-zinc-400 max-w-lg">يجب على المستفهم إتمام عملية الدفع أولاً لكي تفتح غرفة المحاضرة المباشرة.</p>
+        <Button onClick={() => router.push('/')} className="h-16 px-12 rounded-2xl text-xl font-black bg-primary">العودة للرئيسية</Button>
       </div>
     );
   }
@@ -214,56 +147,35 @@ export default function MeetingPage() {
       
       {!meetingStarted ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8 bg-[#F8FAFC]">
-          <Card className="p-10 rounded-[3.5rem] shadow-2xl max-w-2xl space-y-8 bg-white border-none">
-            <div className="bg-blue-100 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto text-blue-600 shadow-inner">
-              <ShieldCheck size={56} />
+          <Card className="p-10 rounded-[3.5rem] shadow-2xl max-w-2xl space-y-8 bg-white border-none animate-in fade-in zoom-in duration-500">
+            <div className="bg-primary/10 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner">
+              <Video size={56} />
             </div>
             
             <div className="space-y-4">
-              <h2 className="text-3xl font-black text-zinc-900">نظام التوثيق والرقابة الذكي</h2>
+              <h2 className="text-3xl font-black text-zinc-900">جاهز لبدء المحاضرة؟</h2>
               <p className="text-muted-foreground font-bold text-lg leading-relaxed">
-                لضمان حقوقك المالية والمعرفية، سيتم تسجيل هذه الجلسة فيديو وصوت ورفعها سحابياً للمراجعة عند الضرورة.
+                اضغط على الزر أدناه للدخول لغرفة المحاضرة المباشرة والبدء في {profile?.role === 'mufhem' ? 'الشرح' : 'التعلم'} فوراً.
               </p>
             </div>
 
-            <div className="p-6 bg-blue-50 rounded-[2rem] border-2 border-dashed border-blue-200 text-right space-y-4">
-              <div className="flex items-start gap-3">
-                <Info className="text-blue-600 shrink-0 mt-1" size={20} />
-                <p className="text-blue-800 text-sm font-black">
-                  عند الضغط على الزر أدناه، ستظهر لك نافذة من المتصفح تطلب "مشاركة الشاشة". يرجى اختيار <span className="underline">"نافذة الاجتماع"</span> أو <span className="underline">"هذا التبويب"</span> للمتابعة.
-                </p>
-              </div>
+            <div className="p-6 bg-zinc-50 rounded-[2rem] border-2 border-dashed text-right space-y-2">
+              <h4 className="font-black text-zinc-800">موضوع الجلسة:</h4>
+              <p className="text-primary font-black text-xl">{request?.title}</p>
             </div>
 
             <Button 
-              onClick={handleStartRecording} 
+              onClick={handleStartMeeting} 
               className="w-full h-20 rounded-[2rem] font-black text-2xl bg-primary shadow-xl hover:scale-[1.02] transition-all"
             >
-              <Monitor className="ml-3 h-8 w-8" /> بدء المحاضرة والتوثيق الآن
+              <Play className="ml-3 h-8 w-8 fill-current" /> ابدأ المحاضرة الآن
             </Button>
             
-            <p className="text-xs text-zinc-400 font-bold">بمتابعتك أنت توافق على سياسة الخصوصية وتوثيق الجلسة سحابياً.</p>
+            <p className="text-xs text-zinc-400 font-bold italic">نتمنى لك رحلة تعليمية مثمرة وممتعة.</p>
           </Card>
         </div>
       ) : (
-        <>
-          <div className="bg-red-600 text-white text-center py-1.5 font-black text-xs z-50 flex items-center justify-center gap-2">
-            <div className="h-2 w-2 bg-white rounded-full animate-pulse"></div>
-            نظام الرقابة السحابي يسجل الجلسة الآن لضمان حقوقك
-          </div>
-          <div id="jaas-container" ref={jitsiContainerRef} className="flex-1 w-full h-full" />
-        </>
-      )}
-
-      {isUploading && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center text-white space-y-6">
-          <CloudUpload size={80} className="text-primary animate-bounce" />
-          <div className="text-center space-y-2">
-            <h3 className="text-3xl font-black">جاري الحفظ السحابي...</h3>
-            <p className="text-zinc-400 font-bold">يرجى الانتظار، يتم تأمين تسجيل المحاضرة ({Math.round(uploadProgress)}%)</p>
-          </div>
-          <Loader2 className="animate-spin h-10 w-10 opacity-50" />
-        </div>
+        <div id="jaas-container" ref={jitsiContainerRef} className="flex-1 w-full h-full" />
       )}
 
       <Dialog open={showRatingDialog} onOpenChange={() => {}}>
@@ -326,7 +238,7 @@ export default function MeetingPage() {
                 <div className="bg-red-50 p-8 rounded-[2rem] border-2 border-dashed border-red-200 space-y-4">
                   <ShieldAlert size={64} className="mx-auto text-red-600" />
                   <h2 className="text-2xl font-black text-red-900">فتح نزاع رسمي</h2>
-                  <p className="text-red-800 font-bold">سيتم تعليق أرباح المفهم فوراً وسيقوم فريق الرقابة بمراجعة فيديو المحاضرة للفصل بينكما.</p>
+                  <p className="text-red-800 font-bold">سيتم تعليق أرباح المفهم فوراً وسيقوم فريق الرقابة بمراجعة الجلسة للفصل بينكما.</p>
                 </div>
                 <Button onClick={() => handleFinishSession(true)} disabled={isSubmitting} className="w-full h-16 bg-red-600 hover:bg-red-700 rounded-2xl font-black text-xl shadow-xl">
                   تأكيد فتح النزاع والمراجعة
@@ -337,17 +249,6 @@ export default function MeetingPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function RatingStat({ label, value }: { label: string, value?: number }) {
-  return (
-    <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
-      <div className="flex gap-1">
-        {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${Number(value) >= s ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-200'}`} />)}
-      </div>
-      <span className="font-bold text-zinc-600">{label}</span>
     </div>
   );
 }
