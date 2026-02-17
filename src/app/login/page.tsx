@@ -27,7 +27,9 @@ import {
   MessageSquare,
   User,
   Info,
-  FileText
+  FileText,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
@@ -54,6 +56,7 @@ function LoginContent() {
   const [step, setStep] = useState<'info' | 'verify'>('info');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"mustafhem" | "mufhem">("mustafhem");
   const [gender, setGender] = useState<"male" | "female">("male");
@@ -75,7 +78,6 @@ function LoginContent() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // إذا كان المستخدم زائراً يحاول طرح استفهام، نجبر الرتبة لتكون مستفهم
     if (returnTo === 'create-request') {
       setRole("mustafhem");
     }
@@ -156,7 +158,6 @@ function LoginContent() {
           createdAt: new Date().toISOString()
         });
 
-        // التحقق مما إذا كان هناك طلب استفهام معلق
         const pendingIstifham = localStorage.getItem('pending_istifham');
         if (pendingIstifham) {
           const data = JSON.parse(pendingIstifham);
@@ -187,7 +188,6 @@ function LoginContent() {
     e.preventDefault();
     setIsProcessing(true);
     initiateEmailSignIn(auth, email, password).then(() => {
-      // بعد تسجيل الدخول، التحقق من الطلبات المعلقة
       const pendingIstifham = localStorage.getItem('pending_istifham');
       if (pendingIstifham && auth.currentUser) {
         const data = JSON.parse(pendingIstifham);
@@ -245,7 +245,22 @@ function LoginContent() {
                   <Label className="font-black flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary" /></Label>
                   <Link href="/forgot-password" size="sm" className="text-sm font-black text-primary">نسيت كلمة المرور؟</Link>
                 </div>
-                <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-lg" />
+                <div className="relative">
+                  <Input 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={(e)=>setPassword(e.target.value)} 
+                    required 
+                    className="h-16 rounded-2xl border-2 font-black text-lg pl-12" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-primary shadow-xl">
                 {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تسجيل الدخول"}
@@ -305,7 +320,22 @@ function LoginContent() {
 
                     <div className="space-y-2">
                       <Label className="font-black flex items-center gap-2">كلمة المرور <KeyRound size={18} className="text-primary"/></Label>
-                      <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required className="h-16 rounded-2xl border-2 font-black text-xl" />
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
+                          value={password} 
+                          onChange={(e)=>setPassword(e.target.value)} 
+                          required 
+                          className="h-16 rounded-2xl border-2 font-black text-xl pl-12" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary transition-colors"
+                        >
+                          {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
