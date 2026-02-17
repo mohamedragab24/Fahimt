@@ -35,7 +35,7 @@ export function Footer() {
           {/* Column 1: About */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-zinc-900 flex items-center gap-2">
-              <div className="w-1.5 h-8 bg-primary rounded-full"></div> عن المنصة
+              <span className="w-1.5 h-8 bg-primary rounded-full inline-block"></span> عن المنصة
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/about" icon={Info} label="عن فهمني" />
@@ -47,7 +47,7 @@ export function Footer() {
           {/* Column 2: Legal */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-accent flex items-center gap-2">
-              <div className="w-1.5 h-8 bg-accent rounded-full"></div> قانونيات
+              <span className="w-1.5 h-8 bg-accent rounded-full inline-block"></span> قانونيات
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/terms" icon={FileText} label="شروط الاستخدام" />
@@ -59,7 +59,7 @@ export function Footer() {
           {/* Column 3: Help */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-zinc-800 flex items-center gap-2">
-              <div className="w-1.5 h-8 bg-zinc-800 rounded-full"></div> المساعدة
+              <span className="w-1.5 h-8 bg-zinc-800 rounded-full inline-block"></span> المساعدة
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/support" icon={HelpCircle} label="الأسئلة الشائعة" />
@@ -71,7 +71,7 @@ export function Footer() {
           {/* Column 4: Social Media - Dynamic from Admin Settings */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-primary flex items-center gap-2">
-              <div className="w-1.5 h-8 bg-primary rounded-full"></div> تابعنا
+              <span className="w-1.5 h-8 bg-primary rounded-full inline-block"></span> تابعنا
             </h4>
             <div className="grid grid-cols-2 gap-4">
               {settings?.facebookUrl && (
