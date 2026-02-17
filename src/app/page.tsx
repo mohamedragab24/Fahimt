@@ -48,7 +48,6 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { sendNotification } from "@/ai/flows/messaging-flow";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -168,7 +167,11 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      {profile.role === "mustafhem" ? <MustafhemView profile={profile} settings={settings} /> : <MufhemView profile={profile} settings={settings} />}
+      {profile.role === "mustafhem" ? (
+        <MustafhemView profile={profile} settings={settings} router={router} />
+      ) : (
+        <MufhemView profile={profile} settings={settings} router={router} />
+      )}
     </div>
   );
 }
@@ -338,7 +341,7 @@ function LinkItem({ href, icon: Icon, label }: { href: string, icon: any, label:
   );
 }
 
-function MustafhemView({ profile, settings }: any) {
+function MustafhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newIstifham, setNewIstifham] = useState({ 
@@ -353,7 +356,6 @@ function MustafhemView({ profile, settings }: any) {
     attachmentUrl: "" 
   });
   const { toast } = useToast();
-  const router = useRouter();
 
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
@@ -433,9 +435,8 @@ function MustafhemView({ profile, settings }: any) {
   );
 }
 
-function MufhemView({ profile, settings }: any) {
+function MufhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
-  const router = useRouter();
   const { toast } = useToast();
   const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
 
@@ -541,7 +542,7 @@ function MufhemView({ profile, settings }: any) {
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
                     <div className="flex gap-2">
-                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold border-primary text-primary">قدم عرض</Button>
+                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold border-primary text-primary">تقديم عرض</Button>
                       <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold">أنا أفهمك</Button>
                     </div>
                   </div>
