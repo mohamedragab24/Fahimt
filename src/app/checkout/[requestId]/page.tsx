@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
 import { doc, collection, getDocs, addDoc, updateDoc } from "firebase/firestore";
@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 
 type PaymentMethod = 'wallet' | 'e-wallet' | 'card';
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const params = useParams();
   const requestId = params?.requestId as string;
   const searchParams = useSearchParams();
@@ -288,5 +288,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center animate-pulse">جاري تحميل بوابة الدفع...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

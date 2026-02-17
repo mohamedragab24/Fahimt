@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, doc, addDoc, getDocs } from "firebase/firestore";
 import { createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
@@ -30,9 +30,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useDoc } from "@/firebase";
 
-export default function WalletPage() {
+function WalletContent() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -41,7 +41,7 @@ export default function WalletPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const preAmount = searchParams.get('amount');
+    const preAmount = searchParams?.get('amount');
     if (preAmount) {
       setAmount(preAmount);
       setIsModalOpen(true);
@@ -315,5 +315,13 @@ export default function WalletPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function WalletPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center font-bold animate-pulse">جاري تحميل المحفظة...</div>}>
+      <WalletContent />
+    </Suspense>
   );
 }
