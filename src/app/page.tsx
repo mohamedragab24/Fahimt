@@ -226,7 +226,7 @@ function LandingPage({ router, settings }: any) {
             <nav className="hidden md:flex items-center gap-6 border-l border-white/10 pl-6">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
-              <LinkItem href="/login" icon={Search} label="تصفح الاستفهامات" />
+              <LinkItem href="/browse" icon={Search} label="تصفح الاستفهامات" />
             </nav>
             
             <div className="flex items-center gap-2 md:gap-3">
@@ -258,7 +258,7 @@ function LandingPage({ router, settings }: any) {
                   />
                 </div>
                 <Button 
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push('/browse')}
                   className="h-16 md:h-20 px-12 rounded-[2rem] bg-accent hover:bg-accent/90 text-xl font-black shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
                 >
                   <MessageSquare className="ml-2" /> استفهم الآن
@@ -278,7 +278,7 @@ function LandingPage({ router, settings }: any) {
                         <div 
                           key={res.id} 
                           className="p-6 hover:bg-muted/50 cursor-pointer transition-colors text-right group"
-                          onClick={() => router.push('/login')}
+                          onClick={() => router.push(`/requests/${res.id}`)}
                         >
                           <h4 className="font-black text-zinc-800 text-lg group-hover:text-primary transition-colors">{res.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{res.description}</p>

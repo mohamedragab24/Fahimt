@@ -28,7 +28,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn();
+      // السماح للجميع بالقراءة لرؤية ملفات المدرسين والبحث
+      allow read: if true;
       allow write: if isOwner(userId) || isAdmin();
 
       match /transactions/{txId} {
@@ -70,6 +71,7 @@ service cloud.firestore {
     }
 
     match /istifhams/{id} {
+      // السماح للجميع بالقراءة لتصفح الاستفهامات العامة
       allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (request.auth.uid == resource.data.mustafhemId || request.auth.uid == resource.data.mufhemId || isAdmin());
