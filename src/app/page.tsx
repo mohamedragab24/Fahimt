@@ -206,29 +206,32 @@ function LandingPage({ router, settings }: any) {
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
       {/* Hero Section */}
-      <div className="relative min-h-[90vh] flex flex-col">
+      <div className="relative min-h-[95vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
         
-        {/* Navigation Header */}
-        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 ml-6 border-l pl-6 border-white/10">
-              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
-              <Button variant="ghost" onClick={() => router.push('/login')} className="text-white hover:bg-white/10 font-black rounded-full px-6 md:px-8 border border-white/20">دخول</Button>
+        {/* Navigation Header - Enhanced Visibility */}
+        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md">
+          {/* Logo Section - Right side in RTL */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
+            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden border-2 border-white/20">
+              {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
             </div>
-            <nav className="hidden lg:flex items-center gap-8">
+            <span className="text-white font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
+          </div>
+
+          {/* Navigation & Auth Section - Left side in RTL */}
+          <div className="flex items-center gap-4 md:gap-8">
+            <nav className="hidden md:flex items-center gap-6 border-l border-white/10 pl-6">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <LinkItem href="/login" icon={Search} label="تصفح الاستفهامات" />
             </nav>
-          </div>
-          
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <span className="text-white font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
-            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden border-2 border-white/20">
-              {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
+            
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button onClick={() => router.push('/login')} variant="ghost" className="text-white hover:bg-white/10 font-black rounded-full px-4 md:px-6 border border-white/20">دخول</Button>
+              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-8">حساب جديد</Button>
             </div>
           </div>
         </header>
@@ -296,7 +299,7 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
-      {/* Explanation Video Section */}
+      {/* Explanation Video Section - Positioned as requested */}
       {settings?.landingVideoId && (
         <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
           <div className="max-w-6xl mx-auto space-y-16">
@@ -304,8 +307,8 @@ function LandingPage({ router, settings }: any) {
               <div className="bg-primary/10 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
                 <Play size={48} className="fill-current" />
               </div>
-              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">شرح منصة <span className="text-primary">{settings?.siteTitle || "فهمني"}</span></h2>
-              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">شاهد الفيديو لتعرف كيف تبدأ رحلة الفهم والتعلم المباشر في أقل من دقيقة.</p>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">شاهد كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span></h2>
+              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">تعرف على رحلة "الفهم" في أقل من دقيقة عبر هذا الفيديو التوضيحي.</p>
             </div>
 
             <div className="relative group">
@@ -322,14 +325,14 @@ function LandingPage({ router, settings }: any) {
                 ></iframe>
               </div>
 
-              {/* Floating Shield */}
+              {/* Floating Quality Badge */}
               <div className="absolute -bottom-10 -right-10 bg-zinc-900 text-white p-10 rounded-[3rem] shadow-2xl hidden lg:flex items-center gap-6 border-4 border-white animate-bounce-slow">
                 <div className="bg-primary/20 p-4 rounded-2xl">
                   <ShieldCheck className="text-primary h-10 w-10" />
                 </div>
                 <div className="text-right">
-                  <p className="font-black text-xl">تعلم بأمان تام</p>
-                  <p className="text-sm text-zinc-400 font-bold">نضمن حقك المالي والمعرفي</p>
+                  <p className="font-black text-xl">رقابة وموثوقية</p>
+                  <p className="text-sm text-zinc-400 font-bold">جلسات مسجلة لضمان الجودة</p>
                 </div>
               </div>
             </div>
