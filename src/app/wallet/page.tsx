@@ -12,25 +12,22 @@ import {
   Plus, 
   History, 
   Banknote, 
-  Landmark,
   ShieldCheck,
   CreditCard,
   Download,
-  Clock,
   CheckCircle2,
-  XCircle,
   AlertCircle
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, doc, addDoc, getDocs } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, orderBy, doc, addDoc } from "firebase/firestore";
 import { createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSearchParams, useDoc } from "@/firebase";
+import { useSearchParams } from "next/navigation";
 
 function WalletContent() {
   const { user } = useUser();
