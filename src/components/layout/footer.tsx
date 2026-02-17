@@ -15,10 +15,12 @@ import {
   Facebook, 
   Youtube, 
   Send, 
-  MessageSquare,
-  Share2
+  MessageSquare
 } from "lucide-react";
 
+/**
+ * مكون تذييل الموقع - تم تحسينه لتجنب أخطاء الـ HydrationMismatch.
+ */
 export function Footer() {
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => {
@@ -35,7 +37,7 @@ export function Footer() {
           {/* Column 1: About */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-zinc-900 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-primary rounded-full inline-block"></span> عن المنصة
+              <span className="w-1.5 h-8 bg-primary rounded-full inline-block shrink-0"></span> عن المنصة
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/about" icon={Info} label="عن فهمني" />
@@ -47,7 +49,7 @@ export function Footer() {
           {/* Column 2: Legal */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-accent flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-accent rounded-full inline-block"></span> قانونيات
+              <span className="w-1.5 h-8 bg-accent rounded-full inline-block shrink-0"></span> قانونيات
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/terms" icon={FileText} label="شروط الاستخدام" />
@@ -59,7 +61,7 @@ export function Footer() {
           {/* Column 3: Help */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-zinc-800 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-zinc-800 rounded-full inline-block"></span> المساعدة
+              <span className="w-1.5 h-8 bg-zinc-800 rounded-full inline-block shrink-0"></span> المساعدة
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/support" icon={HelpCircle} label="الأسئلة الشائعة" />
@@ -68,10 +70,10 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Social Media - Dynamic from Admin Settings */}
+          {/* Column 4: Social Media */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-primary flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-primary rounded-full inline-block"></span> تابعنا
+              <span className="w-1.5 h-8 bg-primary rounded-full inline-block shrink-0"></span> تابعنا
             </h4>
             <div className="grid grid-cols-2 gap-4">
               {settings?.facebookUrl && (
