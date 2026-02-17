@@ -162,7 +162,7 @@ export default function HomePage() {
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {(profile.isVerified || profile.emailVerified || profile.whatsappVerified) && (
-                <img src={verifiedBadgeUrl} alt="Verified" className="h-12 w-12" data-ai-hint="verified badge" />
+                <img src={verifiedBadgeUrl} alt="Verified" className="h-12 w-12" />
               )}
             </div>
           </div>

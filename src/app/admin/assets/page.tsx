@@ -1,19 +1,15 @@
+
 "use client";
 
 import { useState, useRef } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, RefreshCw, Upload, CheckCircle2, Layout, Flower2, Monitor, Users, Sparkles, AlertCircle, Zap, Box, Globe, ShieldCheck, Share2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-/**
- * مركز التحكم بالأصول الرسومية.
- * يتيح للمسؤول تغيير كافة صور المنصة المخزنة في Firebase.
- */
 export default function AdminAssets() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -31,6 +27,16 @@ export default function AdminAssets() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && activeKey && firestore) {
+      // فحص حجم الملف (Firestore limit is 1MB for doc)
+      if (file.size > 800 * 1024) {
+        toast({ 
+          variant: "destructive", 
+          title: "الملف كبير جداً", 
+          description: "يرجى اختيار صورة بحجم أقل من 800 كيلوبايت لضمان الحفظ في قاعدة البيانات." 
+        });
+        return;
+      }
+
       setUploadingKey(activeKey);
       
       const reader = new FileReader();
@@ -38,14 +44,15 @@ export default function AdminAssets() {
         const base64 = reader.result as string;
         try {
           const settingsRef = doc(firestore, "settings", "general");
-          setDocumentNonBlocking(settingsRef, {
+          await setDoc(settingsRef, {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          toast({ title: "تم التحديث في Firebase!", description: "تم تغيير الصورة بنجاح وستظهر في كافة الأنظمة الآن." });
+          
+          toast({ title: "تم التحديث بنجاح", description: "تم حفظ الصورة في Firebase وستظهر للجميع الآن." });
         } catch (err) {
           console.error(err);
-          toast({ variant: "destructive", title: "خطأ", description: "فشل التحديث، تأكد من صلاحياتك." });
+          toast({ variant: "destructive", title: "خطأ في الحفظ", description: "فشل تحديث الصورة في Firebase. تأكد من اتصالك بالإنترنت." });
         } finally {
           setUploadingKey(null);
         }
@@ -83,7 +90,7 @@ export default function AdminAssets() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">إدارة صور المنصة (Firebase)</h1>
-          <p className="text-muted-foreground text-xl">تحكم كامل في كافة الأصول الرسومية؛ أي تعديل هنا يُحفظ مباشرة في قاعدة البيانات.</p>
+          <p className="text-muted-foreground text-xl">تحكم كامل في كافة الأصول الرسومية؛ يتم حفظ الصور مباشرة في قاعدة البيانات.</p>
         </div>
         <div className="bg-green-50 px-6 py-3 rounded-2xl flex items-center gap-3 border border-green-100">
           <Sparkles className="text-green-600 h-6 w-6" />
