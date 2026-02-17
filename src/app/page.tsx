@@ -29,7 +29,8 @@ import {
   ArrowRight,
   GraduationCap,
   Layout,
-  HelpCircle
+  HelpCircle,
+  BadgeCent
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -555,14 +556,10 @@ function MufhemView({ profile, settings }: any) {
   const { toast } = useToast();
   const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
 
-  // جلب كافة الاستفهامات النشطة دون فلترة الجنس في الاستعلام لتجنب الحاجة للفهارس المركبة
   const istifhamsQuery = useMemoFirebase(() => (firestore) ? query(collection(firestore, "istifhams"), where("status", "==", "active")) : null, [firestore]);
   const { data: rawIstifhams, isLoading } = useCollection(istifhamsQuery);
 
-  // فلترة النتائج في الذاكرة لضمان الخصوصية والسرعة
   const istifhams = rawIstifhams?.filter(ist => {
-    // إذا كان جنس المستفهم غير محدد، يظهر للجميع (لضمان عدم فقدان بيانات قديمة)
-    // وإلا يظهر فقط إذا كان نفس جنس المفهم لضمان الخصوصية
     return !ist.mustafhemGender || ist.mustafhemGender === profile.gender;
   });
 
@@ -663,7 +660,10 @@ function MufhemView({ profile, settings }: any) {
                       <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
                       <span className="text-[10px] text-zinc-400 font-bold">بواسطة: {ist.mustafhemName}</span>
                     </div>
-                    <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
+                    <div className="flex gap-2">
+                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold px-6 border-primary text-primary">قدم عرض</Button>
+                      <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -25,13 +25,14 @@ import {
   Plus,
   Loader2,
   Star,
-  Paperclip
+  Paperclip,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,7 @@ export default function RequestDetailsPage() {
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [showOwnerProfile, setShowOwnerProfile] = useState(false);
   const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
@@ -92,6 +94,9 @@ export default function RequestDetailsPage() {
     setIsSubmittingOffer(true);
     try {
       await addDoc(collection(firestore, "istifhams", request.id, "offers"), {
+        requestId: request.id,
+        requestTitle: request.title,
+        mustafhemId: request.mustafhemId,
         mufhemId: currentUser.uid,
         mufhemName: profile.fullName,
         mufhemAvatar: profile.profilePictureUrl,
@@ -103,7 +108,6 @@ export default function RequestDetailsPage() {
         createdAt: new Date().toISOString()
       });
 
-      // إشعار للمستفهم
       if (owner?.phoneNumber) {
         sendNotification({
           recipient: owner.phoneNumber,
@@ -128,12 +132,11 @@ export default function RequestDetailsPage() {
         status: "accepted",
         mufhemId: offer.mufhemId,
         mufhemName: offer.mufhemName,
-        amount: offer.amount, // تحديث السعر بناءً على العرض المقبول
+        amount: offer.amount,
         acceptedOfferId: offer.id,
         acceptedAt: new Date().toISOString()
       });
 
-      // تحديث حالة العرض نفسه
       await updateDoc(doc(firestore, "istifhams", request.id, "offers", offer.id), {
         status: "accepted"
       });
@@ -148,7 +151,7 @@ export default function RequestDetailsPage() {
   if (isLoading) return <div className="p-20 text-center animate-pulse font-bold">جاري تحميل تفاصيل المشروع...</div>;
   if (!request) return <div className="p-20 text-center font-bold text-red-500">عذراً، هذا المشروع غير موجود.</div>;
 
-  const earnings = Number(offerForm.amount) * 0.8; // بعد خصم عمولة 20%
+  const earnings = Number(offerForm.amount) * 0.8;
 
   return (
     <div className="bg-zinc-50 min-h-screen pb-20" dir="rtl">
@@ -164,7 +167,6 @@ export default function RequestDetailsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-10">
-            {/* بطاقة تفاصيل الاستفهام */}
             <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
               <CardContent className="p-10 space-y-10">
                 <div className="border-b pb-6 text-right flex justify-between items-center">
@@ -203,88 +205,94 @@ export default function RequestDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* قسم العروض للمفهمين */}
             {profile?.role === 'mufhem' && request.status === 'active' && profile.id !== request.mustafhemId && (
-              <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white animate-in slide-in-from-bottom-4">
-                <CardHeader className="bg-zinc-900 text-white p-8">
-                  <CardTitle className="text-2xl font-black flex items-center gap-3">
-                    <Briefcase className="text-primary" /> تقدم للمشروع (أضف عرضك)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8 md:p-12 space-y-10">
+              <Card className="rounded-xl border shadow-sm overflow-hidden bg-white animate-in slide-in-from-bottom-4">
+                <div className="p-6 border-b bg-zinc-50/50 flex justify-between items-center">
+                  <h3 className="text-xl font-black text-zinc-800">تقدم للمشروع</h3>
+                </div>
+                <CardContent className="p-8 space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="space-y-3">
-                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
-                        مدة التسليم (أيام) <span className="text-red-500">*</span>
+                      <Label className="font-black text-zinc-700 block text-right">
+                        مدة التسليم <span className="text-red-500">*</span>
                       </Label>
-                      <div className="relative">
+                      <div className="flex items-center">
                         <Input 
                           placeholder="مثال: 1" 
                           type="number"
-                          className="h-14 rounded-xl border-2 text-center font-black pr-12" 
+                          className="h-14 rounded-l-none rounded-r-xl border-2 text-center font-black" 
                           value={offerForm.duration}
                           onChange={(e)=>setOfferForm({...offerForm, duration: e.target.value})}
                         />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">أيام</span>
+                        <div className="h-14 bg-zinc-100 border-2 border-r-0 rounded-l-xl px-4 flex items-center justify-center font-bold text-zinc-500">أيام</div>
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
+                      <Label className="font-black text-zinc-700 block text-right">
                         قيمة العرض <span className="text-red-500">*</span>
                       </Label>
-                      <div className="relative">
+                      <div className="flex items-center">
                         <Input 
                           placeholder="0.00" 
                           type="number"
-                          className="h-14 rounded-xl border-2 text-center font-black pr-12" 
+                          className="h-14 rounded-l-none rounded-r-xl border-2 text-center font-black" 
                           value={offerForm.amount}
                           onChange={(e)=>setOfferForm({...offerForm, amount: e.target.value})}
                         />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                        <div className="h-14 bg-zinc-100 border-2 border-r-0 rounded-l-xl px-4 flex items-center justify-center font-bold text-zinc-500">
+                          <DollarSign size={16} />
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">مستحقاتك</Label>
-                      <div className="relative">
-                        <div className="h-14 rounded-xl bg-zinc-100 border-2 flex items-center justify-center font-black text-xl text-primary">
-                          {earnings.toFixed(2)}
+                      <Label className="font-black text-zinc-700 block text-right">مستحقاتك</Label>
+                      <div className="flex items-center">
+                        <div className="h-14 rounded-l-none rounded-r-xl bg-zinc-100 border-2 flex-1 flex items-center justify-center font-black text-xl text-zinc-600">
+                          {earnings.toFixed(0)}
                         </div>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                        <div className="h-14 bg-zinc-100 border-2 border-r-0 rounded-l-xl px-4 flex items-center justify-center font-bold text-zinc-500">
+                          <DollarSign size={16} />
+                        </div>
                       </div>
-                      <p className="text-[10px] text-primary font-bold text-center">بعد خصم عمولة موقع مستقل (20%)</p>
+                      <p className="text-[10px] text-primary font-bold text-center mt-1">بعد خصم عمولة موقع مستقل</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
+                    <Label className="font-black text-zinc-700 block text-right">
                       تفاصيل العرض <span className="text-red-500">*</span>
                     </Label>
                     <Textarea 
-                      placeholder="اكتب كيف ستقوم بحل الاستفهام وما الذي يميز شرحك..."
-                      className="h-48 rounded-[1.5rem] border-2 p-6 text-lg font-medium leading-relaxed"
+                      placeholder=""
+                      className="h-48 rounded-xl border-2 p-6 text-lg font-medium leading-relaxed"
                       value={offerForm.details}
                       onChange={(e)=>setOfferForm({...offerForm, details: e.target.value})}
                     />
                   </div>
 
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t">
-                    <ul className="text-xs text-muted-foreground font-bold space-y-2 text-right">
-                      <li className="flex items-center gap-2 justify-end">لا تستخدم وسائل تواصل خارجية <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
-                      <li className="flex items-center gap-2 justify-end">لا تضع روابط خارجية، قم بالاهتمام بمعرض أعمالك بدلاً منها <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
-                    </ul>
+                  <div className="flex flex-col md:flex-row items-end justify-between gap-6 pt-6">
+                    <div className="space-y-4 w-full">
+                      <Button variant="outline" className="gap-2 font-bold rounded-lg h-10 px-4 text-zinc-500 border-zinc-200">
+                        <Paperclip size={16} /> أرفق ملفات (اختياري)
+                      </Button>
+                      <ul className="text-xs text-muted-foreground font-bold space-y-2 text-right">
+                        <li className="flex items-center gap-2 justify-end">لا تستخدم وسائل تواصل خارجية <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
+                        <li className="flex items-center gap-2 justify-end">لا تضع روابط خارجية، قم بالاهتمام بمعرض أعمالك بدلاً منها <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
+                        <li className="flex items-center gap-2 justify-end"><span className="text-primary cursor-pointer hover:underline">اقرأ هنا كيف تضيف عرضاً مميزاً على أي مشروع</span> <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
+                      </ul>
+                    </div>
                     <Button 
                       onClick={handleSubmitOffer} 
                       disabled={isSubmittingOffer}
-                      className="h-16 px-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
+                      className="h-14 px-12 rounded-lg font-black text-lg bg-[#1e6ca8] hover:bg-[#1e6ca8]/90 transition-all w-full md:w-auto"
                     >
-                      {isSubmittingOffer ? <Loader2 className="animate-spin" /> : "أضف عرضك الآن"}
+                      {isSubmittingOffer ? <Loader2 className="animate-spin" /> : "أضف عرضك"}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* قسم العروض للمستفهم (صاحب الطلب) */}
             {profile?.id === request.mustafhemId && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                 <h3 className="text-2xl font-black border-r-8 border-primary pr-6 flex items-center gap-3">

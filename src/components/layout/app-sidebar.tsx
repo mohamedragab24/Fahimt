@@ -31,7 +31,8 @@ import {
   GalleryVertical,
   Edit3,
   Wand2,
-  Mail
+  Mail,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -84,6 +85,7 @@ export function AppSidebar() {
     { title: settings?.sideTeachers || "المُفهمين", icon: GraduationCap, href: "/teachers" },
     { title: settings?.sidePortfolio || "أعمال المفهمين", icon: ImageIcon, href: "/portfolio" },
     { title: settings?.sideRequests || "استفهاماتي", icon: ClipboardList, href: "/requests" },
+    { title: "العروض المتقدمة", icon: Zap, href: "/offers" },
     { title: settings?.sideWallet || "المحفظة", icon: Wallet, href: "/wallet" },
     { title: settings?.sideSettings || "الإعدادات", icon: Settings, href: "/profile" },
   ];
