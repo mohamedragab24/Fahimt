@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Palette, Type, Layout, Save, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Palette, Type, Layout, Save, RefreshCw, Sparkles, CheckCircle2, AlertCircle, Youtube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCustomize() {
@@ -30,7 +31,8 @@ export default function AdminCustomize() {
     footerText: "",
     primaryColor: "#29B6F6",
     accentColor: "#FF7043",
-    backgroundColor: "#F8FAFC"
+    backgroundColor: "#F8FAFC",
+    landingVideoId: ""
   });
 
   useEffect(() => {
@@ -42,7 +44,8 @@ export default function AdminCustomize() {
         footerText: settings.footerText || "جميع الحقوق محفوظة لمنصة فهمني",
         primaryColor: settings.primaryColor || "#29B6F6",
         accentColor: settings.accentColor || "#FF7043",
-        backgroundColor: settings.backgroundColor || "#F8FAFC"
+        backgroundColor: settings.backgroundColor || "#F8FAFC",
+        landingVideoId: settings.landingVideoId || "dQw4w9WgXcQ"
       });
     }
   }, [settings]);
@@ -98,6 +101,13 @@ export default function AdminCustomize() {
             <div className="space-y-2">
               <Label className="font-bold">الوصف التعريفي (Hero Subtitle)</Label>
               <Textarea value={formData.heroSubtitle} onChange={(e)=>setFormData({...formData, heroSubtitle: e.target.value})} className="h-24 border-2 rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold">فيديو اليوتيوب (Video ID)</Label>
+              <div className="flex gap-2">
+                <Input value={formData.landingVideoId} onChange={(e)=>setFormData({...formData, landingVideoId: e.target.value})} placeholder="مثال: dQw4w9WgXcQ" className="h-14 border-2 rounded-xl font-mono" />
+                <div className="bg-red-50 p-3 rounded-xl flex items-center justify-center text-red-600"><Youtube /></div>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="font-bold">نص التذييل (Footer Text)</Label>

@@ -226,7 +226,7 @@ export default function ManualEditorPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button onClick={handleSave} disabled={isSaving} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
+          <Button onClick={handleSave} className="h-14 px-10 rounded-2xl font-black text-xl shadow-xl">
             {isSaving ? <RefreshCw className="animate-spin ml-2" /> : <Save className="ml-2" />}
             حفظ الإعدادات
           </Button>
@@ -261,12 +261,21 @@ export default function ManualEditorPage() {
 
           <div className="space-y-4 pt-6 border-t">
             <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <ImageIcon size={14} /> الأصول الرسومية
+              <ImageIcon size={14} /> الأصول الرسومية والفيديو
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <ImageThumb label="اللوجو الرئيسي" value={formData.logoUrl} onClick={() => handleFieldClick('logoUrl', 'شعار المنصة', 'image')} />
               <ImageThumb label="خلفية الهيرو" value={formData.landingBg} onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')} />
               <ImageThumb label="صورة المشاركة" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black opacity-60">فيديو اليوتيوب</Label>
+                <div 
+                  onClick={() => handleFieldClick('landingVideoId', 'معرف فيديو يوتيوب')}
+                  className="h-24 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center cursor-pointer hover:border-primary transition-all"
+                >
+                  <Youtube size={24} className="text-red-600" />
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -337,6 +346,23 @@ export default function ManualEditorPage() {
                       </p>
                     </div>
                   </section>
+
+                  {/* YouTube Preview Section */}
+                  <section 
+                    className="py-24 bg-zinc-50 border-t border-b border-dashed border-zinc-200 cursor-pointer hover:bg-zinc-100 transition-all flex flex-col items-center justify-center gap-6"
+                    onClick={() => handleFieldClick('landingVideoId', 'معرف فيديو يوتيوب')}
+                  >
+                    <div className="bg-primary/10 p-6 rounded-full text-primary">
+                      <Play className="h-12 w-12 fill-current" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="text-2xl font-black text-zinc-800">قسم الفيديو التعريفي</h3>
+                      <p className="text-sm font-bold text-muted-foreground">ID الحالي: {formData.landingVideoId}</p>
+                    </div>
+                    <div className="w-full max-w-3xl aspect-video bg-black rounded-[3rem] shadow-2xl flex items-center justify-center overflow-hidden border-8 border-white">
+                      <Youtube size={80} className="text-red-600 opacity-50" />
+                    </div>
+                  </section>
                 </>
               )}
 
@@ -392,7 +418,9 @@ export default function ManualEditorPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-10">
-            <Label className="font-black mb-4 block text-lg text-right">المحتوى الجديد</Label>
+            <Label className="font-black mb-4 block text-lg text-right">
+              {activeField?.key === 'landingVideoId' ? 'أدخل معرف الفيديو (مثلاً: dQw4w9WgXcQ)' : 'المحتوى الجديد'}
+            </Label>
             {activeField?.type === 'textarea' ? (
               <Textarea 
                 value={activeField?.value || ""} 
