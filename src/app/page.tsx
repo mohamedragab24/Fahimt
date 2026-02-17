@@ -35,7 +35,10 @@ import {
   Wallet,
   Facebook,
   Youtube,
-  Send
+  Send,
+  Layers,
+  Filter,
+  Activity
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -370,6 +373,8 @@ function MustafhemView({ profile, settings, router }: any) {
   const { data: acceptedRequests } = useCollection(acceptedRequestsQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
+  const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === newIstifham.categorySub)?.id) || [];
 
   const handleCreate = async () => {
     if (!newIstifham.title || !newIstifham.description || !newIstifham.goal || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
@@ -404,22 +409,47 @@ function MustafhemView({ profile, settings, router }: any) {
               <DialogHeader><DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle></DialogHeader>
               <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
                 <div className="space-y-2"><Label className="font-black">عنوان الاستفهام</Label><Input value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" /></div>
-                <div className="space-y-2"><Label className="font-black">تفاصيل الاستفهام</Label><Textarea value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" /></div>
-                <div className="space-y-2"><Label className="font-black text-primary flex items-center gap-2">هدف الاستفهام <Target size={16}/></Label><Textarea value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" /></div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2 text-right">
-                    <Label className="font-black">القسم</Label>
-                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}>
-                      <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-black flex items-center gap-2">القسم الرئيسي <Layers size={14}/></Label>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: "", categoryOption: ""})}>
+                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                       <SelectContent>
                         {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى (غير مدرج)</SelectItem>
+                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="font-black">الميزانية</Label><Input type="number" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
+                  <div className="space-y-2">
+                    <Label className="font-black flex items-center gap-2">التخصص <Filter size={14}/></Label>
+                    <Select disabled={!newIstifham.category || newIstifham.category === 'أخرى'} onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v, categoryOption: ""})}>
+                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                      <SelectContent>
+                        {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-black flex items-center gap-2">خيار إضافي <Activity size={14}/></Label>
+                    <Select disabled={!newIstifham.categorySub || newIstifham.categorySub === 'أخرى'} onValueChange={(v)=>setNewIstifham({...newIstifham, categoryOption: v})}>
+                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
+                      <SelectContent>
+                        {options.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2"><Label className="font-black">موعد المحاضرة</Label><Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
+
+                <div className="space-y-2"><Label className="font-black">تفاصيل الاستفهام</Label><Textarea value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-2xl border-2 p-4" /></div>
+                <div className="space-y-2"><Label className="font-black text-primary flex items-center gap-2">هدف الاستفهام <Target size={16}/></Label><Textarea value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-20 rounded-2xl border-2 border-primary/20 p-4 font-medium" /></div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2"><Label className="font-black">الميزانية المقترحة</Label><Input type="number" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2 font-black text-lg" /></div>
+                  <div className="space-y-2"><Label className="font-black">موعد المحاضرة</Label><Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
+                </div>
               </div>
               <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
             </DialogContent>
@@ -439,7 +469,7 @@ function MustafhemView({ profile, settings, router }: any) {
                 <Badge className="bg-blue-100 text-blue-600 mb-4">تم قبول طلبك بواسطة {ist.mufhemName}</Badge>
                 <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
                 <div className="pt-4 border-t border-dashed mt-4">
-                  <Button onClick={() => router.push(`/requests/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-blue-600">إتمام الدفع الآن</Button>
+                  <Button onClick={() => router.push(`/requests/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-blue-600">إتم الدفع الآن</Button>
                 </div>
               </Card>
             ))}
@@ -533,7 +563,6 @@ function MufhemView({ profile, settings, router }: any) {
 
   return (
     <div className="space-y-10">
-      {/* Banner for adding new portfolio works */}
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
         <div className="space-y-4 text-right flex-1">
           <h2 className="text-3xl md:text-4xl font-black text-zinc-800 leading-tight">

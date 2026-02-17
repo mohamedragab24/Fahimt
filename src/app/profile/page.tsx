@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle, Layers, MessageSquare } from "lucide-react";
+import { Camera, Lock, Save, User, LogOut, Phone, Calendar as CalendarIcon, Mail, ShieldCheck, Upload, Copy, Check, Fingerprint, GraduationCap, BadgeCheck, Smartphone, FileText, Image as ImageIcon, Trash2, Plus, Video, PlayCircle, Layers, MessageSquare, Filter, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from "@/firebase";
 import { doc, collection, addDoc, query, where, orderBy, deleteDoc } from "firebase/firestore";
@@ -60,6 +60,7 @@ export default function ProfilePage() {
     profilePictureUrl: "",
     specialization: "",
     specializationSub: "",
+    specializationOption: "",
     bio: ""
   });
 
@@ -72,10 +73,15 @@ export default function ProfilePage() {
         profilePictureUrl: profile.profilePictureUrl || "",
         specialization: profile.specialization || "",
         specializationSub: profile.specializationSub || "",
+        specializationOption: profile.specializationOption || "",
         bio: profile.bio || ""
       });
     }
   }, [profile]);
+
+  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.specialization)?.id) || [];
+  const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.specializationSub)?.id) || [];
 
   const handleSendOTP = async (method: 'email' | 'whatsapp') => {
     const recipient = method === 'email' ? user?.email : formData.phone;
@@ -134,6 +140,7 @@ export default function ProfilePage() {
       profilePictureUrl: formData.profilePictureUrl,
       specialization: formData.specialization,
       specializationSub: formData.specializationSub,
+      specializationOption: formData.specializationOption,
       bio: formData.bio
     });
     toast({ title: "تم التحديث", description: "تم حفظ التغييرات بنجاح." });
@@ -143,7 +150,6 @@ export default function ProfilePage() {
   if (!profile) return <div className="p-10 text-center font-bold">يرجى تسجيل الدخول لعرض الملف الشخصي.</div>;
 
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
-  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
@@ -210,23 +216,44 @@ export default function ProfilePage() {
             </div>
 
             {profile.role === 'mufhem' && (
-              <>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-8">
                 <div className="space-y-3">
                   <Label className="font-black text-lg flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
-                  <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v})}>
+                  <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v, specializationSub: "", specializationOption: ""})}>
                     <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                     <SelectContent>
                       {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                      <SelectItem value="أخرى" className="font-bold text-primary">أخرى (غير مدرج)</SelectItem>
+                      <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="md:col-span-2 space-y-3">
-                  <Label className="font-black text-lg">نبذة تعريفية للطلاب</Label>
-                  <Textarea value={formData.bio} onChange={(e)=>setFormData({...formData, bio: e.target.value})} className="h-32 rounded-xl border-2 p-4 text-lg font-medium" />
+                <div className="space-y-3">
+                  <Label className="font-black text-lg flex items-center gap-2">التخصص <Filter size={16}/></Label>
+                  <Select disabled={!formData.specialization || formData.specialization === 'أخرى'} value={formData.specializationSub} onValueChange={(v) => setFormData({...formData, specializationSub: v, specializationOption: ""})}>
+                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                    <SelectContent>
+                      {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                      <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </>
+                <div className="space-y-3">
+                  <Label className="font-black text-lg flex items-center gap-2">مهارة محددة <Activity size={16}/></Label>
+                  <Select disabled={!formData.specializationSub || formData.specializationSub === 'أخرى'} value={formData.specializationOption} onValueChange={(v) => setFormData({...formData, specializationOption: v})}>
+                    <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
+                    <SelectContent>
+                      {options.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                      <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             )}
+
+            <div className="md:col-span-2 space-y-3">
+              <Label className="font-black text-lg">نبذة تعريفية للطلاب</Label>
+              <Textarea value={formData.bio} onChange={(e)=>setFormData({...formData, bio: e.target.value})} className="h-32 rounded-xl border-2 p-4 text-lg font-medium" />
+            </div>
           </div>
 
           <div className="mt-12 flex justify-center md:justify-end">

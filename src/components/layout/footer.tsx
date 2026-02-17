@@ -68,7 +68,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Social Media */}
+          {/* Column 4: Social Media - Dynamic from Admin Settings */}
           <div className="space-y-6 text-right">
             <h4 className="font-black text-xl text-primary flex items-center gap-2">
               <div className="w-1.5 h-8 bg-primary rounded-full"></div> تابعنا

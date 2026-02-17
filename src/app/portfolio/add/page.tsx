@@ -23,7 +23,9 @@ import {
   Plus,
   Video,
   CloudUpload,
-  Layers
+  Layers,
+  Filter,
+  Activity
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +54,8 @@ export default function AddPortfolioWork() {
     title: "",
     description: "",
     category: "",
+    categorySub: "",
+    categoryOption: "",
     mediaType: "image" as "image" | "video",
     skills: [] as string[],
     agreed: false
@@ -62,7 +66,10 @@ export default function AddPortfolioWork() {
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
   }, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
+
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
+  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
+  const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.categorySub)?.id) || [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,6 +142,8 @@ export default function AddPortfolioWork() {
             title: formData.title,
             description: formData.description,
             category: formData.category,
+            categorySub: formData.categorySub,
+            categoryOption: formData.categoryOption,
             mediaUrl: downloadUrl,
             mediaType: formData.mediaType,
             skills: formData.skills,
@@ -166,30 +175,51 @@ export default function AddPortfolioWork() {
           <form onSubmit={handleSubmit} className="space-y-10">
             
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">عنوان العمل</Label>
+              <Label className="text-lg font-black">عنوان العمل</Label>
               <Input 
                 placeholder="مثال: شرح مبسط لقواعد اللغة العربية"
-                className="h-14 rounded-2xl border-2 font-bold text-right"
+                className="h-14 rounded-2xl border-2 font-bold"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                 required
               />
             </div>
 
-            <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">القسم (التصنيف)</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
-                <SelectTrigger className="h-14 rounded-2xl border-2 font-bold">
-                  <SelectValue placeholder="اختر قسم العمل" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                <Label className="font-black flex items-center gap-2">القسم <Layers size={14}/></Label>
+                <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v, categorySub: "", categoryOption: ""})}>
+                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                  <SelectContent>
+                    {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                    <SelectItem value="أخرى" className="font-bold text-primary">أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <Label className="font-black flex items-center gap-2">التخصص <Filter size={14}/></Label>
+                <Select disabled={!formData.category || formData.category === 'أخرى'} value={formData.categorySub} onValueChange={(v) => setFormData({...formData, categorySub: v, categoryOption: ""})}>
+                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                  <SelectContent>
+                    {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                    <SelectItem value="أخرى" className="font-bold text-primary">أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <Label className="font-black flex items-center gap-2">المهارة <Activity size={14}/></Label>
+                <Select disabled={!formData.categorySub || formData.categorySub === 'أخرى'} value={formData.categoryOption} onValueChange={(v) => setFormData({...formData, categoryOption: v})}>
+                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
+                  <SelectContent>
+                    {options.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                    <SelectItem value="أخرى" className="font-bold text-primary">أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">الملف التعليمي (فيديو/صورة)</Label>
+              <Label className="text-lg font-black">الملف التعليمي (فيديو/صورة)</Label>
               <div 
                 onClick={() => !isSubmitting && thumbInputRef.current?.click()}
                 className={`relative h-72 rounded-[3rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${previewUrl ? 'border-primary/20 bg-zinc-900' : 'border-zinc-200 hover:border-primary/40 bg-zinc-50'}`}
@@ -221,7 +251,7 @@ export default function AddPortfolioWork() {
             </div>
 
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black flex items-center gap-2 justify-end">الوصف</Label>
+              <Label className="text-lg font-black">الوصف</Label>
               <Textarea 
                 placeholder="اشرح باختصار محتوى العمل..."
                 className="h-40 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed"
@@ -247,7 +277,7 @@ export default function AddPortfolioWork() {
               </div>
             </div>
 
-            <div className="flex items-start gap-4 p-6 bg-primary/5 rounded-[2rem] border-2 border-primary/10 justify-end">
+            <div className="flex items-start gap-4 p-6 bg-primary/5 rounded-[2rem] border-2 border-primary/10">
               <Label htmlFor="agreed" className="text-lg font-bold leading-relaxed cursor-pointer select-none text-right flex-1">
                 أقر بأن هذا العمل من مجهودي الشخصي <span className="text-red-500">*</span>
               </Label>
