@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -53,7 +52,8 @@ import {
   Globe,
   SearchCode,
   Zap,
-  Code2
+  Code2,
+  MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -373,43 +373,55 @@ export default function ManualEditorPage() {
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-accent pr-6">
                     <h2 className="text-4xl font-black text-zinc-900">معاينة المشاركة والبحث (SEO)</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> في جوجل وواتساب.</p>
+                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> عند مشاركة الرابط وفي جوجل.</p>
                   </div>
 
-                  {/* Social Preview Card Simulation */}
-                  <div className="max-w-2xl mx-auto bg-[#F0F2F5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                    <div className="p-4 bg-white border-b flex items-center gap-3">
-                      <div className="bg-green-500 p-2 rounded-full text-white"><Share2 size={16}/></div>
-                      <span className="font-bold text-sm text-zinc-500">معاينة الرابط في تطبيقات التواصل</span>
-                    </div>
-                    <div className="aspect-[1.91/1] bg-zinc-200 relative group cursor-pointer" onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')}>
-                      {formData.ogImageUrl ? (
-                        <img src={formData.ogImageUrl} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-zinc-400">
-                          <ImageIcon size={64} />
-                          <p className="font-black mt-2">اضغط لرفع صورة المعاينة</p>
+                  {/* WhatsApp Preview Simulation */}
+                  <div className="max-w-md mx-auto bg-[#DCF8C6] rounded-3xl p-4 shadow-2xl relative">
+                    <div className="absolute -right-2 top-4 w-4 h-4 bg-[#DCF8C6] rotate-45"></div>
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-zinc-200/50">
+                      <div className="flex items-stretch bg-[#F0F2F5]/50">
+                        <div 
+                          className="w-24 shrink-0 bg-zinc-200 relative group cursor-pointer"
+                          onClick={() => handleFieldClick('ogImageUrl', 'صورة المعاينة المصغرة', 'image')}
+                        >
+                          {formData.ogImageUrl ? (
+                            <img src={formData.ogImageUrl} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-zinc-400">
+                              <ImageIcon size={24} />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Upload className="text-white h-6 w-6" />
+                          </div>
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Upload className="text-white h-12 w-12" />
+                        <div className="p-3 flex-1 text-right space-y-1">
+                          <h4 
+                            className="text-sm font-black text-[#075E54] cursor-pointer hover:underline"
+                            onClick={() => handleFieldClick('metaTitle', 'عنوان الرابط')}
+                          >
+                            {formData.metaTitle}
+                          </h4>
+                          <p 
+                            className="text-[10px] text-zinc-500 font-bold leading-tight cursor-pointer"
+                            onClick={() => handleFieldClick('metaDescription', 'وصف الرابط', 'textarea')}
+                          >
+                            {formData.metaDescription}
+                          </p>
+                          <p className="text-[8px] text-[#34B7F1] font-mono mt-1">https://{formData.siteTitle.toLowerCase()}.com</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="p-6 space-y-2 bg-white text-right">
-                      <h4 
-                        className="text-2xl font-black text-zinc-900 cursor-pointer hover:text-accent"
-                        onClick={() => handleFieldClick('metaTitle', 'عنوان محركات البحث')}
-                      >
-                        {formData.metaTitle}
-                      </h4>
-                      <p 
-                        className="text-zinc-500 font-medium cursor-pointer hover:text-zinc-800"
-                        onClick={() => handleFieldClick('metaDescription', 'وصف محركات البحث', 'textarea')}
-                      >
-                        {formData.metaDescription}
-                      </p>
-                      <p className="text-[10px] text-blue-500 font-mono mt-4">https://{formData.siteTitle.toLowerCase()}.com</p>
+                    <div className="mt-2 flex justify-end gap-2 items-center text-[10px] text-zinc-500 font-bold">
+                      <span>٨:١٧ م</span>
+                      <CheckCircle2 size={10} className="text-blue-500" />
                     </div>
+                  </div>
+
+                  <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 text-blue-800 text-sm font-bold flex items-start gap-3">
+                    <Info className="shrink-0 mt-1" size={18} />
+                    <p>المحاكي أعلاه يوضح كيف سيظهر رابط موقعك عند إرساله في واتساب أو تليجرام. اضغط على أي نص أو على الصورة لتعديلها فوراً.</p>
                   </div>
 
                   {/* Advanced SEO Fields */}

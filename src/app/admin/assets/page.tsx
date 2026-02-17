@@ -68,7 +68,7 @@ export default function AdminAssets() {
 
   const assetItems = [
     { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'هذه هي الصورة الصغيرة التي تظهر في أعلى لسان المتصفح وبجانب رابط الموقع.', icon: Globe },
-    { key: 'ogImageUrl', label: 'صورة المعاينة (Social Preview)', desc: 'الصورة التي تظهر عند مشاركة رابط الموقع على واتساب، فيسبوك، أو تويتر.', icon: Share2 },
+    { key: 'ogImageUrl', label: 'صورة المعاينة (Social Preview)', desc: 'الصورة المصغرة التي تظهر عند مشاركة رابط الموقع على واتساب أو تطبيقات التواصل.', icon: Share2 },
     { key: 'logoUrl', label: 'اللوجو الرئيسي للمنصة', desc: 'يظهر في الهيدر وصفحة الدخول الرئيسية.', icon: Flower2 },
     { key: 'miniIconUrl', label: 'الأيقونة المصغرة (UI)', desc: 'تظهر بجانب الاسم في القائمة الجانبية والهيدر.', icon: Layout },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق (Verified Badge)', desc: 'تظهر بجانب أسماء المفهمين الموثقين.', icon: ShieldCheck },
@@ -125,13 +125,13 @@ export default function AdminAssets() {
                     <div className="flex items-center gap-2 text-zinc-500 font-black uppercase text-xs">
                       <AlertCircle size={14} /> المعاينة الحالية
                     </div>
-                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'faviconUrl' || item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'verifiedBadgeUrl' ? 'h-48' : 'aspect-video'}`}>
+                    <div className={`relative rounded-[2.5rem] overflow-hidden border-4 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center ${item.key === 'faviconUrl' || item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'verifiedBadgeUrl' || item.key === 'ogImageUrl' ? 'h-48' : 'aspect-video'}`}>
                       {currentImage ? (
                         <div className="relative group/img w-full h-full flex items-center justify-center">
                           <img 
                             src={currentImage} 
                             alt={item.label} 
-                            className={`${item.key === 'faviconUrl' ? 'h-16 w-16 object-contain' : item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
+                            className={`${item.key === 'faviconUrl' || item.key === 'ogImageUrl' ? 'h-16 w-16 object-contain' : item.key === 'logoUrl' || item.key === 'miniIconUrl' || item.key === 'splashImageUrl' || item.key === 'verifiedBadgeUrl' ? 'max-h-40 object-contain p-4' : 'object-cover w-full h-full'}`} 
                           />
                         </div>
                       ) : (
