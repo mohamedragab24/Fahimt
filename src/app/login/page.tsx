@@ -25,11 +25,13 @@ import {
   Smartphone,
   MessageSquare,
   User,
-  Info
+  Info,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const COUNTRIES = [
   { code: "20", name: "مصر", flag: "🇪🇬" },
@@ -58,6 +60,7 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -94,6 +97,12 @@ export default function LoginPage() {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول ورفع الصورة الشخصية." });
       return;
     }
+
+    if (!agreedToTerms) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية للمتابعة." });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const cleanPhone = phoneNumber.replace(/\D/g, '').startsWith('0') ? phoneNumber.replace(/\D/g, '').substring(1) : phoneNumber.replace(/\D/g, '');
@@ -280,6 +289,22 @@ export default function LoginPage() {
                       <Button onClick={() => setOtpMethod('email')} variant={otpMethod === 'email' ? 'default' : 'outline'} className={`h-16 rounded-2xl font-black text-lg transition-all ${otpMethod === 'email' ? 'bg-primary shadow-lg scale-105' : 'bg-white'}`}>
                         <Mail size={20} className="ml-2"/> بريد
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* القسم القانوني والموافقة */}
+                  <div className="flex items-start gap-4 p-6 bg-muted/20 rounded-[2rem] border-2 border-dashed border-primary/10 animate-in fade-in slide-in-from-top-2 duration-700">
+                    <Checkbox 
+                      id="terms" 
+                      checked={agreedToTerms} 
+                      onCheckedChange={(checked) => setAgreedToTerms(!!checked)}
+                      className="mt-1 h-6 w-6 rounded-md border-2 border-primary shadow-sm data-[state=checked]:bg-primary data-[state=checked]:text-white"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label htmlFor="terms" className="text-sm md:text-md font-bold leading-relaxed cursor-pointer select-none text-right">
+                        أوافق على <Link href="/terms" target="_blank" className="text-primary hover:underline font-black decoration-dotted">شروط الاستخدام</Link> و <Link href="/privacy" target="_blank" className="text-primary hover:underline font-black decoration-dotted">سياسة الخصوصية</Link> الخاصة بمنصة فهمني.
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground font-medium">يجب الموافقة للمتابعة.</p>
                     </div>
                   </div>
 
