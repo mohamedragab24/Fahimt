@@ -26,7 +26,8 @@ import {
   Youtube, 
   Facebook, 
   Send,
-  Search
+  Search,
+  Play
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";

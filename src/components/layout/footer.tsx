@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -33,11 +34,14 @@ const ICON_MAP: Record<string, any> = {
   Globe
 };
 
-/**
- * مكون تذييل الموقع - تم تحسينه ليعرض روابط التواصل الاجتماعي بشكل ديناميكي.
- */
 export function Footer() {
   const firestore = useFirestore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, "settings", "general");
@@ -91,38 +95,28 @@ export function Footer() {
               <span className="w-1.5 h-8 bg-primary rounded-full inline-block shrink-0"></span> تابعنا
             </h4>
             <div className="grid grid-cols-2 gap-4">
-              {/* عرض الروابط الديناميكية الجديدة */}
-              {settings?.socialLinks && settings.socialLinks.map((link: any) => {
-                const Icon = ICON_MAP[link.icon] || Globe;
-                return (
-                  <a 
-                    key={link.id}
-                    href={link.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-zinc-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-zinc-100 group"
-                  >
-                    <Icon size={18} style={{ color: link.color }} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-black text-zinc-600">{link.label}</span>
-                  </a>
-                );
-              })}
-
-              {/* نسخة احتياطية للروابط القديمة في حال عدم وجود روابط ديناميكية */}
-              {(!settings?.socialLinks || settings.socialLinks.length === 0) && (
+              {mounted && settings?.socialLinks && settings.socialLinks.length > 0 ? (
+                settings.socialLinks.map((link: any) => {
+                  const Icon = ICON_MAP[link.icon] || Globe;
+                  return (
+                    <a 
+                      key={link.id}
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 bg-zinc-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-zinc-100 group"
+                    >
+                      <Icon size={18} style={{ color: link.color }} className="group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-black text-zinc-600">{link.label}</span>
+                    </a>
+                  );
+                })
+              ) : (
                 <>
-                  {settings?.facebookUrl && (
-                    <SocialIconLink href={settings.facebookUrl} icon={Facebook} label="فيسبوك" color="text-blue-600" />
-                  )}
-                  {settings?.whatsappUrl && (
-                    <SocialIconLink href={settings.whatsappUrl} icon={MessageSquare} label="واتساب" color="text-green-500" />
-                  )}
-                  {settings?.telegramUrl && (
-                    <SocialIconLink href={settings.telegramUrl} icon={Send} label="تليجرام" color="text-blue-400" />
-                  )}
-                  {settings?.youtubeUrl && (
-                    <SocialIconLink href={settings.youtubeUrl} icon={Youtube} label="يوتيوب" color="text-red-600" />
-                  )}
+                  <SocialIconLink href="https://www.facebook.com/profile.php?id=61581756573184" icon={Facebook} label="فيسبوك" color="text-blue-600" />
+                  <SocialIconLink href="https://whatsapp.com/channel/0029VbBNt0y0LKZ8hY8BWF1a" icon={MessageSquare} label="واتساب" color="text-green-500" />
+                  <SocialIconLink href="https://t.me/FAHEMNY" icon={Send} label="تليجرام" color="text-blue-400" />
+                  <SocialIconLink href="https://youtube.com/channel/UCd5XJWKfw-bOBpvjlW-ML2w" icon={Youtube} label="يوتيوب" color="text-red-600" />
                 </>
               )}
             </div>
