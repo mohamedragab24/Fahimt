@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -54,14 +55,13 @@ export default function PortfolioItemDetails() {
 
   const { data: teacher } = useDoc(teacherRef);
 
-  // جلب أعمال مقترحة (بنفس القسم)
   const relatedQuery = useMemoFirebase(() => {
     if (!firestore || !work?.category || !id) return null;
     return query(
       collection(firestore, "portfolio"),
       where("category", "==", work.category),
       where("status", "==", "approved"),
-      limit(4) // 4 ليشمل الحالي ثم نفلتره
+      limit(4)
     );
   }, [firestore, work?.category, id]);
 
@@ -75,13 +75,27 @@ export default function PortfolioItemDetails() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shareOnSocial = (platform: string) => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(work?.title || "شاهد هذا العمل التعليمي المميز على منصة فهمني");
+    let shareUrl = "";
+
+    switch(platform) {
+      case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`; break;
+      case 'twitter': shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`; break;
+      case 'linkedin': shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`; break;
+      case 'whatsapp': shareUrl = `https://api.whatsapp.com/send?text=${text}%20${url}`; break;
+    }
+
+    if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
+  };
+
   if (isWorkLoading) return <div className="p-20 text-center animate-pulse font-black text-2xl">جاري تحميل تفاصيل العمل...</div>;
   if (!work) return <div className="p-20 text-center font-bold text-red-500">هذا العمل غير متاح حالياً.</div>;
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-20" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 pt-10">
-        {/* Navigation Breadcrumb */}
         <Button 
           variant="ghost" 
           onClick={() => router.push('/portfolio')}
@@ -92,8 +106,6 @@ export default function PortfolioItemDetails() {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Main Content (Right Side) */}
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-zinc-100 overflow-hidden">
               <div className="p-10 space-y-8">
@@ -101,7 +113,6 @@ export default function PortfolioItemDetails() {
                   {work.title}
                 </h1>
 
-                {/* Video Player Section */}
                 <div className="aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl relative group">
                   {work.mediaType === 'video' ? (
                     <video 
@@ -115,7 +126,6 @@ export default function PortfolioItemDetails() {
                   )}
                 </div>
 
-                {/* Category & Tags */}
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary" className="bg-primary/5 text-primary border-none px-4 py-2 rounded-xl font-black flex items-center gap-2">
                     <Layers size={16} /> {work.category || "تخصص تعليمي"}
@@ -127,7 +137,6 @@ export default function PortfolioItemDetails() {
                   )}
                 </div>
 
-                {/* Description */}
                 <div className="space-y-4">
                   <h3 className="text-xl font-black text-zinc-800 flex items-center gap-2">
                     <FileText size={20} className="text-primary" /> وصف العمل
@@ -139,7 +148,6 @@ export default function PortfolioItemDetails() {
               </div>
             </div>
 
-            {/* Related Works */}
             <div className="space-y-6 pt-10">
               <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4 flex items-center gap-3">
                 <Zap className="text-accent" /> أعمال قد تهمك
@@ -165,12 +173,9 @@ export default function PortfolioItemDetails() {
             </div>
           </div>
 
-          {/* Sidebar (Left Side) */}
           <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
-            
-            {/* Work Card Card (بطاقة العمل) */}
             <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white">
-              <div className="p-6 border-b bg-zinc-50/50">
+              <div className="p-6 border-b bg-zinc-50/50 text-right">
                 <h4 className="font-black text-lg text-zinc-800">بطاقة العمل</h4>
               </div>
               <CardContent className="p-8 space-y-6">
@@ -193,7 +198,7 @@ export default function PortfolioItemDetails() {
                     </div>
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
                       <AvatarImage src={teacher?.profilePictureUrl} />
-                      <AvatarFallback>{teacher?.fullName?.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary font-black">{teacher?.fullName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </div>
                   <Button 
@@ -207,7 +212,6 @@ export default function PortfolioItemDetails() {
               </CardContent>
             </Card>
 
-            {/* CTA Button (طلب عمل مماثل) */}
             <Button 
               onClick={() => router.push('/')}
               className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-blue-600 text-white font-black text-xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all gap-3"
@@ -215,9 +219,8 @@ export default function PortfolioItemDetails() {
               <Send size={24} className="rotate-180" /> طلب عمل مماثل
             </Button>
 
-            {/* Skills Card */}
             <Card className="rounded-[2rem] border-none shadow-sm bg-white overflow-hidden">
-              <div className="p-6 border-b bg-zinc-50/50">
+              <div className="p-6 border-b bg-zinc-50/50 text-right">
                 <h4 className="font-black text-lg text-zinc-800">مهارات العمل</h4>
               </div>
               <CardContent className="p-6">
@@ -231,24 +234,30 @@ export default function PortfolioItemDetails() {
               </CardContent>
             </Card>
 
-            {/* Share Card */}
             <Card className="rounded-[2rem] border-none shadow-sm bg-white overflow-hidden">
-              <div className="p-6 border-b bg-zinc-50/50">
-                <h4 className="font-black text-lg text-zinc-800 text-right">شارك</h4>
+              <div className="p-6 border-b bg-zinc-50/50 text-right">
+                <h4 className="font-black text-lg text-zinc-800">شارك هذا العمل</h4>
               </div>
               <CardContent className="p-6">
                 <div className="flex justify-center gap-3">
-                  <ShareBtn icon={Facebook} />
-                  <ShareBtn icon={Twitter} />
-                  <ShareBtn icon={Linkedin} />
-                  <ShareBtn icon={MessageSquare} className="text-green-500" />
+                  <button onClick={() => shareOnSocial('facebook')} className="h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors text-blue-600">
+                    <Facebook size={18} />
+                  </button>
+                  <button onClick={() => shareOnSocial('twitter')} className="h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors text-sky-500">
+                    <Twitter size={18} />
+                  </button>
+                  <button onClick={() => shareOnSocial('linkedin')} className="h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors text-blue-700">
+                    <Linkedin size={18} />
+                  </button>
+                  <button onClick={() => shareOnSocial('whatsapp')} className="h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors text-green-500">
+                    <MessageSquare size={18} />
+                  </button>
                   <button onClick={handleCopyLink} className="h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors">
                     {copied ? <CheckCircle2 size={18} className="text-green-500" /> : <Copy size={18} className="text-zinc-400" />}
                   </button>
                 </div>
               </CardContent>
             </Card>
-
           </div>
         </div>
       </div>
@@ -262,14 +271,6 @@ function StatRow({ label, value }: { label: string, value: any }) {
       <span className="text-sm font-bold text-zinc-500">{label}</span>
       <span className="text-sm font-black text-zinc-800">{value}</span>
     </div>
-  );
-}
-
-function ShareBtn({ icon: Icon, className }: any) {
-  return (
-    <button className={`h-10 w-10 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors ${className}`}>
-      <Icon size={18} className="text-zinc-400" />
-    </button>
   );
 }
 

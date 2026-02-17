@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,20 +23,30 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, orderBy, doc, addDoc } from "firebase/firestore";
+import { collection, query, orderBy, doc, addDoc, getDocs } from "firebase/firestore";
 import { createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSearchParams } from "next/navigation";
 
 export default function WalletPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [amount, setAmount] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const preAmount = searchParams.get('amount');
+    if (preAmount) {
+      setAmount(preAmount);
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -109,7 +119,7 @@ export default function WalletPage() {
           description: `تم خصم ${numAmount} ج.م من رصيدك مؤقتاً لحين مراجعة التحويل.`,
         });
       } catch (e) {
-        toast({ variant: "destructive", title: "خطأ", description: "فشلت العملية، يرجى المحاولة لاحقاً." });
+        toast({ variant: "destructive", title: "خطأ", description: "فشل العملية، يرجى المحاولة لاحقاً." });
       }
     } else {
       createTransactionNonBlocking(firestore, user.uid, {

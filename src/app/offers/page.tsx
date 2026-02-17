@@ -2,7 +2,7 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, doc, updateDoc, getDocs, addDoc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -14,7 +14,8 @@ import {
   ArrowRight,
   ClipboardList,
   Star,
-  Zap
+  Zap,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,6 +70,7 @@ export default function AdvancedOffersPage() {
 
 function OfferRequestGroup({ request, router }: { request: any, router: any }) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   
   const offersQuery = useMemoFirebase(() => {
@@ -79,23 +81,55 @@ function OfferRequestGroup({ request, router }: { request: any, router: any }) {
   const { data: offers } = useCollection(offersQuery);
 
   const handleAcceptOffer = async (offer: any) => {
-    if (!firestore) return;
+    if (!firestore || !user?.uid) return;
+
+    // 1. حساب الرصيد الحالي
+    const txSnap = await getDocs(collection(firestore, "users", user.uid, "transactions"));
+    let balance = 0;
+    txSnap.forEach(doc => {
+      const d = doc.data();
+      if (d.status !== 'rejected') {
+        if (d.type === 'deposit' || d.type === 'earning') balance += d.amount;
+        else balance -= d.amount;
+      }
+    });
+
+    // 2. التحقق من كفاية الرصيد
+    if (balance < offer.amount) {
+      toast({ 
+        variant: "destructive", 
+        title: "رصيد غير كافٍ", 
+        description: "يرجى شحن محفظتك للمتابعة وقبول العرض." 
+      });
+      router.push(`/wallet?amount=${offer.amount - balance}&requestId=${request.id}`);
+      return;
+    }
+
+    // 3. الرصيد كافٍ -> خصم المبلغ وتحديث الحالة
     try {
+      await addDoc(collection(firestore, "users", user.uid, "transactions"), {
+        amount: offer.amount,
+        type: 'payment',
+        details: `دفع مقابل استفهام: ${request.title}`,
+        status: 'completed',
+        timestamp: new Date().toISOString()
+      });
+
       const requestRef = doc(firestore, "istifhams", request.id);
       await updateDoc(requestRef, {
-        status: "accepted",
+        status: "paid", // مدفوع وجاهز للبدء
         mufhemId: offer.mufhemId,
         mufhemName: offer.mufhemName,
         amount: offer.amount,
         acceptedOfferId: offer.id,
-        acceptedAt: new Date().toISOString()
+        paidAt: new Date().toISOString()
       });
 
       await updateDoc(doc(firestore, "istifhams", request.id, "offers", offer.id), {
         status: "accepted"
       });
 
-      toast({ title: "تم قبول العرض!", description: "تم حجز الخبير وجاري تحضير المحاضرة." });
+      toast({ title: "تم الدفع وقبول العرض!", description: "تم حجز الخبير وجاري تحضير المحاضرة." });
       router.push(`/meeting/${request.id}`);
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل قبول العرض." });
@@ -140,14 +174,14 @@ function OfferRequestGroup({ request, router }: { request: any, router: any }) {
                     <p className="text-[10px] font-black text-muted-foreground uppercase">القيمة</p>
                     <p className="text-2xl font-black text-primary">{offer.amount} <span className="text-xs">ج.م</span></p>
                   </div>
-                  {request.status === 'active' && (
-                    <Button onClick={() => handleAcceptOffer(offer)} className="h-12 rounded-xl font-black px-6 shadow-md bg-green-600 hover:bg-green-700">
-                      قبول العرض
+                  {(request.status === 'active' || request.status === 'accepted') && offer.status !== 'accepted' && (
+                    <Button onClick={() => handleAcceptOffer(offer)} className="h-12 rounded-xl font-black px-6 shadow-md bg-green-600 hover:bg-green-700 flex items-center gap-2">
+                      <Wallet size={16} /> ادفع واقبل العرض
                     </Button>
                   )}
-                  {offer.status === 'accepted' && (
+                  {(offer.status === 'accepted' || request.status === 'paid') && (
                     <Badge className="bg-green-100 text-green-600 font-black h-10 px-6 rounded-xl flex items-center gap-2">
-                      <CheckCircle2 size={16} /> عرض مقبول
+                      <CheckCircle2 size={16} /> عرض مدفوع ومقبول
                     </Badge>
                   )}
                 </div>

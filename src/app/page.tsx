@@ -31,7 +31,8 @@ import {
   Layout,
   HelpCircle,
   BadgeCent,
-  Zap
+  Zap,
+  Wallet
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -207,7 +208,6 @@ function LandingPage({ router, settings }: any) {
 
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
-      {/* Hero Section */}
       <div className="relative min-h-[95vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
@@ -281,7 +281,7 @@ function LandingPage({ router, settings }: any) {
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{res.description}</p>
                           <div className="flex justify-between items-center mt-3">
                             <Badge variant="outline" className="font-black text-xs">{res.amount} ج.م</Badge>
-                            <span className="text-[10px] font-bold text-primary flex items-center gap-1">سجل دخولك لقبول المشروع <ArrowRight size={10} className="rotate-180" /></span>
+                            <span className="text-[10px] font-bold text-primary flex items-center gap-1">سجل دخولك لمشاهدة التفاصيل <ArrowRight size={10} className="rotate-180" /></span>
                           </div>
                         </div>
                       ))
@@ -309,7 +309,6 @@ function LandingPage({ router, settings }: any) {
 
             <div className="relative group">
               <div className="absolute -inset-6 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 rounded-[4rem] blur-3xl opacity-40"></div>
-              
               <div className="relative aspect-video w-full rounded-[3.5rem] md:rounded-[4.5rem] overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,0.2)] border-[15px] md:border-[25px] border-white bg-black">
                 <iframe 
                   className="w-full h-full"
@@ -319,16 +318,6 @@ function LandingPage({ router, settings }: any) {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 ></iframe>
-              </div>
-
-              <div className="absolute -bottom-10 -right-10 bg-zinc-900 text-white p-10 rounded-[3rem] shadow-2xl hidden lg:flex items-center gap-6 border-4 border-white animate-bounce-slow">
-                <div className="bg-primary/20 p-4 rounded-2xl">
-                  <ShieldCheck className="text-primary h-10 w-10" />
-                </div>
-                <div className="text-right">
-                  <p className="font-black text-xl">رقابة وموثوقية</p>
-                  <p className="text-sm text-zinc-400 font-bold">جلسات مسجلة لضمان الجودة</p>
-                </div>
               </div>
             </div>
           </div>
@@ -365,40 +354,19 @@ function MustafhemView({ profile, settings }: any) {
   });
   const { toast } = useToast();
 
-  const countWords = (text: string) => {
-    return text.trim().split(/\s+/).filter(Boolean).length;
-  };
-
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
 
   const pendingIstifhamsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(10)) : null, [firestore, profile.id]);
   const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
-  const upcomingSessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "accepted"), limit(10)) : null, [firestore, profile.id]);
-  const { data: upcomingSessions } = useCollection(upcomingSessionsQuery);
+  const readySessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(10)) : null, [firestore, profile.id]);
+  const { data: paidSessions } = useCollection(readySessionsQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
 
   const handleCreate = async () => {
-    const titleWords = countWords(newIstifham.title);
-    const descWords = countWords(newIstifham.description);
-    const goalWords = countWords(newIstifham.goal);
-
-    if (titleWords > 100) {
-      toast({ variant: "destructive", title: "تنبيه", description: "العنوان يتجاوز 100 كلمة." });
-      return;
-    }
-    if (descWords > 1000) {
-      toast({ variant: "destructive", title: "تنبيه", description: "التفاصيل تتجاوز 1000 كلمة." });
-      return;
-    }
-    if (goalWords > 200) {
-      toast({ variant: "destructive", title: "تنبيه", description: "الهدف يتجاوز 200 كلمة." });
-      return;
-    }
-
     if (!newIstifham.title || !newIstifham.description || !newIstifham.goal || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
@@ -428,112 +396,36 @@ function MustafhemView({ profile, settings }: any) {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">{settings?.studentDashboardBtn || "طلب استفهام جديد"}</Button></DialogTrigger>
             <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
-              <DialogHeader>
-                <DialogTitle className="text-right text-3xl font-black">{settings?.createIstifhamTitle || "تفاصيل الاستفهام"}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle></DialogHeader>
               <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-2">
-                    <span className={`text-[10px] font-black ${countWords(newIstifham.title) > 100 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.title)} / 100 كلمة</span>
-                    <Label className="font-black">عنوان الاستفهام</Label>
-                  </div>
-                  <Input placeholder="عنوان مختصر وواضح..." value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-2">
-                    <span className={`text-[10px] font-black ${countWords(newIstifham.description) > 1000 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.description)} / 1000 كلمة</span>
-                    <Label className="font-black">تفاصيل الاستفهام</Label>
-                  </div>
-                  <Textarea placeholder="اشرح مشكلتك بالتفصيل..." value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-2">
-                    <span className={`text-[10px] font-black ${countWords(newIstifham.goal) > 200 ? 'text-red-500' : 'text-zinc-400'}`}>{countWords(newIstifham.goal)} / 200 كلمة</span>
-                    <Label className="font-black text-primary flex items-center gap-2">
-                      هدف الاستفهام <Target size={16}/>
-                    </Label>
-                  </div>
-                  <Textarea placeholder="ما هو الشيء الذي إذا حققه المدرس تعتبر أنك فهمت تماماً؟" value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" />
-                </div>
-
+                <div className="space-y-2"><Label className="font-black">عنوان الاستفهام</Label><Input value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" /></div>
+                <div className="space-y-2"><Label className="font-black">تفاصيل الاستفهام</Label><Textarea value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" /></div>
+                <div className="space-y-2"><Label className="font-black text-primary flex items-center gap-2">هدف الاستفهام <Target size={16}/></Label><Textarea value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" /></div>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">القسم</Label>
-                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: ""})}>
-                      <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
-                      <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">التخصص</Label>
-                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v})}>
-                      <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
-                      <SelectContent>{filteredSubs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
+                  <div className="space-y-2"><Label className="font-black">القسم</Label><Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}><SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger><SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label className="font-black">الميزانية</Label><Input type="number" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">الميزانية (ج.م)</Label>
-                    <Input type="number" placeholder="0.00" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-black pr-2">موعد المحاضرة المقترح</Label>
-                    <Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" />
-                  </div>
-                </div>
+                <div className="space-y-2"><Label className="font-black">موعد المحاضرة</Label><Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
               </div>
-              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">{settings?.createIstifhamBtn || "تأكيد وإرسال للمراجعة"}</Button></DialogFooter>
+              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
 
-      {upcomingSessions && upcomingSessions.length > 0 && (
+      {paidSessions && paidSessions.length > 0 && (
         <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-primary pr-6 flex items-center gap-3">
-            <Video className="text-primary" /> محاضرات قريبة
+          <h3 className="text-2xl font-black border-r-8 border-green-500 pr-6 flex items-center gap-3">
+            <Video className="text-green-600" /> محاضرات جاهزة للبدء
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingSessions.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-primary/10 bg-white p-6 shadow-lg hover:border-primary transition-all">
-                <Badge className="bg-green-100 text-green-600 mb-4">تم القبول - جاهزة للبدء</Badge>
+            {paidSessions.map(ist => (
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-green-500/20 bg-white p-6 shadow-lg hover:border-green-500 transition-all">
+                <Badge className="bg-green-100 text-green-600 mb-4">مدفوعة - جاهزة للبدء</Badge>
                 <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
-                    <Calendar size={14} /> {new Date(ist.meetingTime).toLocaleDateString('ar-EG')}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
-                    <Clock size={14} /> {new Date(ist.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
                 <div className="pt-4 border-t border-dashed mt-4">
-                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black">دخول المحاضرة الآن</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {pendingIstifhams && pendingIstifhams.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-orange-500 pr-6 flex items-center gap-3">
-            <Timer className="text-orange-500" /> طلبات بانتظار المراجعة
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pendingIstifhams.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-orange-100 bg-white p-6 shadow-lg">
-                <Badge className="bg-orange-100 text-orange-600 mb-4">قيد المراجعة</Badge>
-                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
-                <div className="pt-4 border-t border-dashed mt-4 flex justify-between items-center">
-                  <span className="font-black text-primary">{ist.amount} ج.م</span>
-                  <span className="text-[10px] font-bold text-muted-foreground">أرسل منذ لحظات</span>
+                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-green-600">دخول المحاضرة الآن</Button>
                 </div>
               </Card>
             ))}
@@ -553,9 +445,7 @@ function MufhemView({ profile, settings }: any) {
   const istifhamsQuery = useMemoFirebase(() => (firestore) ? query(collection(firestore, "istifhams"), where("status", "==", "active")) : null, [firestore]);
   const { data: rawIstifhams, isLoading } = useCollection(istifhamsQuery);
 
-  const istifhams = rawIstifhams?.filter(ist => {
-    return !ist.mustafhemGender || ist.mustafhemGender === profile.gender;
-  });
+  const istifhams = rawIstifhams?.filter(ist => !ist.mustafhemGender || ist.mustafhemGender === profile.gender);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -579,28 +469,13 @@ function MufhemView({ profile, settings }: any) {
     if (!firestore) return;
     try {
       updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { 
-        status: "accepted", 
+        status: "accepted", // assigned but waiting for student payment
         mufhemId: profile.id, 
         mufhemName: profile.fullName 
       });
-
-      const mustafhemSnap = await getDoc(doc(firestore, "users", ist.mustafhemId));
-      if (mustafhemSnap.exists()) {
-        const mData = mustafhemSnap.data();
-        const reminderBody = `أهلاً ${mData.fullName}، يسعدنا إبلاغك بأن الخبير "${profile.fullName}" قد قبل استفهامك: "${ist.title}". يمكنك الدخول للمنصة الآن لبدء المحاضرة.`;
-        
-        if (mData.phoneNumber) {
-          sendNotification({ recipient: mData.phoneNumber, method: 'whatsapp', body: reminderBody });
-        }
-        if (mData.email) {
-          sendNotification({ recipient: mData.email, method: 'email', subject: 'تذكير: تم قبول استفهامك!', body: reminderBody });
-        }
-      }
-
-      toast({ title: "تم قبول الطلب وإرسال تذكير للمستفهم" });
-      router.push(`/meeting/${ist.id}`);
+      toast({ title: "تم قبول الطلب", description: "بانتظار قيام المستفهم بالدفع لبدء الجلسة." });
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في معالجة الطلب" });
+      toast({ variant: "destructive", title: "خطأ" });
     }
   };
 
@@ -621,57 +496,35 @@ function MufhemView({ profile, settings }: any) {
         </Card>
       </div>
 
-      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 border-accent/10">
-        <div className="space-y-4 text-right">
-          <h2 className="text-4xl font-black text-zinc-800">{settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}</h2>
-          <p className="text-muted-foreground font-bold text-lg max-w-xl">{settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم."}</p>
-          <Button size="lg" onClick={() => router.push('/portfolio/add')} className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20">
-            {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"} <Plus className="mr-2" />
-          </Button>
-        </div>
-        <ImageIcon size={120} className="text-accent opacity-20 hidden md:block" />
-      </div>
-
       <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
         <div className="p-6 border-b flex items-center justify-between">
           <h3 className="text-xl font-black">الاستفهامات المتاحة</h3>
-          <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-2"><BellRing size={14}/> تذكير الطلبات مفعل</Badge>
+          <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-2"><BellRing size={14}/> طلبات جديدة</Badge>
         </div>
         <div className="divide-y">
           {isLoading ? (
-            <div className="p-20 text-center animate-pulse font-bold text-zinc-400">جاري البحث عن طلبات...</div>
+            <div className="p-20 text-center animate-pulse font-bold">جاري البحث...</div>
           ) : (istifhams && istifhams.length > 0) ? (
             istifhams.map(ist => (
               <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <h4 className="text-xl font-bold text-primary">{ist.title}</h4>
-                    <Badge variant="secondary" className="bg-muted/50">{ist.category}</Badge>
+                    <Badge variant="secondary">{ist.category}</Badge>
                   </div>
                   <p className="text-zinc-600 text-sm line-clamp-2">{ist.description}</p>
                   <div className="flex justify-between items-center pt-2">
-                    <div className="flex flex-col">
-                      <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
-                      <span className="text-[10px] text-zinc-400 font-bold">بواسطة: {ist.mustafhemName}</span>
-                    </div>
+                    <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
                     <div className="flex gap-2">
-                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold px-6 border-primary text-primary flex items-center gap-2">
-                        <Zap size={16} /> قدم عرض
-                      </Button>
-                      <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
+                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold border-primary text-primary">قدم عرض</Button>
+                      <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold">أنا أفهمك</Button>
                     </div>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="py-24 text-center space-y-4">
-              <div className="bg-zinc-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-                <HelpCircle size={40} className="text-zinc-200" />
-              </div>
-              <p className="text-zinc-400 font-black text-xl">لا توجد طلبات متاحة تناسبك حالياً.</p>
-              <p className="text-zinc-300 text-sm font-bold">تأكد من اختيار التخصصات المناسبة في ملفك الشخصي.</p>
-            </div>
+            <div className="py-24 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد طلبات متاحة حالياً.</div>
           )}
         </div>
       </div>
