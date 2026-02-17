@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -32,7 +31,8 @@ import {
   Edit3,
   Wand2,
   Mail,
-  Zap
+  Zap,
+  ListTodo
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -114,6 +114,7 @@ export function AppSidebar() {
     { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
     { title: "المحرر المرئي", icon: Edit3, href: "/admin/manual-editor" },
     { title: "الإدارة بالذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
+    { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
     { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
     { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
     { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
@@ -121,7 +122,7 @@ export function AppSidebar() {
     { title: "مراجعة أعمال المفهمين", icon: FileSearch, href: "/admin/portfolio-approvals" },
     { title: "إدارة معرض الأعمال", icon: GalleryVertical, href: "/admin/portfolio-management" },
     { title: "أقسام المفهمين", icon: Layers, href: "/admin/teacher-categories" },
-    { title: "رقابة المحاضرات", icon: Video, href: "/admin/sessions" },
+    { title: "سجلات الفيديو", icon: Video, href: "/admin/sessions" },
     { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
     { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
     { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
