@@ -11,60 +11,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Palette, 
-  Type, 
   Save, 
   RefreshCw, 
-  Sparkles, 
   Edit3, 
-  MousePointer2,
-  FileText,
-  ShieldCheck,
-  Info,
-  BookOpen,
-  Layers,
-  X,
-  ImageIcon,
-  Upload,
-  Link as LinkIcon,
-  LayoutTemplate,
-  Monitor,
-  Smartphone,
-  CheckCircle2,
-  Menu,
-  Home,
-  GraduationCap,
-  ClipboardList,
-  Wallet,
-  Settings,
-  LayoutDashboard,
-  LogOut,
-  ShieldAlert,
-  ChevronRight,
-  ChevronLeft,
-  Gavel,
-  Lock,
-  Target,
-  Users,
-  Video,
-  Star,
-  Search,
-  Plus,
-  Share2,
-  Globe,
-  SearchCode,
-  Zap,
-  Code2,
-  MessageSquare,
-  Youtube,
-  Facebook,
-  Send
+  ImageIcon, 
+  LayoutTemplate, 
+  Monitor, 
+  ChevronRight, 
+  ChevronLeft, 
+  Share2, 
+  Globe, 
+  Zap, 
+  MessageSquare, 
+  Youtube, 
+  Facebook, 
+  Send 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 
 type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo' | 'social';
 
@@ -93,24 +59,19 @@ export default function ManualEditorPage() {
     accentColor: "#FF7043",
     backgroundColor: "#F8FAFC",
     borderRadius: "1rem",
-    // SEO Settings
     metaTitle: "فهمني - منصة التعلم الذكي",
     metaDescription: "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل الخبرات والمعرفة.",
     metaKeywords: "تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, مفهم, مستفهم",
     googleSiteVerification: "",
     ogImageUrl: "",
-    // Images
     logoUrl: "",
     landingBg: "",
     aboutImage: "",
-    // Video
     landingVideoId: "dQw4w9WgXcQ", 
-    // Social Links
     telegramUrl: "https://t.me/FAHEMNY",
     whatsappUrl: "https://whatsapp.com/channel/0029VbBNt0y0LKZ8hY8BWF1a",
     facebookUrl: "https://www.facebook.com/profile.php?id=61581756573184",
     youtubeUrl: "https://youtube.com/channel/UCd5XJWKfw-bOBpvjlW-ML2w?si=4lk8qfXknylih4QV",
-    // Nav Labels
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
     navGuide: "الدليل",
@@ -118,7 +79,6 @@ export default function ManualEditorPage() {
     navTeachers: "المُفهمين",
     navPortfolio: "أعمال المفهمين",
     navBrowse: "تصفح الاستفهامات",
-    // Sidebar Labels
     sideHome: "الرئيسية",
     sideTeachers: "المُفهمين",
     sidePortfolio: "أعمال المفهمين",
@@ -129,7 +89,6 @@ export default function ManualEditorPage() {
     sideLogout: "تسجيل الخروج",
     sideToggleToStudent: "تبديل إلى مُستفهم",
     sideToggleToTeacher: "تبديل إلى مُفهم",
-    // Pages Content
     aboutTitle: "ما هي منصة فهمني؟",
     aboutDescription: "فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية.",
     termsTitle: "شروط الاستخدام",
@@ -140,7 +99,6 @@ export default function ManualEditorPage() {
     guaranteesDescription: "نحن في 'فهمني' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
     guideTitle: "الدليل الإرشادي",
     guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
-    // Dashboards
     studentDashboardTitle: "عندك سؤال؟ اطرح استفهامك الآن",
     studentDashboardBtn: "طلب استفهام جديد",
     teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
@@ -394,10 +352,10 @@ export default function ManualEditorPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <SocialField icon={Send} label="قناة تليجرام" value={formData.telegramUrl} onChange={(v)=>setFormData({...formData, telegramUrl: v})} color="text-blue-500" />
-                    <SocialField icon={MessageSquare} label="قناة واتساب" value={formData.whatsappUrl} onChange={(v)=>setFormData({...formData, whatsappUrl: v})} color="text-green-500" />
-                    <SocialField icon={Facebook} label="صفحة فيسبوك" value={formData.facebookUrl} onChange={(v)=>setFormData({...formData, facebookUrl: v})} color="text-blue-700" />
-                    <SocialField icon={Youtube} label="قناة يوتيوب" value={formData.youtubeUrl} onChange={(v)=>setFormData({...formData, youtubeUrl: v})} color="text-red-600" />
+                    <SocialField icon={Send} label="قناة تليجرام" value={formData.telegramUrl} onChange={(v:any)=>setFormData({...formData, telegramUrl: v})} color="text-blue-500" />
+                    <SocialField icon={MessageSquare} label="قناة واتساب" value={formData.whatsappUrl} onChange={(v:any)=>setFormData({...formData, whatsappUrl: v})} color="text-green-500" />
+                    <SocialField icon={Facebook} label="صفحة فيسبوك" value={formData.facebookUrl} onChange={(v:any)=>setFormData({...formData, facebookUrl: v})} color="text-blue-700" />
+                    <SocialField icon={Youtube} label="قناة يوتيوب" value={formData.youtubeUrl} onChange={(v:any)=>setFormData({...formData, youtubeUrl: v})} color="text-red-600" />
                   </div>
 
                   <div className="p-8 bg-zinc-900 rounded-[3rem] text-white space-y-6">
@@ -418,7 +376,6 @@ export default function ManualEditorPage() {
                     <h2 className="text-4xl font-black text-zinc-900">إعدادات البحث (SEO)</h2>
                     <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> في محركات البحث.</p>
                   </div>
-                  {/* SEO Fields... */}
                   <div className="grid grid-cols-1 gap-8">
                     <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-6">
                       <h4 className="font-black text-xl flex items-center gap-2"><Globe className="text-primary"/> الأساسيات (Meta Tags)</h4>
@@ -459,7 +416,6 @@ export default function ManualEditorPage() {
         </main>
       </div>
 
-      {/* Field Edit Dialog */}
       <Dialog open={!!activeField && activeField.type !== 'image'} onOpenChange={() => setActiveField(null)}>
         <DialogContent className="sm:max-w-[700px] rounded-[3.5rem] border-none shadow-2xl p-12" dir="rtl">
           <DialogHeader>
