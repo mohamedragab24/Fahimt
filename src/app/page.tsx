@@ -353,18 +353,15 @@ function MustafhemView({ profile, settings }: any) {
     attachmentUrl: "" 
   });
   const { toast } = useToast();
+  const router = useRouter();
 
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
-
-  const pendingIstifhamsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "pending_approval"), limit(10)) : null, [firestore, profile.id]);
-  const { data: pendingIstifhams } = useCollection(pendingIstifhamsQuery);
 
   const readySessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(10)) : null, [firestore, profile.id]);
   const { data: paidSessions } = useCollection(readySessionsQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
-  const filteredSubs = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
 
   const handleCreate = async () => {
     if (!newIstifham.title || !newIstifham.description || !newIstifham.goal || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
@@ -445,6 +442,15 @@ function MufhemView({ profile, settings }: any) {
   const istifhamsQuery = useMemoFirebase(() => (firestore) ? query(collection(firestore, "istifhams"), where("status", "==", "active")) : null, [firestore]);
   const { data: rawIstifhams, isLoading } = useCollection(istifhamsQuery);
 
+  const paidSessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(
+    collection(firestore, "istifhams"),
+    where("mufhemId", "==", profile.id),
+    where("status", "==", "paid"),
+    limit(10)
+  ) : null, [firestore, profile.id]);
+
+  const { data: paidSessions } = useCollection(paidSessionsQuery);
+
   const istifhams = rawIstifhams?.filter(ist => !ist.mustafhemGender || ist.mustafhemGender === profile.gender);
 
   useEffect(() => {
@@ -469,7 +475,7 @@ function MufhemView({ profile, settings }: any) {
     if (!firestore) return;
     try {
       updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { 
-        status: "accepted", // assigned but waiting for student payment
+        status: "accepted", 
         mufhemId: profile.id, 
         mufhemName: profile.fullName 
       });
@@ -495,6 +501,25 @@ function MufhemView({ profile, settings }: any) {
           <h3 className="text-5xl font-black">{stats.rating.toFixed(1)}</h3>
         </Card>
       </div>
+
+      {paidSessions && paidSessions.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black border-r-8 border-green-500 pr-6 flex items-center gap-3">
+            <Video className="text-green-600" /> محاضرات جاهزة للبدء (مدفوعة)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paidSessions.map(ist => (
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-green-500/20 bg-white p-6 shadow-lg hover:border-green-500 transition-all">
+                <Badge className="bg-green-100 text-green-600 mb-4">المستفهم دفع - ابدأ الآن</Badge>
+                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
+                <div className="pt-4 border-t border-dashed mt-4">
+                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-green-600">دخول المحاضرة الآن</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
         <div className="p-6 border-b flex items-center justify-between">

@@ -122,6 +122,7 @@ export default function RequestDetailsPage() {
   if (!request) return <div className="p-20 text-center font-bold text-red-500">الاستفهام غير موجود.</div>;
 
   const isOwner = currentUser?.uid === request.mustafhemId;
+  const isMufhem = currentUser?.uid === request.mufhemId;
 
   return (
     <div className="bg-zinc-50 min-h-screen pb-20" dir="rtl">
@@ -149,7 +150,7 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
                 
-                {/* تنبيه الدفع للمستفهم في حال القبول المباشر */}
+                {/* تنبيه الدفع للمستفهم */}
                 {isOwner && request.status === 'accepted' && (
                   <div className="bg-blue-50 p-10 rounded-[3rem] border-4 border-dashed border-blue-200 flex flex-col md:flex-row items-center justify-between gap-8 animate-in zoom-in duration-500">
                     <div className="text-right space-y-2">
@@ -164,13 +165,14 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {isOwner && request.status === 'paid' && (
+                {/* زر دخول المحاضرة للمستفهم والمفهم */}
+                {(isOwner || isMufhem) && request.status === 'paid' && (
                   <div className="bg-green-50 p-10 rounded-[3rem] border-4 border-dashed border-green-200 flex items-center justify-between animate-in fade-in">
                     <div className="text-right">
                       <h4 className="text-2xl font-black text-green-900 flex items-center gap-2">
-                        <ShieldCheck className="text-green-600" /> المحاضرة مدفوعة وجاهزة!
+                        <ShieldCheck className="text-green-600" /> المحاضرة جاهزة للبدء!
                       </h4>
-                      <p className="text-green-700 font-bold mt-1">يمكنك الآن الدخول لغرفة المحاضرة المباشرة مع المفهم.</p>
+                      <p className="text-green-700 font-bold mt-1">تم تأمين الدفع سحابياً. يمكنك الآن الدخول لغرفة المحاضرة المباشرة.</p>
                     </div>
                     <Button onClick={() => router.push(`/meeting/${request.id}`)} className="h-20 px-12 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl shadow-xl transition-all hover:scale-105">
                       <Play className="ml-2 fill-current"/> دخول المحاضرة
@@ -208,7 +210,6 @@ export default function RequestDetailsPage() {
                   <Button onClick={handleSubmitOffer} disabled={isSubmittingOffer} className="w-full h-20 rounded-[2rem] font-black text-2xl shadow-2xl transition-all hover:scale-[1.01]">
                     {isSubmittingOffer ? <Loader2 className="animate-spin ml-2 h-8 w-8" /> : "إرسال العرض المتقدم الآن"}
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center font-bold italic">* يمنع منعاً باتاً تبادل وسائل تواصل خارجية؛ كافة التعاملات تتم داخل المنصة لضمان حقوقك.</p>
                 </CardContent>
               </Card>
             )}
@@ -247,12 +248,6 @@ export default function RequestDetailsPage() {
                       </CardContent>
                     </Card>
                   ))}
-                  {(!offers || offers.length === 0) && (
-                    <div className="py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-zinc-100 flex flex-col items-center gap-4">
-                      <div className="bg-zinc-50 p-6 rounded-full"><Clock size={40} className="text-zinc-300" /></div>
-                      <p className="font-black text-zinc-300 text-xl">بانتظار وصول عروض المفهمين الأولى...</p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -278,13 +273,6 @@ export default function RequestDetailsPage() {
                 </Avatar>
               </CardContent>
             </Card>
-
-            {isOwner && request.status !== 'paid' && (
-              <div className="p-6 bg-orange-50 rounded-3xl border-2 border-orange-200 flex items-start gap-4 text-orange-800 text-sm font-bold shadow-inner">
-                <AlertCircle size={24} className="shrink-0 mt-1" />
-                <p>تنبيه: يجب إتمام الدفع قبل 30 دقيقة على الأقل من موعد المحاضرة لضمان تأكيد الحجز وفتح غرفة الفيديو.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
