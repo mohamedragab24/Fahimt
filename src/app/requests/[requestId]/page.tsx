@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 /**
  * صفحة تفاصيل الاستفهام المحدثة.
@@ -40,6 +41,12 @@ export default function RequestDetailsPage() {
   const { toast } = useToast();
   
   const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -79,6 +86,7 @@ export default function RequestDetailsPage() {
 
   const isOwner = currentUser?.uid === request.mustafhemId;
   const isMufhem = currentUser?.uid === request.mufhemId;
+  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-20" dir="rtl">
@@ -223,7 +231,12 @@ export default function RequestDetailsPage() {
                   <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">{request.mustafhemName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-black text-2xl text-zinc-900 leading-none">{request.mustafhemName}</p>
+                  <p className="font-black text-2xl text-zinc-900 leading-none flex items-center gap-2 justify-center">
+                    {request.mustafhemName}
+                    {(owner?.isVerified || owner?.emailVerified || owner?.whatsappVerified) && (
+                      <img src={verifiedBadgeUrl} alt="Verified" className="h-6 w-6" />
+                    )}
+                  </p>
                   <p className="text-xs text-zinc-400 font-bold mt-2 flex items-center justify-center gap-1">
                     موثق في المنصة <ShieldCheck size={14} className="text-blue-500" />
                   </p>

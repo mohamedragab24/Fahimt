@@ -32,7 +32,10 @@ import {
   HelpCircle,
   BadgeCent,
   Zap,
-  Wallet
+  Wallet,
+  Facebook,
+  Youtube,
+  Send
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -155,8 +158,8 @@ export default function HomePage() {
             <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
-              {profile.isVerified && (
-                <img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10" data-ai-hint="verified badge" />
+              {(profile.isVerified || profile.emailVerified || profile.whatsappVerified) && (
+                <img src={verifiedBadgeUrl} alt="Verified" className="h-12 w-12" data-ai-hint="verified badge" />
               )}
             </div>
           </div>
@@ -393,7 +396,7 @@ function MustafhemView({ profile, settings, router }: any) {
   return (
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
-        <div className="space-y-4 text-right">
+        <div className="space-y-4 text-right flex-1">
           <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">{settings?.studentDashboardBtn || "طلب استفهام جديد"}</Button></DialogTrigger>
@@ -404,7 +407,16 @@ function MustafhemView({ profile, settings, router }: any) {
                 <div className="space-y-2"><Label className="font-black">تفاصيل الاستفهام</Label><Textarea value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-40 rounded-2xl border-2 p-4" /></div>
                 <div className="space-y-2"><Label className="font-black text-primary flex items-center gap-2">هدف الاستفهام <Target size={16}/></Label><Textarea value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-24 rounded-2xl border-2 border-primary/20 p-4 font-medium" /></div>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2"><Label className="font-black">القسم</Label><Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}><SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger><SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2 text-right">
+                    <Label className="font-black">القسم</Label>
+                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v})}>
+                      <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                      <SelectContent>
+                        {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى (غير مدرج)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2"><Label className="font-black">الميزانية</Label><Input type="number" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
                 </div>
                 <div className="space-y-2"><Label className="font-black">موعد المحاضرة</Label><Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" /></div>

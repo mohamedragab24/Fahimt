@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -26,7 +27,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const portfolioInputRef = useRef<HTMLInputElement>(null);
   
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -52,13 +52,6 @@ export default function ProfilePage() {
     return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
   }, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
-
-  const portfolioQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return query(collection(firestore, "portfolio"), where("mufhemId", "==", user.uid), orderBy("createdAt", "desc"));
-  }, [firestore, user?.uid]);
-
-  const { data: portfolioItems } = useCollection(portfolioQuery);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -151,8 +144,6 @@ export default function ProfilePage() {
 
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
-  const currentMainCatId = allCategories?.find(c => c.name === formData.specialization)?.id;
-  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === currentMainCatId) || [];
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
@@ -180,7 +171,10 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 space-y-3 text-center md:text-right">
               <h2 className="text-3xl md:text-4xl font-black flex items-center justify-center md:justify-start gap-3">
-                {formData.fullName} {profile.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-8 w-8" />}
+                {formData.fullName} 
+                {(profile.isVerified || profile.emailVerified || profile.whatsappVerified) && (
+                  <img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10" />
+                )}
               </h2>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <Badge className="px-4 py-1 text-md font-black">{profile.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}</Badge>
@@ -219,9 +213,12 @@ export default function ProfilePage() {
               <>
                 <div className="space-y-3">
                   <Label className="font-black text-lg flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
-                  <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v, specializationSub: ""})}>
+                  <Select value={formData.specialization} onValueChange={(v) => setFormData({...formData, specialization: v})}>
                     <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
-                    <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                      <SelectItem value="أخرى" className="font-bold text-primary">أخرى (غير مدرج)</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-3">

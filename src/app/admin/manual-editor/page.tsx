@@ -56,7 +56,8 @@ import {
   Code2,
   MessageSquare,
   Youtube,
-  Layout
+  Facebook,
+  Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -65,7 +66,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo';
+type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo' | 'social';
 
 export default function ManualEditorPage() {
   const firestore = useFirestore();
@@ -104,6 +105,11 @@ export default function ManualEditorPage() {
     aboutImage: "",
     // Video
     landingVideoId: "dQw4w9WgXcQ", 
+    // Social Links
+    telegramUrl: "https://t.me/FAHEMNY",
+    whatsappUrl: "https://whatsapp.com/channel/0029VbBNt0y0LKZ8hY8BWF1a",
+    facebookUrl: "https://www.facebook.com/profile.php?id=61581756573184",
+    youtubeUrl: "https://youtube.com/channel/UCd5XJWKfw-bOBpvjlW-ML2w?si=4lk8qfXknylih4QV",
     // Nav Labels
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
@@ -165,7 +171,7 @@ export default function ManualEditorPage() {
         ...formData,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة وتجهيز إعدادات SEO." });
+      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة وتجهيز إعدادات SEO والتواصل الاجتماعي." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ التغييرات." });
     } finally {
@@ -244,8 +250,9 @@ export default function ManualEditorPage() {
             <div ref={tabsListRef} className="overflow-x-auto no-scrollbar flex items-center">
               <TabsList className="bg-muted/50 p-1 rounded-xl h-14 flex-nowrap shrink-0">
                 <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
+                <TabsTrigger value="social" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">التواصل الاجتماعي <Share2 size={14}/></TabsTrigger>
                 <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
-                <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Share2 size={14}/></TabsTrigger>
+                <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Search size={14}/></TabsTrigger>
                 <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">المدرسين</TabsTrigger>
                 <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
                 <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
@@ -306,22 +313,6 @@ export default function ManualEditorPage() {
               <ImageThumb label="اللوجو الرئيسي" value={formData.logoUrl} onClick={() => handleFieldClick('logoUrl', 'شعار المنصة', 'image')} />
               <ImageThumb label="خلفية الهيرو" value={formData.landingBg} onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')} />
               <ImageThumb label="صورة المشاركة" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-6 border-t">
-            <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Youtube size={14} /> فيديو الشرح
-            </h3>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black opacity-60">معرف فيديو يوتيوب (Video ID)</Label>
-              <Input 
-                placeholder="مثال: dQw4w9WgXcQ" 
-                value={formData.landingVideoId} 
-                onChange={(e) => setFormData({...formData, landingVideoId: e.target.value})}
-                className="h-10 rounded-lg border-2 font-mono text-xs"
-              />
-              <p className="text-[8px] text-muted-foreground">استخرج المعرف من نهاية رابط الفيديو في يوتيوب.</p>
             </div>
           </div>
         </aside>
@@ -390,96 +381,45 @@ export default function ManualEditorPage() {
                       >
                         {formData.heroSubtitle}
                       </p>
-
-                      {/* Search Bar Simulation */}
-                      <div className="max-w-3xl mx-auto flex gap-4 p-3 bg-white/10 backdrop-blur-md rounded-[2.5rem] border border-white/20 mt-10">
-                        <div className="flex-1 bg-white h-16 rounded-[2rem] flex items-center px-6 gap-4">
-                          <Search size={24} className="text-zinc-300" />
-                          <span className="text-zinc-400 font-bold">ابحث عن موضوع تعليمي...</span>
-                        </div>
-                        <Button className="h-16 px-10 rounded-[2rem] bg-accent font-black text-xl">استفهم الآن</Button>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Video Preview Section */}
-                  <section className="py-20 px-12 bg-zinc-50 flex flex-col items-center gap-10">
-                    <div className="text-center space-y-4">
-                      <h2 className="text-4xl font-black text-zinc-900">شرح منصة {formData.siteTitle}</h2>
-                      <p className="text-muted-foreground font-bold">شاهد هذا الفيديو لتعرف كيف تبدأ رحلة الفهم معنا.</p>
-                    </div>
-                    <div className="w-full max-w-4xl aspect-video rounded-[3rem] overflow-hidden shadow-2xl border-[12px] border-white bg-black group relative">
-                      <iframe 
-                        className="w-full h-full"
-                        src={`https://www.youtube.com/embed/${formData.landingVideoId}`}
-                        title="YouTube video player"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      ></iframe>
-                      <div className="absolute inset-0 bg-primary/10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
                   </section>
                 </>
               )}
 
+              {currentPage === 'social' && (
+                <section className="p-16 space-y-12">
+                  <div className="space-y-4 border-r-8 border-primary pr-6">
+                    <h2 className="text-4xl font-black text-zinc-900">روابط التواصل الاجتماعي</h2>
+                    <p className="text-zinc-500 font-bold">تحكم في الروابط الرسمية التي تظهر للمستخدمين في أسفل الموقع.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <SocialField icon={Send} label="قناة تليجرام" value={formData.telegramUrl} onChange={(v)=>setFormData({...formData, telegramUrl: v})} color="text-blue-500" />
+                    <SocialField icon={MessageSquare} label="قناة واتساب" value={formData.whatsappUrl} onChange={(v)=>setFormData({...formData, whatsappUrl: v})} color="text-green-500" />
+                    <SocialField icon={Facebook} label="صفحة فيسبوك" value={formData.facebookUrl} onChange={(v)=>setFormData({...formData, facebookUrl: v})} color="text-blue-700" />
+                    <SocialField icon={Youtube} label="قناة يوتيوب" value={formData.youtubeUrl} onChange={(v)=>setFormData({...formData, youtubeUrl: v})} color="text-red-600" />
+                  </div>
+
+                  <div className="p-8 bg-zinc-900 rounded-[3rem] text-white space-y-6">
+                    <h4 className="text-xl font-black flex items-center gap-2 text-primary"><Monitor size={20}/> معاينة الظهور في الفوتر</h4>
+                    <div className="flex justify-center gap-8 py-10 border-y border-white/10">
+                      <div className="text-blue-500 bg-white/10 p-4 rounded-2xl"><Send size={32}/></div>
+                      <div className="text-green-500 bg-white/10 p-4 rounded-2xl"><MessageSquare size={32}/></div>
+                      <div className="text-blue-700 bg-white/10 p-4 rounded-2xl"><Facebook size={32}/></div>
+                      <div className="text-red-600 bg-white/10 p-4 rounded-2xl"><Youtube size={32}/></div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {currentPage === 'seo' && (
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-accent pr-6">
-                    <h2 className="text-4xl font-black text-zinc-900">معاينة المشاركة والبحث (SEO)</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> عند مشاركة الرابط وفي جوجل.</p>
+                    <h2 className="text-4xl font-black text-zinc-900">إعدادات البحث (SEO)</h2>
+                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> في محركات البحث.</p>
                   </div>
-
-                  {/* WhatsApp Preview Simulation */}
-                  <div className="max-w-md mx-auto bg-[#DCF8C6] rounded-3xl p-4 shadow-2xl relative">
-                    <div className="absolute -right-2 top-4 w-4 h-4 bg-[#DCF8C6] rotate-45"></div>
-                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-zinc-200/50">
-                      <div className="flex items-stretch bg-[#F0F2F5]/50">
-                        <div 
-                          className="w-24 shrink-0 bg-zinc-200 relative group cursor-pointer"
-                          onClick={() => handleFieldClick('ogImageUrl', 'صورة المعاينة المصغرة', 'image')}
-                        >
-                          {formData.ogImageUrl ? (
-                            <img src={formData.ogImageUrl} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-zinc-400">
-                              <ImageIcon size={24} />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Upload className="text-white h-6 w-6" />
-                          </div>
-                        </div>
-                        <div className="p-3 flex-1 text-right space-y-1">
-                          <h4 
-                            className="text-sm font-black text-[#075E54] cursor-pointer hover:underline"
-                            onClick={() => handleFieldClick('metaTitle', 'عنوان الرابط')}
-                          >
-                            {formData.metaTitle}
-                          </h4>
-                          <p 
-                            className="text-[10px] text-zinc-500 font-bold leading-tight cursor-pointer"
-                            onClick={() => handleFieldClick('metaDescription', 'وصف الرابط', 'textarea')}
-                          >
-                            {formData.metaDescription}
-                          </p>
-                          <p className="text-[8px] text-[#34B7F1] font-mono mt-1">https://{formData.siteTitle.toLowerCase()}.com</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex justify-end gap-2 items-center text-[10px] text-zinc-500 font-bold">
-                      <span>٨:١٧ م</span>
-                      <CheckCircle2 size={10} className="text-blue-500" />
-                    </div>
-                  </div>
-
-                  <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 text-blue-800 text-sm font-bold flex items-start gap-3">
-                    <Info className="shrink-0 mt-1" size={18} />
-                    <p>المحاكي أعلاه يوضح كيف سيظهر رابط موقعك عند إرساله في واتساب أو تليجرام. اضغط على أي نص أو على الصورة لتعديلها فوراً.</p>
-                  </div>
-
-                  {/* Advanced SEO Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                  {/* SEO Fields... */}
+                  <div className="grid grid-cols-1 gap-8">
                     <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-6">
                       <h4 className="font-black text-xl flex items-center gap-2"><Globe className="text-primary"/> الأساسيات (Meta Tags)</h4>
                       <div className="space-y-4">
@@ -493,33 +433,7 @@ export default function ManualEditorPage() {
                         </div>
                       </div>
                     </div>
-
-                    <div className="p-8 bg-zinc-900 rounded-3xl text-white space-y-6">
-                      <h4 className="font-black text-xl flex items-center gap-2"><Code2 className="text-accent"/> تقنيات التصدر (Advanced)</h4>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="font-black text-xs text-white/60">الكلمات المفتاحية (Keywords - مفصولة بفاصلة)</Label>
-                          <Input value={formData.metaKeywords} onChange={(e)=>setFormData({...formData, metaKeywords: e.target.value})} className="h-12 rounded-xl border-2 border-white/10 bg-white/5 text-white font-bold" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-black text-xs text-white/60">Google Search Console Verification ID</Label>
-                          <Input placeholder="مثال: google-site-verification=..." value={formData.googleSiteVerification} onChange={(e)=>setFormData({...formData, googleSiteVerification: e.target.value})} className="h-12 rounded-xl border-2 border-white/10 bg-white/5 text-white font-mono" />
-                        </div>
-                      </div>
-                    </div>
                   </div>
-                </section>
-              )}
-
-              {/* Other Pages Sim... */}
-              {currentPage === 'about' && (
-                <section className="p-16 space-y-12">
-                  <h2 className="text-5xl font-black text-center" onClick={() => handleFieldClick('aboutTitle', 'عنوان صفحة عن المنصة')}>
-                    {formData.aboutTitle}
-                  </h2>
-                  <p className="text-2xl text-zinc-600 leading-relaxed text-center max-w-4xl mx-auto" onClick={() => handleFieldClick('aboutDescription', 'وصف صفحة عن المنصة', 'textarea')}>
-                    {formData.aboutDescription}
-                  </p>
                 </section>
               )}
             </div>
@@ -533,6 +447,12 @@ export default function ManualEditorPage() {
                 >
                   {formData.footerText}
                 </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="text-blue-500"><Send size={20}/></div>
+                <div className="text-green-500"><MessageSquare size={20}/></div>
+                <div className="text-blue-700"><Facebook size={20}/></div>
+                <div className="text-red-600"><Youtube size={20}/></div>
               </div>
             </footer>
           </div>
@@ -574,6 +494,23 @@ export default function ManualEditorPage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function SocialField({ icon: Icon, label, value, onChange, color }: any) {
+  return (
+    <div className="p-6 bg-white rounded-3xl border-2 space-y-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-xl bg-zinc-50 ${color}`}><Icon size={24}/></div>
+        <Label className="font-black text-lg">{label}</Label>
+      </div>
+      <Input 
+        value={value} 
+        onChange={(e)=>onChange(e.target.value)} 
+        placeholder="https://..." 
+        className="h-14 rounded-xl border-2 font-mono text-xs" 
+      />
     </div>
   );
 }

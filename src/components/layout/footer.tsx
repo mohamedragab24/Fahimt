@@ -4,7 +4,19 @@
 import Link from "next/link";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-import { ShieldCheck, Heart, Info, FileText, HelpCircle, Briefcase, BookOpen } from "lucide-react";
+import { 
+  ShieldCheck, 
+  Heart, 
+  Info, 
+  FileText, 
+  HelpCircle, 
+  Briefcase, 
+  BookOpen, 
+  Facebook, 
+  Youtube, 
+  Send, 
+  MessageSquare 
+} from "lucide-react";
 
 export function Footer() {
   const firestore = useFirestore();
@@ -29,6 +41,22 @@ export function Footer() {
           <p className="text-muted-foreground text-sm font-medium leading-relaxed">
             المنصة العربية الأولى لطلب وتقديم خدمات الشرح الفوري. نربط العقول الطموحة بالخبراء الموثقين.
           </p>
+          
+          {/* Social Links */}
+          <div className="flex items-center gap-4 pt-4">
+            {settings?.telegramUrl && (
+              <a href={settings.telegramUrl} target="_blank" className="text-blue-500 hover:scale-110 transition-transform"><Send size={24}/></a>
+            )}
+            {settings?.whatsappUrl && (
+              <a href={settings.whatsappUrl} target="_blank" className="text-green-500 hover:scale-110 transition-transform"><MessageSquare size={24}/></a>
+            )}
+            {settings?.facebookUrl && (
+              <a href={settings.facebookUrl} target="_blank" className="text-blue-700 hover:scale-110 transition-transform"><Facebook size={24}/></a>
+            )}
+            {settings?.youtubeUrl && (
+              <a href={settings.youtubeUrl} target="_blank" className="text-red-600 hover:scale-110 transition-transform"><Youtube size={24}/></a>
+            )}
+          </div>
         </div>
 
         {/* Links Column 1 */}
