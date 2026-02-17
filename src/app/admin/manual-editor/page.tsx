@@ -25,7 +25,8 @@ import {
   MessageSquare, 
   Youtube, 
   Facebook, 
-  Send 
+  Send,
+  Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -348,7 +349,7 @@ export default function ManualEditorPage() {
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-primary pr-6">
                     <h2 className="text-4xl font-black text-zinc-900">روابط التواصل الاجتماعي</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في الروابط الرسمية التي تظهر للمستخدمين في أسفل الموقع.</p>
+                    <p className="text-zinc-500 font-bold">تحكم في الروابط الرسمية التي تظهر في تذييل الموقع.</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -374,7 +375,7 @@ export default function ManualEditorPage() {
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-accent pr-6">
                     <h2 className="text-4xl font-black text-zinc-900">إعدادات البحث (SEO)</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور منصة <span className="text-primary">{formData.siteTitle}</span> في محركات البحث.</p>
+                    <p className="text-zinc-500 font-bold">تحكم في كيفية ظهور المنصة في محركات البحث.</p>
                   </div>
                   <div className="grid grid-cols-1 gap-8">
                     <div className="p-8 bg-white rounded-3xl border shadow-sm space-y-6">
@@ -427,7 +428,7 @@ export default function ManualEditorPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-10">
-            <Label className="font-black mb-4 block text-lg text-right">القيمة الجديدة</Label>
+            <Label className="font-black mb-4 block text-lg text-right">الصحفة والمسار</Label>
             {activeField?.type === 'textarea' ? (
               <Textarea 
                 value={activeField?.value || ""} 
