@@ -8,8 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ShieldCheck, Clock, Layout, PlayCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +15,6 @@ export default function GlobalPortfolioPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -86,7 +83,7 @@ export default function GlobalPortfolioPage() {
             <div 
               key={item.id} 
               className="group space-y-5 cursor-pointer" 
-              onClick={() => setSelectedItem({ ...item, teacher })}
+              onClick={() => router.push(`/portfolio/${item.id}`)}
             >
               <div className="relative aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl bg-zinc-200 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
                 {item.mediaType === 'video' ? (
@@ -96,8 +93,6 @@ export default function GlobalPortfolioPage() {
                       className="w-full h-full object-cover" 
                       muted 
                       playsInline
-                      onMouseEnter={(e) => e.currentTarget.play()}
-                      onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
                       <PlayCircle className="text-white h-16 w-16 drop-shadow-2xl opacity-80 group-hover:scale-110 transition-transform" />
@@ -141,7 +136,7 @@ export default function GlobalPortfolioPage() {
                     {teacher?.fullName}
                   </p>
                   <p className="text-xs text-zinc-300 font-bold mt-1">
-                    {teacher?.specialization || "خبير تعليمي"}
+                    {item.category || "خبير تعليمي"}
                   </p>
                 </div>
               </div>
@@ -158,74 +153,6 @@ export default function GlobalPortfolioPage() {
           </div>
         )}
       </div>
-
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="sm:max-w-[900px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden" dir="rtl">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{selectedItem?.title || "تفاصيل العمل"}</DialogTitle>
-            <DialogDescription>عرض بيانات وتفاصيل النموذج التعليمي للمفهم.</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[95vh]">
-            <div className="p-0 relative bg-zinc-950 flex items-center justify-center min-h-[400px]">
-              {selectedItem?.mediaType === 'video' ? (
-                <video 
-                  src={selectedItem.mediaUrl} 
-                  className="max-w-full h-auto max-h-[700px]" 
-                  controls 
-                  autoPlay 
-                  playsInline 
-                />
-              ) : (
-                <img 
-                  src={selectedItem?.mediaUrl} 
-                  className="max-w-full h-auto max-h-[700px] object-contain"
-                  alt="Portfolio Detail"
-                />
-              )}
-            </div>
-            <div className="p-10 md:p-16 space-y-10 bg-white">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-10 text-right">
-                <div className="space-y-2">
-                  <h2 className="text-4xl font-black text-zinc-900 leading-tight">{selectedItem?.title}</h2>
-                  <div className="flex items-center gap-4 text-muted-foreground font-bold">
-                    <span className="flex items-center gap-2"><Clock size={18} className="text-primary"/> {selectedItem?.createdAt ? new Date(selectedItem.createdAt).toLocaleDateString('ar-EG') : "-"}</span>
-                    <Badge variant="secondary" className="bg-muted px-4 py-1 rounded-lg">عمل معتمد</Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-8 p-10 bg-zinc-50 rounded-[2.5rem] border-2 border-dashed border-primary/10 transition-colors hover:border-primary/30">
-                <Avatar className="h-28 w-28 border-8 border-white shadow-2xl">
-                  <AvatarImage src={selectedItem?.teacher?.profilePictureUrl} />
-                  <AvatarFallback className="text-4xl font-black">{selectedItem?.teacher?.fullName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="text-right flex-1">
-                  <h4 className="text-3xl font-black flex items-center justify-end gap-3 text-zinc-900">
-                    {selectedItem?.teacher?.fullName}
-                    {selectedItem?.teacher?.isVerified && <ShieldCheck className="h-8 w-8 text-blue-500 fill-blue-500/10" />}
-                  </h4>
-                  <p className="text-primary font-black text-xl mt-2">{selectedItem?.teacher?.specialization || "خبير تعليمي"}</p>
-                  <Button 
-                    onClick={() => router.push(`/teachers?id=${selectedItem?.teacher?.id}`)}
-                    className="mt-6 rounded-2xl h-14 px-10 font-black text-lg shadow-xl hover:scale-105 transition-all"
-                  >
-                    عرض ملف المفهم بالكامل
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-6 text-right">
-                <h5 className="text-2xl font-black text-zinc-800 flex items-center justify-end gap-3">
-                  عن هذا العمل <Layout size={24} className="text-primary" />
-                </h5>
-                <p className="text-zinc-600 text-xl leading-relaxed font-medium bg-zinc-50 p-10 rounded-[2rem] border-r-8 border-primary italic shadow-inner">
-                  "{selectedItem?.description}"
-                </p>
-              </div>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
