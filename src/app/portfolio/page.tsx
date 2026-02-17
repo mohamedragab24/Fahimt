@@ -5,16 +5,24 @@ import { useState } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ShieldCheck, Clock, Layout, PlayCircle } from "lucide-react";
+import { Search, ShieldCheck, Clock, Layout, PlayCircle, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
 export default function GlobalPortfolioPage() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: currentUserProfile } = useDoc(userRef);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -63,14 +71,24 @@ export default function GlobalPortfolioPage() {
           <p className="text-muted-foreground font-bold">{settings?.portfolioListSubtitle || "نماذج تعليمية ملهمة من خبراء منصة فهمني."}</p>
         </div>
         
-        <div className="relative w-full md:w-96">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <Input 
-            placeholder="ابحث عن عمل، تخصص، أو مفهم..." 
-            className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg text-right"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          {currentUserProfile?.role === 'mufhem' && (
+            <Button 
+              onClick={() => router.push('/portfolio/add')} 
+              className="h-14 px-8 rounded-2xl font-black text-lg bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20"
+            >
+              <Plus className="ml-2" /> أضف عملك الآن
+            </Button>
+          )}
+          <div className="relative w-full md:w-80">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Input 
+              placeholder="ابحث عن عمل، تخصص، أو مفهم..." 
+              className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg text-right"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 

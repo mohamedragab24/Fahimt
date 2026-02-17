@@ -503,7 +503,6 @@ function MufhemView({ profile, settings, router }: any) {
         mufhemName: profile.fullName 
       });
 
-      // إضافة إشعار نظام للمستفهم
       addDocumentNonBlocking(collection(firestore, "notifications"), {
         userId: ist.mustafhemId,
         title: "تم قبول استفهامك!",
@@ -522,6 +521,28 @@ function MufhemView({ profile, settings, router }: any) {
 
   return (
     <div className="space-y-10">
+      {/* Banner for adding new portfolio works */}
+      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
+        <div className="space-y-4 text-right flex-1">
+          <h2 className="text-3xl md:text-4xl font-black text-zinc-800 leading-tight">
+            {settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}
+          </h2>
+          <p className="text-muted-foreground font-bold text-lg">
+            {settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة، زادت ثقة الطلاب باختيارك لمشاريعهم."}
+          </p>
+          <Button 
+            onClick={() => router.push('/portfolio/add')} 
+            size="lg" 
+            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl shadow-accent/20 transition-transform hover:scale-105"
+          >
+            <Plus className="ml-2" /> {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"}
+          </Button>
+        </div>
+        <div className="bg-accent/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-accent/10">
+          <Briefcase size={100} className="text-accent opacity-40" />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-primary text-white rounded-[2.5rem] p-8 shadow-xl">
           <p className="font-bold opacity-80 text-right">الرصيد المتاح</p>
