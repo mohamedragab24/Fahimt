@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -32,7 +33,7 @@ import {
   Wand2,
   Mail,
   Zap,
-  ListTodo
+  Share2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -125,6 +126,7 @@ export function AppSidebar() {
     { title: "سجلات الفيديو", icon: Video, href: "/admin/sessions" },
     { title: "إدارة الوظائف", icon: Briefcase, href: "/admin/jobs" },
     { title: "النافذة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
+    { title: "إدارة قائمة تابعنا", icon: Share2, href: "/admin/social-management" },
     { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
     { title: "مركز الطعون", icon: Scale, href: "/admin/appeals" },
     { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },

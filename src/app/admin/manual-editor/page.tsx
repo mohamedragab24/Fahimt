@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo' | 'social';
+type PageType = 'home' | 'about' | 'terms' | 'privacy' | 'guarantees' | 'guide' | 'nav' | 'sidebar' | 'dashboards' | 'teachers_list' | 'portfolio_list' | 'seo';
 
 export default function ManualEditorPage() {
   const firestore = useFirestore();
@@ -69,10 +69,6 @@ export default function ManualEditorPage() {
     landingBg: "",
     aboutImage: "",
     landingVideoId: "dQw4w9WgXcQ", 
-    telegramUrl: "https://t.me/FAHEMNY",
-    whatsappUrl: "https://whatsapp.com/channel/0029VbBNt0y0LKZ8hY8BWF1a",
-    facebookUrl: "https://www.facebook.com/profile.php?id=61581756573184",
-    youtubeUrl: "https://youtube.com/channel/UCd5XJWKfw-bOBpvjlW-ML2w?si=4lk8qfXknylih4QV",
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
     navGuide: "الدليل",
@@ -130,7 +126,7 @@ export default function ManualEditorPage() {
         ...formData,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة وتجهيز إعدادات SEO والتواصل الاجتماعي." });
+      toast({ title: "تم الحفظ بنجاح", description: "تم تحديث كافة تفاصيل المنصة وتجهيز إعدادات SEO." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ التغييرات." });
     } finally {
@@ -209,7 +205,6 @@ export default function ManualEditorPage() {
             <div ref={tabsListRef} className="overflow-x-auto no-scrollbar flex items-center">
               <TabsList className="bg-muted/50 p-1 rounded-xl h-14 flex-nowrap shrink-0">
                 <TabsTrigger value="home" className="rounded-lg font-black px-4 shrink-0">الرئيسية</TabsTrigger>
-                <TabsTrigger value="social" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">التواصل الاجتماعي <Share2 size={14}/></TabsTrigger>
                 <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
                 <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Search size={14}/></TabsTrigger>
                 <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">المدرسين</TabsTrigger>
@@ -345,32 +340,6 @@ export default function ManualEditorPage() {
                 </>
               )}
 
-              {currentPage === 'social' && (
-                <section className="p-16 space-y-12">
-                  <div className="space-y-4 border-r-8 border-primary pr-6">
-                    <h2 className="text-4xl font-black text-zinc-900">روابط التواصل الاجتماعي</h2>
-                    <p className="text-zinc-500 font-bold">تحكم في الروابط الرسمية التي تظهر في تذييل الموقع.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <SocialField icon={Send} label="قناة تليجرام" value={formData.telegramUrl} onChange={(v:any)=>setFormData({...formData, telegramUrl: v})} color="text-blue-500" />
-                    <SocialField icon={MessageSquare} label="قناة واتساب" value={formData.whatsappUrl} onChange={(v:any)=>setFormData({...formData, whatsappUrl: v})} color="text-green-500" />
-                    <SocialField icon={Facebook} label="صفحة فيسبوك" value={formData.facebookUrl} onChange={(v:any)=>setFormData({...formData, facebookUrl: v})} color="text-blue-700" />
-                    <SocialField icon={Youtube} label="قناة يوتيوب" value={formData.youtubeUrl} onChange={(v:any)=>setFormData({...formData, youtubeUrl: v})} color="text-red-600" />
-                  </div>
-
-                  <div className="p-8 bg-zinc-900 rounded-[3rem] text-white space-y-6">
-                    <h4 className="text-xl font-black flex items-center gap-2 text-primary"><Monitor size={20}/> معاينة الظهور في الفوتر</h4>
-                    <div className="flex justify-center gap-8 py-10 border-y border-white/10">
-                      <div className="text-blue-500 bg-white/10 p-4 rounded-2xl"><Send size={32}/></div>
-                      <div className="text-green-500 bg-white/10 p-4 rounded-2xl"><MessageSquare size={32}/></div>
-                      <div className="text-blue-700 bg-white/10 p-4 rounded-2xl"><Facebook size={32}/></div>
-                      <div className="text-red-600 bg-white/10 p-4 rounded-2xl"><Youtube size={32}/></div>
-                    </div>
-                  </div>
-                </section>
-              )}
-
               {currentPage === 'seo' && (
                 <section className="p-16 space-y-12">
                   <div className="space-y-4 border-r-8 border-accent pr-6">
@@ -406,12 +375,7 @@ export default function ManualEditorPage() {
                   {formData.footerText}
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="text-blue-500"><Send size={20}/></div>
-                <div className="text-green-500"><MessageSquare size={20}/></div>
-                <div className="text-blue-700"><Facebook size={20}/></div>
-                <div className="text-red-600"><Youtube size={20}/></div>
-              </div>
+              <div className="text-zinc-500 text-xs font-bold">معاينة التذييل الرسمي</div>
             </footer>
           </div>
         </main>
@@ -428,7 +392,7 @@ export default function ManualEditorPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-10">
-            <Label className="font-black mb-4 block text-lg text-right">الصحفة والمسار</Label>
+            <Label className="font-black mb-4 block text-lg text-right">المحتوى الجديد</Label>
             {activeField?.type === 'textarea' ? (
               <Textarea 
                 value={activeField?.value || ""} 
@@ -451,23 +415,6 @@ export default function ManualEditorPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function SocialField({ icon: Icon, label, value, onChange, color }: any) {
-  return (
-    <div className="p-6 bg-white rounded-3xl border-2 space-y-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl bg-zinc-50 ${color}`}><Icon size={24}/></div>
-        <Label className="font-black text-lg">{label}</Label>
-      </div>
-      <Input 
-        value={value} 
-        onChange={(e)=>onChange(e.target.value)} 
-        placeholder="https://..." 
-        className="h-14 rounded-xl border-2 font-mono text-xs" 
-      />
     </div>
   );
 }

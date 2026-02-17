@@ -15,11 +15,26 @@ import {
   Facebook, 
   Youtube, 
   Send, 
-  MessageSquare
+  MessageSquare,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Globe
 } from "lucide-react";
 
+const ICON_MAP: Record<string, any> = {
+  Facebook,
+  Youtube,
+  Send,
+  MessageSquare,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Globe
+};
+
 /**
- * مكون تذييل الموقع - تم تحسينه لتجنب أخطاء الـ HydrationMismatch.
+ * مكون تذييل الموقع - تم تحسينه ليعرض روابط التواصل الاجتماعي بشكل ديناميكي.
  */
 export function Footer() {
   const firestore = useFirestore();
@@ -76,17 +91,39 @@ export function Footer() {
               <span className="w-1.5 h-8 bg-primary rounded-full inline-block shrink-0"></span> تابعنا
             </h4>
             <div className="grid grid-cols-2 gap-4">
-              {settings?.facebookUrl && (
-                <SocialIconLink href={settings.facebookUrl} icon={Facebook} label="فيسبوك" color="text-blue-600" />
-              )}
-              {settings?.whatsappUrl && (
-                <SocialIconLink href={settings.whatsappUrl} icon={MessageSquare} label="واتساب" color="text-green-500" />
-              )}
-              {settings?.telegramUrl && (
-                <SocialIconLink href={settings.telegramUrl} icon={Send} label="تليجرام" color="text-blue-400" />
-              )}
-              {settings?.youtubeUrl && (
-                <SocialIconLink href={settings.youtubeUrl} icon={Youtube} label="يوتيوب" color="text-red-600" />
+              {/* عرض الروابط الديناميكية الجديدة */}
+              {settings?.socialLinks && settings.socialLinks.map((link: any) => {
+                const Icon = ICON_MAP[link.icon] || Globe;
+                return (
+                  <a 
+                    key={link.id}
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 bg-zinc-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-zinc-100 group"
+                  >
+                    <Icon size={18} style={{ color: link.color }} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-black text-zinc-600">{link.label}</span>
+                  </a>
+                );
+              })}
+
+              {/* نسخة احتياطية للروابط القديمة في حال عدم وجود روابط ديناميكية */}
+              {(!settings?.socialLinks || settings.socialLinks.length === 0) && (
+                <>
+                  {settings?.facebookUrl && (
+                    <SocialIconLink href={settings.facebookUrl} icon={Facebook} label="فيسبوك" color="text-blue-600" />
+                  )}
+                  {settings?.whatsappUrl && (
+                    <SocialIconLink href={settings.whatsappUrl} icon={MessageSquare} label="واتساب" color="text-green-500" />
+                  )}
+                  {settings?.telegramUrl && (
+                    <SocialIconLink href={settings.telegramUrl} icon={Send} label="تليجرام" color="text-blue-400" />
+                  )}
+                  {settings?.youtubeUrl && (
+                    <SocialIconLink href={settings.youtubeUrl} icon={Youtube} label="يوتيوب" color="text-red-600" />
+                  )}
+                </>
               )}
             </div>
           </div>
