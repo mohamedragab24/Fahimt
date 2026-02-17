@@ -2,8 +2,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from "@/firebase";
+import { doc, collection, addDoc, query, orderBy, updateDoc, getDoc } from "firebase/firestore";
 import { 
   Clock, 
   User, 
@@ -21,21 +21,38 @@ import {
   Phone,
   UserCircle,
   Target,
-  FileText
+  FileText,
+  Plus,
+  Loader2,
+  Star,
+  Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { sendNotification } from "@/ai/flows/messaging-flow";
 
 export default function RequestDetailsPage() {
   const { requestId } = useParams();
   const router = useRouter();
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
+  const { toast } = useToast();
+  
   const [showOwnerProfile, setShowOwnerProfile] = useState(false);
+  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+  const [offerForm, setOfferForm] = useState({
+    amount: "",
+    duration: "",
+    details: ""
+  });
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -44,6 +61,13 @@ export default function RequestDetailsPage() {
 
   const { data: request, isLoading } = useDoc(requestRef);
 
+  const offersQuery = useMemoFirebase(() => {
+    if (!firestore || !requestId) return null;
+    return query(collection(firestore, "istifhams", requestId as string, "offers"), orderBy("createdAt", "desc"));
+  }, [firestore, requestId]);
+
+  const { data: offers } = useCollection(offersQuery);
+
   const ownerRef = useMemoFirebase(() => {
     if (!firestore || !request?.mustafhemId) return null;
     return doc(firestore, "users", request.mustafhemId);
@@ -51,12 +75,84 @@ export default function RequestDetailsPage() {
 
   const { data: owner } = useDoc(ownerRef);
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !currentUser?.uid) return null;
+    return doc(firestore, "users", currentUser.uid);
+  }, [firestore, currentUser?.uid]);
+
+  const { data: profile } = useDoc(userRef);
+
+  const handleSubmitOffer = async () => {
+    if (!firestore || !currentUser || !profile || !request) return;
+    if (!offerForm.amount || !offerForm.duration || !offerForm.details) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة حقول العرض." });
+      return;
+    }
+
+    setIsSubmittingOffer(true);
+    try {
+      await addDoc(collection(firestore, "istifhams", request.id, "offers"), {
+        mufhemId: currentUser.uid,
+        mufhemName: profile.fullName,
+        mufhemAvatar: profile.profilePictureUrl,
+        mufhemSpecialization: profile.specialization || "خبير عام",
+        amount: Number(offerForm.amount),
+        duration: offerForm.duration,
+        details: offerForm.details,
+        status: "pending",
+        createdAt: new Date().toISOString()
+      });
+
+      // إشعار للمستفهم
+      if (owner?.phoneNumber) {
+        sendNotification({
+          recipient: owner.phoneNumber,
+          method: 'whatsapp',
+          body: `أهلاً ${owner.fullName}، لقد تلقيت عرضاً جديداً من الخبير "${profile.fullName}" على استفهامك: "${request.title}". تفقد المنصة الآن لمراجعة العرض.`
+        });
+      }
+
+      toast({ title: "تم تقديم العرض بنجاح", description: "سيتم إخطار صاحب الاستفهام بمراجعة عرضك." });
+      setOfferForm({ amount: "", duration: "", details: "" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال العرض." });
+    } finally {
+      setIsSubmittingOffer(false);
+    }
+  };
+
+  const handleAcceptOffer = async (offer: any) => {
+    if (!firestore || !requestRef) return;
+    try {
+      await updateDoc(requestRef, {
+        status: "accepted",
+        mufhemId: offer.mufhemId,
+        mufhemName: offer.mufhemName,
+        amount: offer.amount, // تحديث السعر بناءً على العرض المقبول
+        acceptedOfferId: offer.id,
+        acceptedAt: new Date().toISOString()
+      });
+
+      // تحديث حالة العرض نفسه
+      await updateDoc(doc(firestore, "istifhams", request.id, "offers", offer.id), {
+        status: "accepted"
+      });
+
+      toast({ title: "تم قبول العرض!", description: "تم حجز الخبير وجاري تحضير المحاضرة." });
+      router.push(`/meeting/${request.id}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل قبول العرض." });
+    }
+  };
+
   if (isLoading) return <div className="p-20 text-center animate-pulse font-bold">جاري تحميل تفاصيل المشروع...</div>;
   if (!request) return <div className="p-20 text-center font-bold text-red-500">عذراً، هذا المشروع غير موجود.</div>;
 
+  const earnings = Number(offerForm.amount) * 0.8; // بعد خصم عمولة 20%
+
   return (
     <div className="bg-zinc-50 min-h-screen pb-20" dir="rtl">
-      <div className="max-w-5xl mx-auto px-4 pt-8">
+      <div className="max-w-6xl mx-auto px-4 pt-8">
         <Button 
           variant="ghost" 
           onClick={() => router.back()} 
@@ -67,18 +163,20 @@ export default function RequestDetailsPage() {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
-              <CardContent className="p-8 space-y-8">
-                <div className="border-b pb-6 text-right">
-                  <h1 className="text-3xl font-black text-zinc-900 leading-tight">تفاصيل الاستفهام</h1>
+          <div className="lg:col-span-2 space-y-10">
+            {/* بطاقة تفاصيل الاستفهام */}
+            <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
+              <CardContent className="p-10 space-y-10">
+                <div className="border-b pb-6 text-right flex justify-between items-center">
+                  <h1 className="text-3xl font-black text-zinc-900">تفاصيل الاستفهام</h1>
+                  <Badge variant="outline" className="text-primary font-black px-4 py-1">{request.category}</Badge>
                 </div>
 
                 <div className="space-y-8 text-right">
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold text-primary">{request.title}</h2>
                     <div className="flex items-center gap-2 text-muted-foreground font-bold text-xs justify-end">
-                      {request.category} • {request.categorySub} <Tag size={12} />
+                      {request.categorySub} <Tag size={12} />
                     </div>
                   </div>
                   
@@ -86,7 +184,7 @@ export default function RequestDetailsPage() {
                     <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
                       التفاصيل <FileText size={18} className="text-primary" />
                     </h4>
-                    <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-medium bg-zinc-50 p-6 rounded-2xl border-2 border-dashed">
+                    <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-medium bg-zinc-50 p-8 rounded-[2rem] border-2 border-dashed">
                       {request.description}
                     </p>
                   </div>
@@ -96,36 +194,158 @@ export default function RequestDetailsPage() {
                       <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
                         هدف الاستفهام (شرط الاستحقاق) <Target size={18} className="text-accent" />
                       </h4>
-                      <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-bold italic bg-accent/5 p-6 rounded-2xl border-2 border-accent/10">
+                      <p className="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap font-bold italic bg-accent/5 p-8 rounded-[2rem] border-2 border-accent/10">
                         "{request.goal}"
                       </p>
-                    </div>
-                  )}
-
-                  {request.attachmentUrl && (
-                    <div className="mt-6 space-y-3">
-                      <h4 className="font-bold text-zinc-900 flex items-center gap-2 justify-end">
-                        المرفقات <ImageIcon size={18} className="text-primary" />
-                      </h4>
-                      <div className="rounded-2xl overflow-hidden border-2 shadow-sm max-w-md mr-auto">
-                        <img src={request.attachmentUrl} alt="Attachment" className="w-full h-auto" />
-                      </div>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex gap-4">
-              {request.status === 'accepted' && (request.mustafhemId === currentUser?.uid || request.mufhemId === currentUser?.uid) && (
-                <Button 
-                  onClick={() => router.push(`/meeting/${request.id}`)}
-                  className="flex-1 h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-xl font-black shadow-xl"
-                >
-                  دخول المحاضرة الآن
-                </Button>
-              )}
-            </div>
+            {/* قسم العروض للمفهمين */}
+            {profile?.role === 'mufhem' && request.status === 'active' && profile.id !== request.mustafhemId && (
+              <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white animate-in slide-in-from-bottom-4">
+                <CardHeader className="bg-zinc-900 text-white p-8">
+                  <CardTitle className="text-2xl font-black flex items-center gap-3">
+                    <Briefcase className="text-primary" /> تقدم للمشروع (أضف عرضك)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 md:p-12 space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-3">
+                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
+                        مدة التسليم (أيام) <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input 
+                          placeholder="مثال: 1" 
+                          type="number"
+                          className="h-14 rounded-xl border-2 text-center font-black pr-12" 
+                          value={offerForm.duration}
+                          onChange={(e)=>setOfferForm({...offerForm, duration: e.target.value})}
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">أيام</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
+                        قيمة العرض <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input 
+                          placeholder="0.00" 
+                          type="number"
+                          className="h-14 rounded-xl border-2 text-center font-black pr-12" 
+                          value={offerForm.amount}
+                          onChange={(e)=>setOfferForm({...offerForm, amount: e.target.value})}
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">مستحقاتك</Label>
+                      <div className="relative">
+                        <div className="h-14 rounded-xl bg-zinc-100 border-2 flex items-center justify-center font-black text-xl text-primary">
+                          {earnings.toFixed(2)}
+                        </div>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                      </div>
+                      <p className="text-[10px] text-primary font-bold text-center">بعد خصم عمولة موقع مستقل (20%)</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="font-black text-zinc-700 flex items-center gap-2 justify-end">
+                      تفاصيل العرض <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea 
+                      placeholder="اكتب كيف ستقوم بحل الاستفهام وما الذي يميز شرحك..."
+                      className="h-48 rounded-[1.5rem] border-2 p-6 text-lg font-medium leading-relaxed"
+                      value={offerForm.details}
+                      onChange={(e)=>setOfferForm({...offerForm, details: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t">
+                    <ul className="text-xs text-muted-foreground font-bold space-y-2 text-right">
+                      <li className="flex items-center gap-2 justify-end">لا تستخدم وسائل تواصل خارجية <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
+                      <li className="flex items-center gap-2 justify-end">لا تضع روابط خارجية، قم بالاهتمام بمعرض أعمالك بدلاً منها <div className="w-1 h-1 bg-zinc-400 rounded-full"/></li>
+                    </ul>
+                    <Button 
+                      onClick={handleSubmitOffer} 
+                      disabled={isSubmittingOffer}
+                      className="h-16 px-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
+                    >
+                      {isSubmittingOffer ? <Loader2 className="animate-spin" /> : "أضف عرضك الآن"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* قسم العروض للمستفهم (صاحب الطلب) */}
+            {profile?.id === request.mustafhemId && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                <h3 className="text-2xl font-black border-r-8 border-primary pr-6 flex items-center gap-3">
+                  العروض المقدمة <Badge className="bg-primary/10 text-primary border-none">{offers?.length || 0}</Badge>
+                </h3>
+                
+                <div className="space-y-6">
+                  {offers?.map((offer) => (
+                    <Card key={offer.id} className={`rounded-[2rem] border-2 transition-all hover:border-primary/20 bg-white overflow-hidden ${offer.status === 'accepted' ? 'border-green-500 ring-4 ring-green-50' : ''}`}>
+                      <CardContent className="p-8">
+                        <div className="flex flex-col md:flex-row justify-between gap-8">
+                          <div className="flex gap-6 flex-1 text-right">
+                            <Avatar className="h-20 w-20 border-4 border-white shadow-lg shrink-0">
+                              <AvatarImage src={offer.mufhemAvatar} />
+                              <AvatarFallback>{offer.mufhemName?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-3 flex-1">
+                              <div className="flex flex-wrap items-center gap-3 justify-end md:justify-start">
+                                <h4 className="font-black text-xl text-zinc-900">{offer.mufhemName}</h4>
+                                <Badge variant="outline" className="text-[10px] font-bold">{offer.mufhemSpecialization}</Badge>
+                                <div className="flex gap-0.5"><Star size={12} className="fill-yellow-400 text-yellow-400" /> <span className="text-[10px] font-black">5.0</span></div>
+                              </div>
+                              <p className="text-zinc-600 font-medium leading-relaxed bg-zinc-50/50 p-4 rounded-xl border italic">
+                                "{offer.details}"
+                              </p>
+                              <div className="flex gap-6 text-[10px] font-bold text-muted-foreground">
+                                <span className="flex items-center gap-1"><Clock size={12} /> التسليم: {offer.duration} يوم</span>
+                                <span className="flex items-center gap-1"><BadgeCent size={12} /> القيمة: {offer.amount} ج.م</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="shrink-0 flex flex-col justify-center items-center gap-4 border-r-2 md:pr-8 border-dashed">
+                            <div className="text-center">
+                              <p className="text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-widest">قيمة العرض</p>
+                              <h5 className="text-3xl font-black text-primary">{offer.amount} <span className="text-sm">ج.م</span></h5>
+                            </div>
+                            {request.status === 'active' && (
+                              <Button onClick={() => handleAcceptOffer(offer)} className="h-12 px-8 rounded-xl font-black bg-green-600 hover:bg-green-700 shadow-lg">
+                                قبول العرض
+                              </Button>
+                            )}
+                            {offer.status === 'accepted' && (
+                              <Badge className="bg-green-100 text-green-600 font-black h-10 px-6 rounded-xl flex items-center gap-2">
+                                <CheckCircle2 size={16} /> عرض مقبول
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {(!offers || offers.length === 0) && (
+                    <div className="py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-zinc-100">
+                      <MessageSquare size={64} className="mx-auto text-zinc-100 mb-4" />
+                      <p className="text-xl font-black text-zinc-300">لا توجد عروض مقدمة بعد؛ سيتم إخطارك فور وصول أول عرض.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -135,7 +355,9 @@ export default function RequestDetailsPage() {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-zinc-500 font-bold">حالة المشروع</span>
                     <Badge className={`${
-                      request.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-zinc-100 text-zinc-600'
+                      request.status === 'active' ? 'bg-green-100 text-green-600' : 
+                      request.status === 'accepted' ? 'bg-blue-100 text-blue-600' : 
+                      'bg-zinc-100 text-zinc-600'
                     } border-none px-3 font-black`}>
                       {request.status === 'active' ? 'مفتوح' : 
                        request.status === 'accepted' ? 'قيد التنفيذ' : 
@@ -151,7 +373,7 @@ export default function RequestDetailsPage() {
                   </div>
 
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-500 font-bold">الميزانية</span>
+                    <span className="text-zinc-500 font-bold">الميزانية المقترحة</span>
                     <span className="text-primary font-black text-lg">
                       {request.amount} ج.م
                     </span>
@@ -162,7 +384,7 @@ export default function RequestDetailsPage() {
 
             <Card className="rounded-2xl border-none shadow-sm bg-white overflow-hidden">
               <div className="p-6 border-b bg-zinc-50/50 text-right">
-                <h4 className="font-black text-zinc-800">المستفهم</h4>
+                <h4 className="font-black text-zinc-800">صاحب الاستفهام</h4>
               </div>
               <CardContent className="p-6 space-y-6">
                 <div 
@@ -182,17 +404,6 @@ export default function RequestDetailsPage() {
                       {request.mustafhemName?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                </div>
-
-                <div className="space-y-3 pt-4 border-t">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-zinc-500 font-bold">تاريخ التسجيل</span>
-                    <span className="text-zinc-900 font-bold">{owner?.createdAt ? new Date(owner.createdAt).toLocaleDateString('ar-EG') : "-"}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-zinc-500 font-bold">معدل التوظيف</span>
-                    <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 font-black">100%</Badge>
-                  </div>
                 </div>
               </CardContent>
             </Card>
