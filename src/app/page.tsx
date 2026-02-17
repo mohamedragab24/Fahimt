@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BookOpen, 
   ShieldCheck, 
@@ -215,6 +215,11 @@ function LandingPage({ router, settings }: any) {
     return () => clearTimeout(timer);
   }, [searchTerm, firestore]);
 
+  const handleAskNow = () => {
+    // التوجه لصفحة إنشاء الطلب مع تمرير نص البحث
+    router.push(`/create-request?title=${encodeURIComponent(searchTerm)}`);
+  };
+
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
       <div className="relative min-h-[95vh] flex flex-col">
@@ -262,10 +267,11 @@ function LandingPage({ router, settings }: any) {
                     className="h-16 md:h-20 pr-16 rounded-[2rem] border-none bg-white text-xl font-bold shadow-inner placeholder:text-zinc-400"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAskNow()}
                   />
                 </div>
                 <Button 
-                  onClick={() => router.push('/browse')}
+                  onClick={handleAskNow}
                   className="h-16 md:h-20 px-12 rounded-[2rem] bg-accent hover:bg-accent/90 text-xl font-black shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
                 >
                   <MessageSquare className="ml-2" /> استفهم الآن
@@ -349,18 +355,6 @@ function LinkItem({ href, icon: Icon, label }: { href: string, icon: any, label:
 
 function MustafhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newIstifham, setNewIstifham] = useState({ 
-    title: "", 
-    description: "", 
-    goal: "",
-    amount: "", 
-    category: "", 
-    categorySub: "", 
-    categoryOption: "", 
-    meetingTime: "", 
-    attachmentUrl: "" 
-  });
   const { toast } = useToast();
 
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
@@ -372,88 +366,14 @@ function MustafhemView({ profile, settings, router }: any) {
   const acceptedRequestsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "accepted"), limit(10)) : null, [firestore, profile.id]);
   const { data: acceptedRequests } = useCollection(acceptedRequestsQuery);
 
-  const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
-  const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === newIstifham.category)?.id) || [];
-  const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === newIstifham.categorySub)?.id) || [];
-
-  const handleCreate = async () => {
-    if (!newIstifham.title || !newIstifham.description || !newIstifham.goal || !newIstifham.category || !newIstifham.amount || !newIstifham.meetingTime) {
-      toast({ variant: "destructive", title: "بيانات ناقصة" });
-      return;
-    }
-
-    if (firestore && profile) {
-      await addDoc(collection(firestore, "istifhams"), {
-        ...newIstifham,
-        amount: Number(newIstifham.amount),
-        status: "pending_approval",
-        mustafhemId: profile.id,
-        mustafhemName: profile.fullName || "مستخدم",
-        mustafhemGender: profile.gender || "male",
-        createdAt: new Date().toISOString()
-      });
-      setIsDialogOpen(false);
-      setNewIstifham({ title: "", description: "", goal: "", amount: "", category: "", categorySub: "", categoryOption: "", meetingTime: "", attachmentUrl: "" });
-      toast({ title: "تم الإرسال للمراجعة" });
-    }
-  };
-
   return (
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
         <div className="space-y-4 text-right flex-1">
           <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild><Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">{settings?.studentDashboardBtn || "طلب استفهام جديد"}</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] rounded-[3rem]" dir="rtl">
-              <DialogHeader><DialogTitle className="text-right text-3xl font-black">تفاصيل الاستفهام</DialogTitle></DialogHeader>
-              <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
-                <div className="space-y-2"><Label className="font-black">عنوان الاستفهام</Label><Input value={newIstifham.title} onChange={(e)=>setNewIstifham({...newIstifham, title: e.target.value})} className="h-14 rounded-2xl border-2 font-bold" /></div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-black flex items-center gap-2">القسم الرئيسي <Layers size={14}/></Label>
-                    <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: "", categoryOption: ""})}>
-                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
-                      <SelectContent>
-                        {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-black flex items-center gap-2">التخصص <Filter size={14}/></Label>
-                    <Select disabled={!newIstifham.category || newIstifham.category === 'أخرى'} onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v, categoryOption: ""})}>
-                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
-                      <SelectContent>
-                        {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-black flex items-center gap-2">خيار إضافي <Activity size={14}/></Label>
-                    <Select disabled={!newIstifham.categorySub || newIstifham.categorySub === 'أخرى'} onValueChange={(v)=>setNewIstifham({...newIstifham, categoryOption: v})}>
-                      <SelectTrigger className="h-12 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
-                      <SelectContent>
-                        {options.map(c => <SelectItem key={c.id} value={c.name} className="font-bold">{c.name}</SelectItem>)}
-                        <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2"><Label className="font-black">تفاصيل الاستفهام</Label><Textarea value={newIstifham.description} onChange={(e)=>setNewIstifham({...newIstifham, description: e.target.value})} className="h-32 rounded-2xl border-2 p-4" /></div>
-                <div className="space-y-2"><Label className="font-black text-primary flex items-center gap-2">هدف الاستفهام <Target size={16}/></Label><Textarea value={newIstifham.goal} onChange={(e)=>setNewIstifham({...newIstifham, goal: e.target.value})} className="h-20 rounded-2xl border-2 border-primary/20 p-4 font-medium" /></div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2"><Label className="font-black">الميزانية المقترحة</Label><Input type="number" value={newIstifham.amount} onChange={(e)=>setNewIstifham({...newIstifham, amount: e.target.value})} className="h-14 rounded-2xl border-2 font-black text-lg" /></div>
-                  <div className="space-y-2"><Label className="font-black">موعد المحاضرة</Label><Input type="datetime-local" value={newIstifham.meetingTime} onChange={(e)=>setNewIstifham({...newIstifham, meetingTime: e.target.value})} className="h-14 rounded-2xl border-2" /></div>
-                </div>
-              </div>
-              <DialogFooter className="px-4 pb-6"><Button onClick={handleCreate} className="w-full h-16 text-xl font-black rounded-2xl">تأكيد وإرسال للمراجعة</Button></DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">
+            {settings?.studentDashboardBtn || "طلب استفهام جديد"}
+          </Button>
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useFirebase, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
-import { useRouter } from "next/navigation";
-import { doc, setDoc } from "firebase/firestore";
+import { useRouter, useSearchParams } from "next/navigation";
+import { doc, setDoc, collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -44,8 +45,12 @@ const COUNTRIES = [
   { code: "973", name: "البحرين", flag: "🇧🇭" },
 ];
 
-export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const initialMode = searchParams?.get('mode') === 'signup' ? false : true;
+  const returnTo = searchParams?.get('returnTo');
+
+  const [isLogin, setIsLogin] = useState(initialMode);
   const [step, setStep] = useState<'info' | 'verify'>('info');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,11 +74,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, "settings", "general");
-  }, [firestore]);
-  const { data: settings } = useDoc(settingsRef);
+  useEffect(() => {
+    // إذا كان المستخدم زائراً يحاول طرح استفهام، نجبر الرتبة لتكون مستفهم
+    if (returnTo === 'create-request') {
+      setRole("mustafhem");
+    }
+  }, [returnTo]);
 
   useEffect(() => {
     if (user && !isUserLoading && isLogin) {
@@ -135,6 +141,7 @@ export default function LoginPage() {
       if (cred.user) {
         const cleanPhone = phoneNumber.replace(/\D/g, '').startsWith('0') ? phoneNumber.replace(/\D/g, '').substring(1) : phoneNumber.replace(/\D/g, '');
         const fullPhone = `${countryCode}${cleanPhone}`;
+        
         await setDoc(doc(firestore!, "users", cred.user.uid), {
           id: cred.user.uid,
           fullName,
@@ -148,7 +155,25 @@ export default function LoginPage() {
           status: "active",
           createdAt: new Date().toISOString()
         });
-        toast({ title: "تم إنشاء الحساب!" });
+
+        // التحقق مما إذا كان هناك طلب استفهام معلق
+        const pendingIstifham = localStorage.getItem('pending_istifham');
+        if (pendingIstifham) {
+          const data = JSON.parse(pendingIstifham);
+          await addDoc(collection(firestore!, "istifhams"), {
+            ...data,
+            amount: Number(data.amount),
+            status: "pending_approval",
+            mustafhemId: cred.user.uid,
+            mustafhemName: fullName,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.removeItem('pending_istifham');
+          toast({ title: "تم التسجيل وإرسال استفهامك!", description: "طلبك قيد المراجعة الآن." });
+        } else {
+          toast({ title: "تم إنشاء الحساب!" });
+        }
+        
         router.push("/");
       }
     } catch (err: any) {
@@ -161,11 +186,34 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    initiateEmailSignIn(auth, email, password).catch(() => {
+    initiateEmailSignIn(auth, email, password).then(() => {
+      // بعد تسجيل الدخول، التحقق من الطلبات المعلقة
+      const pendingIstifham = localStorage.getItem('pending_istifham');
+      if (pendingIstifham && auth.currentUser) {
+        const data = JSON.parse(pendingIstifham);
+        addDoc(collection(firestore!, "istifhams"), {
+          ...data,
+          amount: Number(data.amount),
+          status: "pending_approval",
+          mustafhemId: auth.currentUser.uid,
+          mustafhemName: auth.currentUser.displayName || "مستخدم",
+          createdAt: new Date().toISOString()
+        }).then(() => {
+          localStorage.removeItem('pending_istifham');
+          toast({ title: "تم تسجيل دخولك وإرسال استفهامك المعلق!" });
+        });
+      }
+    }).catch(() => {
       toast({ variant: "destructive", title: "خطأ", description: "البيانات غير صحيحة." });
       setIsProcessing(false);
     });
   };
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "settings", "general");
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#F8FAFC]" dir="rtl">
@@ -292,7 +340,6 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  {/* القسم القانوني والموافقة */}
                   <div className="flex items-start gap-4 p-6 bg-muted/20 rounded-[2rem] border-2 border-dashed border-primary/10 animate-in fade-in slide-in-from-top-2 duration-700">
                     <Checkbox 
                       id="terms" 
@@ -337,7 +384,7 @@ export default function LoginPage() {
                       {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تأكيد وتفعيل الحساب"}
                     </Button>
                     <div className="p-4 bg-blue-50 rounded-2xl text-xs font-bold text-blue-700 flex items-start gap-3">
-                      <Info size={16} className="shrink-0 mt-0.5" />
+                      <div className="shrink-0 mt-0.5"><Info size={16} /></div>
                       <p>إذا لم يصلك الرمز عبر الواتساب، تأكد من إرسال كلمة <b>START</b> للرقم <b>447860099299</b> إذا كان حسابك تجريبياً.</p>
                     </div>
                     <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400 text-lg">تعديل البيانات</Button>
@@ -356,5 +403,13 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center animate-pulse">جاري تحميل صفحة الدخول...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
