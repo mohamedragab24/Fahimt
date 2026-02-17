@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +16,9 @@ import Image from "next/image";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
+/**
+ * صفحة "عن المنصة" - كافة نصوصها وصورها مرتبطة ببيانات Firebase.
+ */
 export default function AboutPage() {
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => {
@@ -66,23 +68,14 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <Card className="rounded-[3.5rem] border-4 border-white shadow-2xl overflow-hidden bg-primary/5 group relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 opacity-50"></div>
-          <CardContent className="p-12 space-y-6 relative z-10">
-            <h3 className="text-2xl font-black text-primary flex items-center gap-3">
-              <Sparkles className="animate-pulse" /> رؤيتنا ورسالتنا
-            </h3>
-            <p className="text-zinc-700 text-lg leading-relaxed font-bold italic">
-              "نسعى لمساعدة الطلاب والمحترفين على استيعاب النقاط الصعبة وتجاوز التحديات التقنية أو المهارية من خلال وسيط يضمن الحقوق المالية والمعرفية للجميع، مع الالتزام التام بالخصوصية وحقوق الملكية."
-            </p>
-            <div className="pt-6 border-t border-primary/10 flex items-center gap-4">
-              <div className="bg-white p-3 rounded-2xl shadow-sm">
-                <ShieldCheck className="text-green-600" />
-              </div>
-              <span className="font-black text-zinc-600">بيئة تعليمية آمنة ومسجلة</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative aspect-video rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-white group">
+          <img 
+            src={settings?.aboutImage || "https://picsum.photos/seed/about/800/600"} 
+            alt="About Fahimni" 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-primary/10 group-hover:bg-transparent transition-colors"></div>
+        </div>
       </div>
 
       {/* Stats/Values Section */}
@@ -105,11 +98,11 @@ export default function AboutPage() {
       </div>
 
       {/* Final Note Card */}
-      <Card className="rounded-[3rem] bg-zinc-900 text-white overflow-hidden shadow-2xl">
-        <CardContent className="p-10 md:p-16 text-center space-y-8 relative">
-          <div className="absolute top-0 left-0 p-10 opacity-10 rotate-12">
-            <MessageSquare size={120} />
-          </div>
+      <Card className="rounded-[3rem] bg-zinc-900 text-white overflow-hidden shadow-2xl relative border-none">
+        <div className="absolute top-0 left-0 p-10 opacity-10 rotate-12">
+          <MessageSquare size={120} />
+        </div>
+        <CardContent className="p-10 md:p-16 text-center space-y-8 relative z-10">
           <h3 className="text-3xl md:text-5xl font-black font-headline leading-tight">ابدأ رحلة "الفهم" اليوم</h3>
           <p className="text-zinc-400 text-xl max-w-3xl mx-auto font-medium leading-relaxed">
             تتيح لك المنصة طرح "استفهامك" مجاناً لتتلقى عروضاً من مفهمين موثقين، ثم اختيار الأنسب لبدء جلسة تفهيم موثقة ومسجلة تحفظ حقك المعرفي.
