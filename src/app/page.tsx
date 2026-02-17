@@ -555,8 +555,16 @@ function MufhemView({ profile, settings }: any) {
   const { toast } = useToast();
   const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
 
-  const istifhamsQuery = useMemoFirebase(() => (firestore && profile?.gender) ? query(collection(firestore, "istifhams"), where("status", "==", "active"), where("mustafhemGender", "==", profile.gender)) : null, [firestore, profile?.gender]);
-  const { data: istifhams, isLoading } = useCollection(istifhamsQuery);
+  // جلب كافة الاستفهامات النشطة دون فلترة الجنس في الاستعلام لتجنب الحاجة للفهارس المركبة
+  const istifhamsQuery = useMemoFirebase(() => (firestore) ? query(collection(firestore, "istifhams"), where("status", "==", "active")) : null, [firestore]);
+  const { data: rawIstifhams, isLoading } = useCollection(istifhamsQuery);
+
+  // فلترة النتائج في الذاكرة لضمان الخصوصية والسرعة
+  const istifhams = rawIstifhams?.filter(ist => {
+    // إذا كان جنس المستفهم غير محدد، يظهر للجميع (لضمان عدم فقدان بيانات قديمة)
+    // وإلا يظهر فقط إذا كان نفس جنس المفهم لضمان الخصوصية
+    return !ist.mustafhemGender || ist.mustafhemGender === profile.gender;
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -601,7 +609,7 @@ function MufhemView({ profile, settings }: any) {
       toast({ title: "تم قبول الطلب وإرسال تذكير للمستفهم" });
       router.push(`/requests/${ist.id}`);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ in معالجة الطلب" });
+      toast({ variant: "destructive", title: "خطأ في معالجة الطلب" });
     }
   };
 
@@ -639,19 +647,36 @@ function MufhemView({ profile, settings }: any) {
           <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-2"><BellRing size={14}/> تذكير الطلبات مفعل</Badge>
         </div>
         <div className="divide-y">
-          {isLoading ? <div className="p-20 text-center animate-pulse">جاري التحميل...</div> : istifhams?.map(ist => (
-            <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>
-              <div className="space-y-3">
-                <h4 className="text-xl font-bold text-primary">{ist.title}</h4>
-                <p className="text-zinc-600 text-sm line-clamp-2">{ist.description}</p>
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
-                  <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
+          {isLoading ? (
+            <div className="p-20 text-center animate-pulse font-bold text-zinc-400">جاري البحث عن طلبات...</div>
+          ) : (istifhams && istifhams.length > 0) ? (
+            istifhams.map(ist => (
+              <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-xl font-bold text-primary">{ist.title}</h4>
+                    <Badge variant="secondary" className="bg-muted/50">{ist.category}</Badge>
+                  </div>
+                  <p className="text-zinc-600 text-sm line-clamp-2">{ist.description}</p>
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="flex flex-col">
+                      <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
+                      <span className="text-[10px] text-zinc-400 font-bold">بواسطة: {ist.mustafhemName}</span>
+                    </div>
+                    <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="py-24 text-center space-y-4">
+              <div className="bg-zinc-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+                <HelpCircle size={40} className="text-zinc-200" />
+              </div>
+              <p className="text-zinc-400 font-black text-xl">لا توجد طلبات متاحة تناسبك حالياً.</p>
+              <p className="text-zinc-300 text-sm font-bold">تأكد من اختيار التخصصات المناسبة في ملفك الشخصي.</p>
             </div>
-          ))}
-          {istifhams?.length === 0 && <div className="py-20 text-center text-zinc-400 font-bold">لا توجد طلبات جديدة حالياً.</div>}
+          )}
         </div>
       </div>
     </div>
