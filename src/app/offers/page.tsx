@@ -2,7 +2,7 @@
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * صفحة العروض المتقدمة - مجمعة لكل عروض المستفهم.
@@ -30,7 +31,6 @@ export default function AdvancedOffersPage() {
 
   const offersQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    // جلب كافة العروض الموجهة للمستفهم الحالي
     return query(
       collection(firestore, "istifhams"), 
       where("mustafhemId", "==", user.uid)
@@ -39,15 +39,11 @@ export default function AdvancedOffersPage() {
 
   const { data: myRequests, isLoading } = useCollection(offersQuery);
 
-  // جلب كافة العروض من المجموعات الفرعية يدوياً أو استنتاجاً
-  // ملاحظة: في Firestore، الاستعلام عن subcollections يتطلب Collection Group Query
-  // للتبسيط في هذا الـ MVP سنقوم بعرض الاستفهامات التي تحتوي على عروض فقط
-  
   const requestsWithOffers = myRequests?.filter(r => r.status === 'active' || r.status === 'accepted') || [];
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
-      <div className="border-r-8 border-primary pr-6">
+      <div className="border-r-8 border-primary pr-6 text-right">
         <h1 className="text-4xl font-black font-headline text-zinc-900">العروض المتقدمة</h1>
         <p className="text-muted-foreground text-lg">راجع عروض المفهمين المخصصة على استفهاماتك المفتوحة.</p>
       </div>
@@ -73,12 +69,38 @@ export default function AdvancedOffersPage() {
 
 function OfferRequestGroup({ request, router }: { request: any, router: any }) {
   const firestore = useFirestore();
+  const { toast } = useToast();
+  
   const offersQuery = useMemoFirebase(() => {
     if (!firestore || !request.id) return null;
     return query(collection(firestore, "istifhams", request.id, "offers"), orderBy("createdAt", "desc"));
   }, [firestore, request.id]);
 
   const { data: offers } = useCollection(offersQuery);
+
+  const handleAcceptOffer = async (offer: any) => {
+    if (!firestore) return;
+    try {
+      const requestRef = doc(firestore, "istifhams", request.id);
+      await updateDoc(requestRef, {
+        status: "accepted",
+        mufhemId: offer.mufhemId,
+        mufhemName: offer.mufhemName,
+        amount: offer.amount,
+        acceptedOfferId: offer.id,
+        acceptedAt: new Date().toISOString()
+      });
+
+      await updateDoc(doc(firestore, "istifhams", request.id, "offers", offer.id), {
+        status: "accepted"
+      });
+
+      toast({ title: "تم قبول العرض!", description: "تم حجز الخبير وجاري تحضير المحاضرة." });
+      router.push(`/meeting/${request.id}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل قبول العرض." });
+    }
+  };
 
   if (!offers || offers.length === 0) return null;
 
@@ -93,7 +115,7 @@ function OfferRequestGroup({ request, router }: { request: any, router: any }) {
 
       <div className="grid gap-4">
         {offers.map((offer: any) => (
-          <Card key={offer.id} className="rounded-3xl border-2 hover:border-primary/20 transition-all shadow-sm overflow-hidden bg-white">
+          <Card key={offer.id} className={`rounded-3xl border-2 transition-all hover:border-primary/20 bg-white overflow-hidden ${offer.status === 'accepted' ? 'border-green-500 ring-4 ring-green-50' : ''}`}>
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex gap-4 items-start text-right flex-1">
@@ -113,14 +135,21 @@ function OfferRequestGroup({ request, router }: { request: any, router: any }) {
                     </div>
                   </div>
                 </div>
-                <div className="shrink-0 flex items-center gap-3">
-                  <div className="text-left ml-4">
+                <div className="shrink-0 flex flex-col justify-center items-center gap-3">
+                  <div className="text-left">
                     <p className="text-[10px] font-black text-muted-foreground uppercase">القيمة</p>
                     <p className="text-2xl font-black text-primary">{offer.amount} <span className="text-xs">ج.م</span></p>
                   </div>
-                  <Button onClick={() => router.push(`/requests/${request.id}`)} className="h-12 rounded-xl font-black px-6 shadow-md">
-                    عرض وقبول <ArrowRight size={16} className="mr-2 rotate-180" />
-                  </Button>
+                  {request.status === 'active' && (
+                    <Button onClick={() => handleAcceptOffer(offer)} className="h-12 rounded-xl font-black px-6 shadow-md bg-green-600 hover:bg-green-700">
+                      قبول العرض
+                    </Button>
+                  )}
+                  {offer.status === 'accepted' && (
+                    <Badge className="bg-green-100 text-green-600 font-black h-10 px-6 rounded-xl flex items-center gap-2">
+                      <CheckCircle2 size={16} /> عرض مقبول
+                    </Badge>
+                  )}
                 </div>
               </div>
             </CardContent>

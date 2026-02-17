@@ -30,7 +30,8 @@ import {
   GraduationCap,
   Layout,
   HelpCircle,
-  BadgeCent
+  BadgeCent,
+  Zap
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -212,9 +213,7 @@ function LandingPage({ router, settings }: any) {
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
         
-        {/* Navigation Header - Enhanced Visibility */}
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md">
-          {/* Logo Section - Right side in RTL */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
             <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden border-2 border-white/20">
               {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
@@ -222,7 +221,6 @@ function LandingPage({ router, settings }: any) {
             <span className="text-white font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
 
-          {/* Navigation & Auth Section - Left side in RTL */}
           <div className="flex items-center gap-4 md:gap-8">
             <nav className="hidden md:flex items-center gap-6 border-l border-white/10 pl-6">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
@@ -246,7 +244,6 @@ function LandingPage({ router, settings }: any) {
               {settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك؛ ابحث عن أي سؤال الآن."}
             </p>
 
-            {/* Search Bar Section */}
             <div className="relative max-w-4xl w-full mx-auto mt-12 group">
               <div className="flex flex-col md:flex-row gap-4 p-3 bg-white/10 backdrop-blur-xl rounded-[2.5rem] border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all group-hover:border-primary/50">
                 <div className="relative flex-1">
@@ -266,7 +263,6 @@ function LandingPage({ router, settings }: any) {
                 </Button>
               </div>
 
-              {/* Search Results Preview */}
               {searchTerm && (
                 <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[2rem] shadow-2xl border-2 overflow-hidden z-[60] animate-in slide-in-from-top-4 duration-300">
                   <div className="p-4 bg-muted/30 border-b flex justify-between items-center px-8">
@@ -300,7 +296,6 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
-      {/* Explanation Video Section - Positioned as requested */}
       {settings?.landingVideoId && (
         <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
           <div className="max-w-6xl mx-auto space-y-16">
@@ -326,7 +321,6 @@ function LandingPage({ router, settings }: any) {
                 ></iframe>
               </div>
 
-              {/* Floating Quality Badge */}
               <div className="absolute -bottom-10 -right-10 bg-zinc-900 text-white p-10 rounded-[3rem] shadow-2xl hidden lg:flex items-center gap-6 border-4 border-white animate-bounce-slow">
                 <div className="bg-primary/20 p-4 rounded-2xl">
                   <ShieldCheck className="text-primary h-10 w-10" />
@@ -604,7 +598,7 @@ function MufhemView({ profile, settings }: any) {
       }
 
       toast({ title: "تم قبول الطلب وإرسال تذكير للمستفهم" });
-      router.push(`/requests/${ist.id}`);
+      router.push(`/meeting/${ist.id}`);
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ في معالجة الطلب" });
     }
@@ -661,7 +655,9 @@ function MufhemView({ profile, settings }: any) {
                       <span className="text-[10px] text-zinc-400 font-bold">بواسطة: {ist.mustafhemName}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold px-6 border-primary text-primary">قدم عرض</Button>
+                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold px-6 border-primary text-primary flex items-center gap-2">
+                        <Zap size={16} /> قدم عرض
+                      </Button>
                       <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold px-8">أنا أفهمك</Button>
                     </div>
                   </div>
