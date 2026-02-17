@@ -53,7 +53,8 @@ import {
   SearchCode,
   Zap,
   Code2,
-  MessageSquare
+  MessageSquare,
+  Youtube
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -99,6 +100,8 @@ export default function ManualEditorPage() {
     logoUrl: "",
     landingBg: "",
     aboutImage: "",
+    // Video
+    landingVideoId: "dQw4w9WgXcQ", // Default placeholder
     // Nav Labels
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
@@ -300,6 +303,22 @@ export default function ManualEditorPage() {
               <ImageThumb label="صورة المشاركة" value={formData.ogImageUrl} onClick={() => handleFieldClick('ogImageUrl', 'صورة معاينة الروابط', 'image')} />
             </div>
           </div>
+
+          <div className="space-y-4 pt-6 border-t">
+            <h3 className="font-black text-xs text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+              <Youtube size={14} /> فيديو الشرح
+            </h3>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black opacity-60">معرف فيديو يوتيوب (Video ID)</Label>
+              <Input 
+                placeholder="مثال: dQw4w9WgXcQ" 
+                value={formData.landingVideoId} 
+                onChange={(e) => setFormData({...formData, landingVideoId: e.target.value})}
+                className="h-10 rounded-lg border-2 font-mono text-xs"
+              />
+              <p className="text-[8px] text-muted-foreground">استخرج المعرف من نهاية رابط الفيديو في يوتيوب.</p>
+            </div>
+          </div>
         </aside>
 
         <main className="flex-1 bg-zinc-200/50 p-10 overflow-y-auto flex flex-col items-center">
@@ -344,29 +363,50 @@ export default function ManualEditorPage() {
             {/* Page Previews */}
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               {currentPage === 'home' && (
-                <section className="relative">
-                  <div className="absolute inset-0 z-0">
-                    <img 
-                      src={formData.landingBg || PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl} 
-                      className="w-full h-full object-cover brightness-[0.4] cursor-pointer hover:brightness-[0.6] transition-all" 
-                      onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')}
-                    />
-                  </div>
-                  <div className="relative z-10 py-48 px-12 text-center space-y-12">
-                    <h1 
-                      className="text-7xl md:text-8xl font-black leading-tight text-white cursor-pointer hover:bg-white/10 p-6 rounded-[3rem] transition-all"
-                      onClick={() => handleFieldClick('heroTitle', 'عنوان الهيرو الرئيسي')}
-                    >
-                      {formData.heroTitle}
-                    </h1>
-                    <p 
-                      className="text-3xl font-bold text-zinc-300 max-w-3xl mx-auto cursor-pointer hover:bg-white/5 p-4 rounded-2xl transition-all"
-                      onClick={() => handleFieldClick('heroSubtitle', 'الوصف الفرعي للهيرو')}
-                    >
-                      {formData.heroSubtitle}
-                    </p>
-                  </div>
-                </section>
+                <>
+                  <section className="relative">
+                    <div className="absolute inset-0 z-0">
+                      <img 
+                        src={formData.landingBg || PlaceHolderImages.find(i => i.id === 'landing-bg')?.imageUrl} 
+                        className="w-full h-full object-cover brightness-[0.4] cursor-pointer hover:brightness-[0.6] transition-all" 
+                        onClick={() => handleFieldClick('landingBg', 'خلفية صفحة الهبوط', 'image')}
+                      />
+                    </div>
+                    <div className="relative z-10 py-48 px-12 text-center space-y-12">
+                      <h1 
+                        className="text-7xl md:text-8xl font-black leading-tight text-white cursor-pointer hover:bg-white/10 p-6 rounded-[3rem] transition-all"
+                        onClick={() => handleFieldClick('heroTitle', 'عنوان الهيرو الرئيسي')}
+                      >
+                        {formData.heroTitle}
+                      </h1>
+                      <p 
+                        className="text-3xl font-bold text-zinc-300 max-w-3xl mx-auto cursor-pointer hover:bg-white/5 p-4 rounded-2xl transition-all"
+                        onClick={() => handleFieldClick('heroSubtitle', 'الوصف الفرعي للهيرو')}
+                      >
+                        {formData.heroSubtitle}
+                      </p>
+                    </div>
+                  </section>
+
+                  {/* Video Preview Section */}
+                  <section className="py-20 px-12 bg-zinc-50 flex flex-col items-center gap-10">
+                    <div className="text-center space-y-4">
+                      <h2 className="text-4xl font-black text-zinc-900">شرح منصة {formData.siteTitle}</h2>
+                      <p className="text-muted-foreground font-bold">شاهد هذا الفيديو لتعرف كيف تبدأ رحلة الفهم معنا.</p>
+                    </div>
+                    <div className="w-full max-w-4xl aspect-video rounded-[3rem] overflow-hidden shadow-2xl border-[12px] border-white bg-black group relative">
+                      <iframe 
+                        className="w-full h-full"
+                        src={`https://www.youtube.com/embed/${formData.landingVideoId}`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      ></iframe>
+                      <div className="absolute inset-0 bg-primary/10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                  </section>
+                </>
               )}
 
               {currentPage === 'seo' && (

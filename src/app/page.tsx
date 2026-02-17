@@ -22,7 +22,8 @@ import {
   Timer,
   Video,
   Calendar,
-  BellRing
+  BellRing,
+  Play
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -162,29 +163,76 @@ export default function HomePage() {
 function LandingPage({ router, settings }: any) {
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   return (
-    <div className="relative min-h-screen bg-black font-body overflow-hidden flex flex-col" dir="rtl">
-      <div className="absolute inset-0 z-0">
-        <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.4]" />
-      </div>
-      <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
-          <Button variant="ghost" onClick={() => router.push('/login')} className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 font-black rounded-full px-6 md:px-8">دخول</Button>
+    <div className="relative min-h-screen bg-black font-body overflow-x-hidden flex flex-col" dir="rtl">
+      {/* Hero Section */}
+      <div className="relative h-[100vh] flex flex-col">
+        <div className="absolute inset-0 z-0">
+          <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.4]" />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-primary font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
-          <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden">
-            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
+        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
+            <Button variant="ghost" onClick={() => router.push('/login')} className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 font-black rounded-full px-6 md:px-8">دخول</Button>
           </div>
-        </div>
-      </header>
-      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-32">
-        <div className="max-w-5xl space-y-8 md:space-y-12">
-          <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight">{settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}</h1>
-          <p className="text-xl md:text-4xl text-zinc-300 font-bold opacity-90">{settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}</p>
-          <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-2xl md:rounded-[2rem] shadow-xl">ابدأ التعلم الآن</Button>
-        </div>
-      </main>
+          <div className="flex items-center gap-2">
+            <span className="text-primary font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
+            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden">
+              {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
+            </div>
+          </div>
+        </header>
+        <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-32">
+          <div className="max-w-5xl space-y-8 md:space-y-12">
+            <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight">{settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}</h1>
+            <p className="text-xl md:text-4xl text-zinc-300 font-bold opacity-90">{settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}</p>
+            <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-2xl md:rounded-[2rem] shadow-xl">ابدأ التعلم الآن</Button>
+          </div>
+        </main>
+      </div>
+
+      {/* Explanation Video Section */}
+      {settings?.landingVideoId && (
+        <section className="relative z-10 bg-white py-24 px-6 md:py-32">
+          <div className="max-w-6xl mx-auto space-y-16">
+            <div className="text-center space-y-6">
+              <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
+                <Play size={40} className="fill-current" />
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
+              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">شاهد هذا الفيديو التعريفي القصير لتتعرف على آلية طلب الاستفهامات وبدء محاضرات الشرح المباشرة.</p>
+            </div>
+
+            <div className="relative group">
+              {/* Decorative elements around video */}
+              <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 via-transparent to-accent/20 rounded-[4rem] blur-3xl opacity-50"></div>
+              
+              <div className="relative aspect-video w-full rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.15)] border-[12px] md:border-[20px] border-white bg-zinc-900">
+                <iframe 
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1`}
+                  title="Explanation Video"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              </div>
+
+              {/* Float Badge */}
+              <div className="absolute -bottom-8 -right-8 bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-2xl hidden lg:block border-4 border-white animate-bounce-slow">
+                <div className="flex items-center gap-4">
+                  <div className="bg-primary/20 p-3 rounded-2xl">
+                    <ShieldCheck className="text-primary h-8 w-8" />
+                  </div>
+                  <div>
+                    <p className="font-black text-lg">تعلم بضمان</p>
+                    <p className="text-xs text-zinc-400 font-bold">حقوقك المالية والمعرفية محفوظة</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -440,7 +488,7 @@ function MufhemView({ profile, settings }: any) {
       toast({ title: "تم قبول الطلب وإرسال تذكير للمستفهم" });
       router.push(`/requests/${ist.id}`);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في معالجة الطلب" });
+      toast({ variant: "destructive", title: "خطأ in معالجة الطلب" });
     }
   };
 
