@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,7 +24,12 @@ import {
   Video,
   Calendar,
   BellRing,
-  Play
+  Play,
+  Search,
+  ArrowRight,
+  GraduationCap,
+  Layout,
+  HelpCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -85,7 +91,11 @@ export default function HomePage() {
   };
 
   if (isUserLoading || isProfileLoading) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-primary"></div>
+      </div>
+    );
   }
 
   if (!user || !profile) {
@@ -161,72 +171,165 @@ export default function HomePage() {
 }
 
 function LandingPage({ router, settings }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const firestore = useFirestore();
+
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
+
+  useEffect(() => {
+    if (!firestore || !searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const q = query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(5));
+        const snap = await getDocs(q);
+        const results = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter((ist: any) => ist.title?.toLowerCase().includes(searchTerm.toLowerCase()));
+        setSearchResults(results);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, firestore]);
+
   return (
-    <div className="relative min-h-screen bg-black font-body overflow-x-hidden flex flex-col" dir="rtl">
+    <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
       {/* Hero Section */}
-      <div className="relative h-[100vh] flex flex-col">
+      <div className="relative min-h-[90vh] flex flex-col">
         <div className="absolute inset-0 z-0">
-          <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.4]" />
+          <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
-        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
-            <Button variant="ghost" onClick={() => router.push('/login')} className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 font-black rounded-full px-6 md:px-8">دخول</Button>
+        
+        {/* Navigation Header */}
+        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 ml-6 border-l pl-6 border-white/10">
+              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-6 md:px-8">حساب جديد</Button>
+              <Button variant="ghost" onClick={() => router.push('/login')} className="text-white hover:bg-white/10 font-black rounded-full px-6 md:px-8 border border-white/20">دخول</Button>
+            </div>
+            <nav className="hidden lg:flex items-center gap-8">
+              <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
+              <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
+              <LinkItem href="/login" icon={Search} label="تصفح الاستفهامات" />
+            </nav>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-primary font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
-            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden">
+          
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+            <span className="text-white font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
+            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden border-2 border-white/20">
               {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
             </div>
           </div>
         </header>
-        <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-32">
-          <div className="max-w-5xl space-y-8 md:space-y-12">
-            <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight">{settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}</h1>
-            <p className="text-xl md:text-4xl text-zinc-300 font-bold opacity-90">{settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك"}</p>
-            <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black bg-primary hover:bg-primary/90 rounded-2xl md:rounded-[2rem] shadow-xl">ابدأ التعلم الآن</Button>
+
+        <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-20">
+          <div className="max-w-5xl space-y-10">
+            <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
+              {settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}
+            </h1>
+            <p className="text-xl md:text-3xl text-zinc-200 font-bold opacity-90 max-w-3xl mx-auto">
+              {settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك؛ ابحث عن أي سؤال الآن."}
+            </p>
+
+            {/* Search Bar Section */}
+            <div className="relative max-w-4xl w-full mx-auto mt-12 group">
+              <div className="flex flex-col md:flex-row gap-4 p-3 bg-white/10 backdrop-blur-xl rounded-[2.5rem] border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all group-hover:border-primary/50">
+                <div className="relative flex-1">
+                  <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
+                  <Input 
+                    placeholder="ابحث عن أي موضوع أو سؤال يدور في ذهنك..." 
+                    className="h-16 md:h-20 pr-16 rounded-[2rem] border-none bg-white text-xl font-bold shadow-inner placeholder:text-zinc-400"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={() => router.push('/login')}
+                  className="h-16 md:h-20 px-12 rounded-[2rem] bg-accent hover:bg-accent/90 text-xl font-black shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
+                >
+                  <MessageSquare className="ml-2" /> استفهم الآن
+                </Button>
+              </div>
+
+              {/* Search Results Preview */}
+              {searchTerm && (
+                <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[2rem] shadow-2xl border-2 overflow-hidden z-[60] animate-in slide-in-from-top-4 duration-300">
+                  <div className="p-4 bg-muted/30 border-b flex justify-between items-center px-8">
+                    <span className="font-black text-primary text-sm">نتائج البحث عن: {searchTerm}</span>
+                    {isSearching && <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>}
+                  </div>
+                  <div className="divide-y max-h-[400px] overflow-y-auto">
+                    {searchResults.length > 0 ? (
+                      searchResults.map(res => (
+                        <div 
+                          key={res.id} 
+                          className="p-6 hover:bg-muted/50 cursor-pointer transition-colors text-right group"
+                          onClick={() => router.push('/login')}
+                        >
+                          <h4 className="font-black text-zinc-800 text-lg group-hover:text-primary transition-colors">{res.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{res.description}</p>
+                          <div className="flex justify-between items-center mt-3">
+                            <Badge variant="outline" className="font-black text-xs">{res.amount} ج.م</Badge>
+                            <span className="text-[10px] font-bold text-primary flex items-center gap-1">سجل دخولك لقبول المشروع <ArrowRight size={10} className="rotate-180" /></span>
+                          </div>
+                        </div>
+                      ))
+                    ) : !isSearching && (
+                      <div className="p-12 text-center text-muted-foreground font-bold">لم نجد استفهامات مطابقة، كن أنت أول من يستفهم!</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
 
       {/* Explanation Video Section */}
       {settings?.landingVideoId && (
-        <section className="relative z-10 bg-white py-24 px-6 md:py-32">
+        <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
           <div className="max-w-6xl mx-auto space-y-16">
             <div className="text-center space-y-6">
-              <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
-                <Play size={40} className="fill-current" />
+              <div className="bg-primary/10 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
+                <Play size={48} className="fill-current" />
               </div>
-              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
-              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">شاهد هذا الفيديو التعريفي القصير لتتعرف على آلية طلب الاستفهامات وبدء محاضرات الشرح المباشرة.</p>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">شرح منصة <span className="text-primary">{settings?.siteTitle || "فهمني"}</span></h2>
+              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">شاهد الفيديو لتعرف كيف تبدأ رحلة الفهم والتعلم المباشر في أقل من دقيقة.</p>
             </div>
 
             <div className="relative group">
-              {/* Decorative elements around video */}
-              <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 via-transparent to-accent/20 rounded-[4rem] blur-3xl opacity-50"></div>
+              <div className="absolute -inset-6 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 rounded-[4rem] blur-3xl opacity-40"></div>
               
-              <div className="relative aspect-video w-full rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.15)] border-[12px] md:border-[20px] border-white bg-zinc-900">
+              <div className="relative aspect-video w-full rounded-[3.5rem] md:rounded-[4.5rem] overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,0.2)] border-[15px] md:border-[25px] border-white bg-black">
                 <iframe 
                   className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1`}
-                  title="Explanation Video"
+                  src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1&autoplay=0`}
+                  title="How it works"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 ></iframe>
               </div>
 
-              {/* Float Badge */}
-              <div className="absolute -bottom-8 -right-8 bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-2xl hidden lg:block border-4 border-white animate-bounce-slow">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/20 p-3 rounded-2xl">
-                    <ShieldCheck className="text-primary h-8 w-8" />
-                  </div>
-                  <div>
-                    <p className="font-black text-lg">تعلم بضمان</p>
-                    <p className="text-xs text-zinc-400 font-bold">حقوقك المالية والمعرفية محفوظة</p>
-                  </div>
+              {/* Floating Shield */}
+              <div className="absolute -bottom-10 -right-10 bg-zinc-900 text-white p-10 rounded-[3rem] shadow-2xl hidden lg:flex items-center gap-6 border-4 border-white animate-bounce-slow">
+                <div className="bg-primary/20 p-4 rounded-2xl">
+                  <ShieldCheck className="text-primary h-10 w-10" />
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-xl">تعلم بأمان تام</p>
+                  <p className="text-sm text-zinc-400 font-bold">نضمن حقك المالي والمعرفي</p>
                 </div>
               </div>
             </div>
@@ -234,6 +337,17 @@ function LandingPage({ router, settings }: any) {
         </section>
       )}
     </div>
+  );
+}
+
+function LinkItem({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
+  return (
+    <a href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-sm transition-all group">
+      <div className="bg-white/10 p-2 rounded-lg group-hover:bg-primary/20 group-hover:scale-110 transition-all">
+        <Icon size={16} className="group-hover:text-primary" />
+      </div>
+      {label}
+    </a>
   );
 }
 
@@ -351,14 +465,14 @@ function MustafhemView({ profile, settings }: any) {
                   <div className="space-y-2">
                     <Label className="font-black pr-2">القسم</Label>
                     <Select onValueChange={(v)=>setNewIstifham({...newIstifham, category: v, categorySub: ""})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                      <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                       <SelectContent>{mainCategories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-black pr-2">التخصص</Label>
                     <Select onValueChange={(v)=>setNewIstifham({...newIstifham, categorySub: v})}>
-                      <SelectTrigger className="h-14 rounded-2xl border-2"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                      <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                       <SelectContent>{filteredSubs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
@@ -462,24 +576,20 @@ function MufhemView({ profile, settings }: any) {
   const handleAccept = async (ist: any) => {
     if (!firestore) return;
     try {
-      // 1. تحديث حالة الطلب في Firestore
       updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { 
         status: "accepted", 
         mufhemId: profile.id, 
         mufhemName: profile.fullName 
       });
 
-      // 2. جلب بيانات المستفهم لإرسال "التذكير"
       const mustafhemSnap = await getDoc(doc(firestore, "users", ist.mustafhemId));
       if (mustafhemSnap.exists()) {
         const mData = mustafhemSnap.data();
         const reminderBody = `أهلاً ${mData.fullName}، يسعدنا إبلاغك بأن الخبير "${profile.fullName}" قد قبل استفهامك: "${ist.title}". يمكنك الدخول للمنصة الآن لبدء المحاضرة.`;
         
-        // إرسال تذكير واتساب
         if (mData.phoneNumber) {
           sendNotification({ recipient: mData.phoneNumber, method: 'whatsapp', body: reminderBody });
         }
-        // إرسال تذكير بريد
         if (mData.email) {
           sendNotification({ recipient: mData.email, method: 'email', subject: 'تذكير: تم قبول استفهامك!', body: reminderBody });
         }

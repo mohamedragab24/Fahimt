@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -54,7 +55,8 @@ import {
   Zap,
   Code2,
   MessageSquare,
-  Youtube
+  Youtube,
+  Layout
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -101,12 +103,15 @@ export default function ManualEditorPage() {
     landingBg: "",
     aboutImage: "",
     // Video
-    landingVideoId: "dQw4w9WgXcQ", // Default placeholder
+    landingVideoId: "dQw4w9WgXcQ", 
     // Nav Labels
     navHome: "الرئيسية",
     navAbout: "عن المنصة",
     navGuide: "الدليل",
     navGuarantees: "الضمانات",
+    navTeachers: "المُفهمين",
+    navPortfolio: "أعمال المفهمين",
+    navBrowse: "تصفح الاستفهامات",
     // Sidebar Labels
     sideHome: "الرئيسية",
     sideTeachers: "المُفهمين",
@@ -133,7 +138,7 @@ export default function ManualEditorPage() {
     studentDashboardTitle: "عندك سؤال؟ اطرح استفهامك الآن",
     studentDashboardBtn: "طلب استفهام جديد",
     teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
-    teacherDashboardSubtitle: "كلما زادت أعمالك المميزة في المعرض، زادت ثقة الطلاب باختيارك لمشاريعهم.",
+    teacherDashboardSubtitle: "كلما زادت أعمالك المميزة في المعرض, زادت ثقة الطلاب باختيارك لمشاريعهم.",
     teacherDashboardBtn: "إضافة عمل جديد للمعرض",
     teachersListTitle: "نخبة 'المفهمين' الموثقين",
     teachersListSearchPlaceholder: "ابحث باسم المدرس أو التخصص...",
@@ -347,11 +352,11 @@ export default function ManualEditorPage() {
                   {formData.siteTitle}
                 </span>
               </div>
-              <div className="flex gap-8 items-center">
-                {['navHome', 'navAbout', 'navGuide', 'navGuarantees'].map(key => (
+              <div className="flex gap-6 items-center">
+                {['navHome', 'navTeachers', 'navPortfolio', 'navBrowse'].map(key => (
                   <span 
                     key={key}
-                    className="font-black text-sm text-zinc-400 cursor-pointer hover:text-primary"
+                    className="font-black text-xs text-zinc-400 cursor-pointer hover:text-primary whitespace-nowrap"
                     onClick={() => handleFieldClick(key, 'اسم رابط التنقل')}
                   >
                     {(formData as any)[key] || ""}
@@ -385,6 +390,15 @@ export default function ManualEditorPage() {
                       >
                         {formData.heroSubtitle}
                       </p>
+
+                      {/* Search Bar Simulation */}
+                      <div className="max-w-3xl mx-auto flex gap-4 p-3 bg-white/10 backdrop-blur-md rounded-[2.5rem] border border-white/20 mt-10">
+                        <div className="flex-1 bg-white h-16 rounded-[2rem] flex items-center px-6 gap-4">
+                          <Search size={24} className="text-zinc-300" />
+                          <span className="text-zinc-400 font-bold">ابحث عن موضوع تعليمي...</span>
+                        </div>
+                        <Button className="h-16 px-10 rounded-[2rem] bg-accent font-black text-xl">استفهم الآن</Button>
+                      </div>
                     </div>
                   </section>
 
