@@ -20,7 +20,8 @@ import {
   AlertCircle,
   ChevronRight,
   BadgeCent,
-  Lock
+  Lock,
+  ArrowRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,10 @@ import { Badge } from "@/components/ui/badge";
 type PaymentMethod = 'wallet' | 'e-wallet' | 'card';
 
 export default function CheckoutPage() {
-  const { requestId } = useParams();
+  const params = useParams();
+  const requestId = params?.requestId as string;
   const searchParams = useSearchParams();
-  const offerId = searchParams.get('offerId');
+  const offerId = searchParams?.get('offerId');
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -40,21 +42,20 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [phone, setPhone] = useState("");
-  const [cardData, setCardData] = useState({ number: "", expiry: "", cvc: "" });
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
-    return doc(firestore, "istifhams", requestId as string);
+    return doc(firestore, "istifhams", requestId);
   }, [firestore, requestId]);
 
   const { data: request, isLoading: isRequestLoading } = useDoc(requestRef);
 
   const offerRef = useMemoFirebase(() => {
     if (!firestore || !requestId || !offerId) return null;
-    return doc(firestore, "istifhams", requestId as string, "offers", offerId);
+    return doc(firestore, "istifhams", requestId, "offers", offerId);
   }, [firestore, requestId, offerId]);
 
-  const { data: offer } = useDoc(offerRef);
+  const { data: offer, isLoading: isOfferLoading } = useDoc(offerRef);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -81,14 +82,13 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // 1. التحقق من الدفع بالمحفظة
       if (paymentMethod === 'wallet' && walletBalance < amountToPay) {
         toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن محفظتك أو اختيار وسيلة دفع أخرى." });
         setIsProcessing(false);
         return;
       }
 
-      // 2. تسجيل المعاملة المالية
+      // تسجيل المعاملة
       await addDoc(collection(firestore, "users", user.uid, "transactions"), {
         amount: amountToPay,
         type: 'payment',
@@ -98,11 +98,11 @@ export default function CheckoutPage() {
         timestamp: new Date().toISOString()
       });
 
-      // 3. تحديث حالة الطلب
       const updateData: any = {
         status: "paid",
         paidAt: new Date().toISOString(),
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod,
+        finalAmount: amountToPay
       };
 
       if (offer) {
@@ -118,28 +118,36 @@ export default function CheckoutPage() {
       toast({ title: "تم الدفع بنجاح!", description: "المحاضرة جاهزة للبدء الآن." });
       router.push(`/meeting/${requestId}`);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الدفع", description: "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً." });
+      toast({ variant: "destructive", title: "خطأ في الدفع", description: "حدث خطأ غير متوقع." });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (isRequestLoading) return <div className="p-20 text-center animate-pulse font-black text-2xl">جاري تحضير بوابة الدفع...</div>;
+  if (isRequestLoading || (offerId && isOfferLoading)) {
+    return (
+      <div className="p-20 text-center flex flex-col items-center gap-4 bg-white min-h-screen" dir="rtl">
+        <Loader2 className="animate-spin h-12 w-12 text-primary" />
+        <p className="font-black text-2xl">جاري تحضير بوابة الدفع الآمنة...</p>
+      </div>
+    );
+  }
+
+  if (!request) return <div className="p-20 text-center font-bold text-red-500">الطلب غير موجود.</div>;
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10 bg-zinc-50 min-h-screen" dir="rtl">
-      <div className="flex items-center gap-4 border-r-8 border-primary pr-6">
-        <Button variant="ghost" onClick={() => router.back()} className="h-12 w-12 rounded-full p-0">
-          <ChevronRight className="h-8 w-8" />
-        </Button>
+    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-10 bg-zinc-50 min-h-screen" dir="rtl">
+      <div className="flex items-center justify-between border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900">إتمام الدفع الآمن</h1>
           <p className="text-muted-foreground font-bold">اختر الوسيلة المناسبة لحجز جلستك التعليمية.</p>
         </div>
+        <Button variant="ghost" onClick={() => router.back()} className="h-12 rounded-xl font-bold gap-2">
+          <span>رجوع</span> <ArrowRight className="h-5 w-5" />
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ملخص الطلب */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="rounded-[2.5rem] shadow-xl border-none overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 border-b p-6">
@@ -149,13 +157,25 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-2 text-right">
-                <p className="text-xs text-muted-foreground font-black uppercase">الاستفهام</p>
-                <h4 className="font-black text-lg text-zinc-800 leading-tight">{request?.title}</h4>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">موضوع الاستفهام</p>
+                <h4 className="font-black text-lg text-zinc-800 leading-tight">{request.title}</h4>
               </div>
-              <div className="pt-4 border-t border-dashed flex justify-between items-center">
-                <span className="font-bold text-zinc-500">إجمالي المبلغ</span>
-                <span className="text-3xl font-black text-primary">{amountToPay} <span className="text-sm">ج.م</span></span>
+              
+              <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
+                <div className="flex justify-between text-sm font-bold text-zinc-500">
+                  <span>قيمة الجلسة</span>
+                  <span>{amountToPay} ج.م</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-zinc-500">
+                  <span>رسوم الخدمة</span>
+                  <span className="text-green-600">مجاناً</span>
+                </div>
+                <div className="pt-3 border-t flex justify-between items-center">
+                  <span className="font-black text-zinc-900">الإجمالي</span>
+                  <span className="text-3xl font-black text-primary">{amountToPay} <span className="text-sm">ج.م</span></span>
+                </div>
               </div>
+
               <div className="p-4 bg-blue-50 rounded-2xl flex items-start gap-3 text-blue-700 text-xs font-bold border border-blue-100">
                 <ShieldCheck className="shrink-0" size={16} />
                 <p>يتم حجز المبلغ في المنصة ولا يتم تحريره للمفهم إلا بعد تأكيد فهمك للمعلومة.</p>
@@ -164,14 +184,13 @@ export default function CheckoutPage() {
           </Card>
         </div>
 
-        {/* خيارات الدفع */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="rounded-[2.5rem] shadow-2xl border-none overflow-hidden bg-white">
             <CardContent className="p-8 md:p-12 space-y-10">
               <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-4">
                 {/* المحفظة */}
                 <div 
-                  className={`flex items-center justify-between p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50'}`}
+                  className={`flex items-center justify-between p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('wallet')}
                 >
                   <div className="flex items-center gap-4">
@@ -181,7 +200,7 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="wallet" className="text-xl font-black cursor-pointer">محفظة الموقع</Label>
-                      <p className="text-sm font-bold text-zinc-500">رصيدك الحالي: {walletBalance} ج.م</p>
+                      <p className={`text-sm font-bold ${walletBalance >= amountToPay ? 'text-green-600' : 'text-red-500'}`}>رصيدك الحالي: {walletBalance} ج.م</p>
                     </div>
                   </div>
                   {paymentMethod === 'wallet' && walletBalance < amountToPay && (
@@ -191,7 +210,7 @@ export default function CheckoutPage() {
 
                 {/* المحافظ الإلكترونية */}
                 <div 
-                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'e-wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50'}`}
+                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'e-wallet' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('e-wallet')}
                 >
                   <div className="flex items-center gap-4">
@@ -203,20 +222,21 @@ export default function CheckoutPage() {
                   </div>
                   {paymentMethod === 'e-wallet' && (
                     <div className="space-y-3 animate-in slide-in-from-top-2 pr-10">
-                      <Label className="font-bold">أدخل رقم المحفظة</Label>
+                      <Label className="font-black">أدخل رقم المحفظة المحول منها</Label>
                       <Input 
                         placeholder="01xxxxxxxxx" 
-                        className="h-14 rounded-xl border-2 bg-white font-black text-xl"
+                        className="h-14 rounded-xl border-2 bg-white font-black text-xl text-center"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                       />
+                      <p className="text-[10px] text-muted-foreground font-bold text-center italic">سيتم التحقق من عملية التحويل يدوياً خلال دقائق.</p>
                     </div>
                   )}
                 </div>
 
                 {/* بطاقة الائتمان */}
                 <div 
-                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50'}`}
+                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('card')}
                 >
                   <div className="flex items-center gap-4">
@@ -230,16 +250,16 @@ export default function CheckoutPage() {
                     <div className="space-y-4 animate-in slide-in-from-top-2 pr-10">
                       <div className="space-y-2">
                         <Label className="font-bold">رقم البطاقة</Label>
-                        <Input placeholder="**** **** **** ****" className="h-14 rounded-xl border-2 bg-white font-mono" />
+                        <Input placeholder="**** **** **** ****" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="font-bold">تاريخ الانتهاء</Label>
-                          <Input placeholder="MM/YY" className="h-14 rounded-xl border-2 bg-white font-mono" />
+                          <Input placeholder="MM/YY" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
                         </div>
                         <div className="space-y-2">
                           <Label className="font-bold">رمز CVC</Label>
-                          <Input placeholder="***" className="h-14 rounded-xl border-2 bg-white font-mono" />
+                          <Input placeholder="***" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
                         </div>
                       </div>
                     </div>
@@ -260,7 +280,7 @@ export default function CheckoutPage() {
                   )}
                 </Button>
                 <div className="flex items-center justify-center gap-2 text-zinc-400 font-bold text-sm">
-                  <ShieldCheck size={16} /> مدعوم بتقنيات تشفير عالمية
+                  <ShieldCheck size={16} /> مدعوم بتقنيات تشفير عالمية آمنة
                 </div>
               </div>
             </CardContent>
