@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -22,7 +21,9 @@ import {
   Linkedin,
   Copy,
   Layers,
-  Zap
+  Zap,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
