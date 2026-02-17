@@ -44,7 +44,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -363,6 +363,9 @@ function MustafhemView({ profile, settings, router }: any) {
   const readySessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(10)) : null, [firestore, profile.id]);
   const { data: paidSessions } = useCollection(readySessionsQuery);
 
+  const acceptedRequestsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "accepted"), limit(10)) : null, [firestore, profile.id]);
+  const { data: acceptedRequests } = useCollection(acceptedRequestsQuery);
+
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
 
   const handleCreate = async () => {
@@ -412,6 +415,25 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
+
+      {acceptedRequests && acceptedRequests.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black border-r-8 border-blue-500 pr-6 flex items-center gap-3">
+            <BadgeCent className="text-blue-600" /> طلبات مقبولة - بانتظار الدفع
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {acceptedRequests.map(ist => (
+              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-blue-500/20 bg-white p-6 shadow-lg hover:border-blue-500 transition-all">
+                <Badge className="bg-blue-100 text-blue-600 mb-4">تم قبول طلبك بواسطة {ist.mufhemName}</Badge>
+                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
+                <div className="pt-4 border-t border-dashed mt-4">
+                  <Button onClick={() => router.push(`/requests/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-blue-600">إتمام الدفع الآن</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {paidSessions && paidSessions.length > 0 && (
         <div className="space-y-6">
@@ -480,6 +502,18 @@ function MufhemView({ profile, settings, router }: any) {
         mufhemId: profile.id, 
         mufhemName: profile.fullName 
       });
+
+      // إضافة إشعار نظام للمستفهم
+      addDocumentNonBlocking(collection(firestore, "notifications"), {
+        userId: ist.mustafhemId,
+        title: "تم قبول استفهامك!",
+        message: `قام المفهم ${profile.fullName} بقبول طلبك: ${ist.title}. يرجى إتمام الدفع للبدء.`,
+        type: "acceptance",
+        read: false,
+        requestId: ist.id,
+        createdAt: new Date().toISOString()
+      });
+
       toast({ title: "تم قبول الطلب", description: "بانتظار قيام المستفهم بالدفع لبدء الجلسة." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });

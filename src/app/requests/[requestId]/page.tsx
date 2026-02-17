@@ -3,40 +3,34 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { doc, collection, addDoc, query, orderBy, updateDoc, getDocs } from "firebase/firestore";
+import { doc, collection, query, orderBy } from "firebase/firestore";
 import { 
   Clock, 
   User, 
   BadgeCent, 
   Calendar, 
   CheckCircle2, 
-  Tag, 
+  Target, 
+  FileText, 
+  Loader2, 
+  Zap, 
+  CreditCard,
   ChevronRight,
   ShieldCheck,
-  MessageSquare,
-  Target,
-  FileText,
-  Loader2,
-  Star,
-  Paperclip,
-  DollarSign,
-  Zap,
-  Wallet,
-  Play,
-  CreditCard,
   AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * صفحة تفاصيل الاستفهام المحدثة.
+ * تعرض كافة التفاصيل للمستفهم مع زر الدفع البارز فور قبول الطلب.
+ */
 export default function RequestDetailsPage() {
   const params = useParams();
   const requestId = params?.requestId as string;
@@ -46,11 +40,6 @@ export default function RequestDetailsPage() {
   const { toast } = useToast();
   
   const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
-  const [offerForm, setOfferForm] = useState({
-    amount: "",
-    duration: "",
-    details: ""
-  });
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -58,13 +47,6 @@ export default function RequestDetailsPage() {
   }, [firestore, requestId]);
 
   const { data: request, isLoading } = useDoc(requestRef);
-
-  const offersQuery = useMemoFirebase(() => {
-    if (!firestore || !requestId) return null;
-    return query(collection(firestore, "istifhams", requestId, "offers"), orderBy("createdAt", "desc"));
-  }, [firestore, requestId]);
-
-  const { data: offers } = useCollection(offersQuery);
 
   const ownerRef = useMemoFirebase(() => {
     if (!firestore || !request?.mustafhemId) return null;
@@ -86,193 +68,179 @@ export default function RequestDetailsPage() {
     router.push(url);
   };
 
-  const handleSubmitOffer = async () => {
-    if (!firestore || !currentUser || !profile || !request) return;
-    if (!offerForm.amount || !offerForm.duration || !offerForm.details) {
-      toast({ variant: "destructive", title: "بيانات ناقصة" });
-      return;
-    }
+  if (isLoading) return (
+    <div className="p-20 text-center animate-pulse flex flex-col items-center gap-4 bg-white min-h-screen" dir="rtl">
+      <Loader2 className="animate-spin h-12 w-12 text-primary" />
+      <p className="font-black text-2xl">جاري تحميل تفاصيل الاستفهام...</p>
+    </div>
+  );
 
-    setIsSubmittingOffer(true);
-    try {
-      await addDoc(collection(firestore, "istifhams", request.id, "offers"), {
-        requestId: request.id,
-        requestTitle: request.title,
-        mustafhemId: request.mustafhemId,
-        mufhemId: currentUser.uid,
-        mufhemName: profile.fullName,
-        mufhemAvatar: profile.profilePictureUrl,
-        mufhemSpecialization: profile.specialization || "خبير عام",
-        amount: Number(offerForm.amount),
-        duration: offerForm.duration,
-        details: offerForm.details,
-        status: "pending",
-        createdAt: new Date().toISOString()
-      });
-      toast({ title: "تم تقديم العرض بنجاح", description: "سيتم إخطار المستفهم لمراجعة عرضك." });
-      setOfferForm({ amount: "", duration: "", details: "" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
-    } finally {
-      setIsSubmittingOffer(false);
-    }
-  };
-
-  if (isLoading) return <div className="p-20 text-center animate-pulse font-black text-2xl flex flex-col items-center gap-4 bg-white min-h-screen" dir="rtl"><Loader2 className="animate-spin h-10 w-10 text-primary" /> جاري تحميل تفاصيل الاستفهام...</div>;
   if (!request) return <div className="p-20 text-center font-bold text-red-500">الاستفهام غير موجود.</div>;
 
   const isOwner = currentUser?.uid === request.mustafhemId;
   const isMufhem = currentUser?.uid === request.mufhemId;
 
   return (
-    <div className="bg-zinc-50 min-h-screen pb-20" dir="rtl">
-      <div className="max-w-6xl mx-auto px-4 pt-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6 hover:bg-white gap-2 font-bold text-zinc-600">
-          <ChevronRight size={18} className="rotate-180" /> العودة للخلف
-        </Button>
+    <div className="bg-[#F8FAFC] min-h-screen pb-20" dir="rtl">
+      <div className="max-w-6xl mx-auto px-4 pt-10">
+        <div className="flex items-center justify-between mb-8">
+          <Button variant="ghost" onClick={() => router.back()} className="hover:bg-white gap-2 font-black text-zinc-500">
+            <ChevronRight size={20} className="rotate-180" /> العودة للاستفهامات
+          </Button>
+          <Badge className={`px-6 py-2 rounded-xl text-md font-black shadow-sm ${
+            request.status === 'paid' ? 'bg-green-100 text-green-600' : 
+            request.status === 'accepted' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'
+          }`}>
+            {request.status === 'paid' ? 'مدفوع وجاهز' : request.status === 'accepted' ? 'بانتظار الدفع' : 'مفتوح للعروض'}
+          </Badge>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-10">
-            <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
-              <CardContent className="p-10 space-y-10">
-                <div className="border-b pb-6 text-right flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <h1 className="text-3xl font-black text-zinc-900">{request.title}</h1>
-                  <Badge variant="outline" className="text-primary font-black px-4 py-1 rounded-xl border-primary/20 bg-primary/5">{request.category}</Badge>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-10">
+            {/* بطاقة تفاصيل الطلب الرئيسية */}
+            <Card className="rounded-[3rem] border-none shadow-xl bg-white overflow-hidden">
+              <CardContent className="p-10 md:p-14 space-y-12">
+                <div className="space-y-4 text-right">
+                  <div className="flex items-center gap-3 justify-end mb-2">
+                    <span className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-black">{request.category}</span>
+                    <span className="text-zinc-400 text-xs font-bold flex items-center gap-1"><Clock size={14}/> منذ {new Date(request.createdAt).toLocaleDateString('ar-EG')}</span>
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">
+                    {request.title}
+                  </h1>
                 </div>
-                <div className="space-y-4">
-                  <Label className="font-black text-zinc-400 flex items-center gap-2 justify-end uppercase text-xs tracking-widest">الوصف والتفاصيل <FileText size={14}/></Label>
-                  <p className="text-zinc-700 text-lg leading-relaxed bg-zinc-50/50 p-8 rounded-[2rem] border-2 border-dashed">{request.description}</p>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 justify-end text-zinc-400 font-black text-xs uppercase tracking-widest">
+                    <span>تفاصيل الاستفهام</span>
+                    <FileText size={18} />
+                  </div>
+                  <div className="text-xl text-zinc-700 leading-relaxed font-medium bg-zinc-50/50 p-10 rounded-[2.5rem] border-2 border-dashed border-zinc-100">
+                    {request.description}
+                  </div>
                 </div>
+
                 {request.goal && (
-                  <div className="space-y-4">
-                    <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">هدف الاستفهام <Target size={18} className="text-accent" /></h4>
-                    <p className="text-zinc-700 text-lg font-bold italic bg-accent/5 p-8 rounded-[2rem] border-2 border-accent/10">"{request.goal}"</p>
-                  </div>
-                )}
-                
-                {/* تنبيه الدفع للمستفهم */}
-                {isOwner && request.status === 'accepted' && (
-                  <div className="bg-blue-50 p-10 rounded-[3rem] border-4 border-dashed border-blue-200 flex flex-col md:flex-row items-center justify-between gap-8 animate-in zoom-in duration-500">
-                    <div className="text-right space-y-2">
-                      <div className="flex items-center gap-2 text-blue-600 font-black text-2xl">
-                        <CheckCircle2 /> <span>تم قبول طلبك!</span>
-                      </div>
-                      <p className="text-blue-700 font-bold text-lg">المفهم <span className="underline decoration-dotted">{request.mufhemName}</span> جاهز للبدء. يرجى إتمام الدفع لتفعيل المحاضرة.</p>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 justify-end text-accent font-black text-xs uppercase tracking-widest">
+                      <span>الهدف المرجو تحقيقه</span>
+                      <Target size={18} />
                     </div>
-                    <Button onClick={() => goToCheckout()} className="h-20 px-12 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-2xl shadow-2xl flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
-                      <CreditCard size={28}/> إتمام الدفع {request.amount} ج.م
-                    </Button>
+                    <div className="text-xl text-zinc-800 font-black italic bg-accent/5 p-10 rounded-[2.5rem] border-2 border-accent/10 border-dashed">
+                      "{request.goal}"
+                    </div>
                   </div>
                 )}
 
-                {/* زر دخول المحاضرة للمستفهم والمفهم */}
-                {(isOwner || isMufhem) && request.status === 'paid' && (
-                  <div className="bg-green-50 p-10 rounded-[3rem] border-4 border-dashed border-green-200 flex items-center justify-between animate-in fade-in">
-                    <div className="text-right">
-                      <h4 className="text-2xl font-black text-green-900 flex items-center gap-2">
-                        <ShieldCheck className="text-green-600" /> المحاضرة جاهزة للبدء!
-                      </h4>
-                      <p className="text-green-700 font-bold mt-1">تم تأمين الدفع سحابياً. يمكنك الآن الدخول لغرفة المحاضرة المباشرة.</p>
+                {/* قسم الدفع الفوري (يظهر للمستفهم عند القبول) */}
+                {isOwner && request.status === 'accepted' && (
+                  <div className="relative group animate-in slide-in-from-bottom-6 duration-700">
+                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-primary rounded-[4rem] blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                    <div className="relative bg-white border-4 border-blue-500/20 p-10 md:p-14 rounded-[3.5rem] shadow-2xl flex flex-col items-center text-center space-y-8">
+                      <div className="bg-blue-100 w-24 h-24 rounded-[2rem] flex items-center justify-center text-blue-600 shadow-inner">
+                        <ShieldCheck size={56} />
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-3xl md:text-4xl font-black text-zinc-900">جاهز لبدء التعلم؟</h3>
+                        <p className="text-xl text-zinc-500 font-bold max-w-lg mx-auto">
+                          لقد قبل المفهم <span className="text-blue-600 underline decoration-dotted">{request.mufhemName}</span> طلبك. يرجى تأمين الرصيد لتفعيل غرفة المحاضرة.
+                        </p>
+                      </div>
+                      
+                      <div className="w-full max-w-md p-6 bg-zinc-50 rounded-[2rem] border-2 border-dashed flex justify-between items-center px-10">
+                        <span className="text-zinc-400 font-black text-sm uppercase">إجمالي المطلوب</span>
+                        <span className="text-4xl font-black text-primary">{request.amount} <span className="text-lg">ج.م</span></span>
+                      </div>
+
+                      <Button 
+                        onClick={() => goToCheckout()} 
+                        className="w-full h-24 rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-2xl shadow-2xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4"
+                      >
+                        <CreditCard size={32} /> إتمام الدفع وفتح المحاضرة
+                      </Button>
+                      
+                      <p className="text-xs text-zinc-400 font-bold flex items-center gap-2">
+                        <AlertCircle size={14} /> سيتم حجز المبلغ في المنصة ولن يصل للمفهم إلا بعد تأكيد فهمك.
+                      </p>
                     </div>
-                    <Button onClick={() => router.push(`/meeting/${request.id}`)} className="h-20 px-12 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl shadow-xl transition-all hover:scale-105">
-                      <Play className="ml-2 fill-current"/> دخول المحاضرة
+                  </div>
+                )}
+
+                {/* زر الدخول للمحاضرة (بعد الدفع) */}
+                {(isOwner || isMufhem) && request.status === 'paid' && (
+                  <div className="bg-green-50 p-12 rounded-[3.5rem] border-4 border-dashed border-green-200 flex flex-col items-center text-center space-y-8 animate-in zoom-in">
+                    <div className="bg-white p-6 rounded-full shadow-xl text-green-600">
+                      <Zap size={48} className="fill-current" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-3xl font-black text-green-900">المحاضرة مدفوعة وجاهزة!</h4>
+                      <p className="text-lg text-green-700 font-bold">تم تأمين الرصيد بنجاح. اضغط أدناه للدخول للغرفة المباشرة.</p>
+                    </div>
+                    <Button 
+                      onClick={() => router.push(`/meeting/${request.id}`)} 
+                      className="h-20 px-16 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl shadow-2xl shadow-green-600/20 transition-all hover:scale-105"
+                    >
+                      دخول المحاضرة الآن
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* نموذج تقديم العروض للمفهمين */}
-            {!isOwner && profile?.role === 'mufhem' && request.status === 'active' && (
-              <Card className="rounded-[2.5rem] border-2 shadow-xl bg-white overflow-hidden animate-in slide-in-from-bottom-4">
-                <div className="p-8 border-b bg-muted/30 flex items-center gap-4">
-                  <div className="bg-primary p-3 rounded-2xl text-white shadow-lg"><Zap size={24}/></div>
-                  <h3 className="text-2xl font-black">تقدم للمشروع (قدم عرضك)</h3>
-                </div>
-                <CardContent className="p-10 space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <Label className="font-black text-lg">مدة التسليم (بالأيام)</Label>
-                      <Input type="number" placeholder="مثال: 1" value={offerForm.duration} onChange={(e)=>setOfferForm({...offerForm, duration: e.target.value})} className="h-16 rounded-2xl border-2 font-black text-xl text-center" />
-                    </div>
-                    <div className="space-y-3">
-                      <Label className="font-black text-lg">قيمة العرض (ج.م)</Label>
-                      <Input type="number" placeholder="100" value={offerForm.amount} onChange={(e)=>setOfferForm({...offerForm, amount: e.target.value})} className="h-16 rounded-2xl border-2 font-black text-xl text-center" />
-                      {offerForm.amount && (
-                        <p className="text-xs text-green-600 font-bold text-center">ستستلم {Number(offerForm.amount) * 0.8} ج.م بعد خصم عمولة المنصة (20%)</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="font-black text-lg">تفاصيل العرض</Label>
-                    <Textarea placeholder="اشرح للمستفهم لماذا أنت الأنسب وماذا ستقدم له في المحاضرة..." value={offerForm.details} onChange={(e)=>setOfferForm({...offerForm, details: e.target.value})} className="h-48 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed" />
-                  </div>
-                  <Button onClick={handleSubmitOffer} disabled={isSubmittingOffer} className="w-full h-20 rounded-[2rem] font-black text-2xl shadow-2xl transition-all hover:scale-[1.01]">
-                    {isSubmittingOffer ? <Loader2 className="animate-spin ml-2 h-8 w-8" /> : "إرسال العرض المتقدم الآن"}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* عرض العروض المتاحة لصاحب الطلب */}
-            {isOwner && (
-              <div className="space-y-8 animate-in fade-in">
-                <h3 className="text-2xl font-black border-r-8 border-primary pr-6 flex items-center gap-3">العروض المتقدمة ({offers?.length || 0}) <Zap size={20} className="text-accent" /></h3>
-                <div className="space-y-6">
-                  {offers?.map((offer) => (
-                    <Card key={offer.id} className={`rounded-[2.5rem] border-2 bg-white transition-all hover:border-primary/20 overflow-hidden ${offer.status === 'accepted' ? 'border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.1)]' : 'shadow-sm'}`}>
-                      <CardContent className="p-8 flex flex-col md:flex-row justify-between gap-8">
-                        <div className="flex gap-6 items-start flex-1 text-right">
-                          <Avatar className="h-20 w-20 shadow-xl border-4 border-white shrink-0"><AvatarImage src={offer.mufhemAvatar} /><AvatarFallback>{offer.mufhemName?.charAt(0)}</AvatarFallback></Avatar>
-                          <div className="space-y-2">
-                            <h4 className="font-black text-xl flex items-center gap-2">{offer.mufhemName} <Badge className="bg-primary/10 text-primary border-none text-[10px] font-black">خبير موثق</Badge></h4>
-                            <p className="text-zinc-600 text-md font-medium leading-relaxed">"{offer.details}"</p>
-                            <div className="flex gap-4 text-xs font-bold text-muted-foreground pt-2">
-                              <span className="flex items-center gap-1"><Clock size={14}/> {offer.duration} يوم</span>
-                              <span className="flex items-center gap-1"><BadgeCent size={14}/> {offer.amount} ج.م</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="shrink-0 flex flex-col items-center justify-center gap-4 bg-muted/20 p-6 rounded-3xl min-w-[180px]">
-                          <div className="text-center">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">قيمة العرض</p>
-                            <h5 className="text-3xl font-black text-primary tabular-nums">{offer.amount} <span className="text-sm">ج.م</span></h5>
-                          </div>
-                          {(request.status === 'active' || request.status === 'accepted') && offer.status !== 'accepted' && (
-                            <Button onClick={() => goToCheckout(offer.id)} className="w-full h-12 rounded-xl font-black bg-green-600 hover:bg-green-700 shadow-lg flex items-center gap-2">
-                              <CreditCard size={16}/> قبول الدفع
-                            </Button>
-                          )}
-                          {offer.status === 'accepted' && <Badge className="bg-green-100 text-green-600 h-10 px-6 rounded-xl font-black flex items-center gap-2"><CheckCircle2 size={16}/> تم القبول</Badge>}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          <div className="space-y-6">
-            <Card className="rounded-3xl bg-white p-8 space-y-6 shadow-sm border-2">
-              <div className="flex justify-between items-center"><span className="text-zinc-500 font-bold text-sm">حالة الاستفهام</span><Badge className={request.status === 'paid' ? 'bg-green-100 text-green-600 border-none px-4' : 'bg-blue-100 text-blue-600 border-none px-4'}>{request.status === 'paid' ? 'مدفوع - جاهز' : request.status === 'accepted' ? 'بانتظار الدفع' : 'مفتوح للعروض'}</Badge></div>
-              <div className="flex justify-between items-center pt-4 border-t border-dashed"><span className="text-zinc-500 font-bold text-sm">الميزانية المقترحة</span><span className="text-primary font-black text-3xl tabular-nums">{request.amount} <span className="text-sm">ج.م</span></span></div>
-              <div className="flex justify-between items-center pt-4 border-t border-dashed"><span className="text-zinc-500 font-bold text-sm">الموعد المطلوب</span><span className="text-zinc-800 font-black text-xs text-left">{new Date(request.meetingTime).toLocaleString('ar-EG')}</span></div>
+          <div className="lg:col-span-4 space-y-8">
+            {/* بطاقة معلومات سريعة */}
+            <Card className="rounded-[2.5rem] bg-white p-8 space-y-8 shadow-xl border-none">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-400 font-black text-xs uppercase tracking-widest">الميزانية</span>
+                  <span className="text-primary font-black text-4xl tabular-nums">{request.amount} <span className="text-sm">ج.م</span></span>
+                </div>
+                <div className="pt-6 border-t border-dashed space-y-2 text-right">
+                  <span className="text-zinc-400 font-black text-xs uppercase tracking-widest block mb-2">الموعد المطلوب</span>
+                  <div className="flex items-center gap-3 justify-end text-zinc-800 font-black">
+                    <Calendar size={18} className="text-primary" />
+                    <span className="text-lg">{new Date(request.meetingTime).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-end text-zinc-500 font-bold mr-7">
+                    <Clock size={16} />
+                    <span>الساعة {new Date(request.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              </div>
             </Card>
 
-            <Card className="rounded-3xl bg-white overflow-hidden shadow-sm border-2">
-              <div className="p-6 border-b bg-zinc-50/50 text-right"><h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end"><User size={16}/> صاحب الاستفهام</h4></div>
-              <CardContent className="p-8 flex items-center gap-4 justify-end">
-                <div className="text-right">
-                  <p className="font-black text-xl text-zinc-900 leading-none">{request.mustafhemName}</p>
-                  <p className="text-xs text-zinc-400 font-bold mt-2">موثق في المنصة <ShieldCheck size={12} className="inline text-blue-500" /></p>
-                </div>
-                <Avatar className="h-16 w-16 border-4 border-zinc-50 shadow-md">
+            {/* بطاقة صاحب الطلب */}
+            <Card className="rounded-[2.5rem] bg-white overflow-hidden shadow-xl border-none">
+              <div className="p-6 border-b bg-zinc-50/50 text-right">
+                <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
+                  <User size={18} className="text-primary" /> صاحب الاستفهام
+                </h4>
+              </div>
+              <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
+                <Avatar className="h-24 w-24 border-4 border-white shadow-2xl">
                   <AvatarImage src={owner?.profilePictureUrl} />
-                  <AvatarFallback className="font-black text-xl">{request.mustafhemName?.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">{request.mustafhemName?.charAt(0)}</AvatarFallback>
                 </Avatar>
+                <div>
+                  <p className="font-black text-2xl text-zinc-900 leading-none">{request.mustafhemName}</p>
+                  <p className="text-xs text-zinc-400 font-bold mt-2 flex items-center justify-center gap-1">
+                    موثق في المنصة <ShieldCheck size={14} className="text-blue-500" />
+                  </p>
+                </div>
               </CardContent>
             </Card>
+
+            {/* بطاقة الأمان */}
+            <div className="p-8 bg-zinc-900 rounded-[2.5rem] text-white space-y-4 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12">
+                <BadgeCent size={120} />
+              </div>
+              <h4 className="text-xl font-black flex items-center gap-2 relative z-10">ضمان فهمني <ShieldCheck size={24} className="text-primary" /></h4>
+              <p className="text-zinc-400 font-bold text-sm leading-relaxed relative z-10">
+                أموالك في أمان تام؛ حيث لا يتم تحويل المستحقات للمفهم إلا بعد انتهاء الجلسة وتأكيدك بأنك "فهمت" المعلومة تماماً.
+              </p>
+            </div>
           </div>
         </div>
       </div>
