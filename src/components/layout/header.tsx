@@ -133,10 +133,10 @@ export function Header() {
           >
             <Mail className="h-8 w-8 group-hover:scale-110 transition-transform" />
             {unreadChats && unreadChats.length > 0 && (
-              <span className="absolute top-2 right-2 flex h-5 w-5">
+              <span className="absolute top-2 right-2 flex h-6 w-6">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-5 w-5 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
-                   <span className="text-[10px] text-white font-black">{unreadChats.length}</span>
+                <span className="relative inline-flex rounded-full h-6 w-6 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
+                   <span className="text-[11px] text-white font-black">{unreadChats.length}</span>
                 </span>
               </span>
             )}
@@ -148,9 +148,9 @@ export function Header() {
               <Button variant="ghost" size="icon" className="relative h-14 w-14 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
                 <Bell className="h-8 w-8 group-hover:scale-110 transition-transform" />
                 {totalNotifications > 0 && (
-                  <span className="absolute top-2 right-2 flex h-5 w-5">
-                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
-                      <span className="text-[10px] text-white font-black">{totalNotifications}</span>
+                  <span className="absolute top-2 right-2 flex h-6 w-6">
+                    <span className="relative inline-flex rounded-full h-6 w-6 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
+                      <span className="text-[11px] text-white font-black">{totalNotifications}</span>
                     </span>
                   </span>
                 )}
@@ -196,10 +196,10 @@ export function Header() {
                 </Avatar>
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-2">
-                    <span className="text-md font-black leading-none text-zinc-900">{profile?.fullName || "..."}</span>
-                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-4 w-4" />}
+                    <span className="text-lg font-black leading-none text-zinc-900">{profile?.fullName || "..."}</span>
+                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-5 w-5" />}
                   </div>
-                  <span className="text-[11px] text-primary font-black mt-1 uppercase tracking-wider">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+                  <span className="text-[12px] text-primary font-black mt-1 uppercase tracking-wider">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -207,14 +207,14 @@ export function Header() {
               <DropdownMenuLabel className="font-black p-4 text-right text-lg">حسابي</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/profile')} className="p-4 rounded-xl cursor-pointer flex justify-end gap-4 font-black text-md hover:bg-primary/5">
-                الملف الشخصي <User className="h-5 w-5 text-primary" />
+                الملف الشخصي <User className="h-6 w-6 text-primary" />
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-4 rounded-xl cursor-pointer flex justify-end gap-4 font-black text-md hover:bg-primary/5">
-                المحفظة <Settings className="h-5 w-5 text-accent" />
+                المحفظة <Settings className="h-6 w-6 text-accent" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="p-4 rounded-xl cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-md hover:bg-red-50">
-                تسجيل الخروج <LogOut className="h-5 w-5" />
+                تسجيل الخروج <LogOut className="h-6 w-6" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -228,9 +228,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-3 px-5 py-3 rounded-2xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md whitespace-nowrap group"
+      className="flex items-center gap-3 px-5 py-3 rounded-2xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-lg whitespace-nowrap group"
     >
-      <Icon size={22} className="group-hover:scale-110 transition-transform" />
+      <Icon size={24} className="group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );
