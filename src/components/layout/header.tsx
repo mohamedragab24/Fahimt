@@ -48,7 +48,7 @@ export function Header() {
 
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
-  // استعلام للرسائل غير المقروءة (مثال مبسط)
+  // استعلام للرسائل غير المقروءة
   const unreadMessagesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -100,117 +100,121 @@ export function Header() {
   const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-      <div className="flex h-20 items-center justify-between px-4 md:px-8 max-w-[1600px] mx-auto">
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="h-10 w-10 text-primary" />
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center shadow-md overflow-hidden border-2 border-white/20">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-md">
+      <div className="flex h-24 items-center justify-between px-4 md:px-10 max-w-[1800px] mx-auto">
+        <div className="flex items-center gap-6">
+          <SidebarTrigger className="h-12 w-12 text-primary scale-110" />
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="bg-primary w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/20">
               {settings?.miniIconUrl ? (
                 <img src={settings.miniIconUrl} alt="Logo" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-black text-lg">ف</span>
+                <span className="text-white font-black text-2xl">ف</span>
               )}
             </div>
-            <span className="font-black text-2xl hidden lg:block text-primary">{settings?.siteTitle || "فهمني"}</span>
+            <span className="font-black text-3xl hidden xl:block text-primary tracking-tighter">{settings?.siteTitle || "فهمني"}</span>
           </Link>
 
-          {/* روابط التنقل الثابتة */}
-          <nav className="hidden md:flex items-center gap-1 mr-6 border-r pr-6 border-zinc-100">
+          {/* روابط التنقل الثابتة - حجم أكبر */}
+          <nav className="hidden md:flex items-center gap-2 mr-8 border-r-2 pr-8 border-zinc-100">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
             <HeaderNavLink href="/browse" icon={Search} label="تصفح الاستفهامات" />
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* أيقونة الرسائل */}
+        <div className="flex items-center gap-3 md:gap-6">
+          {/* أيقونة الرسائل - حجم أكبر مع تنبيه بارز */}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.push('/messages')}
-            className="relative h-11 w-11 rounded-xl hover:bg-primary/5 text-muted-foreground transition-all"
+            className="relative h-14 w-14 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
           >
-            <Mail className="h-6 w-6" />
+            <Mail className="h-8 w-8 group-hover:scale-110 transition-transform" />
             {unreadChats && unreadChats.length > 0 && (
-              <span className="absolute top-2 right-2 flex h-3 w-3">
+              <span className="absolute top-2 right-2 flex h-5 w-5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
+                <span className="relative inline-flex rounded-full h-5 w-5 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
+                   <span className="text-[10px] text-white font-black">{unreadChats.length}</span>
+                </span>
               </span>
             )}
           </Button>
 
-          {/* أيقونة التنبيهات */}
+          {/* أيقونة التنبيهات - حجم أكبر */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl hover:bg-primary/5 text-muted-foreground transition-all">
-                <Bell className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="relative h-14 w-14 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
+                <Bell className="h-8 w-8 group-hover:scale-110 transition-transform" />
                 {totalNotifications > 0 && (
-                  <span className="absolute top-2 right-2 flex h-3 w-3">
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                  <span className="absolute top-2 right-2 flex h-5 w-5">
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
+                      <span className="text-[10px] text-white font-black">{totalNotifications}</span>
+                    </span>
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
-              <div className="flex justify-between items-center p-3">
-                <DropdownMenuLabel className="text-lg font-black p-0">التنبيهات</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-96 p-2 rounded-[2rem] shadow-2xl border-2" dir="rtl">
+              <div className="flex justify-between items-center p-4">
+                <DropdownMenuLabel className="text-xl font-black p-0">التنبيهات</DropdownMenuLabel>
                 {unreadSystemNotifs.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-xs font-bold text-primary h-8">تحديد كقروء</Button>
+                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-sm font-black text-primary h-8">تحديد كقروء</Button>
                 )}
               </div>
               <DropdownMenuSeparator />
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-[500px] overflow-y-auto">
                 {systemNotifs && systemNotifs.length > 0 ? (
                   systemNotifs.map((n: any) => (
-                    <DropdownMenuItem key={n.id} className={`p-4 rounded-xl cursor-pointer hover:bg-muted mb-1 ${!n.read ? 'bg-primary/5' : ''}`}>
-                      <div className="flex gap-3 text-right w-full">
-                        <div className="bg-primary/10 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
-                          <Bell className="text-primary h-5 w-5" />
+                    <DropdownMenuItem key={n.id} className={`p-5 rounded-2xl cursor-pointer hover:bg-muted mb-2 ${!n.read ? 'bg-primary/5' : ''}`}>
+                      <div className="flex gap-4 text-right w-full">
+                        <div className="bg-primary/10 p-3 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+                          <Bell className="text-primary h-6 w-6" />
                         </div>
                         <div className="space-y-1">
-                          <p className="font-black text-sm leading-tight">{n.title}</p>
-                          <p className="text-[10px] text-muted-foreground">{n.message}</p>
+                          <p className="font-black text-md leading-tight text-zinc-800">{n.title}</p>
+                          <p className="text-xs text-muted-foreground font-bold">{n.message}</p>
                         </div>
                       </div>
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-muted-foreground text-sm font-bold opacity-50 italic">لا توجد تنبيهات جديدة</div>
+                  <div className="p-12 text-center text-muted-foreground text-md font-bold opacity-50 italic">لا توجد تنبيهات جديدة</div>
                 )}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* بروفايل المستخدم */}
+          {/* بروفايل المستخدم - حجم أكبر */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 h-12 pr-1 pl-3 rounded-2xl hover:bg-primary/5 group border border-transparent hover:border-zinc-100 transition-all">
-                <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm transition-transform group-hover:scale-105">
+              <Button variant="ghost" className="flex items-center gap-4 h-16 pr-1 pl-4 rounded-2xl hover:bg-primary/5 group border-2 border-transparent hover:border-zinc-100 transition-all">
+                <Avatar className="h-12 w-12 border-2 border-primary/20 shadow-md transition-transform group-hover:scale-105">
                   <AvatarImage src={profile?.profilePictureUrl} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-black">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col text-right">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-black leading-none">{profile?.fullName || "..."}</span>
-                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-3 w-3" />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-md font-black leading-none text-zinc-900">{profile?.fullName || "..."}</span>
+                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-4 w-4" />}
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-bold mt-1">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+                  <span className="text-[11px] text-primary font-black mt-1 uppercase tracking-wider">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
-              <DropdownMenuLabel className="font-black p-3 text-right">حسابي</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-64 p-3 rounded-[2rem] shadow-2xl border-2" dir="rtl">
+              <DropdownMenuLabel className="font-black p-4 text-right text-lg">حسابي</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold">
-                الملف الشخصي <User className="h-4 w-4 text-primary" />
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-4 rounded-xl cursor-pointer flex justify-end gap-4 font-black text-md hover:bg-primary/5">
+                الملف الشخصي <User className="h-5 w-5 text-primary" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold">
-                المحفظة <Settings className="h-4 w-4 text-accent" />
+              <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-4 rounded-xl cursor-pointer flex justify-end gap-4 font-black text-md hover:bg-primary/5">
+                المحفظة <Settings className="h-5 w-5 text-accent" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="p-3 rounded-xl cursor-pointer text-destructive focus:text-destructive flex justify-end gap-3 font-bold">
-                خروج <LogOut className="h-4 w-4" />
+              <DropdownMenuItem onClick={handleLogout} className="p-4 rounded-xl cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-md hover:bg-red-50">
+                تسجيل الخروج <LogOut className="h-5 w-5" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -224,9 +228,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-2 px-4 py-2 rounded-xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-sm whitespace-nowrap"
+      className="flex items-center gap-3 px-5 py-3 rounded-2xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md whitespace-nowrap group"
     >
-      <Icon size={16} />
+      <Icon size={22} className="group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );
