@@ -94,7 +94,7 @@ service cloud.firestore {
     }
     
     match /notifications/{id} { 
-      allow create: if isAdmin();
+      allow create: if isSignedIn();
       allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
       allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
       allow delete: if isAdmin();
@@ -126,6 +126,15 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
       allow update, delete: if isAdmin();
+    }
+
+    match /direct_chats/{chatId} {
+      allow read, update: if isSignedIn() && (request.auth.uid in resource.data.participants || isAdmin());
+      allow create: if isSignedIn();
+
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/direct_chats/$(chatId)).data.participants || isAdmin());
+      }
     }
   }
 }
