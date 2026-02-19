@@ -150,7 +150,6 @@ export function AppSidebar() {
   return (
     <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-sm fixed inset-y-0 z-50 bg-white">
       <SidebarHeader className="p-4 shrink-0">
-        {/* تم حذف اللوجو المكرر هنا والاكتفاء بالمحتوى المباشر */}
         <div className="flex flex-col gap-1">
           <span className="font-black text-xs text-zinc-400">القائمة الرئيسية</span>
         </div>
@@ -162,30 +161,30 @@ export function AppSidebar() {
         <div className="p-1.5 shrink-0">
           <div className="bg-primary/5 p-3 rounded-2xl space-y-2.5 border border-primary/5 shadow-inner">
             <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { handleLinkClick(); router.push('/profile'); }}>
-              <Avatar className="h-8 w-8 border-2 border-white shadow-md shrink-0">
+              <Avatar className="h-10 w-10 border-2 border-white shadow-md shrink-0">
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback className="text-[10px]">{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col truncate min-w-0">
-                <span className="font-black text-[11px] truncate text-right">{profile?.fullName}</span>
-                <Badge variant="secondary" className="w-fit text-[7px] h-4 mt-0.5 ml-auto px-1.5 font-black">
+                <span className="font-black text-[12px] truncate text-right">{profile?.fullName}</span>
+                <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 ml-auto px-1.5 font-black">
                   {profile?.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}
                 </Badge>
               </div>
             </div>
-            <button onClick={toggleRole} className="w-full h-8 rounded-xl text-[10px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm">
-              <RefreshCw className="h-3 w-3" /> تبديل الحساب
+            <button onClick={toggleRole} className="w-full h-10 rounded-xl text-[11px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm">
+              <RefreshCw className="h-4 w-4" /> تبديل الحساب
             </button>
           </div>
         </div>
 
-        <SidebarMenu className="space-y-1 pt-2 overflow-y-auto no-scrollbar px-1">
+        <SidebarMenu className="space-y-1.5 pt-4 overflow-y-auto no-scrollbar px-1">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} className="h-10 rounded-xl" onClick={handleLinkClick}>
-                <Link href={item.href} className="flex items-center gap-3 px-2">
-                  <item.icon className={`h-4 w-4 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-[13px] truncate">{item.title}</span>
+              <SidebarMenuButton asChild isActive={pathname === item.href} className="h-12 rounded-xl" onClick={handleLinkClick}>
+                <Link href={item.href} className="flex items-center gap-4 px-3">
+                  <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
+                  <span className="font-bold text-[14px] truncate">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -195,18 +194,18 @@ export function AppSidebar() {
             <Collapsible className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="h-10 rounded-xl">
-                    <LayoutDashboard className="h-4 w-4 text-accent shrink-0" />
-                    <span className="font-bold text-[13px] truncate">{settings?.sideAdmin || "لوحة التحكم"}</span>
-                    <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  <SidebarMenuButton className="h-12 rounded-xl">
+                    <LayoutDashboard className="h-5 w-5 text-accent shrink-0" />
+                    <span className="font-bold text-[14px] truncate">{settings?.sideAdmin || "لوحة التحكم"}</span>
+                    <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub className="mr-2 pr-2 border-r-2 border-accent/20 space-y-1 mt-1 max-h-[450px] overflow-y-auto no-scrollbar">
+                  <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-accent/20 space-y-1.5 mt-2 max-h-[450px] overflow-y-auto no-scrollbar">
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
-                        <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-8" onClick={handleLinkClick}>
-                          <Link href={item.href} className="font-bold text-[11px] py-1 text-right w-full block truncate">{item.title}</Link>
+                        <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-10" onClick={handleLinkClick}>
+                          <Link href={item.href} className="font-bold text-[12px] py-2 text-right w-full block truncate">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -218,10 +217,10 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t shrink-0">
-        <SidebarMenuButton onClick={handleLogout} className="h-10 rounded-xl text-destructive hover:bg-destructive/10 font-black">
-          <LogOut className="h-4 w-4 shrink-0" />
-          <span className="text-[12px]">تسجيل الخروج</span>
+      <SidebarFooter className="p-3 border-t shrink-0">
+        <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-destructive hover:bg-destructive/10 font-black">
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span className="text-[13px]">تسجيل الخروج</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

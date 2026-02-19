@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 /**
  * ترويسة الموقع المحدثة - تشمل اللوجو الأساسي في اليمين بجانب الزر، والروابط في اليسار.
@@ -77,24 +78,26 @@ export function Header() {
     router.push('/profile');
   };
 
+  const defaultLogo = PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
+
   return (
     <header className={cn(
-      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0",
-      shouldHideGlobalHeader ? "hidden" : "block h-14 md:h-16"
+      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0 transition-all duration-300",
+      shouldHideGlobalHeader ? "hidden" : "block h-16 md:h-20"
     )}>
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
           <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
             {/* اللوجو الأساسي في اليمين بجانب زر القائمة */}
-            <Link href="/" className="flex items-center gap-3 shrink-0">
-              <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border border-white/20">
-                {settings?.logoUrl ? <img src={settings.logoUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
+            <Link href="/" className="flex items-center gap-3 shrink-0 group">
+              <div className="bg-primary w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
+                <img src={settings?.logoUrl || defaultLogo} className="w-full h-full object-cover" alt="Logo" />
               </div>
-              <span className="text-primary font-black text-xl md:text-3xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
+              <span className="text-primary font-black text-2xl md:text-4xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
             </Link>
             
-            {user && <SidebarTrigger className="h-9 w-9 text-accent bg-accent/5 hover:bg-accent/10 rounded-xl shrink-0" />}
+            {user && <SidebarTrigger className="h-10 w-10 text-accent bg-accent/5 hover:bg-accent/10 rounded-xl shrink-0 border-2 border-accent/10" />}
           </div>
 
           <div className="flex items-center gap-2 md:gap-6 shrink-0">
@@ -102,7 +105,7 @@ export function Header() {
             {user && (
               <div className="flex items-center gap-2 md:gap-4">
                 {/* روابط التنقل في اليسار بجانب الأيقونات */}
-                <nav className="hidden md:flex items-center gap-2 px-4 border-l border-zinc-100 py-1">
+                <nav className="hidden lg:flex items-center gap-2 px-4 border-l border-zinc-100 py-1">
                   <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
                   <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
                   <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
@@ -112,13 +115,13 @@ export function Header() {
                   variant="ghost" 
                   size="icon" 
                   onClick={() => { setOpen(false); setOpenMobile(false); router.push('/messages'); }}
-                  className="relative h-10 w-10 rounded-xl hover:bg-primary/5 text-zinc-500"
+                  className="relative h-12 w-12 rounded-2xl hover:bg-primary/5 text-zinc-500 border-2 border-transparent"
                 >
-                  <Mail className="h-6 w-6" />
+                  <Mail className="h-7 w-7" />
                   {totalMessages > 0 && (
-                    <span className="absolute top-0 right-0 flex h-4 w-4">
-                      <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
-                         <span className="text-[8px] text-white font-black">{totalMessages}</span>
+                    <span className="absolute top-1 right-1 flex h-5 w-5">
+                      <span className="relative inline-flex rounded-full h-5 w-5 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
+                         <span className="text-[10px] text-white font-black">{totalMessages}</span>
                       </span>
                     </span>
                   )}
@@ -126,37 +129,37 @@ export function Header() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-primary/5 text-zinc-500">
-                      <Bell className="h-6 w-6" />
+                    <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-2xl hover:bg-primary/5 text-zinc-500 border-2 border-transparent">
+                      <Bell className="h-7 w-7" />
                       {totalNotifications > 0 && (
-                        <span className="absolute top-0 right-0 flex h-4 w-4">
-                          <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
-                            <span className="text-[8px] text-white font-black">{totalNotifications}</span>
+                        <span className="absolute top-1 right-1 flex h-5 w-5">
+                          <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
+                            <span className="text-[10px] text-white font-black">{totalNotifications}</span>
                           </span>
                         </span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-72 p-2 rounded-2xl shadow-2xl border-2" dir="rtl">
-                    <DropdownMenuLabel className="font-black p-2 text-sm">التنبيهات</DropdownMenuLabel>
+                  <DropdownMenuContent align="center" className="w-80 p-2 rounded-[2rem] shadow-2xl border-2" dir="rtl">
+                    <DropdownMenuLabel className="font-black p-4 text-lg">التنبيهات</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-96 overflow-y-auto">
                       {systemNotifs && systemNotifs.length > 0 ? (
                         systemNotifs.map((n: any) => (
-                          <DropdownMenuItem key={n.id} className="p-3 rounded-xl mb-1 cursor-pointer">
-                            <div className="flex gap-3 text-right w-full">
-                              <div className="bg-primary/10 p-2 rounded-lg h-9 w-9 flex items-center justify-center shrink-0">
-                                <Bell className="text-primary h-4 w-4" />
+                          <DropdownMenuItem key={n.id} className="p-4 rounded-2xl mb-1 cursor-pointer">
+                            <div className="flex gap-4 text-right w-full">
+                              <div className="bg-primary/10 p-3 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+                                <Bell className="text-primary h-6 w-6" />
                               </div>
                               <div className="min-w-0">
-                                <p className="font-black text-xs text-zinc-800 truncate">{n.title}</p>
-                                <p className="text-[10px] text-muted-foreground font-bold truncate">{n.message}</p>
+                                <p className="font-black text-sm text-zinc-800 truncate">{n.title}</p>
+                                <p className="text-xs text-muted-foreground font-bold line-clamp-2">{n.message}</p>
                               </div>
                             </div>
                           </DropdownMenuItem>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-muted-foreground text-sm font-bold">لا توجد تنبيهات</div>
+                        <div className="p-10 text-center text-muted-foreground text-md font-bold">لا توجد تنبيهات جديدة</div>
                       )}
                     </div>
                   </DropdownMenuContent>
@@ -169,17 +172,17 @@ export function Header() {
                 <Button 
                   variant="ghost" 
                   onClick={goToProfile}
-                  className="h-10 w-10 md:h-12 md:w-12 rounded-xl p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-md group"
+                  className="h-12 w-12 md:h-14 md:w-14 rounded-2xl p-0 overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all shadow-md group"
                 >
                   <Avatar className="h-full w-full">
                     <AvatarImage src={profile?.profilePictureUrl} />
-                    <AvatarFallback className="bg-primary/5 text-primary font-black text-sm">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/5 text-primary font-black text-lg">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                   </Avatar>
                 </Button>
               ) : (
                 <Button 
                   onClick={() => router.push('/login')} 
-                  className="h-10 md:h-12 px-6 md:px-8 rounded-xl font-black text-sm md:text-md bg-primary hover:bg-primary/90 text-white shadow-lg"
+                  className="h-12 md:h-14 px-8 md:px-10 rounded-2xl font-black text-lg bg-primary hover:bg-primary/90 text-white shadow-lg"
                 >
                   دخول
                 </Button>
@@ -198,9 +201,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
     <Link 
       href={href} 
       onClick={() => { setOpen(false); setOpenMobile(false); }}
-      className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all font-black text-sm md:text-md whitespace-nowrap group shrink-0 border border-transparent"
+      className="flex items-center gap-2.5 px-4 md:px-5 py-2.5 rounded-2xl text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-lg whitespace-nowrap group shrink-0 border-2 border-transparent"
     >
-      <Icon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+      <Icon className="h-6 w-6 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );
