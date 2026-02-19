@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, Smartphone, Star } from "lucide-react";
+import { X, Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -9,6 +10,7 @@ import { doc } from "firebase/firestore";
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const firestore = useFirestore();
 
   const settingsRef = useMemoFirebase(() => {
@@ -19,39 +21,50 @@ export function PWAInstallBanner() {
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
-    // 1. التحقق إذا كان التطبيق مثبتاً بالفعل
+    setIsMounted(true);
+    
+    // التحقق إذا كان التطبيق مثبتاً بالفعل
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone) return;
 
-    // 2. إظهار البانر فوراً عند الدخول
+    // 1. الاستماع لحدث التثبيت الرسمي من المتصفح
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // بمجرد أن يكون المتصفح جاهزاً للتثبيت، نظهر البانر
+      setShowBanner(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // 2. إظهار البانر فوراً (إذا لم يكن قد تم إغلاقه سابقاً)
     const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
     if (!isDismissed) {
+      // إظهار البانر فوراً عند الدخول
       setShowBanner(true);
       
-      // 3. الإخفاء التلقائي بعد 7 ثوانٍ
+      // الإخفاء التلقائي بعد 7 ثوانٍ كما طلب المستخدم
       const timer = setTimeout(() => {
         setShowBanner(false);
       }, 7000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      };
     }
 
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      // إذا لم يكن الحدث جاهزاً، نوجه المستخدم لفتح خيارات المتصفح
-      alert("يرجى الضغط على زر الخيارات في متصفحك واختيار 'إضافة إلى الشاشة الرئيسية'.");
+      // إذا لم يطلق المتصفح الحدث بعد، نظهر تعليمات بديلة واضحة
+      alert("جاري تحضير ملفات التثبيت.. إذا لم يظهر الخيار، يرجى الضغط على خيارات المتصفح ثم 'إضافة إلى الشاشة الرئيسية'.");
       return;
     }
     
+    // تشغيل نافذة التثبيت الأصلية للهاتف
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
@@ -66,7 +79,7 @@ export function PWAInstallBanner() {
     sessionStorage.setItem("pwa_banner_dismissed", "true");
   };
 
-  if (!showBanner) return null;
+  if (!isMounted || !showBanner) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-1000" dir="rtl">

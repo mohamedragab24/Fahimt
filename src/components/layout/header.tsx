@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -40,7 +41,6 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // إشعارات النظام
   const systemNotifsQuery = useMemoFirebase(() => {
     if (!firestore || !user || !mounted || profile?.status === 'blocked') return null;
     return query(
@@ -53,7 +53,6 @@ export function Header() {
 
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
-  // استعلام للرسائل غير المقروءة
   const unreadMessagesQuery = useMemoFirebase(() => {
     if (!firestore || !user || !mounted) return null;
     return query(
@@ -69,7 +68,6 @@ export function Header() {
   const totalNotifications = unreadSystemNotifs.length;
   const totalMessages = unreadChats?.length || 0;
 
-  // تنبيهات الإشعارات
   useEffect(() => {
     if (mounted && totalNotifications > lastNotifCount.current) {
       const latestNotif = systemNotifs?.[0];
@@ -83,7 +81,6 @@ export function Header() {
     lastNotifCount.current = totalNotifications;
   }, [totalNotifications, systemNotifs, toast, mounted]);
 
-  // تنبيهات الرسائل الجديدة
   useEffect(() => {
     if (mounted && totalMessages > lastMessageCount.current) {
       toast({
@@ -122,7 +119,6 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-2">
         
-        {/* الجزء الأيمن: القائمة الجانبية والروابط */}
         <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
@@ -133,9 +129,7 @@ export function Header() {
           </nav>
         </div>
 
-        {/* الجزء الأوسط: التنبيهات والرسائل */}
         <div className="flex items-center gap-3 md:gap-8 mx-2 md:mx-6 shrink-0">
-          {/* أيقونة الرسائل */}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -153,7 +147,6 @@ export function Header() {
             )}
           </Button>
 
-          {/* أيقونة التنبيهات */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
@@ -198,7 +191,6 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* الجزء الأيسر: بروفايل المستخدم */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
