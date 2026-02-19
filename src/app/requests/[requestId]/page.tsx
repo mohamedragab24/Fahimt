@@ -3,7 +3,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { doc, collection, query, orderBy } from "firebase/firestore";
+import { doc, collection, query, orderBy, addDoc, updateDoc } from "firebase/firestore";
 import { 
   Clock, 
   User, 
@@ -17,7 +17,10 @@ import {
   CreditCard,
   ChevronRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Star,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +30,10 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-/**
- * صفحة تفاصيل الاستفهام المحدثة.
- * تعرض كافة التفاصيل للمستفهم مع زر الدفع البارز فور قبول الطلب.
- */
 export default function RequestDetailsPage() {
   const params = useParams();
   const requestId = params?.requestId as string;
@@ -40,7 +42,9 @@ export default function RequestDetailsPage() {
   const { user: currentUser } = useUser();
   const { toast } = useToast();
   
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+  const [offerForm, setOfferForm] = useState({ amount: "", duration: "1", details: "" });
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -55,12 +59,12 @@ export default function RequestDetailsPage() {
 
   const { data: request, isLoading } = useDoc(requestRef);
 
-  const ownerRef = useMemoFirebase(() => {
-    if (!firestore || !request?.mustafhemId) return null;
-    return doc(firestore, "users", request.mustafhemId);
-  }, [firestore, request?.mustafhemId]);
+  const offersQuery = useMemoFirebase(() => {
+    if (!firestore || !requestId) return null;
+    return query(collection(firestore, "istifhams", requestId, "offers"), orderBy("createdAt", "desc"));
+  }, [firestore, requestId]);
 
-  const { data: owner } = useDoc(ownerRef);
+  const { data: offers } = useCollection(offersQuery);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !currentUser?.uid) return null;
@@ -69,10 +73,43 @@ export default function RequestDetailsPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  const goToCheckout = (customOfferId?: string) => {
-    let url = `/checkout/${requestId}`;
-    if (customOfferId) url += `?offerId=${customOfferId}`;
-    router.push(url);
+  const handleMakeOffer = async () => {
+    if (!firestore || !currentUser || !profile || !offerForm.amount) return;
+    setIsSubmittingOffer(true);
+    try {
+      await addDoc(collection(firestore, "istifhams", requestId, "offers"), {
+        mufhemId: currentUser.uid,
+        mufhemName: profile.fullName,
+        mufhemAvatar: profile.profilePictureUrl || "",
+        amount: Number(offerForm.amount),
+        duration: offerForm.duration,
+        details: offerForm.details,
+        status: "pending",
+        createdAt: new Date().toISOString()
+      });
+
+      // إرسال إشعار لصاحب الطلب
+      await addDoc(collection(firestore, "notifications"), {
+        userId: request?.mustafhemId,
+        title: "عرض جديد على استفهامك!",
+        message: `قام المفهم ${profile.fullName} بتقديم عرض لشرح: ${request?.title}.`,
+        type: "new_offer",
+        read: false,
+        requestId: requestId,
+        createdAt: new Date().toISOString()
+      });
+
+      toast({ title: "تم إرسال عرضك بنجاح" });
+      setIsOfferModalOpen(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في الإرسال" });
+    } finally {
+      setIsSubmittingOffer(false);
+    }
+  };
+
+  const acceptOffer = (offer: any) => {
+    router.push(`/checkout/${requestId}?offerId=${offer.id}`);
   };
 
   if (isLoading) return (
@@ -85,7 +122,8 @@ export default function RequestDetailsPage() {
   if (!request) return <div className="p-20 text-center font-bold text-red-500">الاستفهام غير موجود.</div>;
 
   const isOwner = currentUser?.uid === request.mustafhemId;
-  const isMufhem = currentUser?.uid === request.mufhemId;
+  const isMufhem = profile?.role === 'mufhem';
+  const hasAlreadyOffered = offers?.some((o: any) => o.mufhemId === currentUser?.uid);
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
@@ -105,7 +143,6 @@ export default function RequestDetailsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-10">
-            {/* بطاقة تفاصيل الطلب الرئيسية */}
             <Card className="rounded-[3rem] border-none shadow-xl bg-white overflow-hidden">
               <CardContent className="p-10 md:p-14 space-y-12">
                 <div className="space-y-4 text-right">
@@ -140,6 +177,67 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
+                {/* زر تقديم عرض للمفهمين */}
+                {!isOwner && isMufhem && request.status === 'active' && !hasAlreadyOffered && (
+                  <div className="pt-10">
+                    <Button 
+                      onClick={() => setIsOfferModalOpen(true)}
+                      className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary shadow-2xl hover:scale-[1.02] transition-all"
+                    >
+                      <Zap className="ml-2" /> أنا أفهمك.. قدم عرضك الآن
+                    </Button>
+                  </div>
+                )}
+
+                {hasAlreadyOffered && !isOwner && request.status === 'active' && (
+                  <div className="p-8 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 text-center">
+                    <p className="text-blue-700 font-black text-lg">لقد قمت بتقديم عرض لهذا الاستفهام بالفعل. بانتظار رد المستفهم.</p>
+                  </div>
+                )}
+
+                {/* قائمة العروض لصاحب الطلب */}
+                {isOwner && request.status === 'active' && (
+                  <div className="space-y-8 pt-10">
+                    <h3 className="text-2xl font-black border-r-8 border-primary pr-4 flex items-center gap-3">
+                      العروض المقدمة ({offers?.length || 0})
+                    </h3>
+                    <div className="grid gap-6">
+                      {offers?.map((offer: any) => (
+                        <Card key={offer.id} className="rounded-3xl border-2 hover:border-primary/20 transition-all shadow-md overflow-hidden bg-white">
+                          <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="flex items-start gap-4 text-right flex-1">
+                              <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
+                                <AvatarImage src={offer.mufhemAvatar} />
+                                <AvatarFallback className="bg-primary/10 text-primary font-black">{offer.mufhemName?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-black text-xl">{offer.mufhemName}</h4>
+                                  <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px]">5.0 <Star size={10} className="fill-yellow-500 mr-1"/></Badge>
+                                </div>
+                                <p className="text-sm text-zinc-600 font-medium mt-1 line-clamp-2">"{offer.details}"</p>
+                                <div className="flex gap-4 mt-3 text-[10px] font-bold text-zinc-400">
+                                  <span className="flex items-center gap-1"><Clock size={12}/> الموعد: {offer.duration} يوم</span>
+                                  <span className="flex items-center gap-1"><BadgeCent size={12}/> السعر: {offer.amount} ج.م</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 w-full md:w-auto">
+                              <Button onClick={() => acceptOffer(offer)} className="bg-green-600 hover:bg-green-700 h-12 rounded-xl font-black">قبول وبدء</Button>
+                              <Button variant="outline" onClick={() => router.push('/messages')} className="h-12 rounded-xl font-black border-primary text-primary">استفسار</Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {(!offers || offers.length === 0) && (
+                        <div className="py-16 text-center text-muted-foreground font-bold italic border-2 border-dashed rounded-3xl bg-zinc-50">
+                          لا توجد عروض مقدمة بعد.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* قسم الدفع الفوري (يظهر للمستفهم عند القبول) */}
                 {isOwner && request.status === 'accepted' && (
                   <div className="relative group animate-in slide-in-from-bottom-6 duration-700">
@@ -161,15 +259,11 @@ export default function RequestDetailsPage() {
                       </div>
 
                       <Button 
-                        onClick={() => goToCheckout()} 
+                        onClick={() => router.push(`/checkout/${requestId}`)} 
                         className="w-full h-24 rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-2xl shadow-2xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4"
                       >
                         <CreditCard size={32} /> إتمام الدفع وفتح المحاضرة
                       </Button>
-                      
-                      <p className="text-xs text-zinc-400 font-bold flex items-center gap-2">
-                        <AlertCircle size={14} /> سيتم حجز المبلغ في المنصة ولن يصل للمفهم إلا بعد تأكيد فهمك.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -197,7 +291,6 @@ export default function RequestDetailsPage() {
           </div>
 
           <div className="lg:col-span-4 space-y-8">
-            {/* بطاقة معلومات سريعة */}
             <Card className="rounded-[2.5rem] bg-white p-8 space-y-8 shadow-xl border-none">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -218,33 +311,6 @@ export default function RequestDetailsPage() {
               </div>
             </Card>
 
-            {/* بطاقة صاحب الطلب */}
-            <Card className="rounded-[2.5rem] bg-white overflow-hidden shadow-xl border-none">
-              <div className="p-6 border-b bg-zinc-50/50 text-right">
-                <h4 className="font-black text-zinc-800 flex items-center gap-2 justify-end">
-                  <User size={18} className="text-primary" /> صاحب الاستفهام
-                </h4>
-              </div>
-              <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-2xl">
-                  <AvatarImage src={owner?.profilePictureUrl} />
-                  <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">{request.mustafhemName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-black text-2xl text-zinc-900 leading-none flex items-center gap-2 justify-center">
-                    {request.mustafhemName}
-                    {(owner?.isVerified || owner?.emailVerified || owner?.whatsappVerified) && (
-                      <img src={verifiedBadgeUrl} alt="Verified" className="h-6 w-6" />
-                    )}
-                  </p>
-                  <p className="text-xs text-zinc-400 font-bold mt-2 flex items-center justify-center gap-1">
-                    موثق في المنصة <ShieldCheck size={14} className="text-blue-500" />
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* بطاقة الأمان */}
             <div className="p-8 bg-zinc-900 rounded-[2.5rem] text-white space-y-4 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12">
                 <BadgeCent size={120} />
@@ -257,6 +323,37 @@ export default function RequestDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* مودال تقديم عرض */}
+      <Dialog open={isOfferModalOpen} onOpenChange={setIsOfferModalOpen}>
+        <DialogContent className="sm:max-w-[550px] rounded-[2.5rem]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right text-3xl font-black">تقديم عرض مخصص</DialogTitle>
+            <DialogDescription className="text-right font-bold">اشرح للمستفهم لماذا أنت الشخص المناسب وحدد ميزانيتك.</DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 text-right">
+                <Label className="font-black">السعر (ج.م)</Label>
+                <Input type="number" placeholder="مثال: 120" value={offerForm.amount} onChange={(e)=>setOfferForm({...offerForm, amount: e.target.value})} className="h-14 rounded-xl border-2 font-black text-xl" />
+              </div>
+              <div className="space-y-2 text-right">
+                <Label className="font-black">تاريخ التوافر (يوم)</Label>
+                <Input type="number" placeholder="خلال كم يوم؟" value={offerForm.duration} onChange={(e)=>setOfferForm({...offerForm, duration: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
+              </div>
+            </div>
+            <div className="space-y-2 text-right">
+              <Label className="font-black">تفاصيل العرض</Label>
+              <Textarea placeholder="اشرح طريقتك في التفهيم وكيف ستغطي نقاط الاستفهام..." value={offerForm.details} onChange={(e)=>setOfferForm({...offerForm, details: e.target.value})} className="h-40 rounded-xl p-4 border-2 font-medium" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleMakeOffer} disabled={isSubmittingOffer} className="w-full h-16 rounded-2xl text-xl font-black bg-primary shadow-xl">
+              {isSubmittingOffer ? <Loader2 className="animate-spin" /> : <><Send size={20} className="ml-2 rotate-180"/> تأكيد وإرسال العرض</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
