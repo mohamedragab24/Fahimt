@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -23,7 +24,8 @@ import {
   Play,
   Menu,
   Mail,
-  Bell
+  Bell,
+  UserPlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -211,18 +213,17 @@ function LandingPage({ router, settings }: any) {
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
         
-        {/* الترويسة في صفحة الهبوط لتطابق الهوية الجديدة */}
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-4 shrink-0">
+            {/* القائمة الجانبية ثم اللوجو مباشرة */}
+            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
+              <Menu className="h-7 w-7 text-white" />
+            </Button>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
               </div>
             </Link>
-            {/* زر القائمة البرتقالي */}
-            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
-              <Menu className="h-7 w-7 text-white" />
-            </Button>
           </div>
 
           <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
@@ -233,9 +234,10 @@ function LandingPage({ router, settings }: any) {
             </nav>
             
             <div className="flex items-center gap-2 md:gap-4 shrink-0">
-              <Button variant="ghost" className="text-white hover:bg-white/10 h-12 w-12 rounded-2xl"><Mail className="h-6 w-6"/></Button>
-              <Button variant="ghost" className="text-white hover:bg-white/10 h-12 w-12 rounded-2xl"><Bell className="h-6 w-6"/></Button>
-              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl px-10 h-14 md:h-16 text-xl shadow-2xl">دخول</Button>
+              <Button onClick={() => router.push('/login')} variant="ghost" className="text-white hover:bg-white/10 font-bold text-lg hidden sm:flex">دخول</Button>
+              <Button onClick={() => router.push('/login?mode=signup')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl px-8 h-14 text-xl shadow-2xl flex items-center gap-2">
+                <UserPlus size={20} /> تسجيل جديد
+              </Button>
             </div>
           </div>
         </header>

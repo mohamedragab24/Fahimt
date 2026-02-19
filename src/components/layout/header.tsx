@@ -85,7 +85,7 @@ export function Header() {
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
-          {/* جهة اليمين: زر القائمة الجانبية أولاً ثم اللوجو */}
+          {/* جهة اليمين: زر القائمة الجانبية (البرتقالي) ثم اللوجو */}
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg transition-transform active:scale-95">
               <Menu className="h-6 w-6 md:h-7 md:w-7" />
@@ -101,7 +101,7 @@ export function Header() {
           {/* جهة اليسار: الروابط والرسائل والبروفايل */}
           <div className="flex items-center gap-1 md:gap-4 shrink-0">
             
-            {/* روابط التنقل - تظهر بوضوح وبجانبها الأيقونات والأسماء */}
+            {/* روابط التنقل - تظهر بوضوح مع الأيقونة والاسم */}
             <nav className="hidden md:flex items-center gap-2 pl-4 border-l border-zinc-100">
               <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
@@ -211,7 +211,7 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
       )}
     >
       <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-      <span className="hidden lg:inline">{label}</span>
+      <span className="md:inline">{label}</span>
     </Link>
   );
 }
