@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { Bell, Mail, GraduationCap, Layout, Search, Menu, User, Zap } from "lucide-react";
+import { Bell, Mail, GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,23 +85,23 @@ export function Header() {
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
-          {/* جهة اليمين: اللوجو أولاً ثم زر القائمة البرتقالي كما في الصورة */}
+          {/* جهة اليمين: زر القائمة الجانبية أولاً ثم اللوجو */}
           <div className="flex items-center gap-4 shrink-0">
+            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg transition-transform active:scale-95">
+              <Menu className="h-6 w-6 md:h-7 md:w-7" />
+            </SidebarTrigger>
+
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 bg-transparent">
                 <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
               </div>
             </Link>
-
-            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg transition-transform active:scale-95">
-              <Menu className="h-6 w-6 md:h-7 md:w-7" />
-            </SidebarTrigger>
           </div>
 
           {/* جهة اليسار: الروابط والرسائل والبروفايل */}
           <div className="flex items-center gap-1 md:gap-4 shrink-0">
             
-            {/* روابط التنقل - تظهر بوضوح بجانب الأيقونات */}
+            {/* روابط التنقل - تظهر بوضوح وبجانبها الأيقونات والأسماء */}
             <nav className="hidden md:flex items-center gap-2 pl-4 border-l border-zinc-100">
               <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
@@ -165,7 +165,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* زر الدخول أو البروفايل باللون اللبني */}
+              {/* زر الدخول أو البروفايل */}
               <div className="mr-2">
                 {user ? (
                   <Button 
