@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
@@ -19,9 +18,13 @@ interface ClientWrapperProps {
 
 /**
  * مغلف الواجهة الرئيسي - يضمن التوافق مع كافة الأجهزة وتناسق الأبعاد.
+ * تم تثبيت عرض القائمة الجانبية (12rem) لضمان استقرار الهيدر ومنع أخطاء Hydration.
  */
 export function ClientWrapper({ children }: ClientWrapperProps) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(err => console.log('SW registration failed:', err));
@@ -32,11 +35,10 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <FirebaseClientProvider>
       <ThemeManager>
-        {/* تثبيت العرض الافتراضي ليكون متوافقاً مع الحاسوب والجوال */}
         <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-screen w-full overflow-hidden bg-background">
+          <div className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar" style={{ "--sidebar-width": "12rem", "--sidebar-width-icon": "2.5rem" } as React.CSSProperties}>
             <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 w-full">
+            <div className="flex flex-col flex-1 min-w-0 w-full relative">
               <Header />
               <main className="flex-1 overflow-y-auto w-full">
                 <div className="max-w-[1920px] mx-auto w-full">
@@ -46,7 +48,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               </main>
             </div>
           </div>
-          <PWAInstallBanner />
+          {mounted && <PWAInstallBanner />}
           <FloatingChat />
           <Toaster />
         </SidebarProvider>
