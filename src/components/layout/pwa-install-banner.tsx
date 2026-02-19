@@ -9,7 +9,8 @@ import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 /**
- * بانر تثبيت التطبيق الذكي - يظهر لمدة 7 ثوانٍ فقط إذا لم يكن التطبيق مثبتاً وبعد تسجيل الدخول.
+ * بانر تثبيت التطبيق الذكي - يظهر في كل مرة عند الدخول من المتصفح لمدة 7 ثوانٍ.
+ * يختفي تماماً إذا كان التطبيق مثبتاً بالفعل (Standalone Mode).
  */
 export function PWAInstallBanner() {
   const pathname = usePathname();
@@ -26,24 +27,30 @@ export function PWAInstallBanner() {
 
   const { data: settings } = useDoc(settingsRef);
 
-  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
+  // استبعاد صفحات الدخول والتسجيل لضمان نظافة الواجهة
+  const isExcludedPath = pathname === "/login" || pathname === "/forgot-password";
 
   useEffect(() => {
     setIsMounted(true);
 
-    // التحقق مما إذا كان التطبيق يعمل بالفعل بوضعية "المثبت"
+    // التحقق مما إذا كان التطبيق يعمل بالفعل بوضعية "المثبت" (Standalone)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone;
 
+    // إذا كان في وضع التطبيق، لا تظهر البانر أبداً
+    if (isStandalone) return;
+
     const handleBeforeInstallPrompt = (e: any) => {
+      // منع المتصفح من إظهار النافذة التلقائية فوراً
       e.preventDefault();
+      // حفظ الحدث لاستدعائه عند الضغط على زر التثبيت الخاص بنا
       setDeferredPrompt(e);
       
-      // إظهار البانر فقط للمستخدمين المسجلين وفي الصفحات الداخلية
-      if (user && !isExcludedPath && !isStandalone) {
+      // إظهار البانر الخاص بنا فقط إذا لم نكن في صفحة مستبعدة
+      if (!isExcludedPath) {
         setShowBanner(true);
         
-        // إخفاء البانر تلقائياً بعد 7 ثوانٍ
+        // إخفاء البانر تلقائياً بعد 7 ثوانٍ لضمان تجربة مستخدم رشيقة
         const timer = setTimeout(() => {
           setShowBanner(false);
         }, 7000);
@@ -57,11 +64,12 @@ export function PWAInstallBanner() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, [isExcludedPath, user]);
+  }, [isExcludedPath]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     
+    // إظهار نافذة التثبيت الأصلية للنظام
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
@@ -71,15 +79,15 @@ export function PWAInstallBanner() {
     }
   };
 
-  if (!isMounted || !showBanner || isExcludedPath || !user) return null;
+  if (!isMounted || !showBanner || isExcludedPath) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700" dir="rtl">
       <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/20 shadow-2xl rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="bg-primary w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-md overflow-hidden">
-            {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" />
+            {settings?.miniIconUrl || settings?.logoUrl ? (
+              <img src={settings.miniIconUrl || settings.logoUrl} className="w-full h-full object-cover" alt="Logo" />
             ) : (
               <span className="text-white font-black text-2xl">ف</span>
             )}
@@ -90,7 +98,7 @@ export function PWAInstallBanner() {
               <div className="flex">
                 {[1,2,3,4,5].map(s => <Star key={s} size={10} className="fill-yellow-400 text-yellow-400" />)}
               </div>
-              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع وأخف على جهازك</p>
+              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع وأخف على هاتفك</p>
             </div>
           </div>
         </div>
