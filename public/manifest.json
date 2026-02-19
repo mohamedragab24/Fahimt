@@ -1,10 +1,11 @@
+
 {
   "name": "فهمني - منصة التعلم الذكي",
   "short_name": "فهمني",
-  "description": "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.",
+  "description": "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
+  "background_color": "#ffffff",
   "theme_color": "#29B6F6",
   "icons": [
     {
@@ -16,8 +17,7 @@
     {
       "src": "https://picsum.photos/seed/fahimni/512/512",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

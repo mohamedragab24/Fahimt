@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -124,11 +125,11 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-2">
         
-        {/* الجزء الأيمن: القائمة الجانبية والروابط */}
-        <div className="flex items-center gap-2 md:gap-6 flex-1 min-w-0">
+        {/* الجزء الأيمن: القائمة الجانبية والروابط - تم تقليص الفجوات لتناسب المساحة */}
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
-          <nav className="flex items-center gap-2 md:gap-6 border-r-2 pr-2 md:pr-6 border-zinc-100 overflow-x-auto no-scrollbar py-2">
+          <nav className="flex items-center gap-1 md:gap-4 border-r-2 pr-2 md:pr-6 border-zinc-100 overflow-x-auto no-scrollbar py-2">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
@@ -144,7 +145,7 @@ export function Header() {
             onClick={() => router.push('/messages')}
             className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
           >
-            <Mail className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+            <Mail className="h-9 w-9 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
             {totalMessages > 0 && (
               <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -159,7 +160,7 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
-                <Bell className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+                <Bell className="h-9 w-9 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
                 {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
                     <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
@@ -200,27 +201,25 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* الجزء الأيسر: بروفايل المستخدم */}
+        {/* الجزء الأيسر: بروفايل المستخدم - تم حذف الاسم لتوسيع المساحة */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 md:gap-4 h-16 md:h-28 pr-2 pl-2 md:pl-8 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all">
+                <Button variant="ghost" className="flex items-center justify-center h-16 w-16 md:h-28 md:w-28 rounded-full md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all p-0">
                   <Avatar className="h-12 w-12 md:h-20 md:w-20 border-[4px] border-primary/20 shadow-lg transition-transform group-hover:scale-110">
                     <AvatarImage src={profile?.profilePictureUrl} />
                     <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                   </Avatar>
-                  <div className="hidden sm:flex flex-col text-right">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg md:text-2xl font-black text-zinc-900">{profile?.fullName?.split(' ')[0]}</span>
-                      {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-6 w-6 md:h-8 md:w-8" />}
-                    </div>
-                    <span className="text-[10px] md:text-sm text-primary font-black uppercase tracking-widest">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
-                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72 md:w-96 p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
-                <DropdownMenuLabel className="font-black p-4 text-right text-2xl border-b mb-2">حسابي الشخصي</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-black p-4 text-right text-2xl border-b mb-2">
+                  <div className="flex flex-col">
+                    <span>{profile?.fullName}</span>
+                    <span className="text-xs text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => router.push('/profile')} className="p-5 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-xl hover:bg-primary/5 mb-1">
                   الملف الشخصي <User className="h-7 w-7 text-primary" />
                 </DropdownMenuItem>
@@ -246,9 +245,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-2 md:gap-4 px-3 md:px-8 py-3 md:py-6 rounded-xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-2xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
+      className="flex items-center gap-2 md:gap-4 px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
     >
-      <Icon size={24} className="h-6 w-6 md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
+      <Icon className="h-6 w-6 md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );

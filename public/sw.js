@@ -1,13 +1,27 @@
-// محرك خدمة بسيط لتلبية متطلبات PWA
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+// محرك الخدمة (Service Worker) لتفعيل ميزة الـ PWA
+const CACHE_NAME = 'fahimni-cache-v1';
+const urlsToCache = [
+  '/',
+  '/offline',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // تمرير الطلبات كالمعتاد لضمان عمل الموقع بشكل طبيعي
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
 });
