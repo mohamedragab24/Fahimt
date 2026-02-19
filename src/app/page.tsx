@@ -207,11 +207,10 @@ function LandingPage({ router, settings }: any) {
         </div>
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
-          <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => router.push('/')}>
+          <div className="flex items-center cursor-pointer shrink-0" onClick={() => router.push('/')}>
             <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden">
               <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
             </div>
-            <span className="text-white font-black text-2xl md:text-4xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
 
           <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1 justify-end">
