@@ -110,8 +110,6 @@ export function Header() {
     router.push("/login");
   };
 
-  if (!user) return null;
-
   const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
@@ -120,38 +118,27 @@ export function Header() {
         <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-0">
           <SidebarTrigger className="h-14 w-14 md:h-16 md:w-16 text-primary shrink-0" />
           
-          <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <div className="bg-primary w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden border-2 border-white/20 transition-transform group-hover:scale-105">
-              {settings?.miniIconUrl ? (
-                <img src={settings.miniIconUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-black text-4xl">ف</span>
-              )}
-            </div>
-            <span className="font-black text-3xl md:text-5xl hidden xl:block text-primary tracking-tighter transition-colors group-hover:text-primary/80">{settings?.siteTitle || "فهمني"}</span>
-          </Link>
-
-          <nav className="flex items-center gap-3 md:gap-6 mr-4 md:mr-12 border-r-4 pr-4 md:pr-12 border-zinc-100 overflow-x-auto no-scrollbar flex-nowrap py-4">
+          <nav className="flex items-center gap-3 md:gap-10 border-r-4 pr-4 md:pr-12 border-zinc-100 overflow-x-auto no-scrollbar flex-nowrap py-4">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-10 shrink-0 mr-4">
+        <div className="flex items-center gap-3 md:gap-10 shrink-0">
           {/* أيقونة الرسائل */}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.push('/messages')}
-            className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group border-2 border-transparent hover:border-primary/10"
+            className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
           >
             <Mail className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
             {totalMessages > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-11 md:w-11">
+              <span className="absolute -top-1 -right-1 flex h-10 w-10 md:h-12 md:w-12">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-8 w-8 md:h-11 md:w-11 bg-accent border-4 border-white shadow-md flex items-center justify-center">
-                   <span className="text-xs md:text-lg text-white font-black">{totalMessages}</span>
+                <span className="relative inline-flex rounded-full h-10 w-10 md:h-12 md:w-12 bg-accent border-4 border-white shadow-md flex items-center justify-center">
+                   <span className="text-xs md:text-xl text-white font-black">{totalMessages}</span>
                 </span>
               </span>
             )}
@@ -160,12 +147,12 @@ export function Header() {
           {/* أيقونة التنبيهات */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group border-2 border-transparent hover:border-primary/10">
+              <Button variant="ghost" size="icon" className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
                 <Bell className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
                 {totalNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-11 md:w-11">
-                    <span className="relative inline-flex rounded-full h-8 w-8 md:h-11 md:w-11 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
-                      <span className="text-xs md:text-lg text-white font-black">{totalNotifications}</span>
+                  <span className="absolute -top-1 -right-1 flex h-10 w-10 md:h-12 md:w-12">
+                    <span className="relative inline-flex rounded-full h-10 w-10 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
+                      <span className="text-xs md:text-xl text-white font-black">{totalNotifications}</span>
                     </span>
                   </span>
                 )}
@@ -204,15 +191,15 @@ export function Header() {
           {/* بروفايل المستخدم */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-4 md:gap-6 h-20 md:h-28 pr-2 md:pr-3 pl-4 md:pl-10 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent hover:border-zinc-100 transition-all">
+              <Button variant="ghost" className="flex items-center gap-4 md:gap-6 h-20 md:h-28 pr-2 md:pr-3 pl-4 md:pl-10 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all">
                 <Avatar className="h-14 w-14 md:h-20 md:w-20 border-[6px] border-primary/20 shadow-xl transition-transform group-hover:scale-110">
                   <AvatarImage src={profile?.profilePictureUrl} />
                   <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl md:text-2xl font-black text-zinc-900">{profile?.fullName?.split(' ')[0]}</span>
-                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-6 w-6" />}
+                    <span className="text-xl md:text-3xl font-black text-zinc-900">{profile?.fullName?.split(' ')[0]}</span>
+                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-8 w-8" />}
                   </div>
                   <span className="text-xs md:text-sm text-primary font-black uppercase tracking-widest">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
                 </div>

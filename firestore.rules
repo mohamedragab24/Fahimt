@@ -52,8 +52,8 @@ service cloud.firestore {
 
     match /supportTickets/{ticketId} {
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource == null || request.auth.uid == resource.data.userId);
-      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if isSignedIn() && (resource == null || request.auth.uid == resource.data.userId || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
 
       match /messages/{msgId} {
         allow read, create: if isSignedIn();
@@ -62,8 +62,8 @@ service cloud.firestore {
 
     match /floatingChats/{chatId} {
       allow create: if true;
-      allow read: if isSignedIn() && (chatId == request.auth.uid || (resource != null && request.auth.uid == resource.data.userId));
-      allow update: if isSignedIn() && chatId == request.auth.uid;
+      allow read: if isSignedIn() && (chatId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (chatId == request.auth.uid || isAdmin());
 
       match /messages/{msgId} {
         allow read, create: if isSignedIn();
@@ -73,52 +73,54 @@ service cloud.firestore {
     match /istifhams/{id} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin();
 
       match /offers/{offerId} {
         allow create: if isSignedIn();
         allow read: if true;
-        allow update: if isSignedIn();
+        allow update: if isSignedIn() || isAdmin();
       }
     }
 
     match /settings/{id} {
       allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /verificationRequests/{id} {
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
     
     match /notifications/{id} { 
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
     match /portfolio/{id} { 
       allow read: if true; 
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.mufhemId;
+      allow update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
     }
 
     match /categories/{id} { 
       allow read: if true; 
+      allow write: if isAdmin();
     }
 
     match /appeals/{id} { 
       allow create: if isSignedIn(); 
-      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
     match /payoutRequests/{id} { 
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
     match /direct_chats/{chatId} {
-      allow read, update: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      allow read, update: if isAdmin() || (isSignedIn() && (request.auth.uid in resource.data.participants));
       allow create: if isSignedIn();
 
       match /messages/{msgId} {
