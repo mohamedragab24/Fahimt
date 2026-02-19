@@ -3,7 +3,7 @@
 
 import { useEffect, useRef } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, Video, User, Settings, LogOut, ShieldCheck, Mail, GraduationCap, Layout, Search, CheckCircle2 } from "lucide-react";
+import { Bell, User, LogOut, Mail, GraduationCap, Layout, Search } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy, writeBatch } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -114,31 +114,34 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
-      <div className="flex h-28 md:h-32 items-center justify-between px-4 md:px-12 max-w-[1920px] mx-auto overflow-hidden">
-        <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-0">
-          <SidebarTrigger className="h-14 w-14 md:h-16 md:w-16 text-primary shrink-0" />
+      <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto">
+        
+        {/* الجزء الأيمن: القائمة الجانبية والروابط */}
+        <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+          <SidebarTrigger className="h-12 w-12 md:h-16 md:w-16 text-primary shrink-0" />
           
-          <nav className="flex items-center gap-3 md:gap-10 border-r-4 pr-4 md:pr-12 border-zinc-100 overflow-x-auto no-scrollbar flex-nowrap py-4">
+          <nav className="flex items-center gap-2 md:gap-6 border-r-2 pr-4 border-zinc-100 overflow-x-auto no-scrollbar py-2">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-10 shrink-0">
+        {/* الجزء الأوسط: التنبيهات والرسائل */}
+        <div className="flex items-center gap-4 md:gap-8 mx-4">
           {/* أيقونة الرسائل */}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.push('/messages')}
-            className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
+            className="relative h-12 w-12 md:h-20 md:w-20 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
           >
-            <Mail className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+            <Mail className="h-8 w-8 md:h-10 md:w-10 group-hover:scale-110 transition-transform text-zinc-600" />
             {totalMessages > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-10 w-10 md:h-12 md:w-12">
+              <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-10 md:w-10">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-10 w-10 md:h-12 md:w-12 bg-accent border-4 border-white shadow-md flex items-center justify-center">
-                   <span className="text-xs md:text-xl text-white font-black">{totalMessages}</span>
+                <span className="relative inline-flex rounded-full h-8 w-8 md:h-10 md:w-10 bg-accent border-4 border-white shadow-md flex items-center justify-center">
+                   <span className="text-[10px] md:text-sm text-white font-black">{totalMessages}</span>
                 </span>
               </span>
             )}
@@ -147,75 +150,77 @@ export function Header() {
           {/* أيقونة التنبيهات */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-16 w-16 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
-                <Bell className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+              <Button variant="ghost" size="icon" className="relative h-12 w-12 md:h-20 md:w-20 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
+                <Bell className="h-8 w-8 md:h-10 md:w-10 group-hover:scale-110 transition-transform text-zinc-600" />
                 {totalNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-10 w-10 md:h-12 md:w-12">
-                    <span className="relative inline-flex rounded-full h-10 w-10 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
-                      <span className="text-xs md:text-xl text-white font-black">{totalNotifications}</span>
+                  <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-10 md:w-10">
+                    <span className="relative inline-flex rounded-full h-8 w-8 md:h-10 md:w-10 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
+                      <span className="text-[10px] md:text-sm text-white font-black">{totalNotifications}</span>
                     </span>
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[320px] md:w-[500px] p-4 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border-4" dir="rtl">
-              <div className="flex justify-between items-center p-5">
-                <DropdownMenuLabel className="text-2xl md:text-3xl font-black p-0">التنبيهات</DropdownMenuLabel>
+            <DropdownMenuContent align="center" className="w-[300px] md:w-[450px] p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
+              <div className="flex justify-between items-center p-4">
+                <DropdownMenuLabel className="text-xl md:text-2xl font-black p-0">التنبيهات</DropdownMenuLabel>
                 {unreadSystemNotifs.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-md md:text-lg font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
+                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-sm font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
                 )}
               </div>
               <DropdownMenuSeparator />
-              <div className="max-h-[600px] overflow-y-auto p-2">
+              <div className="max-h-[500px] overflow-y-auto p-2">
                 {systemNotifs && systemNotifs.length > 0 ? (
                   systemNotifs.map((n: any) => (
-                    <DropdownMenuItem key={n.id} className={`p-5 md:p-8 rounded-3xl cursor-pointer hover:bg-muted mb-3 transition-all ${!n.read ? 'bg-primary/5 border-r-8 border-primary' : 'border-r-8 border-transparent'}`}>
-                      <div className="flex gap-5 md:gap-6 text-right w-full">
-                        <div className="bg-primary/10 p-4 md:p-5 rounded-2xl md:rounded-[2rem] h-14 w-14 md:h-20 md:w-20 flex items-center justify-center shrink-0">
-                          <Bell className="text-primary h-8 w-8 md:h-10 md:w-10" />
+                    <DropdownMenuItem key={n.id} className={`p-4 md:p-6 rounded-3xl cursor-pointer hover:bg-muted mb-2 transition-all ${!n.read ? 'bg-primary/5 border-r-4 border-primary' : 'border-r-4 border-transparent'}`}>
+                      <div className="flex gap-4 text-right w-full">
+                        <div className="bg-primary/10 p-3 rounded-2xl h-12 w-12 flex items-center justify-center shrink-0">
+                          <Bell className="text-primary h-6 w-6" />
                         </div>
-                        <div className="space-y-2 flex-1">
-                          <p className="font-black text-lg md:text-2xl leading-tight text-zinc-800">{n.title}</p>
-                          <p className="text-sm md:text-lg text-muted-foreground font-bold leading-relaxed">{n.message}</p>
+                        <div className="space-y-1 flex-1">
+                          <p className="font-black text-md leading-tight text-zinc-800">{n.title}</p>
+                          <p className="text-xs text-muted-foreground font-bold leading-relaxed">{n.message}</p>
                         </div>
                       </div>
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <div className="p-16 text-center text-muted-foreground text-xl font-bold opacity-50 italic">لا توجد تنبيهات</div>
+                  <div className="p-10 text-center text-muted-foreground font-bold opacity-50 italic">لا توجد تنبيهات</div>
                 )}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
 
-          {/* بروفايل المستخدم */}
+        {/* الجزء الأيسر: بروفايل المستخدم */}
+        <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-4 md:gap-6 h-20 md:h-28 pr-2 md:pr-3 pl-4 md:pl-10 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all">
-                <Avatar className="h-14 w-14 md:h-20 md:w-20 border-[6px] border-primary/20 shadow-xl transition-transform group-hover:scale-110">
+              <Button variant="ghost" className="flex items-center gap-3 md:gap-4 h-16 md:h-24 pr-2 pl-4 md:pl-8 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all">
+                <Avatar className="h-12 w-12 md:h-16 md:w-16 border-[4px] border-primary/20 shadow-lg transition-transform group-hover:scale-110">
                   <AvatarImage src={profile?.profilePictureUrl} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col text-right">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl md:text-3xl font-black text-zinc-900">{profile?.fullName?.split(' ')[0]}</span>
-                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-8 w-8" />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg md:text-2xl font-black text-zinc-900">{profile?.fullName?.split(' ')[0]}</span>
+                    {profile?.isVerified && verifiedBadgeUrl && <img src={verifiedBadgeUrl} alt="V" className="h-6 w-6" />}
                   </div>
-                  <span className="text-xs md:text-sm text-primary font-black uppercase tracking-widest">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+                  <span className="text-[10px] md:text-xs text-primary font-black uppercase tracking-widest">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 md:w-96 p-6 rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.2)] border-4" dir="rtl">
-              <DropdownMenuLabel className="font-black p-6 text-right text-2xl border-b mb-4">حسابي الشخصي</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-6 rounded-[1.5rem] cursor-pointer flex justify-end gap-6 font-black text-xl hover:bg-primary/5 mb-2">
-                الملف الشخصي <User className="h-8 w-8 text-primary" />
+            <DropdownMenuContent align="end" className="w-72 md:w-80 p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
+              <DropdownMenuLabel className="font-black p-4 text-right text-xl border-b mb-2">حسابي الشخصي</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="p-4 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-lg hover:bg-primary/5 mb-1">
+                الملف الشخصي <User className="h-6 w-6 text-primary" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-6 rounded-[1.5rem] cursor-pointer flex justify-end gap-6 font-black text-xl hover:bg-primary/5 mb-2">
-                المحفظة <Settings className="h-8 w-8 text-accent" />
+              <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-4 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-lg hover:bg-primary/5 mb-1">
+                المحفظة <Layout className="h-6 w-6 text-accent" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="p-6 rounded-[1.5rem] cursor-pointer text-destructive focus:text-destructive flex justify-end gap-6 font-black text-xl hover:bg-red-50 mt-2">
-                تسجيل الخروج <LogOut className="h-8 w-8" />
+              <DropdownMenuItem onClick={handleLogout} className="p-4 rounded-[1.5rem] cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-lg hover:bg-red-50 mt-1">
+                تسجيل الخروج <LogOut className="h-6 w-6" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -229,9 +234,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-3 md:gap-5 px-4 md:px-8 py-4 md:py-6 rounded-2xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-2xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
+      className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-sm md:text-xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
     >
-      <Icon size={24} className="md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
+      <Icon size={20} className="md:h-7 md:w-7 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );

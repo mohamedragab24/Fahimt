@@ -27,49 +27,40 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // قواعد عامة لكافة المجموعات للمسؤولين
+    // قواعد عامة للمسؤولين (الوصول الكامل)
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
+    // قواعد المستخدمين
     match /users/{userId} {
       allow read: if true;
       allow write: if isOwner(userId);
 
       match /transactions/{txId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
     }
 
-    match /jobs/{jobId} {
-      allow read: if true;
-      
-      match /applications/{appId} {
-        allow create: if true;
-      }
-    }
-
-    match /supportTickets/{ticketId} {
+    // المحادثات المباشرة
+    match /direct_chats/{chatId} {
+      allow read, update: if isAdmin() || (isSignedIn() && (request.auth.uid in resource.data.participants));
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource == null || request.auth.uid == resource.data.userId || isAdmin());
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
 
       match /messages/{msgId} {
-        allow read, create: if isSignedIn();
+        allow read, create: if isAdmin() || (isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/direct_chats/$(chatId)).data.participants));
       }
     }
 
-    match /floatingChats/{chatId} {
-      allow create: if true;
-      allow read: if isSignedIn() && (chatId == request.auth.uid || isAdmin());
-      allow update: if isSignedIn() && (chatId == request.auth.uid || isAdmin());
-
-      match /messages/{msgId} {
-        allow read, create: if isSignedIn();
-      }
+    // الإشعارات
+    match /notifications/{id} { 
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
+    // الاستفهامات
     match /istifhams/{id} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -82,50 +73,67 @@ service cloud.firestore {
       }
     }
 
+    // الإعدادات العامة
     match /settings/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
     
-    match /verificationRequests/{id} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-    }
-    
-    match /notifications/{id} { 
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+    // الأقسام والتخصصات
+    match /categories/{id} { 
+      allow read: if true; 
+      allow write: if isAdmin();
     }
 
+    // المحادثات العائمة
+    match /floatingChats/{chatId} {
+      allow create: if true;
+      allow read: if isAdmin() || (isSignedIn() && chatId == request.auth.uid);
+      allow update: if isAdmin() || (isSignedIn() && chatId == request.auth.uid);
+
+      match /messages/{msgId} {
+        allow read, create: if true;
+      }
+    }
+
+    // معرض الأعمال
     match /portfolio/{id} { 
       allow read: if true; 
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
     }
 
-    match /categories/{id} { 
-      allow read: if true; 
-      allow write: if isAdmin();
+    // الوظائف
+    match /jobs/{jobId} {
+      allow read: if true;
+      
+      match /applications/{appId} {
+        allow create: if true;
+        allow read: if isAdmin();
+      }
     }
 
+    // تذاكر الدعم
+    match /supportTickets/{ticketId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && (resource == null || request.auth.uid == resource.data.userId));
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn();
+      }
+    }
+
+    // الطعون الإدارية
     match /appeals/{id} { 
       allow create: if isSignedIn(); 
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
+    // طلبات السحب المالي
     match /payoutRequests/{id} { 
       allow create: if isSignedIn();
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-    }
-
-    match /direct_chats/{chatId} {
-      allow read, update: if isAdmin() || (isSignedIn() && (request.auth.uid in resource.data.participants));
-      allow create: if isSignedIn();
-
-      match /messages/{msgId} {
-        allow read, create: if isSignedIn();
-      }
     }
   }
 }
