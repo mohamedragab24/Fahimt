@@ -51,7 +51,7 @@ export function Header() {
 
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
-  const unreadMessagesQuery = useMemoFirebase(() => {
+  const unreadChatsQuery = useMemoFirebase(() => {
     if (!firestore || !user || !mounted) return null;
     return query(
       collection(firestore, "direct_chats"),
@@ -60,7 +60,7 @@ export function Header() {
       where("lastSenderId", "!=", user.uid)
     );
   }, [firestore, user, mounted]);
-  const { data: unreadChats } = useCollection(unreadMessagesQuery);
+  const { data: unreadChats } = useCollection(unreadChatsQuery);
 
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
@@ -84,23 +84,24 @@ export function Header() {
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-10 w-10 text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-xl shrink-0 border-2 border-zinc-100 flex items-center justify-center">
-                <Menu className="h-6 w-6" />
-              </SidebarTrigger>
-              
-              <Link href="/" className="flex items-center gap-3 group shrink-0">
-                <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
-                  <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
-                </div>
-                <span className="text-primary font-black text-xl md:text-3xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
-              </Link>
-            </div>
+          {/* جهة اليمين: اللوجو وبجانبه زر القائمة */}
+          <div className="flex items-center gap-4 shrink-0">
+            <Link href="/" className="flex items-center gap-3 group shrink-0">
+              <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 bg-transparent">
+                <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
+              </div>
+              <span className="text-primary font-black text-xl md:text-3xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
+            </Link>
+
+            <SidebarTrigger className="h-10 w-10 text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-xl shrink-0 border-2 border-zinc-100 flex items-center justify-center">
+              <Menu className="h-6 w-6" />
+            </SidebarTrigger>
           </div>
 
+          {/* جهة اليسار: الروابط، الرسائل، التنبيهات، والبروفايل */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0 flex-row-reverse">
             
+            {/* البروفايل */}
             <div className="mr-1">
               <Button 
                 variant="ghost" 
@@ -114,6 +115,7 @@ export function Header() {
               </Button>
             </div>
 
+            {/* التنبيهات */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-2xl hover:bg-primary/5 text-zinc-500">
@@ -152,6 +154,7 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* الرسائل */}
             <Button 
               variant="ghost" 
               size="icon" 
@@ -168,7 +171,8 @@ export function Header() {
               )}
             </Button>
 
-            <nav className="hidden lg:flex items-center gap-2 px-4 border-r border-zinc-100 py-1">
+            {/* روابط التنقل (تظهر بعد التسجيل أيضاً بجانب الرسائل) */}
+            <nav className="hidden md:flex items-center gap-2 px-4 border-r border-zinc-100 py-1">
               <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
@@ -183,11 +187,17 @@ export function Header() {
 
 function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
   const { setOpen, setOpenMobile } = useSidebar();
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
   return (
     <Link 
       href={href} 
       onClick={() => { setOpen(false); setOpenMobile(false); }}
-      className="flex items-center gap-2.5 px-4 md:px-5 py-2.5 rounded-2xl text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-lg whitespace-nowrap group shrink-0"
+      className={cn(
+        "flex items-center gap-2.5 px-4 md:px-5 py-2.5 rounded-2xl transition-all font-black text-md md:text-lg whitespace-nowrap group shrink-0",
+        isActive ? "text-primary bg-primary/5 shadow-inner" : "text-zinc-600 hover:text-primary hover:bg-primary/5"
+      )}
     >
       <Icon className="h-6 w-6 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
