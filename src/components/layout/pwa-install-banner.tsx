@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
+/**
+ * بانر تثبيت التطبيق المطور - يظهر فوراً ويختفي بعد 7 ثوانٍ.
+ */
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -23,10 +25,6 @@ export function PWAInstallBanner() {
   useEffect(() => {
     setIsMounted(true);
     
-    // التحقق إذا كان التطبيق مثبتاً بالفعل
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isStandalone) return;
-
     // 1. الاستماع لحدث التثبيت الرسمي من المتصفح
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -37,13 +35,12 @@ export function PWAInstallBanner() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // 2. إظهار البانر فوراً (إذا لم يكن قد تم إغلاقه سابقاً)
+    // 2. إظهار البانر فوراً (إذا لم يكن قد تم إغلاقه سابقاً في هذه الجلسة)
     const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
     if (!isDismissed) {
-      // إظهار البانر فوراً عند الدخول
       setShowBanner(true);
       
-      // الإخفاء التلقائي بعد 7 ثوانٍ كما طلب المستخدم
+      // الإخفاء التلقائي بعد 7 ثوانٍ
       const timer = setTimeout(() => {
         setShowBanner(false);
       }, 7000);
@@ -59,19 +56,19 @@ export function PWAInstallBanner() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      // إذا لم يطلق المتصفح الحدث بعد، نظهر تعليمات بديلة واضحة
-      alert("جاري تحضير ملفات التثبيت.. إذا لم يظهر الخيار، يرجى الضغط على خيارات المتصفح ثم 'إضافة إلى الشاشة الرئيسية'.");
+      // رسالة توضيحية إذا لم يكن الحدث جاهزاً بعد
+      alert("جاري تحضير ملفات التثبيت.. إذا لم تظهر النافذة التلقائية الآن، يرجى الضغط على خيارات المتصفح (النقاط الثلاثة) ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
       return;
     }
     
-    // تشغيل نافذة التثبيت الأصلية للهاتف
+    // إظهار نافذة التثبيت الأصلية للجهاز
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === "accepted") {
       setShowBanner(false);
+      setDeferredPrompt(null);
     }
-    setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
@@ -106,7 +103,7 @@ export function PWAInstallBanner() {
         <div className="flex items-center gap-3">
           <Button 
             onClick={handleInstallClick}
-            className="h-14 px-10 rounded-[1.5rem] font-black text-lg bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/20 transition-all active:scale-95 flex items-center gap-3 animate-pulse"
+            className="h-14 px-10 rounded-[1.5rem] font-black text-lg bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/20 transition-all active:scale-95 flex items-center gap-3"
           >
             <Download size={24} /> تثبيت
           </Button>

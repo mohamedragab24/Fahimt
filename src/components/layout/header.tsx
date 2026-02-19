@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -13,8 +12,10 @@ import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
+/**
+ * ترويسة الموقع المطورة - مساحة واسعة، أحجام كبيرة، وبدون اسم بجانب الصورة.
+ */
 export function Header() {
   const [mounted, setMounted] = useState(false);
   const { user, auth } = useFirebase();
@@ -42,14 +43,14 @@ export function Header() {
   const { data: profile } = useDoc(userRef);
 
   const systemNotifsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || !mounted || profile?.status === 'blocked') return null;
+    if (!firestore || !user || !mounted) return null;
     return query(
       collection(firestore, "notifications"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc"),
       limit(10)
     );
-  }, [firestore, user, profile?.status, mounted]);
+  }, [firestore, user, mounted]);
 
   const { data: systemNotifs } = useCollection(systemNotifsQuery);
 
@@ -81,17 +82,6 @@ export function Header() {
     lastNotifCount.current = totalNotifications;
   }, [totalNotifications, systemNotifs, toast, mounted]);
 
-  useEffect(() => {
-    if (mounted && totalMessages > lastMessageCount.current) {
-      toast({
-        title: "رسالة جديدة 📩",
-        description: "لديك رسالة توضيحية بانتظارك في مركز الرسائل.",
-        onClick: () => router.push('/messages')
-      });
-    }
-    lastMessageCount.current = totalMessages;
-  }, [totalMessages, toast, router, mounted]);
-
   const markAllRead = async () => {
     if (!firestore || !user || unreadSystemNotifs.length === 0) return;
     try {
@@ -116,27 +106,29 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
-      <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-2">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-lg">
+      <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-4">
         
-        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+        {/* الجزء الأيمن: القائمة والروابط */}
+        <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
-          <nav className="flex items-center gap-1 md:gap-4 border-r-2 pr-2 md:pr-6 border-zinc-100 overflow-x-auto no-scrollbar py-2">
+          <nav className="flex items-center gap-2 md:gap-6 border-r-2 pr-4 border-zinc-100 overflow-x-auto no-scrollbar py-2">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-8 mx-2 md:mx-6 shrink-0">
+        {/* الجزء الأوسط: التنبيهات والرسائل */}
+        <div className="flex items-center gap-4 md:gap-8 mx-4">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.push('/messages')}
-            className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
+            className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 group"
           >
-            <Mail className="h-9 w-9 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+            <Mail className="h-8 w-8 md:h-10 md:w-10 group-hover:scale-110 transition-transform text-zinc-600" />
             {totalMessages > 0 && (
               <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -149,8 +141,8 @@ export function Header() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
-                <Bell className="h-9 w-9 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+              <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 group">
+                <Bell className="h-8 w-8 md:h-10 md:w-10 group-hover:scale-110 transition-transform text-zinc-600" />
                 {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
                     <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
@@ -162,7 +154,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="w-[300px] md:w-[500px] p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
               <div className="flex justify-between items-center p-4">
-                <DropdownMenuLabel className="text-2xl md:text-3xl font-black p-0">التنبيهات</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-2xl font-black p-0">التنبيهات</DropdownMenuLabel>
                 {unreadSystemNotifs.length > 0 && (
                   <Button variant="ghost" size="sm" onClick={markAllRead} className="text-md font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
                 )}
@@ -191,12 +183,13 @@ export function Header() {
           </DropdownMenu>
         </div>
 
+        {/* الجزء الأيسر: البروفايل (بدون اسم) */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-center h-16 w-16 md:h-28 md:w-28 rounded-full md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all p-0">
-                  <Avatar className="h-12 w-12 md:h-20 md:w-20 border-[4px] border-primary/20 shadow-lg transition-transform group-hover:scale-110">
+                <Button variant="ghost" className="flex items-center justify-center h-16 w-16 md:h-28 md:w-28 rounded-full md:rounded-[2.5rem] hover:bg-primary/5 group border-2 border-transparent transition-all p-0">
+                  <Avatar className="h-14 w-14 md:h-24 md:w-24 border-[4px] border-primary/20 shadow-lg transition-transform group-hover:scale-110">
                     <AvatarImage src={profile?.profilePictureUrl} />
                     <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                   </Avatar>
@@ -234,7 +227,7 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-2 md:gap-4 px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
+      className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 md:py-4 rounded-xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
     >
       <Icon className="h-6 w-6 md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
