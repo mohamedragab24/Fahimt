@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -11,24 +12,20 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from "firebase/firestore";
 import { FloatingChat } from './floating-chat';
 import { PWAInstallBanner } from './pwa-install-banner';
+import { WelcomeModal } from './welcome-modal';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
 }
 
+/**
+ * مغلف الواجهة الرئيسي - يضمن التوافق مع كافة الأجهزة وتناسق الأبعاد.
+ */
 export function ClientWrapper({ children }: ClientWrapperProps) {
-  // تسجيل Service Worker لتحويل الموقع إلى تطبيق PWA
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
-          (registration) => {
-            console.log('Fahimni SW registered: ', registration.scope);
-          },
-          (err) => {
-            console.log('Fahimni SW registration failed: ', err);
-          }
-        );
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(err => console.log('SW registration failed:', err));
       });
     }
   }, []);
@@ -36,18 +33,22 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <FirebaseClientProvider>
       <ThemeManager>
+        {/* تثبيت العرض الافتراضي ليكون متوافقاً مع الحاسوب والجوال */}
         <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-screen w-full overflow-hidden">
+          <div className="flex min-h-screen w-full overflow-hidden bg-background">
             <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 bg-background">
+            <div className="flex flex-col flex-1 min-w-0 w-full">
               <Header />
-              <main className="flex-1 overflow-y-auto p-4 md:p-0">
-                {children}
+              <main className="flex-1 overflow-y-auto w-full">
+                <div className="max-w-[1920px] mx-auto w-full">
+                  {children}
+                </div>
                 <Footer />
               </main>
             </div>
           </div>
           <PWAInstallBanner />
+          <WelcomeModal />
           <FloatingChat />
           <Toaster />
         </SidebarProvider>
@@ -69,7 +70,6 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
     if (settings) {
       const root = document.documentElement;
       
-      // تحديث الألوان الأساسية
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
         if (hsl) root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
@@ -85,12 +85,10 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         if (hsl) root.style.setProperty('--background', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
       }
 
-      // تحديث نصف قطر الزوايا (Radius)
       if (settings.borderRadius) {
         root.style.setProperty('--radius', settings.borderRadius);
       }
 
-      // تحديث أيقونة المتصفح (Favicon)
       if (settings.faviconUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
@@ -99,22 +97,12 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
           const rels = ['icon', 'shortcut icon', 'apple-touch-icon'];
           rels.forEach(rel => {
             const existingLinks = document.querySelectorAll(`link[rel*='${rel}']`);
-            if (existingLinks.length > 0) {
-              existingLinks.forEach(link => {
-                (link as HTMLLinkElement).href = finalUrl;
-              });
-            } else {
-              const link = document.createElement('link');
-              link.rel = rel;
-              link.href = finalUrl;
-              document.head.appendChild(link);
-            }
+            existingLinks.forEach(link => { (link as HTMLLinkElement).href = finalUrl; });
           });
         };
         updateFavicon(settings.faviconUrl);
       }
 
-      // تحديث عنوان الموقع
       if (settings.siteTitle) {
         document.title = settings.siteTitle;
       }
