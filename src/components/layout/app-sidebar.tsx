@@ -53,6 +53,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +67,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, auth } = useFirebase();
+  const { setOpen, setOpenMobile } = useSidebar();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -81,6 +83,12 @@ export function AppSidebar() {
   }, [firestore, user]);
 
   const { data: profile } = useDoc(userRef);
+
+  // وظيفة للإغلاق التلقائي عند الضغط على أي رابط
+  const handleLinkClick = () => {
+    setOpen(false);
+    setOpenMobile(false);
+  };
 
   const menuItems = [
     { title: settings?.sideHome || "الرئيسية", icon: Home, href: "/" },
@@ -122,6 +130,7 @@ export function AppSidebar() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
+    handleLinkClick();
   };
 
   const toggleRole = async () => {
@@ -131,6 +140,7 @@ export function AppSidebar() {
       await updateDoc(userRef, { role: newRole });
       toast({ title: "تم تبديل نوع الحساب" });
       router.push("/");
+      handleLinkClick();
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
     }
@@ -141,9 +151,9 @@ export function AppSidebar() {
   return (
     <Sidebar side="right" collapsible="none" className="border-l shadow-sm fixed inset-y-0 z-50">
       <SidebarHeader className="p-2">
-        <Link href="/" className="flex items-center gap-1.5">
+        <Link href="/" className="flex items-center gap-1.5" onClick={handleLinkClick}>
           <div className="bg-primary w-7 h-7 rounded-lg flex items-center justify-center text-white text-lg font-black shrink-0 overflow-hidden border border-white/20 shadow-sm">
-            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
+            {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
           </div>
           <div>
             <span className="font-black text-sm text-primary">{settings?.siteTitle || "فهمني"}</span>
@@ -156,7 +166,7 @@ export function AppSidebar() {
       <SidebarContent className="px-1.5">
         <div className="p-1.5">
           <div className="bg-primary/5 p-2 rounded-lg space-y-1.5 border border-primary/5">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { router.push('/profile'); handleLinkClick(); }}>
               <Avatar className="h-6 w-6 border border-white shadow-sm">
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback className="text-[8px]">{profile?.fullName?.charAt(0)}</AvatarFallback>
@@ -177,7 +187,7 @@ export function AppSidebar() {
         <SidebarMenu className="space-y-0.5 pt-1 overflow-y-auto no-scrollbar">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} className="h-8 rounded-lg">
+              <SidebarMenuButton asChild isActive={pathname === item.href} className="h-8 rounded-lg" onClick={handleLinkClick}>
                 <Link href={item.href} className="flex items-center gap-2 px-1.5">
                   <item.icon className={`h-3.5 w-3.5 ${pathname === item.href ? "text-white" : "text-primary"}`} />
                   <span className="font-bold text-[11px]">{item.title}</span>
@@ -200,7 +210,7 @@ export function AppSidebar() {
                   <SidebarMenuSub className="mr-1 pr-1.5 border-r border-accent/20 space-y-0.5 mt-0.5 max-h-[400px] overflow-y-auto no-scrollbar">
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
-                        <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-7">
+                        <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-7" onClick={handleLinkClick}>
                           <Link href={item.href} className="font-bold text-[10px] py-0.5 text-right w-full block">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
