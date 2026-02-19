@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +69,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <div className="relative aspect-video rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-white group">
+        <div className="relative aspect-video rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-white group bg-zinc-100">
           <img 
             src={settings?.aboutImage || "https://picsum.photos/seed/about/800/600"} 
             alt="About Fahimni" 

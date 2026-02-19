@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * مكون النافذة الترحيبية (Welcome Modal / Popup Overlay)
- * يظهر للمستخدم عند فتح الموقع لأول مرة في الجلسة.
+ * يظهر للمستخدم عند فتح الموقع لأول مرة في الجلسة ويسحب الصورة من الفايربيز.
  */
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,12 +24,9 @@ export function WelcomeModal() {
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
-    // التحقق مما إذا كانت الصورة موجودة في الإعدادات
     if (settings?.splashImageUrl) {
-      // التحقق مما إذا كانت قد ظهرت بالفعل في هذه الجلسة
       const hasShown = sessionStorage.getItem("welcome_modal_shown");
       if (!hasShown) {
-        // تأخير بسيط لضمان جمالية الظهور بعد تحميل الصفحة
         const timer = setTimeout(() => {
           setIsOpen(true);
         }, 1500);
@@ -40,7 +37,6 @@ export function WelcomeModal() {
 
   const handleClose = () => {
     setIsOpen(false);
-    // حفظ حالة الظهور في sessionStorage لضمان عدم تكرارها إلا عند فتح المتصفح من جديد
     sessionStorage.setItem("welcome_modal_shown", "true");
   };
 
@@ -53,12 +49,11 @@ export function WelcomeModal() {
         dir="rtl"
       >
         <DialogHeader className="sr-only">
-          <DialogTitle>مرحباً بك في فهمني</DialogTitle>
+          <DialogTitle>مرحباً بك في {settings?.siteTitle || "فهمني"}</DialogTitle>
           <DialogDescription>نافذة ترحيبية تظهر لمستخدمي المنصة الجدد.</DialogDescription>
         </DialogHeader>
         
         <div className="relative group animate-in zoom-in fade-in duration-500 ease-out">
-          {/* زر الإغلاق المخصص فوق الصورة */}
           <Button
             variant="ghost"
             size="icon"
@@ -68,16 +63,14 @@ export function WelcomeModal() {
             <X size={28} />
           </Button>
 
-          {/* حاوية الصورة مع ظلال سينمائية */}
           <div className="rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-[0_0_120px_rgba(0,0,0,0.6)] border-8 border-white/5 bg-zinc-900/50 backdrop-blur-sm">
             <img
               src={settings.splashImageUrl}
-              alt="Fahimni Welcome"
+              alt="Welcome"
               className="w-full h-auto max-h-[80vh] object-contain select-none pointer-events-none"
             />
           </div>
 
-          {/* شارة توضيحية اختيارية بالأسفل */}
           <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-primary px-8 py-3 rounded-2xl shadow-xl border-4 border-white animate-bounce hidden md:block">
             <p className="text-white font-black text-sm whitespace-nowrap">اضغط في أي مكان للإغلاق</p>
           </div>

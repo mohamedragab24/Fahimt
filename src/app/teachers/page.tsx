@@ -62,6 +62,7 @@ export default function TeachersPage() {
     t.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // سحب شارة التوثيق من الفايربيز
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
@@ -98,7 +99,7 @@ export default function TeachersPage() {
                 <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
                 <h3 className="text-lg font-bold text-zinc-800 flex items-center gap-1">
                   {teacher.fullName}
-                  {teacher.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-4 w-4" data-ai-hint="verified badge" />}
+                  {teacher.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-4 w-4" />}
                 </h3>
               </div>
               <div className="flex items-center gap-1 text-zinc-500 text-sm font-medium">
@@ -142,7 +143,7 @@ export default function TeachersPage() {
                 <div className="text-right flex-1">
                   <h4 className="text-2xl font-black flex items-center gap-2">
                     {selectedTeacher?.fullName}
-                    {selectedTeacher?.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-6 w-6" data-ai-hint="verified badge" />}
+                    {selectedTeacher?.isVerified && <img src={verifiedBadgeUrl} alt="Verified" className="h-6 w-6" />}
                   </h4>
                   <Badge className="bg-primary/10 text-primary border-none mt-2 px-4 py-1 font-bold">
                     {selectedTeacher?.specialization || "خبير عام"}
@@ -162,7 +163,7 @@ export default function TeachersPage() {
                   <p className="text-2xl font-black text-blue-700">{completedProjects?.length || 0}</p>
                 </div>
                 <div className="bg-zinc-100 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
-                  <img src={verifiedBadgeUrl} alt="Status" className="h-5 w-5 mb-1" data-ai-hint="verified badge" />
+                  <img src={verifiedBadgeUrl} alt="Status" className="h-5 w-5 mb-1" />
                   <p className="text-xs text-zinc-600 font-bold">الحالة</p>
                   <p className="text-lg font-black text-zinc-700">{selectedTeacher?.isVerified ? "موثق" : "نشط"}</p>
                 </div>

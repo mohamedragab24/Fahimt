@@ -14,9 +14,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-/**
- * ترويسة الموقع المحدثة - تشمل اللوجو الأساسي في اليمين بجانب الزر، والروابط في اليسار.
- */
 export function Header() {
   const [mounted, setMounted] = useState(false);
   const { user } = useUser();
@@ -78,21 +75,20 @@ export function Header() {
     router.push('/profile');
   };
 
-  const defaultLogo = PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
+  const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0 transition-all duration-300",
-      shouldHideGlobalHeader ? "hidden" : "block h-16 md:h-20"
+      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0 transition-all duration-300 h-16 md:h-20",
+      shouldHideGlobalHeader && "hidden"
     )}>
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
           <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
-            {/* اللوجو الأساسي في اليمين بجانب زر القائمة */}
             <Link href="/" className="flex items-center gap-3 shrink-0 group">
               <div className="bg-primary w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
-                <img src={settings?.logoUrl || defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+                <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
               </div>
               <span className="text-primary font-black text-2xl md:text-4xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
             </Link>
@@ -104,7 +100,6 @@ export function Header() {
             
             {user && (
               <div className="flex items-center gap-2 md:gap-4">
-                {/* روابط التنقل في اليسار بجانب الأيقونات */}
                 <nav className="hidden lg:flex items-center gap-2 px-4 border-l border-zinc-100 py-1">
                   <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
                   <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />

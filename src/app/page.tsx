@@ -54,6 +54,7 @@ import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/no
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { WelcomeModal } from "@/components/layout/welcome-modal";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -155,6 +156,7 @@ export default function HomePage() {
 
   return (
     <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
+      <WelcomeModal />
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
@@ -189,7 +191,7 @@ function LandingPage({ router, settings }: any) {
   const firestore = useFirestore();
 
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
-  const defaultLogo = PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
+  const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
 
   useEffect(() => {
     if (!firestore || !searchTerm.trim()) {
@@ -222,6 +224,7 @@ function LandingPage({ router, settings }: any) {
 
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
+      <WelcomeModal />
       <div className="relative min-h-[95vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
@@ -230,7 +233,7 @@ function LandingPage({ router, settings }: any) {
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => router.push('/')}>
             <div className="bg-primary w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl overflow-hidden border-2 border-white/20">
-              <img src={settings?.logoUrl || defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+              <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
             </div>
             <span className="text-white font-black text-2xl md:text-4xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
