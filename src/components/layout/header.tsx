@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Bell, Mail, GraduationCap, Layout, Search } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
@@ -20,6 +20,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const { user } = useUser();
   const { firestore } = useFirebase();
+  const { setOpen, setOpenMobile } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -60,8 +61,15 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
-  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
+  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password" || pathname === "/signup";
   const shouldHideGlobalHeader = isExcludedPath && !user;
+
+  // وظيفة الانتقال للبروفايل مع إغلاق المنيو
+  const goToProfile = () => {
+    setOpen(false);
+    setOpenMobile(false);
+    router.push('/profile');
+  };
 
   return (
     <header className={cn(
@@ -88,7 +96,7 @@ export function Header() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => router.push('/messages')}
+                  onClick={() => { setOpen(false); setOpenMobile(false); router.push('/messages'); }}
                   className="relative h-7 w-7 rounded-lg hover:bg-primary/5 text-zinc-500"
                 >
                   <Mail className="h-4 w-4" />
@@ -145,7 +153,7 @@ export function Header() {
               {user ? (
                 <Button 
                   variant="ghost" 
-                  onClick={() => router.push('/profile')}
+                  onClick={goToProfile}
                   className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm group"
                 >
                   <Avatar className="h-full w-full">
@@ -170,9 +178,11 @@ export function Header() {
 }
 
 function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
+  const { setOpen, setOpenMobile } = useSidebar();
   return (
     <Link 
       href={href} 
+      onClick={() => { setOpen(false); setOpenMobile(false); }}
       className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-[10px] md:text-xs whitespace-nowrap group shrink-0 border border-transparent"
     >
       <Icon className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />

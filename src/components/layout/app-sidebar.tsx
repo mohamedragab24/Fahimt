@@ -84,7 +84,7 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
-  // وظيفة للإغلاق التلقائي الشامل عند الضغط على أي رابط أو زر
+  // وظيفة للإغلاق التلقائي الفوري عند الضغط على أي رابط أو زر
   const handleLinkClick = () => {
     setOpen(false);
     setOpenMobile(false);
@@ -128,8 +128,8 @@ export function AppSidebar() {
   ];
 
   const handleLogout = async () => {
-    await signOut(auth);
     handleLinkClick();
+    await signOut(auth);
     router.push("/login");
   };
 
@@ -137,9 +137,9 @@ export function AppSidebar() {
     if (!profile || !userRef) return;
     const newRole = profile.role === 'mufhem' ? 'mustafhem' : 'mufhem';
     try {
+      handleLinkClick();
       await updateDoc(userRef, { role: newRole });
       toast({ title: "تم تبديل نوع الحساب" });
-      handleLinkClick();
       router.push("/");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
@@ -166,7 +166,7 @@ export function AppSidebar() {
       <SidebarContent className="px-1.5">
         <div className="p-1.5 shrink-0">
           <div className="bg-primary/5 p-2 rounded-lg space-y-1.5 border border-primary/5">
-            <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { router.push('/profile'); handleLinkClick(); }}>
+            <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { handleLinkClick(); router.push('/profile'); }}>
               <Avatar className="h-6 w-6 border border-white shadow-sm shrink-0">
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback className="text-[8px]">{profile?.fullName?.charAt(0)}</AvatarFallback>

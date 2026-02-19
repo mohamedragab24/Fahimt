@@ -4,17 +4,15 @@
 import { useState, useEffect } from "react";
 import { X, Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 /**
  * بانر تثبيت التطبيق الذكي - يظهر في كل مرة عند الدخول من المتصفح لمدة 7 ثوانٍ.
- * يختفي تماماً إذا كان التطبيق مثبتاً بالفعل (Standalone Mode).
  */
 export function PWAInstallBanner() {
   const pathname = usePathname();
-  const { user } = useUser();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -27,62 +25,57 @@ export function PWAInstallBanner() {
 
   const { data: settings } = useDoc(settingsRef);
 
-  // استبعاد صفحات الدخول والتسجيل لضمان نظافة الواجهة
-  const isExcludedPath = pathname === "/login" || pathname === "/forgot-password";
+  const isExcludedPath = pathname === "/login" || pathname === "/forgot-password" || pathname === "/signup";
 
   useEffect(() => {
     setIsMounted(true);
 
-    // التحقق مما إذا كان التطبيق يعمل بالفعل بوضعية "المثبت" (Standalone)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone;
 
-    // إذا كان في وضع التطبيق، لا تظهر البانر أبداً
     if (isStandalone) return;
 
-    const handleBeforeInstallPrompt = (e: any) => {
-      // منع المتصفح من إظهار النافذة التلقائية فوراً
-      e.preventDefault();
-      // حفظ الحدث لاستدعائه عند الضغط على زر التثبيت الخاص بنا
-      setDeferredPrompt(e);
-      
-      // إظهار البانر الخاص بنا فقط إذا لم نكن في صفحة مستبعدة
+    // إظهار البانر بعد ثانيتين من التحميل لتذكير المستخدم
+    const showTimer = setTimeout(() => {
       if (!isExcludedPath) {
         setShowBanner(true);
-        
-        // إخفاء البانر تلقائياً بعد 7 ثوانٍ لضمان تجربة مستخدم رشيقة
-        const timer = setTimeout(() => {
-          setShowBanner(false);
-        }, 7000);
-        
-        return () => clearTimeout(timer);
+        // إخفاء البانر تلقائياً بعد 7 ثوانٍ من ظهوره
+        setTimeout(() => setShowBanner(false), 7000);
       }
+    }, 2000);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      clearTimeout(showTimer);
     };
   }, [isExcludedPath]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    
-    // إظهار نافذة التثبيت الأصلية للنظام
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === "accepted") {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setShowBanner(false);
+        setDeferredPrompt(null);
+      }
+    } else {
+      // إذا لم يكن البرومت جاهزاً بعد، توجيه المستخدم للقائمة الجانبية أو المتصفح
+      alert("يرجى الضغط على زر الخيارات في متصفحك واختيار 'إضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'.");
       setShowBanner(false);
-      setDeferredPrompt(null);
     }
   };
 
   if (!isMounted || !showBanner || isExcludedPath) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700" dir="rtl">
+    <div className="fixed top-4 left-4 right-4 z-[300] animate-in slide-in-from-top-full duration-700" dir="rtl">
       <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/20 shadow-2xl rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="bg-primary w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-md overflow-hidden">
