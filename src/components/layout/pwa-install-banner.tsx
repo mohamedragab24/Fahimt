@@ -7,8 +7,8 @@ import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 /**
- * بانر تثبيت التطبيق المطور - يظهر فوراً ويختفي بعد 7 ثوانٍ.
- * يستدعي نافذة التثبيت الرسمية للجهاز (Native Install Dialog).
+ * بانر تثبيت التطبيق المطور - يظهر فقط إذا لم يكن التطبيق مثبتاً.
+ * يظهر فوراً ويختفي بعد 7 ثوانٍ تلقائياً.
  */
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -25,46 +25,46 @@ export function PWAInstallBanner() {
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // الاستماع لحدث التثبيت الرسمي من المتصفح
+
+    // التحقق مما إذا كان التطبيق مفتوحاً بالفعل كـ تطبيق مثبت (Standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone 
+      || document.referrer.includes('android-app://');
+
+    if (isStandalone) {
+      setShowBanner(false);
+      return;
+    }
+
     const handleBeforeInstallPrompt = (e: any) => {
+      // منع المتصفح من إظهار النافذة الافتراضية فوراً
       e.preventDefault();
+      // تخزين الحدث لاستخدامه عند ضغط المستخدم على زر التثبيت
       setDeferredPrompt(e);
-      // بمجرد توفر الحدث، نظهر البانر
+      
+      // إظهار البانر فوراً لأننا تأكدنا أن التطبيق غير مثبت
       setShowBanner(true);
+
+      // الإخفاء التلقائي بعد 7 ثوانٍ
+      setTimeout(() => {
+        setShowBanner(false);
+      }, 7000);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // إظهار البانر فوراً (مع ميزة الإخفاء التلقائي)
-    const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
-    if (!isDismissed) {
-      // إظهار مبدئي لضمان رؤية المستخدم له
-      setShowBanner(true);
-      
-      // الإخفاء التلقائي بعد 7 ثوانٍ
-      const timer = setTimeout(() => {
-        setShowBanner(false);
-      }, 7000);
-      
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      };
-    }
-
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    // في حال كان المتصفح قد أطلق الحدث بالفعل قبل تحميل المكون
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // إذا لم يكن الحدث جاهزاً (بسبب بيئة العمل الحالية)، نوجه المستخدم للطريقة اليدوية
-      alert("بيئة العمل الحالية لا تسمح بالتثبيت التلقائي. عند نشر الموقع على رابط رسمي، سيتم التثبيت مباشرة بمجرد ضغطك على هذا الزر.");
-      return;
-    }
+    if (!deferredPrompt) return;
     
-    // إظهار نافذة التثبيت الأصلية للجهاز
+    // إظهار نافذة التثبيت الرسمية للجهاز
     deferredPrompt.prompt();
+    
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === "accepted") {
@@ -73,12 +73,7 @@ export function PWAInstallBanner() {
     }
   };
 
-  const handleDismiss = () => {
-    setShowBanner(false);
-    sessionStorage.setItem("pwa_banner_dismissed", "true");
-  };
-
-  if (!isMounted || !showBanner) return null;
+  if (!isMounted || !showBanner || !deferredPrompt) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-1000" dir="rtl">
@@ -97,7 +92,7 @@ export function PWAInstallBanner() {
               <div className="flex">
                 {[1,2,3,4,5].map(s => <Star key={s} size={10} className="fill-yellow-400 text-yellow-400" />)}
               </div>
-              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع، أخف، وتواصل مباشر</p>
+              <p className="text-[10px] text-zinc-400 font-bold truncate">تجربة أسرع وأخف على جهازك</p>
             </div>
           </div>
         </div>
@@ -112,7 +107,7 @@ export function PWAInstallBanner() {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={handleDismiss}
+            onClick={() => setShowBanner(false)}
             className="h-12 w-12 rounded-full text-zinc-300 hover:bg-zinc-100 transition-colors"
           >
             <X size={28} />
