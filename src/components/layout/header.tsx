@@ -14,7 +14,7 @@ import { signOut } from "firebase/auth";
 import Link from "next/link";
 
 /**
- * ترويسة الموقع الرشيقة - تم ضغط الحجم وإخفاء العناصر غير الضرورية في صفحات الزوار.
+ * ترويسة الموقع الرشيقة - تم إخفاؤها تماماً للزوار في صفحات الهبوط والدخول لمنع الازدواجية.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -66,19 +66,20 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
-  // استبعاد أيقونات التنبيهات من صفحات الهبوط والدخول
+  // استبعاد الترويسة العالمية تماماً للزوار في هذه الصفحات
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
 
-  if (!mounted) return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background h-12" />
-  );
+  // إذا لم يكتمل التحميل أو كان المستخدم زائراً في صفحة مستبعدة، لا تظهر الترويسة العالمية
+  if (!mounted) return null;
+  if (isExcludedPath && !user && !isUserLoading) return null;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0">
       <div className="flex h-12 md:h-14 items-center justify-between px-2 md:px-4 max-w-[1920px] mx-auto gap-1">
         
         <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
-          <SidebarTrigger className="h-7 w-7 text-accent bg-accent/5 hover:bg-accent/10 rounded-lg shrink-0" />
+          {/* زر القائمة يظهر فقط للمسجلين أو في الصفحات الداخلية */}
+          {user && <SidebarTrigger className="h-7 w-7 text-accent bg-accent/5 hover:bg-accent/10 rounded-lg shrink-0" />}
           
           <nav className="flex items-center gap-0.5 md:gap-2 border-r pr-1 md:pr-3 border-zinc-100 overflow-x-auto no-scrollbar py-0.5">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
@@ -89,8 +90,8 @@ export function Header() {
 
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
           
-          {/* تظهر الأيقونات فقط للمستخدم المسجل وفي الصفحات غير المستبعدة */}
-          {!isUserLoading && user && !isExcludedPath && (
+          {/* أيقونات التنبيهات والدردشة تظهر فقط للمسجلين */}
+          {!isUserLoading && user && (
             <div className="flex items-center gap-0.5 md:gap-1.5 animate-in fade-in slide-in-from-left-1">
               <Button 
                 variant="ghost" 
