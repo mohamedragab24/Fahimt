@@ -65,8 +65,8 @@ export function Header() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0 h-12 md:h-14",
-      mounted && shouldHideGlobalHeader ? "hidden" : "block"
+      "sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0",
+      shouldHideGlobalHeader ? "hidden" : "block h-12 md:h-14"
     )}>
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-2 md:px-4 max-w-[1920px] mx-auto gap-1">

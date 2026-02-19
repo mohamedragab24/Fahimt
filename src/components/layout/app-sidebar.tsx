@@ -84,7 +84,7 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
-  // وظيفة للإغلاق التلقائي عند الضغط على أي رابط أو زر
+  // وظيفة للإغلاق التلقائي الشامل عند الضغط على أي رابط أو زر
   const handleLinkClick = () => {
     setOpen(false);
     setOpenMobile(false);
@@ -149,14 +149,14 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-    <Sidebar side="right" collapsible="none" className="border-l shadow-sm fixed inset-y-0 z-50">
-      <SidebarHeader className="p-2">
+    <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-sm fixed inset-y-0 z-50 bg-white">
+      <SidebarHeader className="p-2 shrink-0">
         <Link href="/" className="flex items-center gap-1.5" onClick={handleLinkClick}>
           <div className="bg-primary w-7 h-7 rounded-lg flex items-center justify-center text-white text-lg font-black shrink-0 overflow-hidden border border-white/20 shadow-sm">
             {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
           </div>
-          <div>
-            <span className="font-black text-sm text-primary">{settings?.siteTitle || "فهمني"}</span>
+          <div className="truncate">
+            <span className="font-black text-xs text-primary truncate block">{settings?.siteTitle || "فهمني"}</span>
           </div>
         </Link>
       </SidebarHeader>
@@ -164,14 +164,14 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent className="px-1.5">
-        <div className="p-1.5">
+        <div className="p-1.5 shrink-0">
           <div className="bg-primary/5 p-2 rounded-lg space-y-1.5 border border-primary/5">
             <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { router.push('/profile'); handleLinkClick(); }}>
-              <Avatar className="h-6 w-6 border border-white shadow-sm">
+              <Avatar className="h-6 w-6 border border-white shadow-sm shrink-0">
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback className="text-[8px]">{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col truncate">
+              <div className="flex flex-col truncate min-w-0">
                 <span className="font-black text-[9px] truncate text-right">{profile?.fullName}</span>
                 <Badge variant="secondary" className="w-fit text-[6px] h-3 mt-0.5 ml-auto px-1">
                   {profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}
@@ -189,8 +189,8 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={pathname === item.href} className="h-8 rounded-lg" onClick={handleLinkClick}>
                 <Link href={item.href} className="flex items-center gap-2 px-1.5">
-                  <item.icon className={`h-3.5 w-3.5 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-[11px]">{item.title}</span>
+                  <item.icon className={`h-3.5 w-3.5 shrink-0 ${pathname === item.href ? "text-white" : "text-primary"}`} />
+                  <span className="font-bold text-[11px] truncate">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -201,8 +201,8 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="h-8 rounded-lg">
-                    <LayoutDashboard className="h-3.5 w-3.5 text-accent" />
-                    <span className="font-bold text-[11px]">{settings?.sideAdmin || "المسؤول"}</span>
+                    <LayoutDashboard className="h-3.5 w-3.5 text-accent shrink-0" />
+                    <span className="font-bold text-[11px] truncate">{settings?.sideAdmin || "المسؤول"}</span>
                     <ChevronDown className="ml-auto h-2.5 w-2.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -211,7 +211,7 @@ export function AppSidebar() {
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-7" onClick={handleLinkClick}>
-                          <Link href={item.href} className="font-bold text-[10px] py-0.5 text-right w-full block">{item.title}</Link>
+                          <Link href={item.href} className="font-bold text-[10px] py-0.5 text-right w-full block truncate">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -223,9 +223,9 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-1.5 border-t">
+      <SidebarFooter className="p-1.5 border-t shrink-0">
         <SidebarMenuButton onClick={handleLogout} className="h-8 rounded-lg text-destructive hover:bg-destructive/10">
-          <LogOut className="h-3.5 w-3.5" />
+          <LogOut className="h-3.5 w-3.5 shrink-0" />
           <span className="font-bold text-[11px]">خروج</span>
         </SidebarMenuButton>
       </SidebarFooter>
