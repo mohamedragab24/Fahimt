@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * ترويسة الموقع - تم تعديلها لتوجيه المستخدم للملف الشخصي مباشرة عند الضغط على الصورة.
+ * تم نقل الروابط لجهة اليسار بجانب أيقونات التنبيهات والرسائل.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -73,7 +74,7 @@ export function Header() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0",
+      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0",
       shouldHideGlobalHeader ? "hidden" : "block h-12 md:h-14"
     )}>
       {mounted && !shouldHideGlobalHeader && (
@@ -81,42 +82,42 @@ export function Header() {
           
           <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
             {user && <SidebarTrigger className="h-7 w-7 text-accent bg-accent/5 hover:bg-accent/10 rounded-lg shrink-0" />}
-            
-            <nav className="flex items-center gap-0.5 md:gap-2 border-r pr-1 md:pr-3 border-zinc-100 overflow-x-auto no-scrollbar py-0.5">
-              <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
-              <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
-              <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
-            </nav>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+          <div className="flex items-center gap-1 md:gap-4 shrink-0">
             
             {user && (
-              <div className="flex items-center gap-0.5 md:gap-1.5">
+              <div className="flex items-center gap-1 md:gap-3">
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => { setOpen(false); setOpenMobile(false); router.push('/messages'); }}
-                  className="relative h-7 w-7 rounded-lg hover:bg-primary/5 text-zinc-500"
+                  className="relative h-8 w-8 rounded-lg hover:bg-primary/5 text-zinc-500"
                 >
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-5 w-5" />
                   {totalMessages > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-accent border border-white shadow-sm flex items-center justify-center">
-                         <span className="text-[5px] text-white font-black">{totalMessages}</span>
+                    <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent border border-white shadow-sm flex items-center justify-center">
+                         <span className="text-[6px] text-white font-black">{totalMessages}</span>
                       </span>
                     </span>
                   )}
                 </Button>
 
+                <nav className="hidden sm:flex items-center gap-1 md:gap-2 px-2 border-x border-zinc-100 py-0.5">
+                  <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
+                  <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
+                  <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
+                </nav>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-7 w-7 rounded-lg hover:bg-primary/5 text-zinc-500">
-                      <Bell className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="relative h-8 w-8 rounded-lg hover:bg-primary/5 text-zinc-500">
+                      <Bell className="h-5 w-5" />
                       {totalNotifications > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white shadow-sm flex items-center justify-center">
-                            <span className="text-[5px] text-white font-black">{totalNotifications}</span>
+                        <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border border-white shadow-sm flex items-center justify-center">
+                            <span className="text-[6px] text-white font-black">{totalNotifications}</span>
                           </span>
                         </span>
                       )}
@@ -154,17 +155,17 @@ export function Header() {
                 <Button 
                   variant="ghost" 
                   onClick={goToProfile}
-                  className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm group"
+                  className="h-8 w-8 md:h-10 md:w-10 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm group"
                 >
                   <Avatar className="h-full w-full">
                     <AvatarImage src={profile?.profilePictureUrl} />
-                    <AvatarFallback className="bg-primary/5 text-primary font-black text-[10px]">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/5 text-primary font-black text-xs">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
                   </Avatar>
                 </Button>
               ) : (
                 <Button 
                   onClick={() => router.push('/login')} 
-                  className="h-7 md:h-8 px-3 md:px-5 rounded-lg font-black text-[10px] md:text-xs bg-primary hover:bg-primary/90 text-white shadow-md"
+                  className="h-8 md:h-10 px-4 md:px-6 rounded-lg font-black text-xs md:text-sm bg-primary hover:bg-primary/90 text-white shadow-md"
                 >
                   دخول
                 </Button>
@@ -183,9 +184,9 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
     <Link 
       href={href} 
       onClick={() => { setOpen(false); setOpenMobile(false); }}
-      className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-[10px] md:text-xs whitespace-nowrap group shrink-0 border border-transparent"
+      className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all font-black text-xs md:text-sm whitespace-nowrap group shrink-0 border border-transparent"
     >
-      <Icon className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+      <Icon className="h-4 w-4 md:h-5 md:w-5 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );

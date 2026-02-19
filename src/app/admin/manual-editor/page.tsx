@@ -97,7 +97,7 @@ export default function ManualEditorPage() {
     guaranteesDescription: "نحن في 'فهمني' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
     guideTitle: "الدليل الإرشادي",
     guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
-    studentDashboardTitle: "عندك سؤال؟ اطرح استفهامك الآن",
+    studentDashboardTitle: "عندك سؤال? اطرح استفهامك الآن",
     studentDashboardBtn: "طلب استفهام جديد",
     teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
     teacherDashboardSubtitle: "كلما زادت أعمالك المميزة في المعرض, زادت ثقة الطلاب باختيارك لمشاريعهم.",
@@ -209,7 +209,7 @@ export default function ManualEditorPage() {
                 <TabsTrigger value="dashboards" className="rounded-lg font-black px-4 shrink-0">لوحات التحكم</TabsTrigger>
                 <TabsTrigger value="seo" className="rounded-lg font-black px-4 shrink-0 flex items-center gap-2">إعدادات البحث <Search size={14}/></TabsTrigger>
                 <TabsTrigger value="teachers_list" className="rounded-lg font-black px-4 shrink-0">المدرسين</TabsTrigger>
-                <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">معرض الأعمال</TabsTrigger>
+                <TabsTrigger value="portfolio_list" className="rounded-lg font-black px-4 shrink-0">أعمال المفهمين</TabsTrigger>
                 <TabsTrigger value="nav" className="rounded-lg font-black px-4 shrink-0">الهيدر والفوتر</TabsTrigger>
                 <TabsTrigger value="sidebar" className="rounded-lg font-black px-4 shrink-0">القائمة الجانبية</TabsTrigger>
                 <TabsTrigger value="about" className="rounded-lg font-black px-4 shrink-0">عن المنصة</TabsTrigger>

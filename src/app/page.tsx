@@ -237,7 +237,7 @@ function LandingPage({ router, settings }: any) {
           <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1 justify-end">
             <nav className="flex items-center gap-3 md:gap-8 border-l border-white/10 pl-4 md:pl-8 overflow-x-auto no-scrollbar flex-nowrap">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
-              <LinkItem href="/portfolio" icon={Layout} label="الأعمال" />
+              <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <LinkItem href="/browse" icon={Search} label="الاستفهامات" />
             </nav>
             

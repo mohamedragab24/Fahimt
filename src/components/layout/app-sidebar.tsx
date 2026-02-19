@@ -93,7 +93,7 @@ export function AppSidebar() {
   const menuItems = [
     { title: settings?.sideHome || "الرئيسية", icon: Home, href: "/" },
     { title: settings?.sideTeachers || "المُفهمين", icon: GraduationCap, href: "/teachers" },
-    { title: settings?.sidePortfolio || "الأعمال", icon: ImageIcon, href: "/portfolio" },
+    { title: settings?.sidePortfolio || "أعمال المفهمين", icon: ImageIcon, href: "/portfolio" },
     { title: settings?.sideRequests || "استفهاماتي", icon: ClipboardList, href: "/requests" },
     { title: "العروض", icon: Zap, href: "/offers" },
     { title: settings?.sideWallet || "المحفظة", icon: Wallet, href: "/wallet" },
