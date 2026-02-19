@@ -1,0 +1,24 @@
+{
+  "name": "منصة فهمني - التعليم الذكي",
+  "short_name": "فهمني",
+  "description": "المنصة العربية الأولى لخدمات الشرح الفوري التفاعلي",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#29B6F6",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/fahimni/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/fahimni/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

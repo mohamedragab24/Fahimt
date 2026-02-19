@@ -2,17 +2,23 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
 
-// تصدير إعدادات نافذة العرض بشكل مستقل وفقاً لمعايير Next.js 15 الحديثة
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  themeColor: '#29B6F6',
 };
 
 export const metadata: Metadata = {
   title: 'فهمني - منصة التعلم الذكي',
   description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.',
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمني',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'فهمني',
+  },
   openGraph: {
     title: 'فهمني - منصة التعلم الذكي',
     description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.',
@@ -38,6 +44,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+        <link rel="apple-touch-icon" href="https://picsum.photos/seed/fahimni/192/192" />
       </head>
       <body className="font-body antialiased">
         <ClientWrapper>

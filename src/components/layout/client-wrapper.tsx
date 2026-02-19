@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -17,6 +16,22 @@ interface ClientWrapperProps {
 }
 
 export function ClientWrapper({ children }: ClientWrapperProps) {
+  // تسجيل Service Worker لتحويل الموقع إلى تطبيق PWA
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => {
+            console.log('Fahimni SW registered: ', registration.scope);
+          },
+          (err) => {
+            console.log('Fahimni SW registration failed: ', err);
+          }
+        );
+      });
+    }
+  }, []);
+
   return (
     <FirebaseClientProvider>
       <ThemeManager>
