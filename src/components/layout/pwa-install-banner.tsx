@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * بانر تثبيت التطبيق المطور - يظهر فقط بعد تسجيل الدخول وفي الصفحات الداخلية.
- * يظهر فوراً ويختفي بعد 7 ثوانٍ تلقائياً.
+ * يتم إخفاؤه تماماً من صفحة الهبوط والدخول والتسجيل.
  */
 export function PWAInstallBanner() {
   const { user, isUserLoading } = useUser();
@@ -27,7 +27,7 @@ export function PWAInstallBanner() {
 
   const { data: settings } = useDoc(settingsRef);
 
-  // استبعاد صفحة الهبوط وصفحات الدخول/التسجيل
+  // استبعاد صفحة الهبوط وصفحات الدخول/التسجيل بشكل صارم
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
 
   useEffect(() => {
@@ -46,14 +46,14 @@ export function PWAInstallBanner() {
   }, []);
 
   useEffect(() => {
-    // إظهار البانر فقط للمسجلين وفي غير الصفحات المستبعدة
+    // إظهار البانر فقط للمسجلين وفي غير الصفحات المستبعدة وعند توفر حدث التثبيت
     if (!isUserLoading && user && !isExcludedPath && deferredPrompt) {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
         || (window.navigator as any).standalone;
 
       if (!isStandalone) {
         setShowBanner(true);
-        // الإخفاء التلقائي بعد 7 ثوانٍ
+        // الإخفاء التلقائي بعد 7 ثوانٍ لضمان تجربة مستخدم نظيفة
         const timer = setTimeout(() => {
           setShowBanner(false);
         }, 7000);
@@ -74,6 +74,7 @@ export function PWAInstallBanner() {
     }
   };
 
+  // لا يظهر البانر نهائياً للزوار أو في الصفحات المستبعدة
   if (!isMounted || !showBanner || !user || isExcludedPath) return null;
 
   return (

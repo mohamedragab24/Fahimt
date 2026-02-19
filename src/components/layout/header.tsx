@@ -4,23 +4,24 @@
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, User, LogOut, Mail, GraduationCap, Layout, Search } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
 
 /**
- * ترويسة الموقع الرشيقة - تم ضغط الحجم لتوفير مساحة لجميع الصفحات.
+ * ترويسة الموقع الرشيقة - تم ضغط الحجم وإخفاء العناصر غير الضرورية في صفحات الزوار.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
-  const { user, auth } = useFirebase();
-  const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
+  const { auth, firestore } = useFirebase();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
@@ -65,6 +66,9 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
+  // استبعاد أيقونات التنبيهات من صفحات الهبوط والدخول
+  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
+
   if (!mounted) return (
     <header className="sticky top-0 z-40 w-full border-b bg-background h-12" />
   );
@@ -85,7 +89,8 @@ export function Header() {
 
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
           
-          {user && (
+          {/* تظهر الأيقونات فقط للمستخدم المسجل وفي الصفحات غير المستبعدة */}
+          {!isUserLoading && user && !isExcludedPath && (
             <div className="flex items-center gap-0.5 md:gap-1.5 animate-in fade-in slide-in-from-left-1">
               <Button 
                 variant="ghost" 
@@ -144,7 +149,7 @@ export function Header() {
           )}
 
           <div className="mr-0.5">
-            {user ? (
+            {!isUserLoading && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
@@ -173,7 +178,7 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
+            ) : !isUserLoading && (
               <Button 
                 onClick={() => router.push('/login')} 
                 className="h-7 md:h-8 px-3 md:px-5 rounded-lg font-black text-[10px] md:text-xs bg-primary hover:bg-primary/90 text-white shadow-md"
