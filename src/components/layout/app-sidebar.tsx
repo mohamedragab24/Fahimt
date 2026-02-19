@@ -34,7 +34,9 @@ import {
   Mail,
   Zap,
   Share2,
-  MessageSquare
+  MessageSquare,
+  Send,
+  Filter
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -54,16 +56,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-/**
- * القائمة الجانبية الرشيقة جداً - تم تصغير الأيقونات والمسافات لتوفير أكبر مساحة للمحتوى.
- */
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -97,19 +95,28 @@ export function AppSidebar() {
 
   const adminItems = [
     { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
-    { title: "المحرر", icon: Edit3, href: "/admin/manual-editor" },
+    { title: "المحرر الفائق", icon: Edit3, href: "/admin/manual-editor" },
     { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
     { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
     { title: "رقابة الدردشات", icon: MessageSquare, href: "/admin/direct-chats" },
+    { title: "سجلات الفيديو", icon: ShieldCheck, href: "/admin/sessions" },
     { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
     { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
-    { title: "الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
-    { title: "طلبات المراجعة", icon: FileCheck, href: "/admin/pending-requests" },
+    { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
+    { title: "مراجعة الاستفهامات", icon: FileCheck, href: "/admin/pending-requests" },
     { title: "مراجعة الأعمال", icon: FileSearch, href: "/admin/portfolio-approvals" },
+    { title: "إدارة المعرض", icon: GalleryVertical, href: "/admin/portfolio-management" },
     { title: "إدارة المالية", icon: BadgeCent, href: "/admin/finance" },
     { title: "تذاكر الدعم", icon: LifeBuoy, href: "/admin/support" },
-    { title: "الأقسام", icon: Layers, href: "/admin/categories" },
+    { title: "الدردشة العائمة", icon: MessageCircle, href: "/admin/floating-chats" },
+    { title: "إدارة التوظيف", icon: Briefcase, href: "/admin/jobs" },
+    { title: "أقسام المنصة", icon: Layers, href: "/admin/categories" },
+    { title: "أقسام المفهمين", icon: Filter, href: "/admin/teacher-categories" },
     { title: "الهوية والصور", icon: ImageIcon, href: "/admin/assets" },
+    { title: "قائمة تابعنا", icon: Share2, href: "/admin/social-management" },
+    { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
+    { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
+    { title: "اختبار المراسلات", icon: Send, href: "/admin/comm-test" },
   ];
 
   const handleLogout = async () => {
@@ -191,7 +198,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub className="mr-1 pr-1.5 border-r border-accent/20 space-y-0.5 mt-0.5">
+                  <SidebarMenuSub className="mr-1 pr-1.5 border-r border-accent/20 space-y-0.5 mt-0.5 max-h-[400px] overflow-y-auto no-scrollbar">
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-7">

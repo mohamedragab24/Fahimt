@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * ترويسة الموقع - تم إصلاحها لضمان استقرار الـ Hydration عبر توحيد الكلاسات الأساسية.
+ * تختفي تماماً في صفحات الهبوط والدخول للزوار.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -66,12 +68,16 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
+  // إخفاء الترويسة العالمية في صفحات الزوار
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
-  const shouldHideContent = !mounted || (isExcludedPath && !user && !isUserLoading);
+  const shouldHideGlobalHeader = isExcludedPath && !user;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0 h-12 md:h-14">
-      {mounted && !shouldHideContent && (
+    <header className={cn(
+      "sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0 h-12 md:h-14",
+      mounted && shouldHideGlobalHeader ? "hidden" : "block"
+    )}>
+      {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-2 md:px-4 max-w-[1920px] mx-auto gap-1">
           
           <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
