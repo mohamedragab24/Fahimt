@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,9 +13,6 @@ import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
-/**
- * ترويسة الموقع المطورة - بدون اسم لزيادة المساحة، وأحجام أيقونات كبيرة.
- */
 export function Header() {
   const [mounted, setMounted] = useState(false);
   const { user, auth } = useFirebase();
@@ -65,35 +61,8 @@ export function Header() {
   }, [firestore, user, mounted]);
   const { data: unreadChats } = useCollection(unreadMessagesQuery);
 
-  const unreadSystemNotifs = systemNotifs?.filter(n => !n.read) || [];
-  const totalNotifications = unreadSystemNotifs.length;
+  const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
-
-  useEffect(() => {
-    if (mounted && totalNotifications > lastNotifCount.current) {
-      const latestNotif = systemNotifs?.[0];
-      if (latestNotif) {
-        toast({
-          title: "إشعار جديد 🔔",
-          description: latestNotif.title || latestNotif.message,
-        });
-      }
-    }
-    lastNotifCount.current = totalNotifications;
-  }, [totalNotifications, systemNotifs, toast, mounted]);
-
-  const markAllRead = async () => {
-    if (!firestore || !user || unreadSystemNotifs.length === 0) return;
-    try {
-      const batch = writeBatch(firestore);
-      unreadSystemNotifs.forEach(notif => {
-        batch.update(doc(firestore, "notifications", notif.id), { read: true });
-      });
-      await batch.commit();
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   if (!mounted) return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-lg h-24 md:h-32" />
@@ -103,7 +72,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-4">
         
-        {/* اليمين: القائمة والروابط الأساسية */}
+        {/* اليمين: القائمة الجانبية والروابط */}
         <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
@@ -114,7 +83,7 @@ export function Header() {
           </nav>
         </div>
 
-        {/* المنتصف: التنبيهات والرسائل (بأحجام كبيرة) */}
+        {/* المنتصف: التنبيهات والرسائل */}
         <div className="flex items-center gap-4 md:gap-8 mx-4">
           <Button 
             variant="ghost" 
@@ -147,42 +116,37 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="w-[300px] md:w-[500px] p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
-              <div className="flex justify-between items-center p-4">
-                <DropdownMenuLabel className="text-2xl font-black p-0">التنبيهات</DropdownMenuLabel>
-                {unreadSystemNotifs.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-md font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
-                )}
-              </div>
+              <DropdownMenuLabel className="text-2xl font-black p-4">التنبيهات</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-[500px] overflow-y-auto p-2">
                 {systemNotifs && systemNotifs.length > 0 ? (
                   systemNotifs.map((n: any) => (
-                    <DropdownMenuItem key={n.id} className={`p-4 md:p-6 rounded-3xl cursor-pointer hover:bg-muted mb-2 transition-all ${!n.read ? 'bg-primary/5 border-r-4 border-primary' : 'border-r-4 border-transparent'}`}>
+                    <DropdownMenuItem key={n.id} className="p-4 md:p-6 rounded-3xl mb-2">
                       <div className="flex gap-4 text-right w-full">
                         <div className="bg-primary/10 p-3 rounded-2xl h-14 w-14 flex items-center justify-center shrink-0">
                           <Bell className="text-primary h-8 w-8" />
                         </div>
-                        <div className="space-y-1 flex-1">
-                          <p className="font-black text-lg leading-tight text-zinc-800">{n.title}</p>
-                          <p className="text-sm text-muted-foreground font-bold leading-relaxed">{n.message}</p>
+                        <div className="space-y-1">
+                          <p className="font-black text-lg text-zinc-800">{n.title}</p>
+                          <p className="text-sm text-muted-foreground font-bold">{n.message}</p>
                         </div>
                       </div>
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <div className="p-10 text-center text-muted-foreground font-bold opacity-50 italic">لا توجد تنبيهات</div>
+                  <div className="p-10 text-center text-muted-foreground">لا توجد تنبيهات</div>
                 )}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        {/* اليسار: صورة البروفايل الكبيرة (بدون اسم) */}
+        {/* اليسار: البروفايل */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-center h-16 w-16 md:h-28 md:w-28 rounded-full md:rounded-[2.5rem] hover:bg-primary/5 group border-2 border-transparent transition-all p-0">
+                <Button variant="ghost" className="h-16 w-16 md:h-28 md:w-28 rounded-full md:rounded-[2.5rem] p-0 group">
                   <Avatar className="h-14 w-14 md:h-24 md:w-24 border-[4px] border-primary/20 shadow-lg transition-transform group-hover:scale-110">
                     <AvatarImage src={profile?.profilePictureUrl} />
                     <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
@@ -196,14 +160,14 @@ export function Header() {
                     <span className="text-xs text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => router.push('/profile')} className="p-5 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-xl hover:bg-primary/5 mb-1">
+                <DropdownMenuItem onClick={() => router.push('/profile')} className="p-5 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-xl">
                   الملف الشخصي <User className="h-7 w-7 text-primary" />
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-5 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-xl hover:bg-primary/5 mb-1">
+                <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-5 rounded-[1.5rem] cursor-pointer flex justify-end gap-4 font-black text-xl">
                   المحفظة <Layout className="h-7 w-7 text-accent" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-5 rounded-[1.5rem] cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-xl hover:bg-red-50 mt-1">
+                <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-5 rounded-[1.5rem] cursor-pointer text-destructive flex justify-end gap-4 font-black text-xl">
                   تسجيل الخروج <LogOut className="h-7 w-7" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
