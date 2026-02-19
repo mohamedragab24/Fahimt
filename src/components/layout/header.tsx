@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 /**
- * ترويسة الموقع الرشيقة - تم إخفاؤها تماماً للزوار في صفحات الهبوط والدخول لمنع الازدواجية.
+ * ترويسة الموقع الرشيقة - تم تأمينها ضد أخطاء Hydration بضمان رندرة هيكلية ثابتة.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -66,19 +67,20 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
-  // استبعاد الترويسة العالمية تماماً للزوار في هذه الصفحات
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
-
-  // إذا لم يكتمل التحميل أو كان المستخدم زائراً في صفحة مستبعدة، لا تظهر الترويسة العالمية
-  if (!mounted) return null;
-  if (isExcludedPath && !user && !isUserLoading) return null;
+  
+  // لضمان عدم حدوث خطأ Hydration، يجب أن تظل بنية الـ DOM متطابقة.
+  // نستخدم فئة hidden لإخفاء الترويسة بدلاً من إرجاع null تماماً.
+  const shouldHideGlobalHeader = !mounted || (isExcludedPath && !user && !isUserLoading);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0">
+    <header className={cn(
+      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0",
+      shouldHideGlobalHeader ? "hidden" : "block"
+    )}>
       <div className="flex h-12 md:h-14 items-center justify-between px-2 md:px-4 max-w-[1920px] mx-auto gap-1">
         
         <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
-          {/* زر القائمة يظهر فقط للمسجلين أو في الصفحات الداخلية */}
           {user && <SidebarTrigger className="h-7 w-7 text-accent bg-accent/5 hover:bg-accent/10 rounded-lg shrink-0" />}
           
           <nav className="flex items-center gap-0.5 md:gap-2 border-r pr-1 md:pr-3 border-zinc-100 overflow-x-auto no-scrollbar py-0.5">
@@ -90,9 +92,8 @@ export function Header() {
 
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
           
-          {/* أيقونات التنبيهات والدردشة تظهر فقط للمسجلين */}
-          {!isUserLoading && user && (
-            <div className="flex items-center gap-0.5 md:gap-1.5 animate-in fade-in slide-in-from-left-1">
+          {mounted && user && (
+            <div className="flex items-center gap-0.5 md:gap-1.5">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -150,7 +151,7 @@ export function Header() {
           )}
 
           <div className="mr-0.5">
-            {!isUserLoading && user ? (
+            {mounted && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
@@ -179,7 +180,7 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : !isUserLoading && (
+            ) : mounted && (
               <Button 
                 onClick={() => router.push('/login')} 
                 className="h-7 md:h-8 px-3 md:px-5 rounded-lg font-black text-[10px] md:text-xs bg-primary hover:bg-primary/90 text-white shadow-md"
