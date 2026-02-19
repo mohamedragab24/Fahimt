@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -199,7 +198,7 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* الجزء الأيسر: بروفايل المستخدم (بدون اسم لتوفير المساحة) */}
+        {/* الجزء الأيسر: بروفايل المستخدم */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>

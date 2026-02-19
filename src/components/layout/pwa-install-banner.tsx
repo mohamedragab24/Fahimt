@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,33 +23,34 @@ export function PWAInstallBanner() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone) return;
 
-    // 2. الاستماع لحدث التثبيت من المتصفح
+    // 2. إظهار البانر فوراً عند الدخول
+    const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
+    if (!isDismissed) {
+      setShowBanner(true);
+      
+      // 3. الإخفاء التلقائي بعد 7 ثوانٍ
+      const timer = setTimeout(() => {
+        setShowBanner(false);
+      }, 7000);
+      
+      return () => clearTimeout(timer);
+    }
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      
-      // إظهار البانر إذا لم يقم المستخدم بإغلاقه في هذه الجلسة
-      const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
-      if (!isDismissed) {
-        setShowBanner(true);
-      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    // التحقق من حالة التثبيت (للمتصفحات التي تدعم)
-    window.addEventListener('appinstalled', () => {
-      setShowBanner(false);
-      setDeferredPrompt(null);
-    });
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      // إذا لم يكن الحدث جاهزاً، نوجه المستخدم لفتح خيارات المتصفح
+      alert("يرجى الضغط على زر الخيارات في متصفحك واختيار 'إضافة إلى الشاشة الرئيسية'.");
+      return;
+    }
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;

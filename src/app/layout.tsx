@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
