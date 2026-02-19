@@ -33,7 +33,8 @@ import {
   Wand2,
   Mail,
   Zap,
-  Share2
+  Share2,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -116,6 +117,7 @@ export function AppSidebar() {
     { title: "المحرر المرئي", icon: Edit3, href: "/admin/manual-editor" },
     { title: "الإدارة بالذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
     { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
+    { title: "رقابة الدردشات", icon: MessageSquare, href: "/admin/direct-chats" },
     { title: "إدارة الحسابات", icon: UserCog, href: "/admin/accounts" },
     { title: "فريق العمل", icon: Shield, href: "/admin/roles" },
     { title: "مركز الاعتماد", icon: CheckSquare, href: "/admin/approvals" },
@@ -142,7 +144,7 @@ export function AppSidebar() {
     <Sidebar side="right" collapsible="icon" className="border-l shadow-2xl">
       <SidebarHeader className="p-6">
         <Link href="/" className="flex items-center gap-3">
-          <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0 overflow-hidden">
+          <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center text-white text-3xl font-black shrink-0 overflow-hidden border-2 border-white/20 shadow-xl">
             {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
