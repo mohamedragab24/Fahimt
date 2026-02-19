@@ -15,6 +15,7 @@ import Link from "next/link";
 
 /**
  * ترويسة الموقع المطورة - رشيقة ومنظمة لتناسب كافة الأجهزة (PC, Tablet, Mobile).
+ * تم ضبطها لإخفاء أيقونات العمليات للزوار وإظهارها فقط بعد تسجيل الدخول.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -39,6 +40,7 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
+  // جلب التنبيهات والرسائل فقط في حال وجود مستخدم
   const systemNotifsQuery = useMemoFirebase(() => {
     if (!firestore || !user || !mounted) return null;
     return query(
@@ -66,116 +68,127 @@ export function Header() {
   const totalMessages = unreadChats?.length || 0;
 
   if (!mounted) return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background h-16 md:h-20" />
+    <header className="sticky top-0 z-40 w-full border-b bg-background h-14 md:h-16" />
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm">
-      <div className="flex h-16 md:h-20 items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-2">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden">
+      <div className="flex h-14 md:h-16 items-center justify-between px-3 md:px-6 max-w-[1920px] mx-auto gap-2">
         
-        {/* اليمين: القائمة والروابط الأساسية */}
-        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-          <SidebarTrigger className="h-9 w-9 md:h-11 md:w-11 text-primary shrink-0" />
+        {/* اليمين: القائمة والروابط الأساسية - أحجام رشيقة لتوفير المساحة */}
+        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+          <SidebarTrigger className="h-9 w-9 text-accent bg-accent/10 hover:bg-accent/20 rounded-xl shrink-0" />
           
-          <nav className="flex items-center gap-1 md:gap-3 border-r pr-2 md:pr-4 border-zinc-100 overflow-x-auto no-scrollbar py-1">
+          <nav className="flex items-center gap-1 md:gap-2 border-r pr-2 md:pr-3 border-zinc-100 overflow-x-auto no-scrollbar py-1">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
           </nav>
         </div>
 
-        {/* المنتصف: الرسائل والتنبيهات - أحجام رشيقة */}
-        <div className="flex items-center gap-2 md:gap-4 mx-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => router.push('/messages')}
-            className="relative h-9 w-9 md:h-11 md:w-11 rounded-xl hover:bg-primary/5 transition-all"
-          >
-            <Mail className="h-5 w-5 md:h-6 md:u-6 text-zinc-600" />
-            {totalMessages > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 md:h-6 md:w-6">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-5 w-5 md:h-6 md:w-6 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
-                   <span className="text-[8px] md:text-[10px] text-white font-black">{totalMessages}</span>
-                </span>
-              </span>
-            )}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-11 md:w-11 rounded-xl hover:bg-primary/5 transition-all">
-                <Bell className="h-5 w-5 md:h-6 md:w-6 text-zinc-600" />
-                {totalNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 md:h-6 md:w-6">
-                    <span className="relative inline-flex rounded-full h-5 w-5 md:h-6 md:w-6 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
-                      <span className="text-[8px] md:text-[10px] text-white font-black">{totalNotifications}</span>
+        {/* المنتصف واليسار: العمليات والبروفايل */}
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          
+          {/* أيقونات الرسائل والتنبيهات - تظهر فقط للمسجلين */}
+          {user && (
+            <div className="flex items-center gap-1.5 md:gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/messages')}
+                className="relative h-9 w-9 rounded-xl hover:bg-primary/5 text-zinc-500"
+              >
+                <Mail className="h-5 w-5" />
+                {totalMessages > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
+                       <span className="text-[7px] text-white font-black">{totalMessages}</span>
                     </span>
                   </span>
                 )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-72 md:w-80 p-2 rounded-2xl shadow-xl border-2" dir="rtl">
-              <DropdownMenuLabel className="font-black p-2 text-md">التنبيهات</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-80 overflow-y-auto">
-                {systemNotifs && systemNotifs.length > 0 ? (
-                  systemNotifs.map((n: any) => (
-                    <DropdownMenuItem key={n.id} className="p-3 rounded-xl mb-1 cursor-pointer">
-                      <div className="flex gap-3 text-right w-full">
-                        <div className="bg-primary/10 p-2 rounded-lg h-9 w-9 flex items-center justify-center shrink-0">
-                          <Bell className="text-primary h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-black text-sm text-zinc-800 truncate">{n.title}</p>
-                          <p className="text-xs text-muted-foreground font-bold truncate">{n.message}</p>
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <div className="p-6 text-center text-muted-foreground text-xs font-bold">لا توجد تنبيهات</div>
-                )}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
 
-        {/* اليسار: البروفايل */}
-        <div className="shrink-0">
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 w-10 md:h-12 md:w-12 rounded-xl p-0 group overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all">
-                  <Avatar className="h-full w-full">
-                    <AvatarImage src={profile?.profilePictureUrl} />
-                    <AvatarFallback className="bg-primary/5 text-primary font-black text-sm">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 md:w-72 p-2 rounded-2xl shadow-xl border-2" dir="rtl">
-                <DropdownMenuLabel className="font-black p-3 text-right border-b mb-1">
-                  <div className="flex flex-col">
-                    <span className="text-sm">{profile?.fullName}</span>
-                    <span className="text-[10px] text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl hover:bg-primary/5 text-zinc-500">
+                    <Bell className="h-5 w-5" />
+                    {totalNotifications > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
+                          <span className="text-[7px] text-white font-black">{totalNotifications}</span>
+                        </span>
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-72 p-2 rounded-2xl shadow-xl border-2" dir="rtl">
+                  <DropdownMenuLabel className="font-black p-2 text-sm">التنبيهات</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-80 overflow-y-auto">
+                    {systemNotifs && systemNotifs.length > 0 ? (
+                      systemNotifs.map((n: any) => (
+                        <DropdownMenuItem key={n.id} className="p-3 rounded-xl mb-1 cursor-pointer">
+                          <div className="flex gap-3 text-right w-full">
+                            <div className="bg-primary/10 p-2 rounded-lg h-8 w-8 flex items-center justify-center shrink-0">
+                              <Bell className="text-primary h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-black text-xs text-zinc-800 truncate">{n.title}</p>
+                              <p className="text-[10px] text-muted-foreground font-bold truncate">{n.message}</p>
+                            </div>
+                          </div>
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center text-muted-foreground text-xs font-bold">لا توجد تنبيهات</div>
+                    )}
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold text-sm">
-                  الملف الشخصي <User className="h-4 w-4 text-primary" />
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold text-sm">
-                  المحفظة <Layout className="h-4 w-4 text-accent" />
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-3 rounded-xl cursor-pointer text-destructive flex justify-end gap-3 font-bold text-sm">
-                  تسجيل الخروج <LogOut className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button onClick={() => router.push('/login')} className="h-9 md:h-11 px-4 md:px-6 rounded-xl font-black text-sm md:text-md shadow-sm">دخول</Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
+
+          {/* قسم الحساب: صورة البروفايل أو زر الدخول */}
+          <div className="mr-1">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-9 w-9 rounded-xl p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={profile?.profilePictureUrl} />
+                      <AvatarFallback className="bg-primary/5 text-primary font-black text-xs">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border-2" dir="rtl">
+                  <DropdownMenuLabel className="font-black p-3 text-right border-b mb-1">
+                    <div className="flex flex-col">
+                      <span className="text-sm">{profile?.fullName}</span>
+                      <span className="text-[10px] text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold text-sm">
+                    الملف الشخصي <User className="h-4 w-4 text-primary" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl cursor-pointer flex justify-end gap-3 font-bold text-sm">
+                    المحفظة <Layout className="h-4 w-4 text-accent" />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-3 rounded-xl cursor-pointer text-destructive flex justify-end gap-3 font-bold text-sm">
+                    تسجيل الخروج <LogOut className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                onClick={() => router.push('/login')} 
+                className="h-9 px-5 rounded-xl font-black text-xs md:text-sm bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20"
+              >
+                دخول
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </header>
@@ -186,10 +199,11 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-xs md:text-sm whitespace-nowrap group shrink-0 border border-transparent hover:border-primary/10"
+      className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-[11px] md:text-sm whitespace-nowrap group shrink-0 border border-transparent"
     >
-      <Icon className="h-4 w-4 md:h-5 md:w-5 group-hover:scale-110 transition-transform" />
-      <span>{label}</span>
+      <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+      <span className="hidden sm:inline">{label}</span>
+      <span className="sm:hidden">{label.charAt(0)}</span>
     </Link>
   );
 }
