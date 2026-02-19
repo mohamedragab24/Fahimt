@@ -21,7 +21,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
           (registration) => {
             console.log('Fahimni SW registered: ', registration.scope);
           },

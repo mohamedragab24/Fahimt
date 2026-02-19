@@ -1,8 +1,8 @@
-// Fahimni Service Worker
 const CACHE_NAME = 'fahimni-cache-v1';
 const urlsToCache = [
   '/',
-  '/globals.css'
+  '/manifest.json',
+  'https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap'
 ];
 
 self.addEventListener('install', (event) => {

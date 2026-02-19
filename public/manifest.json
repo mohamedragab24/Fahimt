@@ -4,7 +4,7 @@
   "description": "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
+  "background_color": "#ffffff",
   "theme_color": "#29B6F6",
   "icons": [
     {
