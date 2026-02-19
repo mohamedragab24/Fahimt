@@ -14,7 +14,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * ترويسة الموقع الرشيقة - تم تأمينها ضد أخطاء Hydration بضمان رندرة هيكلية ثابتة.
+ * ترويسة الموقع - تم إصلاحها لضمان استقرار الـ Hydration عبر توحيد الكلاسات الأساسية.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -67,16 +67,11 @@ export function Header() {
   const totalMessages = unreadChats?.length || 0;
 
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
-  
-  // لضمان عدم حدوث خطأ Hydration، يجب أن تظل بنية الـ DOM متطابقة دائماً بوجود وسم <header>.
-  const shouldHideGlobalHeader = mounted && isExcludedPath && !user && !isUserLoading;
+  const shouldHideContent = !mounted || (isExcludedPath && !user && !isUserLoading);
 
   return (
-    <header className={cn(
-      "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden shrink-0",
-      shouldHideGlobalHeader ? "hidden" : "block h-12 md:h-14"
-    )}>
-      {!mounted ? null : (
+    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm overflow-hidden shrink-0 h-12 md:h-14">
+      {mounted && !shouldHideContent && (
         <div className="flex h-full items-center justify-between px-2 md:px-4 max-w-[1920px] mx-auto gap-1">
           
           <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
