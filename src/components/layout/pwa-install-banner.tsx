@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, Star } from "lucide-react";
+import { Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 /**
- * بانر تثبيت التطبيق الذكي - يظهر في كل مرة عند الدخول من المتصفح لمدة 7 ثوانٍ.
+ * بانر تثبيت التطبيق الذكي - يظهر عند الدخول من المتصفح ولا يختفي إلا بقرار المستخدم.
  */
 export function PWAInstallBanner() {
   const pathname = usePathname();
@@ -38,8 +38,7 @@ export function PWAInstallBanner() {
     const showTimer = setTimeout(() => {
       if (!isExcludedPath) {
         setShowBanner(true);
-        // إخفاء البانر تلقائياً بعد 7 ثوانٍ من ظهوره
-        setTimeout(() => setShowBanner(false), 7000);
+        // تم إلغاء الإخفاء التلقائي بناءً على طلب المستخدم
       }
     }, 2000);
 
@@ -103,11 +102,10 @@ export function PWAInstallBanner() {
           </Button>
           <Button 
             variant="ghost" 
-            size="icon" 
             onClick={() => setShowBanner(false)}
-            className="h-10 w-10 rounded-full text-zinc-300"
+            className="h-12 px-4 rounded-2xl font-black text-sm text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors"
           >
-            <X size={24} />
+            ليس الآن
           </Button>
         </div>
       </div>
