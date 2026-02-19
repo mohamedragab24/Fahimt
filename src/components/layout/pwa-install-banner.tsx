@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,13 +6,15 @@ import { X, Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
+import { usePathname } from "next/navigation";
 
 /**
- * بانر تثبيت التطبيق المطور - يظهر فقط بعد تسجيل الدخول وإذا لم يكن التطبيق مثبتاً.
+ * بانر تثبيت التطبيق المطور - يظهر فقط بعد تسجيل الدخول وفي الصفحات الداخلية.
  * يظهر فوراً ويختفي بعد 7 ثوانٍ تلقائياً.
  */
 export function PWAInstallBanner() {
   const { user, isUserLoading } = useUser();
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -24,37 +27,42 @@ export function PWAInstallBanner() {
 
   const { data: settings } = useDoc(settingsRef);
 
+  // استبعاد صفحة الهبوط وصفحات الدخول/التسجيل
+  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
+
   useEffect(() => {
     setIsMounted(true);
 
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      
-      // لا يظهر البانر إلا إذا كان المستخدم مسجلاً وليس في حالة تحميل
-      if (!isUserLoading && user) {
-        setShowBanner(true);
-        // الإخفاء التلقائي بعد 7 ثوانٍ
-        setTimeout(() => {
-          setShowBanner(false);
-        }, 7000);
-      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // التحقق من وضع الـ Standalone (إذا كان مثبت بالفعل)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone;
-
-    if (isStandalone) {
-      setShowBanner(false);
-    }
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, [user, isUserLoading]);
+  }, []);
+
+  useEffect(() => {
+    // إظهار البانر فقط للمسجلين وفي غير الصفحات المستبعدة
+    if (!isUserLoading && user && !isExcludedPath && deferredPrompt) {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+        || (window.navigator as any).standalone;
+
+      if (!isStandalone) {
+        setShowBanner(true);
+        // الإخفاء التلقائي بعد 7 ثوانٍ
+        const timer = setTimeout(() => {
+          setShowBanner(false);
+        }, 7000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setShowBanner(false);
+    }
+  }, [user, isUserLoading, pathname, isExcludedPath, deferredPrompt]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -66,45 +74,45 @@ export function PWAInstallBanner() {
     }
   };
 
-  // حماية إضافية: لا يعرض أي شيء إذا لم يكن هناك مستخدم مسجل
-  if (!isMounted || !showBanner || !deferredPrompt || !user) return null;
+  if (!isMounted || !showBanner || !user || isExcludedPath) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-1000" dir="rtl">
-      <div className="max-w-xl mx-auto bg-white/95 backdrop-blur-2xl border-4 border-primary/20 shadow-[0_30px_80px_rgba(0,0,0,0.25)] rounded-[3rem] p-5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-5 flex-1 min-w-0">
-          <div className="bg-primary w-16 h-16 rounded-[1.5rem] flex items-center justify-center shrink-0 border-4 border-white shadow-xl overflow-hidden">
+    <div className="fixed top-2 left-2 right-2 z-[200] animate-in slide-in-from-top-full duration-700" dir="rtl">
+      <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/20 shadow-2xl rounded-[2rem] p-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="bg-primary w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-md overflow-hidden">
             {settings?.miniIconUrl ? (
-              <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="App Logo" />
+              <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" />
             ) : (
-              <span className="text-white font-black text-3xl">ف</span>
+              <span className="text-white font-black text-xl">ف</span>
             )}
           </div>
-          <div className="text-right truncate space-y-1">
-            <h4 className="font-black text-zinc-900 text-xl leading-none truncate">تثبيت تطبيق {settings?.siteTitle || "فهمني"}</h4>
-            <div className="flex items-center gap-2">
+          <div className="text-right truncate">
+            <h4 className="font-black text-zinc-900 text-sm leading-tight truncate">تثبيت تطبيق {settings?.siteTitle || "فهمني"}</h4>
+            <div className="flex items-center gap-1.5">
               <div className="flex">
-                {[1,2,3,4,5].map(s => <Star key={s} size={10} className="fill-yellow-400 text-yellow-400" />)}
+                {[1,2,3,4,5].map(s => <Star key={s} size={8} className="fill-yellow-400 text-yellow-400" />)}
               </div>
-              <p className="text-[10px] text-zinc-400 font-bold truncate">تجربة أسرع وأخف على جهازك</p>
+              <p className="text-[8px] text-zinc-400 font-bold truncate">أسرع وأخف على جهازك</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button 
             onClick={handleInstallClick}
-            className="h-14 px-10 rounded-[1.5rem] font-black text-lg bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/20 transition-all active:scale-95 flex items-center gap-3"
+            size="sm"
+            className="h-10 px-5 rounded-xl font-black text-sm bg-primary hover:bg-primary/90 text-white shadow-lg"
           >
-            <Download size={24} /> تثبيت
+            <Download size={16} className="ml-1.5" /> تثبيت
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => setShowBanner(false)}
-            className="h-12 w-12 rounded-full text-zinc-300 hover:bg-zinc-100 transition-colors"
+            className="h-8 w-8 rounded-full text-zinc-300"
           >
-            <X size={28} />
+            <X size={20} />
           </Button>
         </div>
       </div>
