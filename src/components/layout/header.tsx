@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { Bell, Mail, GraduationCap, Layout, Search, Menu } from "lucide-react";
+import { Bell, Mail, GraduationCap, Layout, Search, Menu, User, Zap } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,30 +85,30 @@ export function Header() {
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
-          {/* جهة اليمين: زر القائمة أولاً ثم اللوجو مباشرة */}
+          {/* جهة اليمين: اللوجو أولاً ثم زر القائمة البرتقالي كما في الصورة */}
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-10 w-10 text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-xl shrink-0 border-2 border-zinc-100 flex items-center justify-center">
-              <Menu className="h-6 w-6" />
-            </SidebarTrigger>
-
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 bg-transparent">
                 <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
               </div>
             </Link>
+
+            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg transition-transform active:scale-95">
+              <Menu className="h-6 w-6 md:h-7 md:w-7" />
+            </SidebarTrigger>
           </div>
 
-          {/* جهة اليسار: الروابط مجمعة بجانب الأيقونات */}
-          <div className="flex items-center gap-1 md:gap-3 shrink-0">
+          {/* جهة اليسار: الروابط والرسائل والبروفايل */}
+          <div className="flex items-center gap-1 md:gap-4 shrink-0">
             
-            {/* روابط التنقل - تظهر بجانب الرسائل في اليسار */}
-            <nav className="hidden md:flex items-center gap-1 pl-2">
+            {/* روابط التنقل - تظهر بوضوح بجانب الأيقونات */}
+            <nav className="hidden md:flex items-center gap-2 pl-4 border-l border-zinc-100">
               <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <HeaderNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
             </nav>
 
-            <div className="flex items-center gap-1 border-r border-zinc-100 pr-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {/* الرسائل */}
               <Button 
                 variant="ghost" 
@@ -165,18 +165,27 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* البروفايل */}
-              <div className="mr-1">
-                <Button 
-                  variant="ghost" 
-                  onClick={goToProfile}
-                  className="h-10 w-10 md:h-14 md:w-14 rounded-2xl p-0 overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all shadow-md group"
-                >
-                  <Avatar className="h-full w-full">
-                    <AvatarImage src={profile?.profilePictureUrl} />
-                    <AvatarFallback className="bg-primary/5 text-primary font-black text-lg">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
-                  </Avatar>
-                </Button>
+              {/* زر الدخول أو البروفايل باللون اللبني */}
+              <div className="mr-2">
+                {user ? (
+                  <Button 
+                    variant="ghost" 
+                    onClick={goToProfile}
+                    className="h-10 w-10 md:h-14 md:w-14 rounded-2xl p-0 overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all shadow-md group"
+                  >
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={profile?.profilePictureUrl} />
+                      <AvatarFallback className="bg-primary/5 text-primary font-black text-lg">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => router.push('/login')}
+                    className="h-10 md:h-12 px-6 md:px-8 bg-primary hover:bg-primary/90 text-white font-black rounded-xl md:rounded-2xl text-md md:text-lg shadow-lg transition-all hover:scale-105"
+                  >
+                    دخول
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -197,7 +206,7 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
       href={href} 
       onClick={() => { setOpen(false); setOpenMobile(false); }}
       className={cn(
-        "flex items-center gap-2 px-2 py-2 rounded-xl transition-all font-black text-xs whitespace-nowrap group shrink-0",
+        "flex items-center gap-2 px-3 py-2 rounded-xl transition-all font-black text-sm whitespace-nowrap group shrink-0",
         isActive ? "text-primary bg-primary/5 shadow-inner" : "text-zinc-600 hover:text-primary hover:bg-primary/5"
       )}
     >

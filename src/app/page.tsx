@@ -20,7 +20,10 @@ import {
   Zap,
   BellRing,
   Clock,
-  Play
+  Play,
+  Menu,
+  Mail,
+  Bell
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -33,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -166,6 +170,7 @@ function LandingPage({ router, settings }: any) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const firestore = useFirestore();
+  const { toggleSidebar } = useSidebar();
 
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
@@ -206,23 +211,29 @@ function LandingPage({ router, settings }: any) {
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
         
-        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
-          <div className="flex items-center cursor-pointer shrink-0" onClick={() => router.push('/')}>
-            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden">
+        {/* الترويسة في صفحة الهبوط لتطابق الصورة المطلوبة */}
+        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
               <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
             </div>
+            {/* زر القائمة البرتقالي كما في الصورة */}
+            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
+              <Menu className="h-7 w-7 text-white" />
+            </Button>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1 justify-end">
-            <nav className="hidden md:flex items-center gap-3 md:gap-8 border-l border-white/10 pl-4 md:pl-8 overflow-x-auto no-scrollbar flex-nowrap">
+          <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
+            <nav className="hidden lg:flex items-center gap-6 border-l border-white/10 pl-6">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <LinkItem href="/browse" icon={Search} label="الاستفهامات" />
             </nav>
             
             <div className="flex items-center gap-2 md:gap-4 shrink-0">
-              <Button onClick={() => router.push('/login')} variant="ghost" className="text-white hover:bg-white/10 font-black rounded-full px-4 md:px-8 h-12 md:h-16 text-lg border border-white/20">دخول</Button>
-              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-10 h-12 md:h-16 text-lg shadow-xl">سجل</Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10 h-12 w-12 rounded-2xl"><Mail className="h-6 w-6"/></Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10 h-12 w-12 rounded-2xl"><Bell className="h-6 w-6"/></Button>
+              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl px-10 h-14 md:h-16 text-xl shadow-2xl">دخول</Button>
             </div>
           </div>
         </header>
@@ -322,9 +333,9 @@ function LandingPage({ router, settings }: any) {
 
 function LinkItem({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
   return (
-    <a href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-md md:text-xl transition-all group shrink-0">
+    <a href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-md md:text-lg transition-all group shrink-0">
       <div className="bg-white/10 p-2 rounded-lg group-hover:bg-primary/20 group-hover:scale-110 transition-all">
-        <Icon size={24} className="group-hover:text-primary" />
+        <Icon size={20} className="group-hover:text-primary" />
       </div>
       <span className="whitespace-nowrap">{label}</span>
     </a>
