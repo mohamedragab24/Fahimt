@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -20,7 +19,8 @@ import {
   Info, 
   Smartphone,
   LayoutTemplate,
-  BadgeCheck
+  BadgeCheck,
+  AppWindow
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,7 +71,8 @@ export default function AdminAssets() {
   };
 
   const assetItems = [
-    { key: 'logoUrl', label: 'اللوجو الرئيسي', desc: 'يظهر في الهيدر وصفحة الهبوط.', icon: Flower2 },
+    { key: 'logoUrl', label: 'اللوجو الرئيسي', desc: 'يظهر في صفحة الهبوط والترويسة.', icon: Flower2 },
+    { key: 'miniIconUrl', label: 'اللوجو الصغير', desc: 'يظهر بجانب القائمة الجانبية في الترويسة.', icon: AppWindow },
     { key: 'landingBg', label: 'خلفية الهيرو', desc: 'خلفية صفحة الهبوط الرئيسية.', icon: Monitor },
     { key: 'aboutImage', label: 'صورة "عن المنصة"', desc: 'تظهر في صفحة التعريف.', icon: Info },
     { key: 'splashImageUrl', label: 'صورة الترحيب', desc: 'تظهر كـ Popup للمستخدمين الجدد.', icon: Zap },
@@ -126,7 +127,7 @@ export default function AdminAssets() {
                   <img 
                     src={currentImage} 
                     alt={item.label} 
-                    className={`${item.key.includes('icon') || item.key.includes('logo') || item.key.includes('Badge') ? 'h-32 w-32 object-contain' : 'w-full h-full object-cover'}`}
+                    className={`${item.key.includes('icon') || item.key.includes('logo') || item.key.includes('Badge') || item.key.includes('miniIcon') ? 'h-32 w-32 object-contain' : 'w-full h-full object-cover'}`}
                   />
                 </div>
               </CardContent>

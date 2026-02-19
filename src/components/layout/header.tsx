@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -75,7 +74,7 @@ export function Header() {
     router.push('/profile');
   };
 
-  const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
+  const defaultLogo = settings?.miniIconUrl || settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
 
   return (
     <header className={cn(
@@ -86,14 +85,26 @@ export function Header() {
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
           <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
-            <Link href="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="bg-primary w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
-                <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+            {user && (
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="h-10 w-10 text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-xl shrink-0 border-2 border-zinc-100" />
+                <Link href="/" className="flex items-center gap-3 shrink-0 group">
+                  <div className="bg-primary w-10 h-10 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
+                    <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+                  </div>
+                  <span className="text-primary font-black text-xl md:text-3xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
+                </Link>
               </div>
-              <span className="text-primary font-black text-2xl md:text-4xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
-            </Link>
+            )}
             
-            {user && <SidebarTrigger className="h-10 w-10 text-accent bg-accent/5 hover:bg-accent/10 rounded-xl shrink-0 border-2 border-accent/10" />}
+            {!user && (
+              <Link href="/" className="flex items-center gap-3 shrink-0 group">
+                <div className="bg-primary w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
+                  <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+                </div>
+                <span className="text-primary font-black text-2xl md:text-4xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:gap-6 shrink-0">
