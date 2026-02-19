@@ -18,17 +18,22 @@ import {
   Inbox, 
   History,
   ShieldCheck,
-  ArrowRight
+  ArrowRight,
+  Zap
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+/**
+ * صفحة سجل المحادثات المباشرة - للاطلاع والرقابة اللاحقة فقط.
+ * تؤكد الواجهة أن التواصل مباشر وتلقائي بين العملاء.
+ */
 export default function AdminDirectChats() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChat, setSelectedChat] = useState<any>(null);
 
-  // جلب كافة المحادثات الثنائية
+  // جلب كافة المحادثات المباشرة الجارية
   const chatsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "direct_chats"), orderBy("updatedAt", "desc"), limit(100));
@@ -54,8 +59,8 @@ export default function AdminDirectChats() {
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
         <div>
-          <h1 className="text-4xl font-black font-headline text-zinc-900">رقابة الدردشات المباشرة</h1>
-          <p className="text-muted-foreground text-lg">متابعة كافة المحادثات الثنائية الجارية بين الطلاب والمفهمين.</p>
+          <h1 className="text-4xl font-black font-headline text-zinc-900">سجل المحادثات المباشرة</h1>
+          <p className="text-muted-foreground text-lg font-bold">متابعة التواصل التلقائي والمباشر الجاري بين الطلاب والمفهمين لضمان الجودة.</p>
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
@@ -69,16 +74,16 @@ export default function AdminDirectChats() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[750px]">
-        {/* قائمة المحادثات */}
+        {/* قائمة المحادثات النشطة */}
         <Card className="lg:col-span-1 shadow-2xl rounded-[2.5rem] overflow-hidden border-2 bg-white flex flex-col">
           <CardHeader className="bg-muted/30 border-b p-6">
             <CardTitle className="text-xl font-black flex items-center gap-2">
-              <Inbox size={20} className="text-primary" /> قائمة المحادثات
+              <Zap size={20} className="text-primary fill-current" /> تواصل مباشر نشط
             </CardTitle>
           </CardHeader>
           <ScrollArea className="flex-1">
             {isLoading ? (
-              <div className="p-10 text-center animate-pulse font-bold">جاري تحميل المحادثات...</div>
+              <div className="p-10 text-center animate-pulse font-bold">جاري جلب المحادثات الجارية...</div>
             ) : filteredChats && filteredChats.length > 0 ? (
               <div className="divide-y">
                 {filteredChats.map((chat) => (
@@ -99,12 +104,12 @@ export default function AdminDirectChats() {
                 ))}
               </div>
             ) : (
-              <div className="py-20 text-center text-muted-foreground font-bold opacity-30">لا توجد محادثات مطابقة.</div>
+              <div className="py-20 text-center text-muted-foreground font-bold opacity-30">لا توجد محادثات مباشرة حالياً.</div>
             )}
           </ScrollArea>
         </Card>
 
-        {/* عرض المحادثة المختارة */}
+        {/* معاينة المحادثة - اطلاع فقط */}
         <Card className="lg:col-span-2 shadow-2xl rounded-[2.5rem] overflow-hidden border-2 bg-white flex flex-col">
           {selectedChat ? (
             <>
@@ -122,7 +127,7 @@ export default function AdminDirectChats() {
                   <div className="text-right">
                     <h3 className="font-black text-lg leading-tight">{selectedChat.studentName} و {selectedChat.teacherName}</h3>
                     <p className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
-                      <ShieldCheck size={10} /> رقابة إدارية مفعلة
+                      <ShieldCheck size={10} /> اطلاع إداري لضمان الحقوق (تواصل تلقائي)
                     </p>
                   </div>
                 </div>
@@ -155,18 +160,18 @@ export default function AdminDirectChats() {
 
               <div className="p-6 bg-zinc-50 border-t flex justify-between items-center">
                 <div className="flex items-center gap-3 text-zinc-400 font-bold text-xs">
-                  <History size={16} /> سجل كامل للمحادثة التوضيحية
+                  <History size={16} /> سجل كامل لمحادثة مباشرة وتلقائية
                 </div>
                 <Button variant="ghost" className="font-black text-primary gap-2" onClick={() => router.push(`/requests/${selectedChat.requestId}`)}>
-                  عرض الاستفهام المرتبط <ArrowRight size={16} className="rotate-180" />
+                  عرض طلب الاستفهام <ArrowRight size={16} className="rotate-180" />
                 </Button>
               </div>
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground opacity-20 p-20 text-center">
               <MessageSquare size={120} strokeWidth={1} />
-              <h2 className="text-3xl font-black mt-6">اختر محادثة للمراجعة</h2>
-              <p className="text-xl font-bold mt-2">يمكنك الاطلاع على كافة التفاصيل والمرفقات المتبادلة بين الطرفين.</p>
+              <h2 className="text-3xl font-black mt-6">اختر محادثة للاطلاع</h2>
+              <p className="text-xl font-bold mt-2">يمكنك متابعة التواصل المباشر بين الأطراف لضمان الجودة.</p>
             </div>
           )}
         </Card>

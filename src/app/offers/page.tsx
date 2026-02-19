@@ -14,13 +14,17 @@ import {
   Loader2,
   CheckCircle2,
   ArrowRight,
-  Zap
+  Zap,
+  SendHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * صفحة العروض المتقدمة - تتيح للمستفهم التواصل المباشر مع المفهمين.
+ */
 export default function AdvancedOffersPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -38,7 +42,7 @@ export default function AdvancedOffersPage() {
     return (
       <div className="p-20 text-center flex flex-col items-center gap-4 bg-white min-h-screen" dir="rtl">
         <Loader2 className="animate-spin h-10 w-10 text-primary" />
-        <p className="font-black text-2xl">جاري جلب العروض المتقدمة...</p>
+        <p className="font-black text-2xl">جاري جلب العروض المباشرة...</p>
       </div>
     );
   }
@@ -47,8 +51,8 @@ export default function AdvancedOffersPage() {
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div className="space-y-1 text-right">
-          <h1 className="text-4xl font-black font-headline text-zinc-900">العروض المتقدمة</h1>
-          <p className="text-muted-foreground text-lg font-bold">تواصل مع المفهمين الذين قدموا عروضاً لتوضيح طلبك قبل الاختيار.</p>
+          <h1 className="text-4xl font-black font-headline text-zinc-900">العروض المباشرة</h1>
+          <p className="text-muted-foreground text-lg font-bold">تواصل الآن مباشرة مع المفهمين لمناقشة تفاصيل استفهامك.</p>
         </div>
       </div>
 
@@ -60,7 +64,7 @@ export default function AdvancedOffersPage() {
         ) : (
           <div className="py-32 text-center bg-zinc-50 rounded-[4rem] border-4 border-dashed border-zinc-100 flex flex-col items-center gap-6">
             <MessageSquare size={64} className="text-zinc-200" />
-            <p className="text-2xl font-black text-zinc-300">لا توجد عروض مخصصة على طلباتك حالياً.</p>
+            <p className="text-2xl font-black text-zinc-300">لا توجد عروض على طلباتك حالياً.</p>
           </div>
         )}
       </div>
@@ -82,7 +86,7 @@ function OfferRequestGroup({ request, router, user }: any) {
   const startChat = async (offer: any) => {
     if (!firestore || !user) return;
     
-    // إنشاء معرف فريد للمحادثة يربط المستفهم والمفهم والطلب
+    // إنشاء معرف فريد للمحادثة يربط المستفهم والمفهم والطلب بشكل مباشر
     const chatId = `${request.id}_${offer.mufhemId}`;
     const chatRef = doc(firestore, "direct_chats", chatId);
 
@@ -97,15 +101,16 @@ function OfferRequestGroup({ request, router, user }: any) {
         teacherName: offer.mufhemName,
         teacherAvatar: offer.mufhemAvatar || "",
         participants: [user.uid, offer.mufhemId],
-        lastMessage: "بدأ المستفهم محادثة توضيحية معك.",
+        lastMessage: "بدأ المستفهم محادثة مباشرة معك.",
         updatedAt: new Date().toISOString(),
         hasUnread: true,
         lastSenderId: user.uid
       }, { merge: true });
 
+      // الانتقال الفوري لصفحة الدردشة
       router.push(`/messages/${chatId}`);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل بدء المحادثة." });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل فتح قناة التواصل المباشر." });
     }
   };
 
@@ -139,7 +144,7 @@ function OfferRequestGroup({ request, router, user }: any) {
                     </div>
                     <p className="text-zinc-600 text-lg font-medium leading-relaxed italic line-clamp-2">"{offer.details}"</p>
                     <div className="flex flex-wrap gap-4 text-sm font-bold text-muted-foreground mt-4 pt-4 border-t border-dashed">
-                      <span className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-xl"><Clock size={16} /> الموعد: {offer.duration} يوم</span>
+                      <span className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-xl"><Clock size={16} /> الموعد: خلال {offer.duration} يوم</span>
                       <span className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-xl"><BadgeCent size={16} /> السعر: {offer.amount} ج.م</span>
                     </div>
                   </div>
@@ -150,14 +155,14 @@ function OfferRequestGroup({ request, router, user }: any) {
                     onClick={() => router.push(`/checkout/${request.id}?offerId=${offer.id}`)} 
                     className="h-14 rounded-2xl font-black text-lg bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/20"
                   >
-                    <CreditCard size={20} className="ml-2" /> قبول وبدء التعلم
+                    <CreditCard size={20} className="ml-2" /> قبول وبدء الجلسة
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => startChat(offer)}
                     className="h-14 rounded-2xl font-black text-lg border-primary text-primary hover:bg-primary/5"
                   >
-                    <MessageSquare size={20} className="ml-2" /> استفسار من المفهم
+                    <SendHorizontal size={20} className="ml-2 rotate-180" /> تواصل مباشر مع المفهم
                   </Button>
                 </div>
               </div>

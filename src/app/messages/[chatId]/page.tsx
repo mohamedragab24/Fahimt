@@ -9,10 +9,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, ChevronRight, Paperclip, Loader2, Phone, MoreVertical, MessageSquare } from "lucide-react";
+import { Send, ChevronRight, Paperclip, Loader2, Phone, MoreVertical, MessageSquare, Zap } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
+/**
+ * صفحة المحادثة المباشرة - تواصل فوري وتلقائي بين العميلين.
+ */
 export default function ChatRoomPage() {
   const { chatId } = useParams();
   const router = useRouter();
@@ -43,7 +47,7 @@ export default function ChatRoomPage() {
     }
   }, [messages]);
 
-  // تحديث حالة القراءة عند دخول المحادثة
+  // تحديث حالة القراءة فوراً
   useEffect(() => {
     if (chat && user && chat.hasUnread && chat.lastSenderId !== user.uid) {
       updateDoc(chatRef!, { hasUnread: false });
@@ -55,6 +59,7 @@ export default function ChatRoomPage() {
     if (!firestore || !user || !chatId) return;
 
     try {
+      // إرسال الرسالة يتم مباشرة لمجموعة الرسائل الفرعية
       await addDoc(collection(firestore, "direct_chats", chatId as string, "messages"), {
         senderId: user.uid,
         senderName: user.displayName || "مستخدم",
@@ -63,6 +68,7 @@ export default function ChatRoomPage() {
         createdAt: new Date().toISOString()
       });
 
+      // تحديث بيانات المحادثة الرئيسية للمعاينة
       await updateDoc(chatRef!, {
         lastMessage: attachmentBase64 ? "أرسل ملفاً/صورة" : message,
         updatedAt: new Date().toISOString(),
@@ -85,7 +91,7 @@ export default function ChatRoomPage() {
     }
   };
 
-  if (isChatLoading) return <div className="p-20 text-center animate-pulse font-black">جاري فتح المحادثة...</div>;
+  if (isChatLoading) return <div className="p-20 text-center animate-pulse font-black">جاري فتح قناة التواصل...</div>;
   if (!chat) return <div className="p-20 text-center">المحادثة غير موجودة.</div>;
 
   const isStudent = user?.uid === chat.studentId;
@@ -94,7 +100,7 @@ export default function ChatRoomPage() {
 
   return (
     <div className="flex flex-col h-[calc(100svh-80px)] bg-zinc-50" dir="rtl">
-      {/* رأس المحادثة */}
+      {/* رأس المحادثة - مظهر مباشر وحديث */}
       <div className="bg-white border-b p-4 md:px-8 flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push('/messages')} className="rounded-full">
@@ -107,7 +113,9 @@ export default function ChatRoomPage() {
             </Avatar>
             <div className="text-right">
               <h3 className="font-black text-lg text-zinc-900 leading-none">{otherPartyName}</h3>
-              <p className="text-[10px] text-primary font-bold mt-1">بخصوص: {chat.requestTitle}</p>
+              <p className="text-[10px] text-primary font-bold mt-1 flex items-center gap-1">
+                <Zap size={10} className="fill-current" /> دردشة مباشرة بخصوص: {chat.requestTitle}
+              </p>
             </div>
           </div>
         </div>
@@ -116,12 +124,12 @@ export default function ChatRoomPage() {
         </div>
       </div>
 
-      {/* منطقة الرسائل */}
+      {/* منطقة الرسائل الفورية */}
       <ScrollArea className="flex-1 p-4 md:p-8 bg-[#F8FAFC]">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex justify-center mb-8">
-            <Badge variant="outline" className="bg-white px-6 py-2 rounded-2xl border-dashed font-bold text-zinc-400">
-              بدأت المحادثة التوضيحية
+            <Badge variant="outline" className="bg-green-50 px-6 py-2 rounded-2xl border-dashed font-bold text-green-600 border-green-200">
+              أنت الآن في تواصل مباشر مع الطرف الآخر
             </Badge>
           </div>
 
@@ -134,9 +142,11 @@ export default function ChatRoomPage() {
                   {msg.attachmentUrl && (
                     <img src={msg.attachmentUrl} className="rounded-2xl max-w-full h-auto border-2 border-white/20" alt="Attachment" />
                   )}
-                  <span className={`text-[9px] block ${isMe ? 'text-white/60' : 'text-zinc-400'} font-bold`}>
-                    {new Date(msg.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  <div className={`flex items-center gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <span className={`text-[9px] block ${isMe ? 'text-white/60' : 'text-zinc-400'} font-bold`}>
+                      {new Date(msg.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -145,17 +155,17 @@ export default function ChatRoomPage() {
         </div>
       </ScrollArea>
 
-      {/* حقل الإدخال */}
+      {/* حقل الإرسال المباشر */}
       <div className="p-4 md:p-6 bg-white border-t shrink-0">
         <div className="max-w-4xl mx-auto">
           <form className="flex gap-3 items-end" onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}>
             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
-            <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-2xl text-zinc-400 hover:bg-zinc-50 shrink-0">
+            <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-14 w-14 rounded-xl text-zinc-400 hover:bg-zinc-50 shrink-0">
               <Paperclip size={24} />
             </Button>
             <div className="flex-1 relative">
               <Input 
-                placeholder="اكتب رسالتك هنا..." 
+                placeholder="اكتب رسالتك المباشرة هنا..." 
                 className="h-14 rounded-2xl border-2 pr-6 pl-14 font-bold text-lg focus:border-primary transition-all bg-zinc-50/50" 
                 value={message} 
                 onChange={(e) => setMessage(e.target.value)} 
@@ -166,7 +176,7 @@ export default function ChatRoomPage() {
             </div>
           </form>
           <p className="text-[10px] text-center text-muted-foreground font-bold mt-3 italic">
-            * تنبيه: يمنع تبادل وسائل التواصل الخارجية أو طلب الدفع خارج المنصة لضمان حقوقك.
+            * تنبيه: تواصلك المباشر محمي ببروتوكولات الأمان. تجنب طلب الدفع الخارجي لضمان حقك المالي.
           </p>
         </div>
       </div>
