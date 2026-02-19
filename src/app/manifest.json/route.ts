@@ -6,16 +6,16 @@ import { firebaseConfig } from '@/firebase/config';
 
 /**
  * @fileOverview توليد ملف manifest.json بشكل ديناميكي من الفايربيز.
- * هذا يسمح بتغيير أيقونة التطبيق واسمه من لوحة التحكم مباشرة.
+ * هذا يسمح بتغيير أيقونة البرنامج واسمه من لوحة التحكم مباشرة وتطبيقها على هواتف المستخدمين.
  */
 
 export async function GET() {
   let settings = {
     siteTitle: "فهمني",
     primaryColor: "#29B6F6",
-    logoUrl: "https://picsum.photos/seed/fahimni/192/192",
-    icon192: "https://picsum.photos/seed/fahimni/192/192",
-    icon512: "https://picsum.photos/seed/fahimni/512/512"
+    logoUrl: "",
+    icon192: "",
+    icon512: ""
   };
 
   try {
@@ -31,6 +31,10 @@ export async function GET() {
     console.error("Error fetching dynamic manifest:", e);
   }
 
+  // استخدام أيقونات التطبيق المخصصة أو اللوجو كبديل
+  const appIcon192 = settings.icon192 || settings.logoUrl || "https://placehold.co/192x192?text=F";
+  const appIcon512 = settings.icon512 || settings.logoUrl || "https://placehold.co/512x512?text=F";
+
   const manifest = {
     name: settings.siteTitle,
     short_name: settings.siteTitle,
@@ -41,13 +45,13 @@ export async function GET() {
     theme_color: settings.primaryColor,
     icons: [
       {
-        src: settings.icon192 || settings.logoUrl,
+        src: appIcon192,
         sizes: "192x192",
         type: "image/png",
         purpose: "any maskable"
       },
       {
-        src: settings.icon512 || settings.logoUrl,
+        src: appIcon512,
         sizes: "512x512",
         type: "image/png",
         purpose: "any maskable"

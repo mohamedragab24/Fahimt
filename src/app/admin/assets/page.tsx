@@ -10,18 +10,15 @@ import {
   ImageIcon, 
   RefreshCw, 
   Upload, 
-  CheckCircle2, 
   Flower2, 
   Monitor, 
   Zap, 
   Globe, 
-  ShieldCheck, 
-  Share2, 
-  Info, 
   Smartphone,
   LayoutTemplate,
   BadgeCheck,
-  AppWindow
+  AppWindow,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -76,11 +73,10 @@ export default function AdminAssets() {
     { key: 'miniIconUrl', label: 'اللوجو الصغير (Header)', desc: 'يظهر في الترويسة العلوية بجانب القائمة.', icon: AppWindow },
     { key: 'landingBg', label: 'خلفية الهيرو', desc: 'خلفية صفحة الهبوط الكبيرة.', icon: Monitor },
     { key: 'aboutImage', label: 'صورة "عن المنصة"', desc: 'تظهر في صفحة التعريف.', icon: Info },
-    { key: 'splashImageUrl', label: 'صورة الترحيب (Splash)', desc: 'تظهر كـ Popup للمستخدمين الجدد.', icon: Zap },
     { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في لسان المتصفح بالأعلى.', icon: Globe },
-    { key: 'icon192', label: 'أيقونة PWA (192x192)', desc: 'أيقونة التطبيق عند التثبيت على الهاتف.', icon: Smartphone },
-    { key: 'icon512', label: 'أيقونة PWA (512x512)', desc: 'أيقونة شاشة التحميل والمتجر.', icon: LayoutTemplate },
-    { key: 'ogImageUrl', label: 'صورة المشاركة (Social)', desc: 'تظهر عند مشاركة رابط الموقع في السوشيال.', icon: Share2 },
+    { key: 'icon192', label: 'أيقونة التطبيق (شاشة الهاتف)', desc: 'أيقونة البرنامج التي تظهر على الجوال بعد التثبيت (192x192).', icon: Smartphone },
+    { key: 'icon512', label: 'أيقونة التطبيق (المتجر)', desc: 'أيقونة البرنامج فائقة الجودة للمتصفحات والمتاجر (512x512).', icon: LayoutTemplate },
+    { key: 'ogImageUrl', label: 'صورة المشاركة (Social)', desc: 'تظهر عند مشاركة رابط الموقع في السوشيال.', icon: ImageIcon },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق الزرقاء', desc: 'تظهر بجانب أسماء الحسابات الموثقة.', icon: BadgeCheck }
   ];
 
@@ -91,7 +87,7 @@ export default function AdminAssets() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
         <div>
           <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الصور والهوية</h1>
-          <p className="text-muted-foreground text-xl">تحكم كامل في كافة الرسوميات التي يراها المستخدم في المنصة.</p>
+          <p className="text-muted-foreground text-xl">تحكم كامل في كافة الرسوميات التي يراها المستخدم، بما في ذلك أيقونات البرنامج على الجوال.</p>
         </div>
       </div>
 

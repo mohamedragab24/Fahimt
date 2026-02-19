@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,55 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BookOpen, 
-  ShieldCheck, 
   ShieldAlert,
   LogOut,
   Scale,
-  Wand2,
-  Users,
-  MessageSquare,
-  X,
-  Briefcase,
-  ImageIcon,
-  Plus,
-  Target,
-  FileText,
-  Clock,
-  Timer,
-  Video,
-  Calendar,
-  BellRing,
-  Play,
-  Search,
-  ArrowRight,
   GraduationCap,
   Layout,
-  HelpCircle,
+  Search,
+  ArrowRight,
+  MessageSquare,
+  Plus,
+  Video,
   BadgeCent,
   Zap,
-  Wallet,
-  Facebook,
-  Youtube,
-  Send,
-  Layers,
-  Filter,
-  Activity
+  BellRing,
+  Clock,
+  Play
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, addDoc, getDocs, getDoc } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, addDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { WelcomeModal } from "@/components/layout/welcome-modal";
+import { Input } from "@/components/ui/input";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -155,7 +134,6 @@ export default function HomePage() {
 
   return (
     <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
-      <WelcomeModal />
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
@@ -223,7 +201,6 @@ function LandingPage({ router, settings }: any) {
 
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
-      <WelcomeModal />
       <div className="relative min-h-[95vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
