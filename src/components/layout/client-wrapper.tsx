@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -17,8 +18,7 @@ interface ClientWrapperProps {
 }
 
 /**
- * مغلف الواجهة الرئيسي - يضمن التوافق مع كافة الأجهزة وتناسق الأبعاد.
- * تم تثبيت عرض القائمة الجانبية (12rem) لضمان استقرار الهيدر ومنع أخطاء Hydration.
+ * مغلف الواجهة الرئيسي - تم تثبيت عرض القائمة الجانبية على 12rem وضبط حالتها الافتراضية كـ مفتوحة.
  */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);

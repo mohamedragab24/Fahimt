@@ -3,37 +3,29 @@
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, User, LogOut, Mail, GraduationCap, Layout, Search } from "lucide-react";
+import { Bell, Mail, GraduationCap, Layout, Search } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
-import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * ترويسة الموقع - تم إصلاحها لضمان استقرار الـ Hydration عبر توحيد الكلاسات الأساسية.
- * تختفي تماماً في صفحات الهبوط والدخول للزوار.
+ * ترويسة الموقع - تم تعديلها لتوجيه المستخدم للملف الشخصي مباشرة عند الضغط على الصورة.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
-  const { user, isUserLoading } = useUser();
-  const { auth, firestore } = useFirebase();
+  const { user } = useUser();
+  const { firestore } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, "settings", "general");
-  }, [firestore]);
-  const { data: settings } = useDoc(settingsRef);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -68,7 +60,6 @@ export function Header() {
   const totalNotifications = systemNotifs?.filter(n => !n.read).length || 0;
   const totalMessages = unreadChats?.length || 0;
 
-  // إخفاء الترويسة العالمية في صفحات الزوار
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
   const shouldHideGlobalHeader = isExcludedPath && !user;
 
@@ -152,34 +143,16 @@ export function Header() {
 
             <div className="mr-0.5">
               {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
-                      <Avatar className="h-full w-full">
-                        <AvatarImage src={profile?.profilePictureUrl} />
-                        <AvatarFallback className="bg-primary/5 text-primary font-black text-[10px]">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl shadow-xl border-2" dir="rtl">
-                    <DropdownMenuLabel className="font-black p-2 text-right border-b mb-1">
-                      <div className="flex flex-col">
-                        <span className="text-[11px]">{profile?.fullName}</span>
-                        <span className="text-[8px] text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</span>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push('/profile')} className="p-2 rounded-xl cursor-pointer flex justify-end gap-2 font-bold text-[11px]">
-                      الملف الشخصي <User className="h-3.5 w-3.5 text-primary" />
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-2 rounded-xl cursor-pointer flex justify-end gap-2 font-bold text-[11px]">
-                      المحفظة <Layout className="h-3.5 w-3.5 text-accent" />
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-2 rounded-xl cursor-pointer text-destructive flex justify-end gap-2 font-bold text-[11px]">
-                      تسجيل الخروج <LogOut className="h-3.5 w-3.5" />
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => router.push('/profile')}
+                  className="h-7 w-7 md:h-8 md:w-8 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm group"
+                >
+                  <Avatar className="h-full w-full">
+                    <AvatarImage src={profile?.profilePictureUrl} />
+                    <AvatarFallback className="bg-primary/5 text-primary font-black text-[10px]">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                  </Avatar>
+                </Button>
               ) : (
                 <Button 
                   onClick={() => router.push('/login')} 

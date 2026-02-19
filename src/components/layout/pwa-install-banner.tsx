@@ -4,15 +4,16 @@
 import { useState, useEffect } from "react";
 import { X, Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 /**
- * بانر تثبيت التطبيق الذكي - يظهر لمدة 7 ثوانٍ فقط إذا لم يكن التطبيق مثبتاً.
+ * بانر تثبيت التطبيق الذكي - يظهر لمدة 7 ثوانٍ فقط إذا لم يكن التطبيق مثبتاً وبعد تسجيل الدخول.
  */
 export function PWAInstallBanner() {
   const pathname = usePathname();
+  const { user } = useUser();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -25,8 +26,7 @@ export function PWAInstallBanner() {
 
   const { data: settings } = useDoc(settingsRef);
 
-  // استبعاد صفحات الدخول والتسجيل لضمان نظافة الواجهة
-  const isAuthPage = pathname === "/login" || pathname === "/forgot-password";
+  const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password";
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,13 +36,11 @@ export function PWAInstallBanner() {
       || (window.navigator as any).standalone;
 
     const handleBeforeInstallPrompt = (e: any) => {
-      // منع المتصفح من إظهار النافذة الافتراضية
       e.preventDefault();
-      // تخزين الحدث
       setDeferredPrompt(e);
       
-      // إظهار البانر فقط إذا لم يكن في صفحة دخول ولم يكن التطبيق مثبتاً
-      if (!isAuthPage && !isStandalone) {
+      // إظهار البانر فقط للمستخدمين المسجلين وفي الصفحات الداخلية
+      if (user && !isExcludedPath && !isStandalone) {
         setShowBanner(true);
         
         // إخفاء البانر تلقائياً بعد 7 ثوانٍ
@@ -59,12 +57,11 @@ export function PWAInstallBanner() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, [isAuthPage]);
+  }, [isExcludedPath, user]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     
-    // إظهار نافذة التثبيت الأصلية للجهاز
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
@@ -74,8 +71,7 @@ export function PWAInstallBanner() {
     }
   };
 
-  // حماية Hydration
-  if (!isMounted || !showBanner || isAuthPage) return null;
+  if (!isMounted || !showBanner || isExcludedPath || !user) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700" dir="rtl">
