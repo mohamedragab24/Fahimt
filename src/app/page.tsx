@@ -229,7 +229,7 @@ function LandingPage({ router, settings }: any) {
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => router.push('/')}>
             <div className="bg-primary w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl overflow-hidden border-2 border-white/20">
-              {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
+              {settings?.logoUrl ? <img src={settings.logoUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
             </div>
             <span className="text-white font-black text-2xl md:text-4xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
