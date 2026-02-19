@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download } from "lucide-react";
+import { X, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 /**
  * مكون بانر تثبيت التطبيق (PWA)
- * يظهر فقط إذا كان المتصفح يدعم التثبيت ولم يتم تثبيت التطبيق بعد.
+ * يظهر للمستخدمين الذين يتصفحون عبر المتصفح ولم يثبتوا التطبيق بعد.
  */
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -24,17 +24,21 @@ export function PWAInstallBanner() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
-      // منع المتصفح من إظهار البانر الافتراضي فوراً
+      // منع المتصفح من إظهار البانر الافتراضي
       e.preventDefault();
-      // حفظ الحدث لاستخدامه عند الضغط على زر التثبيت
+      // حفظ الحدث
       setDeferredPrompt(e);
-      // إظهار البانر الخاص بنا
-      setShowBanner(true);
+      
+      // التحقق مما إذا كان المستخدم قد أغلق البانر يدوياً في هذه الجلسة
+      const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
+      if (!isDismissed) {
+        setShowBanner(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // التحقق مما إذا كان التطبيق يعمل بالفعل بوضع التثبيت (Standalone)
+    // إذا كان التطبيق يعمل بوضع التثبيت فعلياً، لا تظهر البانر
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setShowBanner(false);
     }
@@ -47,24 +51,25 @@ export function PWAInstallBanner() {
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     
-    // إظهار نافذة التثبيت الرسمية للمتصفح
     deferredPrompt.prompt();
-    
-    // انتظار قرار المستخدم
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === "accepted") {
       setShowBanner(false);
     }
-    
     setDeferredPrompt(null);
+  };
+
+  const handleDismiss = () => {
+    setShowBanner(false);
+    sessionStorage.setItem("pwa_banner_dismissed", "true");
   };
 
   if (!showBanner) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700" dir="rtl">
-      <div className="max-w-xl mx-auto bg-white/95 backdrop-blur-xl border-2 border-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
+      <div className="max-w-xl mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 border-primary/20 overflow-hidden shadow-inner">
             {settings?.miniIconUrl ? (
@@ -74,22 +79,22 @@ export function PWAInstallBanner() {
             )}
           </div>
           <div className="text-right truncate">
-            <h4 className="font-black text-zinc-900 text-lg leading-tight truncate">تثبيت "{settings?.siteTitle || "فهمني"}"</h4>
-            <p className="text-[10px] text-muted-foreground font-bold truncate">تطبيق خفيف وسريع على شاشتك الرئيسية</p>
+            <h4 className="font-black text-zinc-900 text-lg leading-tight truncate">تثبيت تطبيق {settings?.siteTitle || "فهمني"}</h4>
+            <p className="text-[10px] text-muted-foreground font-bold truncate">تصفح أسرع وأسهل من شاشتك الرئيسية</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Button 
             onClick={handleInstallClick}
-            className="h-12 px-8 rounded-2xl font-black text-md bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all active:scale-95"
+            className="h-12 px-8 rounded-2xl font-black text-md bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
           >
-            تثبيت
+            <Download size={18} /> تثبيت
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setShowBanner(false)}
+            onClick={handleDismiss}
             className="h-10 w-10 rounded-full text-zinc-400 hover:bg-zinc-100 transition-colors"
           >
             <X size={20} />
