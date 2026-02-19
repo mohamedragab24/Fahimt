@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,7 +15,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
 /**
- * ترويسة الموقع المطورة - مساحة واسعة، أحجام كبيرة، وبدون اسم بجانب الصورة.
+ * ترويسة الموقع المطورة - بدون اسم لزيادة المساحة، وأحجام أيقونات كبيرة.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -23,7 +24,6 @@ export function Header() {
   const router = useRouter();
   const { toast } = useToast();
   const lastNotifCount = useRef(0);
-  const lastMessageCount = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -75,7 +75,7 @@ export function Header() {
       if (latestNotif) {
         toast({
           title: "إشعار جديد 🔔",
-          description: latestNotif.title || latestNotif.message || "لديك تحديث جديد في المنصة.",
+          description: latestNotif.title || latestNotif.message,
         });
       }
     }
@@ -90,15 +90,9 @@ export function Header() {
         batch.update(doc(firestore, "notifications", notif.id), { read: true });
       });
       await batch.commit();
-      toast({ title: "تم تحديث كافة التنبيهات" });
     } catch (e) {
       console.error(e);
     }
-  };
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/login");
   };
 
   if (!mounted) return (
@@ -109,7 +103,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-4">
         
-        {/* الجزء الأيمن: القائمة والروابط */}
+        {/* اليمين: القائمة والروابط الأساسية */}
         <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
@@ -120,7 +114,7 @@ export function Header() {
           </nav>
         </div>
 
-        {/* الجزء الأوسط: التنبيهات والرسائل */}
+        {/* المنتصف: التنبيهات والرسائل (بأحجام كبيرة) */}
         <div className="flex items-center gap-4 md:gap-8 mx-4">
           <Button 
             variant="ghost" 
@@ -183,7 +177,7 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* الجزء الأيسر: البروفايل (بدون اسم) */}
+        {/* اليسار: صورة البروفايل الكبيرة (بدون اسم) */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
@@ -209,7 +203,7 @@ export function Header() {
                   المحفظة <Layout className="h-7 w-7 text-accent" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="p-5 rounded-[1.5rem] cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-xl hover:bg-red-50 mt-1">
+                <DropdownMenuItem onClick={() => signOut(auth).then(()=>router.push("/login"))} className="p-5 rounded-[1.5rem] cursor-pointer text-destructive focus:text-destructive flex justify-end gap-4 font-black text-xl hover:bg-red-50 mt-1">
                   تسجيل الخروج <LogOut className="h-7 w-7" />
                 </DropdownMenuItem>
               </DropdownMenuContent>

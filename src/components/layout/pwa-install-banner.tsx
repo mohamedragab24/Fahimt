@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,6 +9,7 @@ import { doc } from "firebase/firestore";
 
 /**
  * بانر تثبيت التطبيق المطور - يظهر فوراً ويختفي بعد 7 ثوانٍ.
+ * يستدعي نافذة التثبيت الرسمية للجهاز (Native Install Dialog).
  */
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -25,19 +27,20 @@ export function PWAInstallBanner() {
   useEffect(() => {
     setIsMounted(true);
     
-    // 1. الاستماع لحدث التثبيت الرسمي من المتصفح
+    // الاستماع لحدث التثبيت الرسمي من المتصفح
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // بمجرد أن يكون المتصفح جاهزاً للتثبيت، نظهر البانر
+      // بمجرد توفر الحدث، نظهر البانر
       setShowBanner(true);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // 2. إظهار البانر فوراً (إذا لم يكن قد تم إغلاقه سابقاً في هذه الجلسة)
+    // إظهار البانر فوراً (مع ميزة الإخفاء التلقائي)
     const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
     if (!isDismissed) {
+      // إظهار مبدئي لضمان رؤية المستخدم له
       setShowBanner(true);
       
       // الإخفاء التلقائي بعد 7 ثوانٍ
@@ -56,8 +59,8 @@ export function PWAInstallBanner() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      // رسالة توضيحية إذا لم يكن الحدث جاهزاً بعد
-      alert("جاري تحضير ملفات التثبيت.. إذا لم تظهر النافذة التلقائية الآن، يرجى الضغط على خيارات المتصفح (النقاط الثلاثة) ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
+      // إذا لم يكن الحدث جاهزاً، نوجه المستخدم للطريقة اليدوية
+      alert("لتثبيت التطبيق: اضغط على خيارات المتصفح (⋮) ثم اختر 'Add to Home Screen' أو 'تثبيت التطبيق'.");
       return;
     }
     
@@ -95,7 +98,7 @@ export function PWAInstallBanner() {
               <div className="flex">
                 {[1,2,3,4,5].map(s => <Star key={s} size={10} className="fill-yellow-400 text-yellow-400" />)}
               </div>
-              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع، أخف، وتواصل فوري</p>
+              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع، أخف، وتواصل مباشر</p>
             </div>
           </div>
         </div>

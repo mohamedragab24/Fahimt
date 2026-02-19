@@ -1,3 +1,7 @@
+
+// محرك الخدمة (Service Worker) لتفعيل ميزة تثبيت التطبيق
+const CACHE_NAME = 'fahimni-cache-v1';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -7,6 +11,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // يشترط كروم وجود مستمع لحدث fetch لتفعيل ميزة التثبيت
-  event.respondWith(fetch(event.request));
+  // مطلوب وجود مستمع لحدث fetch لكي يعتبر المتصفح الموقع PWA قابلاً للتثبيت
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
 });
