@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
@@ -223,9 +222,11 @@ function LoginContent() {
         <CardHeader className="text-center pt-12 pb-6 space-y-8">
           <div className="mx-auto w-fit group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-32 md:h-44 mx-auto object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              <div className="h-32 md:h-44 flex items-center justify-center">
+                <img src={settings.logoUrl} className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              </div>
             ) : (
-              <div className="w-24 h-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black mx-auto shadow-2xl">ف</div>
+              <div className="w-24 h-24 flex items-center justify-center text-primary text-5xl font-black mx-auto">ف</div>
             )}
           </div>
           <CardTitle className="text-4xl font-black text-zinc-900 tracking-tight">

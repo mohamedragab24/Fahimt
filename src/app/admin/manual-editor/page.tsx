@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -293,11 +292,10 @@ export default function ManualEditorPage() {
             <nav className="h-24 border-b flex items-center justify-between px-12 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center gap-4">
                 <div 
-                  style={{ backgroundColor: formData.primaryColor, borderRadius: `calc(${formData.borderRadius} / 2)` }} 
-                  className="w-12 h-12 flex items-center justify-center text-white font-black text-2xl shadow-lg cursor-pointer overflow-hidden"
+                  className="w-12 h-12 flex items-center justify-center cursor-pointer overflow-hidden"
                   onClick={() => handleFieldClick('logoUrl', 'الشعار المربع', 'image')}
                 >
-                  {formData.logoUrl ? <img src={formData.logoUrl} className="w-full h-full object-cover" /> : "ف"}
+                  {formData.logoUrl ? <img src={formData.logoUrl} className="w-full h-full object-contain" /> : <span style={{ color: formData.primaryColor }} className="text-2xl font-black">ف</span>}
                 </div>
                 <span 
                   className="font-black text-3xl cursor-pointer hover:text-primary transition-all"
@@ -394,7 +392,7 @@ export default function ManualEditorPage() {
 
             <footer className="mt-20 py-16 border-t px-12 flex flex-col md:flex-row justify-between items-center bg-zinc-900 text-white rounded-t-[5rem]">
               <div className="flex items-center gap-4">
-                <div style={{ backgroundColor: formData.primaryColor }} className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white">ف</div>
+                <div style={{ color: formData.primaryColor }} className="text-xl font-black">ف</div>
                 <div 
                   className="text-xl font-black opacity-60 cursor-pointer hover:bg-white/10 p-3 rounded-xl transition-all"
                   onClick={() => handleFieldClick('footerText', 'نص حقوق الملكية')}

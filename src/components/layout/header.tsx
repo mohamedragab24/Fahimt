@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -85,7 +84,6 @@ export function Header() {
       {mounted && !shouldHideGlobalHeader && (
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
-          {/* الجانب الأيمن: زر القائمة (ثلاث شرط) + اللوجو */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-10 w-10 text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-xl shrink-0 border-2 border-zinc-100 flex items-center justify-center">
@@ -93,15 +91,14 @@ export function Header() {
               </SidebarTrigger>
               
               <Link href="/" className="flex items-center gap-3 group shrink-0">
-                <div className="bg-primary w-10 h-10 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-lg overflow-hidden border-2 border-white/20 group-hover:scale-105 transition-transform">
-                  <img src={miniLogo} className="w-full h-full object-cover" alt="Logo" />
+                <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+                  <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
                 </div>
                 <span className="text-primary font-black text-xl md:text-3xl hidden xs:block">{settings?.siteTitle || "فهمني"}</span>
               </Link>
             </div>
           </div>
 
-          {/* الجانب الأيسر: الروابط + الأيقونات + البروفايل */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0 flex-row-reverse">
             
             <div className="mr-1">

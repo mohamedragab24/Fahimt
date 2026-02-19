@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -84,7 +83,6 @@ export default function ForgotPasswordPage() {
 
     setIsProcessing(true);
     try {
-      // إرسال رابط إعادة التعيين الرسمي لبريد المستخدم بعد التحقق من الهوية
       await sendPasswordResetEmail(auth, email);
       setStep('success');
       toast({ title: "تم التحقق!", description: "أرسلنا رابط تعيين كلمة المرور لبريدك." });
@@ -103,9 +101,11 @@ export default function ForgotPasswordPage() {
         <CardHeader className="text-center pt-16 pb-8 space-y-10">
           <div className="relative mx-auto w-fit group">
             {settings?.logoUrl ? (
-              <img src={settings.logoUrl} className="h-40 md:h-52 mx-auto object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              <div className="h-40 md:h-52 flex items-center justify-center">
+                <img src={settings.logoUrl} className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-110" alt="Logo" />
+              </div>
             ) : (
-              <div className="bg-primary w-32 h-32 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-2xl">
+              <div className="w-32 h-32 flex items-center justify-center mx-auto text-primary">
                 <Lock size={64} strokeWidth={2.5} />
               </div>
             )}

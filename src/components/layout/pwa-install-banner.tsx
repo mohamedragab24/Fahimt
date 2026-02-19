@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -66,7 +65,6 @@ export function PWAInstallBanner() {
         setDeferredPrompt(null);
       }
     } else {
-      // إذا لم يكن البرومت جاهزاً بعد، توجيه المستخدم للقائمة الجانبية أو المتصفح
       alert("يرجى الضغط على زر الخيارات في متصفحك واختيار 'إضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'.");
       setShowBanner(false);
     }
@@ -78,11 +76,11 @@ export function PWAInstallBanner() {
     <div className="fixed top-4 left-4 right-4 z-[300] animate-in slide-in-from-top-full duration-700" dir="rtl">
       <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/20 shadow-2xl rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="bg-primary w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-md overflow-hidden">
+          <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden">
             {settings?.miniIconUrl || settings?.logoUrl ? (
-              <img src={settings.miniIconUrl || settings.logoUrl} className="w-full h-full object-cover" alt="Logo" />
+              <img src={settings.miniIconUrl || settings.logoUrl} className="w-full h-full object-contain" alt="Logo" />
             ) : (
-              <span className="text-white font-black text-2xl">ف</span>
+              <span className="text-primary font-black text-2xl">ف</span>
             )}
           </div>
           <div className="text-right truncate">

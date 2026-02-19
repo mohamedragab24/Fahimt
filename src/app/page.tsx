@@ -40,7 +40,7 @@ import {
   Activity
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, addDoc, getDocs, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
@@ -231,8 +231,8 @@ function LandingPage({ router, settings }: any) {
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => router.push('/')}>
-            <div className="bg-primary w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl overflow-hidden border-2 border-white/20">
-              <img src={defaultLogo} className="w-full h-full object-cover" alt="Logo" />
+            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden">
+              <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
             </div>
             <span className="text-white font-black text-2xl md:text-4xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
@@ -370,7 +370,7 @@ function MustafhemView({ profile, settings, router }: any) {
 
   return (
     <div className="space-y-12">
-      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2">
+      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
         <div className="space-y-4 text-right flex-1">
           <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
           <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">
