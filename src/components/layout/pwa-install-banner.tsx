@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react";
 import { X, Download, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 /**
- * بانر تثبيت التطبيق المطور - يظهر فقط إذا لم يكن التطبيق مثبتاً.
+ * بانر تثبيت التطبيق المطور - يظهر فقط بعد تسجيل الدخول وإذا لم يكن التطبيق مثبتاً.
  * يظهر فوراً ويختفي بعد 7 ثوانٍ تلقائياً.
  */
 export function PWAInstallBanner() {
+  const { user, isUserLoading } = useUser();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -26,54 +27,47 @@ export function PWAInstallBanner() {
   useEffect(() => {
     setIsMounted(true);
 
-    // التحقق مما إذا كان التطبيق مفتوحاً بالفعل كـ تطبيق مثبت (Standalone)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone 
-      || document.referrer.includes('android-app://');
-
-    if (isStandalone) {
-      setShowBanner(false);
-      return;
-    }
-
     const handleBeforeInstallPrompt = (e: any) => {
-      // منع المتصفح من إظهار النافذة الافتراضية فوراً
       e.preventDefault();
-      // تخزين الحدث لاستخدامه عند ضغط المستخدم على زر التثبيت
       setDeferredPrompt(e);
       
-      // إظهار البانر فوراً لأننا تأكدنا أن التطبيق غير مثبت
-      setShowBanner(true);
-
-      // الإخفاء التلقائي بعد 7 ثوانٍ
-      setTimeout(() => {
-        setShowBanner(false);
-      }, 7000);
+      // لا يظهر البانر إلا إذا كان المستخدم مسجلاً وليس في حالة تحميل
+      if (!isUserLoading && user) {
+        setShowBanner(true);
+        // الإخفاء التلقائي بعد 7 ثوانٍ
+        setTimeout(() => {
+          setShowBanner(false);
+        }, 7000);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // في حال كان المتصفح قد أطلق الحدث بالفعل قبل تحميل المكون
+    // التحقق من وضع الـ Standalone (إذا كان مثبت بالفعل)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone;
+
+    if (isStandalone) {
+      setShowBanner(false);
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [user, isUserLoading]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    
-    // إظهار نافذة التثبيت الرسمية للجهاز
     deferredPrompt.prompt();
-    
     const { outcome } = await deferredPrompt.userChoice;
-    
     if (outcome === "accepted") {
       setShowBanner(false);
       setDeferredPrompt(null);
     }
   };
 
-  if (!isMounted || !showBanner || !deferredPrompt) return null;
+  // حماية إضافية: لا يعرض أي شيء إذا لم يكن هناك مستخدم مسجل
+  if (!isMounted || !showBanner || !deferredPrompt || !user) return null;
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-1000" dir="rtl">

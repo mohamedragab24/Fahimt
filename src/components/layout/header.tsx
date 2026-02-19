@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,7 +14,7 @@ import Link from "next/link";
 
 /**
  * ترويسة الموقع المطورة - رشيقة ومنظمة لتناسب كافة الأجهزة (PC, Tablet, Mobile).
- * تم ضبطها لإخفاء أيقونات العمليات للزوار وإظهارها فقط بعد تسجيل الدخول.
+ * أيقونات العمليات (الرسائل، الجرس) تظهر فقط بعد تسجيل الدخول.
  */
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -68,42 +67,41 @@ export function Header() {
   const totalMessages = unreadChats?.length || 0;
 
   if (!mounted) return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background h-14 md:h-16" />
+    <header className="sticky top-0 z-40 w-full border-b bg-background h-14" />
   );
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur shadow-sm overflow-hidden">
       <div className="flex h-14 md:h-16 items-center justify-between px-3 md:px-6 max-w-[1920px] mx-auto gap-2">
         
-        {/* اليمين: القائمة والروابط الأساسية - أحجام رشيقة لتوفير المساحة */}
+        {/* اليمين: القائمة والروابط الأساسية - أحجام رشيقة جداً */}
         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-          <SidebarTrigger className="h-9 w-9 text-accent bg-accent/10 hover:bg-accent/20 rounded-xl shrink-0" />
+          <SidebarTrigger className="h-8 w-8 text-accent bg-accent/5 hover:bg-accent/10 rounded-lg shrink-0" />
           
-          <nav className="flex items-center gap-1 md:gap-2 border-r pr-2 md:pr-3 border-zinc-100 overflow-x-auto no-scrollbar py-1">
+          <nav className="flex items-center gap-1 md:gap-4 border-r pr-2 md:pr-4 border-zinc-100 overflow-x-auto no-scrollbar py-1">
             <HeaderNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
             <HeaderNavLink href="/portfolio" icon={Layout} label="الأعمال" />
             <HeaderNavLink href="/browse" icon={Search} label="الاستفهامات" />
           </nav>
         </div>
 
-        {/* المنتصف واليسار: العمليات والبروفايل */}
-        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        {/* اليسار: العمليات والبروفايل - مدمجة وموفرة للمساحة */}
+        <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
           
-          {/* أيقونات الرسائل والتنبيهات - تظهر فقط للمسجلين */}
+          {/* أيقونات الرسائل والتنبيهات - تظهر فقط للمسجلين لضمان نظافة واجهة الزائر */}
           {user && (
-            <div className="flex items-center gap-1.5 md:gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
+            <div className="flex items-center gap-1 md:gap-2 animate-in fade-in slide-in-from-left-2">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => router.push('/messages')}
-                className="relative h-9 w-9 rounded-xl hover:bg-primary/5 text-zinc-500"
+                className="relative h-8 w-8 rounded-lg hover:bg-primary/5 text-zinc-500"
               >
-                <Mail className="h-5 w-5" />
+                <Mail className="h-4.5 w-4.5" />
                 {totalMessages > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
-                       <span className="text-[7px] text-white font-black">{totalMessages}</span>
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent border-2 border-white shadow-sm flex items-center justify-center">
+                       <span className="text-[6px] text-white font-black">{totalMessages}</span>
                     </span>
                   </span>
                 )}
@@ -111,12 +109,12 @@ export function Header() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl hover:bg-primary/5 text-zinc-500">
-                    <Bell className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="relative h-8 w-8 rounded-lg hover:bg-primary/5 text-zinc-500">
+                    <Bell className="h-4.5 w-4.5" />
                     {totalNotifications > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
-                          <span className="text-[7px] text-white font-black">{totalNotifications}</span>
+                      <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white shadow-sm flex items-center justify-center">
+                          <span className="text-[6px] text-white font-black">{totalNotifications}</span>
                         </span>
                       </span>
                     )}
@@ -154,7 +152,7 @@ export function Header() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-9 w-9 rounded-xl p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
+                  <Button variant="ghost" className="h-8 w-8 md:h-9 md:w-9 rounded-lg p-0 overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all shadow-sm">
                     <Avatar className="h-full w-full">
                       <AvatarImage src={profile?.profilePictureUrl} />
                       <AvatarFallback className="bg-primary/5 text-primary font-black text-xs">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
@@ -183,7 +181,7 @@ export function Header() {
             ) : (
               <Button 
                 onClick={() => router.push('/login')} 
-                className="h-9 px-5 rounded-xl font-black text-xs md:text-sm bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20"
+                className="h-8 md:h-10 px-4 md:px-6 rounded-lg font-black text-xs md:text-sm bg-primary hover:bg-primary/90 text-white shadow-md"
               >
                 دخول
               </Button>
@@ -199,11 +197,10 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-[11px] md:text-sm whitespace-nowrap group shrink-0 border border-transparent"
+      className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-[11px] md:text-sm whitespace-nowrap group shrink-0 border border-transparent"
     >
       <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-      <span className="hidden sm:inline">{label}</span>
-      <span className="sm:hidden">{label.charAt(0)}</span>
+      <span>{label}</span>
     </Link>
   );
 }
