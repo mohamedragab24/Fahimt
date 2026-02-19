@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -71,15 +72,15 @@ export default function AdminAssets() {
   };
 
   const assetItems = [
-    { key: 'logoUrl', label: 'اللوجو الرئيسي', desc: 'يظهر في صفحة الهبوط والترويسة.', icon: Flower2 },
-    { key: 'miniIconUrl', label: 'اللوجو الصغير', desc: 'يظهر بجانب القائمة الجانبية في الترويسة.', icon: AppWindow },
-    { key: 'landingBg', label: 'خلفية الهيرو', desc: 'خلفية صفحة الهبوط الرئيسية.', icon: Monitor },
+    { key: 'logoUrl', label: 'اللوجو الرئيسي (Landing)', desc: 'يظهر بشكل كبير في صفحة الهبوط الرئيسية.', icon: Flower2 },
+    { key: 'miniIconUrl', label: 'اللوجو الصغير (Header)', desc: 'يظهر في الترويسة العلوية بجانب القائمة.', icon: AppWindow },
+    { key: 'landingBg', label: 'خلفية الهيرو', desc: 'خلفية صفحة الهبوط الكبيرة.', icon: Monitor },
     { key: 'aboutImage', label: 'صورة "عن المنصة"', desc: 'تظهر في صفحة التعريف.', icon: Info },
-    { key: 'splashImageUrl', label: 'صورة الترحيب', desc: 'تظهر كـ Popup للمستخدمين الجدد.', icon: Zap },
-    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في لسان المتصفح.', icon: Globe },
-    { key: 'icon192', label: 'أيقونة PWA (192x192)', desc: 'أيقونة التطبيق على شاشة الهاتف.', icon: Smartphone },
+    { key: 'splashImageUrl', label: 'صورة الترحيب (Splash)', desc: 'تظهر كـ Popup للمستخدمين الجدد.', icon: Zap },
+    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في لسان المتصفح بالأعلى.', icon: Globe },
+    { key: 'icon192', label: 'أيقونة PWA (192x192)', desc: 'أيقونة التطبيق عند التثبيت على الهاتف.', icon: Smartphone },
     { key: 'icon512', label: 'أيقونة PWA (512x512)', desc: 'أيقونة شاشة التحميل والمتجر.', icon: LayoutTemplate },
-    { key: 'ogImageUrl', label: 'صورة المشاركة (Social)', desc: 'تظهر عند مشاركة الرابط.', icon: Share2 },
+    { key: 'ogImageUrl', label: 'صورة المشاركة (Social)', desc: 'تظهر عند مشاركة رابط الموقع في السوشيال.', icon: Share2 },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق الزرقاء', desc: 'تظهر بجانب أسماء الحسابات الموثقة.', icon: BadgeCheck }
   ];
 
@@ -107,7 +108,7 @@ export default function AdminAssets() {
                     <div className="bg-primary/10 text-primary p-4 rounded-3xl">
                       <item.icon size={28} />
                     </div>
-                    <div>
+                    <div className="text-right">
                       <h3 className="text-xl font-black text-zinc-800">{item.label}</h3>
                       <p className="text-xs font-bold text-muted-foreground">{item.desc}</p>
                     </div>
