@@ -10,6 +10,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from "firebase/firestore";
 import { FloatingChat } from './floating-chat';
+import { PWAInstallBanner } from './pwa-install-banner';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -46,6 +47,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               </main>
             </div>
           </div>
+          <PWAInstallBanner />
           <FloatingChat />
           <Toaster />
         </SidebarProvider>
