@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -117,7 +116,10 @@ export function Header() {
 
   const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
-  // هيكل الترويسة الأساسي (ثابت لمنع Hydration Error)
+  if (!mounted) return (
+    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-lg h-24 md:h-32" />
+  );
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-2">
@@ -133,78 +135,74 @@ export function Header() {
           </nav>
         </div>
 
-        {/* الجزء الأوسط: التنبيهات والرسائل - يظهر فقط بعد التأكد من التحميل */}
+        {/* الجزء الأوسط: التنبيهات والرسائل */}
         <div className="flex items-center gap-3 md:gap-8 mx-2 md:mx-6 shrink-0">
-          {mounted && (
-            <>
-              {/* أيقونة الرسائل */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => router.push('/messages')}
-                className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
-              >
-                <Mail className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
-                {totalMessages > 0 && (
+          {/* أيقونة الرسائل */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.push('/messages')}
+            className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group"
+          >
+            <Mail className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+            {totalMessages > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-accent border-4 border-white shadow-md flex items-center justify-center">
+                   <span className="text-[10px] md:text-sm text-white font-black">{totalMessages}</span>
+                </span>
+              </span>
+            )}
+          </Button>
+
+          {/* أيقونة التنبيهات */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
+                <Bell className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
+                {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-accent border-4 border-white shadow-md flex items-center justify-center">
-                       <span className="text-[10px] md:text-sm text-white font-black">{totalMessages}</span>
+                    <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
+                      <span className="text-[10px] md:text-sm text-white font-black">{totalNotifications}</span>
                     </span>
                   </span>
                 )}
               </Button>
-
-              {/* أيقونة التنبيهات */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-14 w-14 md:h-24 md:w-24 rounded-2xl hover:bg-primary/5 text-muted-foreground transition-all group">
-                    <Bell className="h-10 w-10 md:h-12 md:w-12 group-hover:scale-110 transition-transform text-zinc-600" />
-                    {totalNotifications > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-8 w-8 md:h-12 md:w-12">
-                        <span className="relative inline-flex rounded-full h-8 w-8 md:h-12 md:w-12 bg-red-500 border-4 border-white shadow-md flex items-center justify-center">
-                          <span className="text-[10px] md:text-sm text-white font-black">{totalNotifications}</span>
-                        </span>
-                      </span>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-[300px] md:w-[500px] p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
-                  <div className="flex justify-between items-center p-4">
-                    <DropdownMenuLabel className="text-2xl md:text-3xl font-black p-0">التنبيهات</DropdownMenuLabel>
-                    {unreadSystemNotifs.length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={markAllRead} className="text-md font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
-                    )}
-                  </div>
-                  <DropdownMenuSeparator />
-                  <div className="max-h-[500px] overflow-y-auto p-2">
-                    {systemNotifs && systemNotifs.length > 0 ? (
-                      systemNotifs.map((n: any) => (
-                        <DropdownMenuItem key={n.id} className={`p-4 md:p-6 rounded-3xl cursor-pointer hover:bg-muted mb-2 transition-all ${!n.read ? 'bg-primary/5 border-r-4 border-primary' : 'border-r-4 border-transparent'}`}>
-                          <div className="flex gap-4 text-right w-full">
-                            <div className="bg-primary/10 p-3 rounded-2xl h-14 w-14 flex items-center justify-center shrink-0">
-                              <Bell className="text-primary h-8 w-8" />
-                            </div>
-                            <div className="space-y-1 flex-1">
-                              <p className="font-black text-lg leading-tight text-zinc-800">{n.title}</p>
-                              <p className="text-sm text-muted-foreground font-bold leading-relaxed">{n.message}</p>
-                            </div>
-                          </div>
-                        </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <div className="p-10 text-center text-muted-foreground font-bold opacity-50 italic">لا توجد تنبيهات</div>
-                    )}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-[300px] md:w-[500px] p-4 rounded-[2.5rem] shadow-2xl border-4" dir="rtl">
+              <div className="flex justify-between items-center p-4">
+                <DropdownMenuLabel className="text-2xl md:text-3xl font-black p-0">التنبيهات</DropdownMenuLabel>
+                {unreadSystemNotifs.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={markAllRead} className="text-md font-black text-primary hover:bg-primary/5">تحديد كقروء</Button>
+                )}
+              </div>
+              <DropdownMenuSeparator />
+              <div className="max-h-[500px] overflow-y-auto p-2">
+                {systemNotifs && systemNotifs.length > 0 ? (
+                  systemNotifs.map((n: any) => (
+                    <DropdownMenuItem key={n.id} className={`p-4 md:p-6 rounded-3xl cursor-pointer hover:bg-muted mb-2 transition-all ${!n.read ? 'bg-primary/5 border-r-4 border-primary' : 'border-r-4 border-transparent'}`}>
+                      <div className="flex gap-4 text-right w-full">
+                        <div className="bg-primary/10 p-3 rounded-2xl h-14 w-14 flex items-center justify-center shrink-0">
+                          <Bell className="text-primary h-8 w-8" />
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <p className="font-black text-lg leading-tight text-zinc-800">{n.title}</p>
+                          <p className="text-sm text-muted-foreground font-bold leading-relaxed">{n.message}</p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="p-10 text-center text-muted-foreground font-bold opacity-50 italic">لا توجد تنبيهات</div>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* الجزء الأيسر: بروفايل المستخدم */}
         <div className="shrink-0">
-          {mounted && user ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 md:gap-4 h-16 md:h-28 pr-2 pl-2 md:pl-8 rounded-2xl md:rounded-[3rem] hover:bg-primary/5 group border-2 border-transparent transition-all">
@@ -235,10 +233,8 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : mounted && !user ? (
-            <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-6 md:px-10 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-2xl shadow-xl">دخول</Button>
           ) : (
-            <div className="h-12 w-12 md:h-20 md:w-20 rounded-full bg-muted animate-pulse"></div>
+            <Button onClick={() => router.push('/login')} className="h-14 md:h-20 px-6 md:px-10 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-2xl shadow-xl">دخول</Button>
           )}
         </div>
       </div>
@@ -252,7 +248,7 @@ function HeaderNavLink({ href, icon: Icon, label }: { href: string, icon: any, l
       href={href} 
       className="flex items-center gap-2 md:gap-4 px-3 md:px-8 py-3 md:py-6 rounded-xl md:rounded-3xl text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all font-black text-md md:text-2xl whitespace-nowrap group shrink-0 border-2 border-transparent hover:border-primary/10"
     >
-      <Icon className="h-6 w-6 md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
+      <Icon size={24} className="h-6 w-6 md:h-10 md:w-10 group-hover:scale-110 transition-transform" />
       <span>{label}</span>
     </Link>
   );
