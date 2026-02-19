@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,10 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
-/**
- * مكون بانر تثبيت التطبيق (PWA) مطور
- * تم تحسينه ليمسك بالحدث فور حدوثه ويظهره للمستخدم.
- */
 export function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -23,14 +20,16 @@ export function PWAInstallBanner() {
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
-    // التحقق من البيئة
+    // 1. التحقق إذا كان التطبيق مثبتاً بالفعل
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone) return;
 
+    // 2. الاستماع لحدث التثبيت من المتصفح
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
       
+      // إظهار البانر إذا لم يقم المستخدم بإغلاقه في هذه الجلسة
       const isDismissed = sessionStorage.getItem("pwa_banner_dismissed");
       if (!isDismissed) {
         setShowBanner(true);
@@ -38,6 +37,12 @@ export function PWAInstallBanner() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // التحقق من حالة التثبيت (للمتصفحات التي تدعم)
+    window.addEventListener('appinstalled', () => {
+      setShowBanner(false);
+      setDeferredPrompt(null);
+    });
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -80,7 +85,7 @@ export function PWAInstallBanner() {
               <div className="flex">
                 {[1,2,3,4,5].map(s => <Star key={s} size={10} className="fill-yellow-400 text-yellow-400" />)}
               </div>
-              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع، أخف، وبدون إعلانات</p>
+              <p className="text-[10px] text-zinc-400 font-bold truncate">أسرع، أخف، وتواصل فوري</p>
             </div>
           </div>
         </div>

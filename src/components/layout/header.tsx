@@ -115,8 +115,6 @@ export function Header() {
     router.push("/login");
   };
 
-  const verifiedBadgeUrl = PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
-
   if (!mounted) return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-lg h-24 md:h-32" />
   );
@@ -125,7 +123,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
       <div className="flex h-24 md:h-32 items-center justify-between px-4 md:px-10 max-w-[1920px] mx-auto gap-2">
         
-        {/* الجزء الأيمن: القائمة الجانبية والروابط - تم تقليص الفجوات لتناسب المساحة */}
+        {/* الجزء الأيمن: القائمة الجانبية والروابط */}
         <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           <SidebarTrigger className="h-12 w-12 md:h-20 md:w-20 text-primary shrink-0" />
           
@@ -201,7 +199,7 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* الجزء الأيسر: بروفايل المستخدم - تم حذف الاسم لتوسيع المساحة */}
+        {/* الجزء الأيسر: بروفايل المستخدم (بدون اسم لتوفير المساحة) */}
         <div className="shrink-0">
           {user ? (
             <DropdownMenu>
