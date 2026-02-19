@@ -126,14 +126,14 @@ export function Footer() {
         <div className="pt-12 mt-12 border-t flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="bg-primary/10 p-2 rounded-lg">
-              {settings?.miniIconUrl ? (
+              {mounted && settings?.miniIconUrl ? (
                 <img src={settings.miniIconUrl} className="h-6 w-6 object-contain" alt="Mini Logo" />
               ) : (
                 <span className="text-primary font-black">ف</span>
               )}
             </div>
             <p className="text-zinc-400 text-xs font-bold">
-              {settings?.footerText || "جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤"}
+              {mounted && settings?.footerText ? settings.footerText : "جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤"}
             </p>
           </div>
           <div className="flex items-center gap-2 text-zinc-400 text-xs font-black">
