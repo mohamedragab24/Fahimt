@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 /**
- * بانر تثبيت التطبيق الذكي - يظهر عند الدخول من المتصفح ولا يختفي إلا بقرار المستخدم.
+ * بانر تثبيت التطبيق الذكي - يظهر عند الدخول من المتصفح ولا يختفي إلا بقرار المستخدم (تثبيت أو ليس الآن).
  */
 export function PWAInstallBanner() {
   const pathname = usePathname();
@@ -34,11 +35,10 @@ export function PWAInstallBanner() {
 
     if (isStandalone) return;
 
-    // إظهار البانر بعد ثانيتين من التحميل لتذكير المستخدم
+    // إظهار البانر بعد ثانيتين من التحميل
     const showTimer = setTimeout(() => {
       if (!isExcludedPath) {
         setShowBanner(true);
-        // تم إلغاء الإخفاء التلقائي بناءً على طلب المستخدم
       }
     }, 2000);
 
@@ -75,7 +75,7 @@ export function PWAInstallBanner() {
     <div className="fixed top-4 left-4 right-4 z-[300] animate-in slide-in-from-top-full duration-700" dir="rtl">
       <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border-2 border-primary/20 shadow-2xl rounded-[2.5rem] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden">
+          <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden bg-transparent">
             {settings?.miniIconUrl || settings?.logoUrl ? (
               <img src={settings.miniIconUrl || settings.logoUrl} className="w-full h-full object-contain" alt="Logo" />
             ) : (
