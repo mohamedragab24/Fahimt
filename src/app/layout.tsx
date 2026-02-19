@@ -1,7 +1,11 @@
+
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
 
+/**
+ * إعدادات الميتا أصبحت تقرأ رابط الـ manifest الديناميكي لضمان تحديث PWA من الفايربيز.
+ */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -13,7 +17,7 @@ export const metadata: Metadata = {
   title: 'فهمني - منصة التعلم الذكي',
   description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.',
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمني',
-  manifest: '/manifest.json',
+  manifest: '/manifest.json', // سيتم توجيهه للـ Dynamic Route
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -44,7 +48,6 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="https://picsum.photos/seed/fahimni/192/192" />
       </head>
       <body className="font-body antialiased">
         <ClientWrapper>

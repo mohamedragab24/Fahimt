@@ -36,7 +36,8 @@ import {
   Share2,
   MessageSquare,
   Send,
-  Filter
+  Filter,
+  CloudUpload
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -52,7 +53,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -67,7 +67,6 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
-  const { setOpenMobile } = useSidebar();
   const { toast } = useToast();
 
   const settingsRef = useMemoFirebase(() => {
@@ -95,6 +94,7 @@ export function AppSidebar() {
 
   const adminItems = [
     { title: "نظرة عامة", icon: LayoutDashboard, href: "/admin" },
+    { title: "تثبيت التعديلات", icon: CloudUpload, href: "/admin/deployment" },
     { title: "المحرر الفائق", icon: Edit3, href: "/admin/manual-editor" },
     { title: "الذكاء الاصطناعي", icon: Wand2, href: "/admin/ai" },
     { title: "رقابة المحاضرات", icon: Video, href: "/admin/all-requests" },
@@ -112,7 +112,7 @@ export function AppSidebar() {
     { title: "إدارة التوظيف", icon: Briefcase, href: "/admin/jobs" },
     { title: "أقسام المنصة", icon: Layers, href: "/admin/categories" },
     { title: "أقسام المفهمين", icon: Filter, href: "/admin/teacher-categories" },
-    { title: "الهوية والصور", icon: ImageIcon, href: "/admin/assets" },
+    { title: "الهوية و PWA", icon: ImageIcon, href: "/admin/assets" },
     { title: "قائمة تابعنا", icon: Share2, href: "/admin/social-management" },
     { title: "سجل الرقابة", icon: History, href: "/admin/logs" },
     { title: "الحظر التلقائي", icon: ShieldAlert, href: "/admin/auto-bans" },
@@ -121,7 +121,6 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    setOpenMobile(false);
     router.push("/login");
   };
 
@@ -140,13 +139,13 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-    <Sidebar side="right" collapsible="icon" className="border-l shadow-sm">
+    <Sidebar side="right" collapsible="none" className="border-l shadow-sm fixed inset-y-0 z-50">
       <SidebarHeader className="p-2">
         <Link href="/" className="flex items-center gap-1.5">
           <div className="bg-primary w-7 h-7 rounded-lg flex items-center justify-center text-white text-lg font-black shrink-0 overflow-hidden border border-white/20 shadow-sm">
             {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" /> : "ف"}
           </div>
-          <div className="group-data-[collapsible=icon]:hidden">
+          <div>
             <span className="font-black text-sm text-primary">{settings?.siteTitle || "فهمني"}</span>
           </div>
         </Link>
@@ -155,7 +154,7 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent className="px-1.5">
-        <div className="p-1.5 group-data-[collapsible=icon]:hidden">
+        <div className="p-1.5">
           <div className="bg-primary/5 p-2 rounded-lg space-y-1.5 border border-primary/5">
             <div className="flex items-center gap-1.5">
               <Avatar className="h-6 w-6 border border-white shadow-sm">
@@ -175,13 +174,13 @@ export function AppSidebar() {
           </div>
         </div>
 
-        <SidebarMenu className="space-y-0.5 pt-1">
+        <SidebarMenu className="space-y-0.5 pt-1 overflow-y-auto no-scrollbar">
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={pathname === item.href} className="h-8 rounded-lg">
-                <Link href={item.href} onClick={() => setOpenMobile(false)} className="flex items-center gap-2 px-1.5">
+                <Link href={item.href} className="flex items-center gap-2 px-1.5">
                   <item.icon className={`h-3.5 w-3.5 ${pathname === item.href ? "text-white" : "text-primary"}`} />
-                  <span className="font-bold text-[11px] group-data-[collapsible=icon]:hidden">{item.title}</span>
+                  <span className="font-bold text-[11px]">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -193,7 +192,7 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="h-8 rounded-lg">
                     <LayoutDashboard className="h-3.5 w-3.5 text-accent" />
-                    <span className="font-bold text-[11px] group-data-[collapsible=icon]:hidden">{settings?.sideAdmin || "المسؤول"}</span>
+                    <span className="font-bold text-[11px]">{settings?.sideAdmin || "المسؤول"}</span>
                     <ChevronDown className="ml-auto h-2.5 w-2.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -202,7 +201,7 @@ export function AppSidebar() {
                     {adminItems.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === item.href} className="h-7">
-                          <Link href={item.href} onClick={() => setOpenMobile(false)} className="font-bold text-[10px] py-0.5 text-right w-full block">{item.title}</Link>
+                          <Link href={item.href} className="font-bold text-[10px] py-0.5 text-right w-full block">{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -214,10 +213,10 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-1.5">
+      <SidebarFooter className="p-1.5 border-t">
         <SidebarMenuButton onClick={handleLogout} className="h-8 rounded-lg text-destructive hover:bg-destructive/10">
           <LogOut className="h-3.5 w-3.5" />
-          <span className="font-bold text-[11px] group-data-[collapsible=icon]:hidden">خروج</span>
+          <span className="font-bold text-[11px]">خروج</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
