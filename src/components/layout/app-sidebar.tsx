@@ -84,7 +84,7 @@ export function AppSidebar() {
 
   const { data: profile } = useDoc(userRef);
 
-  // وظيفة للإغلاق التلقائي عند الضغط على أي رابط
+  // وظيفة للإغلاق التلقائي عند الضغط على أي رابط أو زر
   const handleLinkClick = () => {
     setOpen(false);
     setOpenMobile(false);
@@ -129,8 +129,8 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
     handleLinkClick();
+    router.push("/login");
   };
 
   const toggleRole = async () => {
@@ -139,8 +139,8 @@ export function AppSidebar() {
     try {
       await updateDoc(userRef, { role: newRole });
       toast({ title: "تم تبديل نوع الحساب" });
-      router.push("/");
       handleLinkClick();
+      router.push("/");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
     }
