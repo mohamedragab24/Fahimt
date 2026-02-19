@@ -27,45 +27,46 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // قواعد عامة لكافة المجموعات للمسؤولين
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId);
 
       match /transactions/{txId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow write: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
       }
     }
 
     match /jobs/{jobId} {
       allow read: if true;
-      allow write: if isAdmin();
       
       match /applications/{appId} {
         allow create: if true;
-        allow read: if isAdmin();
       }
     }
 
     match /supportTickets/{ticketId} {
       allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && (resource == null || request.auth.uid == resource.data.userId));
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && (resource == null || request.auth.uid == resource.data.userId);
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
 
       match /messages/{msgId} {
-        allow read, create: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/supportTickets/$(ticketId)).data.userId == request.auth.uid);
+        allow read, create: if isSignedIn();
       }
     }
 
     match /floatingChats/{chatId} {
       allow create: if true;
-      allow read: if isAdmin() || (isSignedIn() && (chatId == request.auth.uid || (resource != null && request.auth.uid == resource.data.userId)));
-      allow update: if isAdmin() || (isSignedIn() && chatId == request.auth.uid);
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && (chatId == request.auth.uid || (resource != null && request.auth.uid == resource.data.userId));
+      allow update: if isSignedIn() && chatId == request.auth.uid;
 
       match /messages/{msgId} {
-        allow read, create: if isAdmin() || (isSignedIn() && (chatId == request.auth.uid));
+        allow read, create: if isSignedIn();
       }
     }
 
@@ -73,7 +74,6 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isAdmin();
 
       match /offers/{offerId} {
         allow create: if isSignedIn();
@@ -84,56 +84,45 @@ service cloud.firestore {
 
     match /settings/{id} {
       allow read: if true;
-      allow write: if isAdmin();
     }
     
     match /verificationRequests/{id} {
       allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow update, delete: if isAdmin();
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
     
     match /notifications/{id} { 
       allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
     match /portfolio/{id} { 
       allow read: if true; 
       allow create: if isSignedIn();
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
-      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.mufhemId);
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.mufhemId;
     }
 
     match /categories/{id} { 
       allow read: if true; 
-      allow write: if isAdmin(); 
     }
 
     match /appeals/{id} { 
       allow create: if isSignedIn(); 
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow update, delete: if isAdmin();
-    }
-
-    match /adminLogs/{id} { 
-      allow read, write: if isAdmin(); 
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
     match /payoutRequests/{id} { 
       allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow update, delete: if isAdmin();
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
     match /direct_chats/{chatId} {
-      allow read, update: if isAdmin() || (isSignedIn() && request.auth.uid in resource.data.participants);
+      allow read, update: if isSignedIn() && (request.auth.uid in resource.data.participants);
       allow create: if isSignedIn();
 
       match /messages/{msgId} {
-        allow read, create: if isAdmin() || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/direct_chats/$(chatId)).data.participants);
+        allow read, create: if isSignedIn();
       }
     }
   }

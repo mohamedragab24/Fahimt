@@ -216,7 +216,6 @@ function LandingPage({ router, settings }: any) {
   }, [searchTerm, firestore]);
 
   const handleAskNow = () => {
-    // التوجه لصفحة إنشاء الطلب مع تمرير نص البحث
     router.push(`/create-request?title=${encodeURIComponent(searchTerm)}`);
   };
 
@@ -227,24 +226,24 @@ function LandingPage({ router, settings }: any) {
           <Image src={landingImage} alt="Background" fill priority className="object-cover brightness-[0.3]" />
         </div>
         
-        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
-            <div className="bg-primary w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-black shadow-xl overflow-hidden border-2 border-white/20">
+        <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/30 backdrop-blur-md overflow-hidden">
+          <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => router.push('/')}>
+            <div className="bg-primary w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl overflow-hidden border-2 border-white/20">
               {settings?.miniIconUrl ? <img src={settings.miniIconUrl} className="w-full h-full object-cover" alt="Logo" /> : "ف"}
             </div>
-            <span className="text-white font-black text-2xl md:text-3xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
+            <span className="text-white font-black text-2xl md:text-4xl hidden sm:block">{settings?.siteTitle || "فهمني"}</span>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-8">
-            <nav className="hidden md:flex items-center gap-6 border-l border-white/10 pl-6">
+          <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1 justify-end">
+            <nav className="flex items-center gap-3 md:gap-8 border-l border-white/10 pl-4 md:pl-8 overflow-x-auto no-scrollbar flex-nowrap">
               <LinkItem href="/teachers" icon={GraduationCap} label="المُفهمين" />
-              <LinkItem href="/portfolio" icon={Layout} label="أعمال المفهمين" />
-              <LinkItem href="/browse" icon={Search} label="تصفح الاستفهامات" />
+              <LinkItem href="/portfolio" icon={Layout} label="الأعمال" />
+              <LinkItem href="/browse" icon={Search} label="الاستفهامات" />
             </nav>
             
-            <div className="flex items-center gap-2 md:gap-3">
-              <Button onClick={() => router.push('/login')} variant="ghost" className="text-white hover:bg-white/10 font-black rounded-full px-4 md:px-6 border border-white/20">دخول</Button>
-              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-8">حساب جديد</Button>
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
+              <Button onClick={() => router.push('/login')} variant="ghost" className="text-white hover:bg-white/10 font-black rounded-full px-4 md:px-8 h-12 md:h-16 text-lg border border-white/20">دخول</Button>
+              <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-10 h-12 md:h-16 text-lg shadow-xl">سجل</Button>
             </div>
           </div>
         </header>
@@ -344,11 +343,11 @@ function LandingPage({ router, settings }: any) {
 
 function LinkItem({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
   return (
-    <a href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-sm transition-all group">
+    <a href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-md md:text-xl transition-all group shrink-0">
       <div className="bg-white/10 p-2 rounded-lg group-hover:bg-primary/20 group-hover:scale-110 transition-all">
-        <Icon size={16} className="group-hover:text-primary" />
+        <Icon size={24} className="group-hover:text-primary" />
       </div>
-      {label}
+      <span className="whitespace-nowrap">{label}</span>
     </a>
   );
 }
