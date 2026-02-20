@@ -3,7 +3,7 @@
 
 import { useState, useRef } from "react";
 import { useFirestore, useUser, useStorage, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, doc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,42 +13,41 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { 
-  ChevronRight, 
   Upload, 
   ImageIcon, 
-  Calendar, 
-  CheckCircle2, 
   Loader2,
-  X,
-  Plus,
   Video,
   CloudUpload,
   Layers,
   Filter,
-  Activity
+  Activity,
+  CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const SUGGESTED_SKILLS = [
-  "Adobe Illustrator", "تصميم متجر إلكتروني", "ووردبريس", "تصوير الفيديو", 
-  "إعادة صياغة المحتوى", "تصميم موقع إلكتروني", "تصميم جرافيك", 
-  "فوتوشوب", "مونتاج فيديو", "كتابة مقالات", "تجسيد 3D"
-];
-
+/**
+ * صفحة إضافة عمل جديد للمعرض - تم تحديثها لفصل الفيديو عن الصورة المصغرة
+ */
 export default function AddPortfolioWork() {
   const { user } = useUser();
   const firestore = useFirestore();
   const storage = useStorage();
   const router = useRouter();
   const { toast } = useToast();
+  
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState("");
+  
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState("");
   
   const [formData, setFormData] = useState({
     title: "",
@@ -56,8 +55,6 @@ export default function AddPortfolioWork() {
     category: "",
     categorySub: "",
     categoryOption: "",
-    mediaType: "image" as "image" | "video",
-    skills: [] as string[],
     agreed: false
   });
 
@@ -71,44 +68,53 @@ export default function AddPortfolioWork() {
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
   const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.categorySub)?.id) || [];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (file.size > maxSize) {
-        toast({
-          variant: "destructive",
-          title: "الملف كبير جداً",
-          description: "يرجى اختيار ملف أقل من 50 ميجابايت."
-        });
+      if (!file.type.startsWith('video/')) {
+        toast({ variant: "destructive", title: "خطأ في الملف", description: "يرجى اختيار ملف فيديو فقط." });
         return;
       }
-
-      setSelectedFile(file);
-      const type = file.type.startsWith('video') ? 'video' : 'image';
-      setFormData(prev => ({ ...prev, mediaType: type }));
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setVideoFile(file);
+      setVideoPreview(URL.createObjectURL(file));
     }
   };
 
-  const toggleSkill = (skill: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.includes(skill) 
-        ? prev.skills.filter(s => s !== skill) 
-        : [...prev.skills, skill]
-    }));
+  const handleThumbChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({ variant: "destructive", title: "خطأ في الملف", description: "يرجى اختيار صورة فقط للغلاف." });
+        return;
+      }
+      setThumbFile(file);
+      setThumbPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const uploadFile = async (file: File, path: string): Promise<string> => {
+    const storageRef = ref(storage!, path);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(prev => (prev + progress) / 2); // محاكاة تقدم تقريبي
+        },
+        (error) => reject(error),
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(url);
+        }
+      );
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !storage || !user || !selectedFile || !formData.category) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى اختيار الملف وتحديد القسم." });
+    if (!firestore || !storage || !user || !videoFile || !thumbFile || !formData.category) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول ورفع الفيديو والصورة المصغرة." });
       return;
     }
 
@@ -118,67 +124,58 @@ export default function AddPortfolioWork() {
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
     
     try {
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `portfolio/${user.uid}/${Date.now()}.${fileExt}`;
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+      const timestamp = Date.now();
+      const videoPath = `portfolio/${user.uid}/videos/${timestamp}_${videoFile.name}`;
+      const thumbPath = `portfolio/${user.uid}/thumbs/${timestamp}_${thumbFile.name}`;
 
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          toast({ variant: "destructive", title: "فشل الرفع", description: error.message });
-          setIsSubmitting(false);
-        },
-        async () => {
-          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          
-          await addDoc(collection(firestore, "portfolio"), {
-            mufhemId: user.uid,
-            title: formData.title,
-            description: formData.description,
-            category: formData.category,
-            categorySub: formData.categorySub,
-            categoryOption: formData.categoryOption,
-            mediaUrl: downloadUrl,
-            mediaType: formData.mediaType,
-            skills: formData.skills,
-            status: "pending_approval",
-            views: 0,
-            likes: 0,
-            createdAt: new Date().toISOString()
-          });
+      const [videoUrl, thumbUrl] = await Promise.all([
+        uploadFile(videoFile, videoPath),
+        uploadFile(thumbFile, thumbPath)
+      ]);
+      
+      await addDoc(collection(firestore, "portfolio"), {
+        mufhemId: user.uid,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        categorySub: formData.categorySub,
+        categoryOption: formData.categoryOption,
+        mediaUrl: videoUrl,
+        thumbnailUrl: thumbUrl,
+        mediaType: "video",
+        status: "pending_approval",
+        views: 0,
+        likes: 0,
+        createdAt: new Date().toISOString()
+      });
 
-          toast({ title: "تم الإرسال بنجاح", description: "سيتم مراجعة عملك ونشره قريباً." });
-          router.push("/portfolio");
-        }
-      );
-    } catch (err) {
-      toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء حفظ البيانات." });
+      toast({ title: "تم الإرسال للمراجعة", description: "سيتم مراجعة عملك من قبل الإدارة قبل نشره." });
+      router.push("/portfolio");
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء الرفع: " + err.message });
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10" dir="rtl">
-      <div className="space-y-2">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10 mb-20" dir="rtl">
+      <div className="space-y-2 text-right">
         <h1 className="text-4xl font-black text-zinc-900 leading-tight">إضافة عمل جديد للمعرض</h1>
-        <p className="text-muted-foreground font-bold text-lg">ارفع فيديوهات شرحك (بحد أقصى 50MB) واعرض مهاراتك للطلاب.</p>
+        <p className="text-muted-foreground font-bold text-lg">ارفع فيديوهات شرحك واعرض مهاراتك للطلاب (تخضع الأعمال للمراجعة).</p>
       </div>
 
-      <Card className="shadow-2xl rounded-[2.5rem] border-2 overflow-hidden bg-white">
+      <Card className="shadow-2xl rounded-[3rem] border-2 overflow-hidden bg-white">
         <CardContent className="p-10">
           <form onSubmit={handleSubmit} className="space-y-10">
             
             <div className="space-y-3 text-right">
               <Label className="text-lg font-black">عنوان العمل</Label>
               <Input 
-                placeholder="مثال: شرح مبسط لقواعد اللغة العربية"
-                className="h-14 rounded-2xl border-2 font-bold"
+                placeholder="ضع عنواناً مميزاً يصف عملك بدقة"
+                className="h-16 rounded-2xl border-2 font-bold text-xl px-6"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                 required
@@ -186,8 +183,8 @@ export default function AddPortfolioWork() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <Label className="font-black flex items-center gap-2">القسم <Layers size={14}/></Label>
+              <div className="space-y-3 text-right">
+                <Label className="font-black flex items-center gap-2 justify-end">القسم <Layers size={14}/></Label>
                 <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v, categorySub: "", categoryOption: ""})}>
                   <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                   <SelectContent>
@@ -196,8 +193,8 @@ export default function AddPortfolioWork() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-3">
-                <Label className="font-black flex items-center gap-2">التخصص <Filter size={14}/></Label>
+              <div className="space-y-3 text-right">
+                <Label className="font-black flex items-center gap-2 justify-end">التخصص <Filter size={14}/></Label>
                 <Select disabled={!formData.category || formData.category === 'أخرى'} value={formData.categorySub} onValueChange={(v) => setFormData({...formData, categorySub: v, categoryOption: ""})}>
                   <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                   <SelectContent>
@@ -206,8 +203,8 @@ export default function AddPortfolioWork() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-3">
-                <Label className="font-black flex items-center gap-2">المهارة <Activity size={14}/></Label>
+              <div className="space-y-3 text-right">
+                <Label className="font-black flex items-center gap-2 justify-end">المهارة <Activity size={14}/></Label>
                 <Select disabled={!formData.categorySub || formData.categorySub === 'أخرى'} value={formData.categoryOption} onValueChange={(v) => setFormData({...formData, categoryOption: v})}>
                   <SelectTrigger className="h-14 rounded-xl border-2 font-bold"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
                   <SelectContent>
@@ -218,75 +215,82 @@ export default function AddPortfolioWork() {
               </div>
             </div>
 
-            <div className="space-y-3 text-right">
-              <Label className="text-lg font-black">الملف التعليمي (فيديو/صورة)</Label>
-              <div 
-                onClick={() => !isSubmitting && thumbInputRef.current?.click()}
-                className={`relative h-72 rounded-[3rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${previewUrl ? 'border-primary/20 bg-zinc-900' : 'border-zinc-200 hover:border-primary/40 bg-zinc-50'}`}
-              >
-                {previewUrl ? (
-                  formData.mediaType === 'video' ? (
-                    <video src={previewUrl} className="w-full h-full object-contain" muted loop playsInline />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* خانة الصورة المصغرة */}
+              <div className="space-y-3 text-right">
+                <Label className="text-lg font-black flex items-center gap-2 justify-end">الصورة المصغرة (صورة فقط) <ImageIcon size={18}/></Label>
+                <div 
+                  onClick={() => !isSubmitting && thumbInputRef.current?.click()}
+                  className={`relative h-60 rounded-[2.5rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${thumbPreview ? 'border-primary/20' : 'border-zinc-200 hover:border-primary/40 bg-zinc-50'}`}
+                >
+                  {thumbPreview ? (
+                    <img src={thumbPreview} className="w-full h-full object-cover" alt="Thumb Preview" />
                   ) : (
-                    <img src={previewUrl} className="w-full h-full object-contain" alt="Preview" />
-                  )
-                ) : (
-                  <>
-                    <div className="bg-white p-5 rounded-3xl shadow-xl text-primary mb-4">
-                      <CloudUpload size={40} />
-                    </div>
-                    <p className="font-black text-zinc-600">اضغط لرفع الفيديو أو الصورة</p>
-                    <p className="text-xs text-zinc-400 font-bold mt-2">الحد الأقصى للملف: 50 ميجابايت</p>
-                  </>
-                )}
-                {isSubmitting && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-8 space-y-4">
-                    <Loader2 className="animate-spin text-white h-12 w-12" />
-                    <Progress value={uploadProgress} className="h-3 w-full max-w-xs bg-white/20" />
-                    <p className="text-white font-black">{Math.round(uploadProgress)}%</p>
-                  </div>
-                )}
+                    <>
+                      <div className="bg-white p-4 rounded-2xl shadow-lg text-primary mb-3">
+                        <Upload size={32} />
+                      </div>
+                      <p className="font-black text-zinc-500 text-sm">ارفع غلاف العمل</p>
+                    </>
+                  )}
+                </div>
+                <input type="file" ref={thumbInputRef} className="hidden" accept="image/*" onChange={handleThumbChange} />
               </div>
-              <input type="file" ref={thumbInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
+
+              {/* خانة فيديو الشرح */}
+              <div className="space-y-3 text-right">
+                <Label className="text-lg font-black flex items-center gap-2 justify-end">فيديو الشرح (فيديو فقط) <Video size={18}/></Label>
+                <div 
+                  onClick={() => !isSubmitting && videoInputRef.current?.click()}
+                  className={`relative h-60 rounded-[2.5rem] border-4 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${videoPreview ? 'border-accent/20 bg-zinc-900' : 'border-zinc-200 hover:border-accent/40 bg-zinc-50'}`}
+                >
+                  {videoPreview ? (
+                    <video src={videoPreview} className="w-full h-full object-contain" muted loop playsInline />
+                  ) : (
+                    <>
+                      <div className="bg-white p-4 rounded-2xl shadow-lg text-accent mb-3">
+                        <CloudUpload size={32} />
+                      </div>
+                      <p className="font-black text-zinc-500 text-sm">ارفع فيديو الشرح</p>
+                    </>
+                  )}
+                </div>
+                <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={handleVideoChange} />
+              </div>
             </div>
 
             <div className="space-y-3 text-right">
-              <Label className="text-lg font-black">الوصف</Label>
+              <Label className="text-lg font-black">الوصف بالتفصيل</Label>
               <Textarea 
-                placeholder="اشرح باختصار محتوى العمل..."
-                className="h-40 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed"
+                placeholder="اشرح محتوى هذا العمل بالتفصيل"
+                className="h-48 rounded-[2rem] border-2 p-8 text-lg font-medium leading-relaxed"
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 required
               />
             </div>
 
-            <div className="p-8 bg-zinc-50 rounded-[2.5rem] border-2 space-y-6">
-              <h5 className="font-black text-sm text-zinc-500 uppercase text-right">المهارات ذات الصلة</h5>
-              <div className="flex flex-wrap gap-2 justify-end">
-                {SUGGESTED_SKILLS.map(skill => (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkill(skill)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border-2 ${formData.skills.includes(skill) ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white text-zinc-600 border-zinc-200 hover:border-primary/40'}`}
-                  >
-                    {skill} {formData.skills.includes(skill) ? <X size={12} /> : <Plus size={12} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 p-6 bg-primary/5 rounded-[2rem] border-2 border-primary/10">
-              <Label htmlFor="agreed" className="text-lg font-bold leading-relaxed cursor-pointer select-none text-right flex-1">
-                أقر بأن هذا العمل من مجهودي الشخصي <span className="text-red-500">*</span>
+            <div className="flex items-start gap-4 p-8 bg-primary/5 rounded-[2.5rem] border-2 border-primary/10">
+              <Label htmlFor="agreed" className="text-xl font-bold leading-relaxed cursor-pointer select-none text-right flex-1">
+                أقر بأن هذا العمل من مجهودي الشخصي ويوافق شروط المنصة <span className="text-red-500">*</span>
               </Label>
-              <Checkbox id="agreed" checked={formData.agreed} onCheckedChange={(checked) => setFormData({...formData, agreed: !!checked})} className="mt-1 h-6 w-6" />
+              <Checkbox id="agreed" checked={formData.agreed} onCheckedChange={(checked) => setFormData({...formData, agreed: !!checked})} className="mt-1 h-8 w-8 rounded-xl border-2" />
             </div>
 
-            <Button type="submit" disabled={isSubmitting || !selectedFile} className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary shadow-2xl transition-all">
-              {isSubmitting ? <Loader2 className="animate-spin" /> : "نشر العمل الآن"}
-            </Button>
+            <div className="space-y-6">
+              {isSubmitting && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-black text-primary">
+                    <span>جاري الرفع والمعالجة...</span>
+                    <span>{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-3 rounded-full" />
+                </div>
+              )}
+              <Button type="submit" disabled={isSubmitting || !videoFile || !thumbFile} className="w-full h-24 rounded-[2.5rem] text-3xl font-black bg-primary shadow-2xl hover:scale-[1.01] transition-all">
+                {isSubmitting ? <><Loader2 className="animate-spin ml-3 h-10 w-10" /> جاري الحفظ...</> : "نشر العمل للمراجعة"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
