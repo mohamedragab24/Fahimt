@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -44,7 +43,8 @@ import {
   HelpCircle,
   Bot,
   UserSearch,
-  Layout
+  Layout,
+  Search
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
