@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -33,7 +32,8 @@ import {
   Target,
   Smartphone,
   RefreshCw,
-  Trophy
+  Trophy,
+  Briefcase
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -46,6 +46,7 @@ import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -222,14 +223,14 @@ function LandingPage({ router, settings }: any) {
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-4 shrink-0">
-            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
-              <Menu className="h-7 w-7 text-white" />
-            </Button>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
               </div>
             </Link>
+            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
+              <Menu className="h-7 w-7 text-white" />
+            </Button>
           </div>
 
           <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
@@ -310,11 +311,9 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
-      {/* قسم الفيديو وكيف يعمل */}
       <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
         <div className="max-w-7xl mx-auto space-y-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* جهة اليمين: الخطوات */}
             <div className="space-y-10 text-right">
               <div className="space-y-4">
                 <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
@@ -332,7 +331,7 @@ function LandingPage({ router, settings }: any) {
                   number="٢" 
                   icon={Users} 
                   title="اختر المُفَهِّم الأنسب" 
-                  desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." 
+                  desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة في التفهيم إن وجِد، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." 
                 />
                 <HowItem 
                   number="٣" 
@@ -349,7 +348,6 @@ function LandingPage({ router, settings }: any) {
               </div>
             </div>
 
-            {/* جهة اليسار: الفيديو */}
             <div className="relative group">
               <div className="absolute -inset-6 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 rounded-[4rem] blur-3xl opacity-40"></div>
               <div className="relative aspect-video w-full rounded-[3.5rem] md:rounded-[4.5rem] overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,0.2)] border-[15px] md:border-[25px] border-white bg-black">
@@ -371,7 +369,6 @@ function LandingPage({ router, settings }: any) {
             </div>
           </div>
 
-          {/* قسم لماذا تختار فهمني */}
           <div className="space-y-16 pt-10">
             <div className="text-center space-y-4">
               <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
@@ -392,12 +389,12 @@ function LandingPage({ router, settings }: any) {
               <WhyCard 
                 icon={ShieldCheck} 
                 title="أمان فائق" 
-                desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة من قبل فريقنا قبل ظهورها للعامة."
+                desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة قبل ظهورها للعامة."
               />
               <WhyCard 
                 icon={Trophy} 
                 title="دقة ومصداقية" 
-                desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في المنصة."
+                desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في صفحة الهبوط."
               />
             </div>
           </div>
