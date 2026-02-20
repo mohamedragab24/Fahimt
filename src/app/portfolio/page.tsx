@@ -3,19 +3,21 @@
 
 import { useState } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
+import { collection, query, where, doc, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ShieldCheck, Clock, Layout, PlayCircle, Plus } from "lucide-react";
+import { Search, Layout, PlayCircle, Plus, Filter, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function GlobalPortfolioPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -29,6 +31,13 @@ export default function GlobalPortfolioPage() {
     return doc(firestore, "settings", "general");
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
+
+  // جلب الأقسام الرئيسية للتصفية
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "categories"), where("type", "==", "main"), orderBy("createdAt", "desc"));
+  }, [firestore]);
+  const { data: categories } = useCollection(categoriesQuery);
 
   // عرض الأعمال المعتمدة فقط
   const portfolioQuery = useMemoFirebase(() => {
@@ -54,15 +63,18 @@ export default function GlobalPortfolioPage() {
 
   const filteredItems = portfolioItems?.filter(item => {
     const teacher = allUsers?.find(u => u.id === item.mufhemId);
-    return (
+    const matchesSearch = (
       item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher?.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="p-6 md:p-10 space-y-12 bg-[#f8f9fa] min-h-screen" dir="rtl">
+    <div className="p-6 md:p-10 space-y-10 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto">
         <div className="space-y-2 text-right w-full md:w-auto border-r-8 border-primary pr-6">
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
@@ -92,6 +104,44 @@ export default function GlobalPortfolioPage() {
         </div>
       </div>
 
+      {/* Category Filter Pills */}
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center gap-2 text-zinc-400 font-black text-xs uppercase tracking-widest px-2">
+            <Filter size={14} /> تصفية حسب الأقسام
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setSelectedCategory("all")}
+              className={cn(
+                "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2",
+                selectedCategory === "all" 
+                  ? "bg-primary border-primary text-white shadow-lg scale-105" 
+                  : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
+              )}
+            >
+              الكل
+            </button>
+            {categories?.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.name)}
+                className={cn(
+                  "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2 flex items-center gap-2",
+                  selectedCategory === cat.name 
+                    ? "bg-primary border-primary text-white shadow-lg scale-105" 
+                    : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
+                )}
+              >
+                {selectedCategory === cat.name && <Check size={14} />}
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Content */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-w-7xl mx-auto">
         {isPortfolioLoading ? (
           <div className="col-span-full py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل المعرض...</div>
@@ -128,9 +178,9 @@ export default function GlobalPortfolioPage() {
                   <Badge className="bg-[#FFC107] text-zinc-900 font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">
                     مميز
                   </Badge>
-                  {item.mediaType === 'video' && (
+                  {item.category && (
                     <Badge className="bg-primary text-white font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">
-                      فيديو
+                      {item.category}
                     </Badge>
                   )}
                 </div>
@@ -154,7 +204,7 @@ export default function GlobalPortfolioPage() {
                     {teacher?.fullName}
                   </p>
                   <p className="text-xs text-zinc-300 font-bold mt-1">
-                    {item.category || "خبير تعليمي"}
+                    {item.categorySub || item.category || "خبير تعليمي"}
                   </p>
                 </div>
               </div>
@@ -166,7 +216,8 @@ export default function GlobalPortfolioPage() {
           <div className="col-span-full py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-zinc-100 shadow-inner">
             <div className="max-w-md mx-auto space-y-4">
               <Layout size={64} className="mx-auto text-zinc-200" />
-              <p className="text-2xl font-black text-zinc-300">لا توجد أعمال منشورة مطابقة لبحثك.</p>
+              <p className="text-2xl font-black text-zinc-300">لا توجد أعمال منشورة في هذا القسم حالياً.</p>
+              <Button variant="ghost" onClick={() => setSelectedCategory("all")} className="font-bold text-primary">عرض كافة الأعمال</Button>
             </div>
           </div>
         )}
