@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -297,7 +298,7 @@ export function AppSidebar() {
                 <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild isActive={pathname === "/about"} onClick={handleLinkClick}>
-                      <Link href="/about" className="font-bold text-xs">عن فهمني</Link>
+                      <Link href="/about" className="font-bold text-xs">عن فهمت</Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>

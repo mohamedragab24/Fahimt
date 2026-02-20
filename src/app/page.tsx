@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -316,7 +317,7 @@ function LandingPage({ router, settings }: any) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-10 text-right">
               <div className="space-y-4">
-                <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
+                <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
                 <p className="text-xl text-muted-foreground font-bold">رحلة تعليمية بسيطة تبدأ بسؤال وتنتهي بفهم عميق.</p>
               </div>
               
@@ -371,7 +372,7 @@ function LandingPage({ router, settings }: any) {
 
           <div className="space-y-16 pt-10">
             <div className="text-center space-y-4">
-              <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
               <p className="text-xl text-muted-foreground font-bold">مميزات تجعلنا رفيقك الأول في رحلتك التعليمية.</p>
             </div>
 

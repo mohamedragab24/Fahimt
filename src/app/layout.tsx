@@ -14,25 +14,25 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'فهمني - منصة التعلم الذكي',
+  title: 'فهمت - منصة التعلم الذكي',
   description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.',
-  keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمني',
+  keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت',
   manifest: '/manifest.json', // سيتم توجيهه للـ Dynamic Route
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'فهمني',
+    title: 'فهمت',
   },
   openGraph: {
-    title: 'فهمني - منصة التعلم الذكي',
+    title: 'فهمت - منصة التعلم الذكي',
     description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.',
     type: 'website',
     locale: 'ar_EG',
-    siteName: 'فهمني',
+    siteName: 'فهمت',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'فهمني - منصة التعلم الذكي',
+    title: 'فهمت - منصة التعلم الذكي',
     description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.',
   },
 };

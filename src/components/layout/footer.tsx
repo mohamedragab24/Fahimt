@@ -59,7 +59,7 @@ export function Footer() {
               <span className="w-1.5 h-8 bg-primary rounded-full inline-block shrink-0"></span> عن المنصة
             </h4>
             <ul className="space-y-4">
-              <FooterLink href="/about" icon={Info} label="عن فهمني" />
+              <FooterLink href="/about" icon={Info} label="عن فهمت" />
               <FooterLink href="/guide" icon={BookOpen} label="الدليل الإرشادي" />
               <FooterLink href="/jobs" icon={Briefcase} label="الوظائف" />
             </ul>
@@ -133,7 +133,7 @@ export function Footer() {
               )}
             </div>
             <p className="text-zinc-400 text-xs font-bold">
-              {mounted && settings?.footerText ? settings.footerText : "جميع الحقوق محفوظة لمنصة فهمني © ٢٠٢٤"}
+              {mounted && settings?.footerText ? settings.footerText : "جميع الحقوق محفوظة لمنصة فهمت © ٢٠٢٤"}
             </p>
           </div>
           <div className="flex items-center gap-2 text-zinc-400 text-xs font-black">

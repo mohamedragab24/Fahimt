@@ -11,7 +11,7 @@ import { firebaseConfig } from '@/firebase/config';
 
 export async function GET() {
   let settings = {
-    siteTitle: "فهمني",
+    siteTitle: "فهمت",
     primaryColor: "#29B6F6",
     logoUrl: "",
     icon192: "",

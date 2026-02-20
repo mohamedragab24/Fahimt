@@ -38,7 +38,7 @@ export default function AboutPage() {
           <Info size={48} />
         </div>
         <h1 className="text-4xl md:text-7xl font-black font-headline tracking-tight text-zinc-900 leading-tight">
-          عن <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>
+          عن <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>
         </h1>
         <p className="text-muted-foreground text-xl md:text-2xl max-w-4xl mx-auto leading-relaxed font-bold">
           المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي.
@@ -49,9 +49,9 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
           <div className="border-r-8 border-primary pr-6">
-            <h2 className="text-3xl font-black text-zinc-800 mb-4">{settings?.aboutTitle || "ما هي منصة فهمني؟"}</h2>
+            <h2 className="text-3xl font-black text-zinc-800 mb-4">{settings?.aboutTitle || "ما هي منصة فهمت؟"}</h2>
             <p className="text-zinc-600 text-xl leading-relaxed font-medium">
-              {settings?.aboutDescription || "فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية. نحن نعمل على ربط الباحثين عن المعرفة بنخبة من الخبراء وأصحاب أساليب الشرح المبسط."}
+              {settings?.aboutDescription || "فهمت هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية. نحن نعمل على ربط الباحثين عن المعرفة بنخبة من الخبراء وأصحاب أساليب الشرح المبسط."}
             </p>
           </div>
           
@@ -72,7 +72,7 @@ export default function AboutPage() {
         <div className="relative aspect-video rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-white group bg-zinc-100">
           <img 
             src={settings?.aboutImage || "https://picsum.photos/seed/about/800/600"} 
-            alt="About Fahimni" 
+            alt="About Fahimt" 
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-primary/10 group-hover:bg-transparent transition-colors"></div>
