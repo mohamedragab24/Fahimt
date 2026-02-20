@@ -25,7 +25,15 @@ import {
   Menu,
   Mail,
   Bell,
-  UserPlus
+  UserPlus,
+  CheckCircle2,
+  Users,
+  ShieldCheck,
+  Star,
+  Target,
+  Smartphone,
+  RefreshCw,
+  Trophy
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -33,7 +41,6 @@ import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea";
-import { updateDocumentNonBlocking, addDocumentNonBlocking, createTransactionNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -215,7 +222,6 @@ function LandingPage({ router, settings }: any) {
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-4 shrink-0">
-            {/* القائمة الجانبية ثم اللوجو مباشرة */}
             <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
               <Menu className="h-7 w-7 text-white" />
             </Button>
@@ -304,33 +310,99 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
-      {settings?.landingVideoId && (
-        <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
-          <div className="max-w-6xl mx-auto space-y-16">
-            <div className="text-center space-y-6">
-              <div className="bg-primary/10 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner mb-4">
-                <Play size={48} className="fill-current" />
+      {/* قسم الفيديو وكيف يعمل */}
+      <section className="relative z-10 bg-zinc-50 py-24 px-6 md:py-32">
+        <div className="max-w-7xl mx-auto space-y-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* جهة اليمين: الخطوات */}
+            <div className="space-y-10 text-right">
+              <div className="space-y-4">
+                <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
+                <p className="text-xl text-muted-foreground font-bold">رحلة تعليمية بسيطة تبدأ بسؤال وتنتهي بفهم عميق.</p>
               </div>
-              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight">شاهد كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمني"}</span></h2>
-              <p className="text-muted-foreground text-xl md:text-2xl font-bold max-w-3xl mx-auto">تعرف على رحلة "الفهم" في أقل من دقيقة عبر هذا الفيديو التوضيحي.</p>
+              
+              <div className="space-y-8">
+                <HowItem 
+                  number="١" 
+                  icon={MessageSquare} 
+                  title="اطرح استفهامك" 
+                  desc="حدد الجزئية التي لا تفهمها، ضع السعر الذي تراه مناسباً والوقت المناسب لك، وانشر استفهامك ليصل إلى نخبة من المُفَهِّمين الموثقين." 
+                />
+                <HowItem 
+                  number="٢" 
+                  icon={Users} 
+                  title="اختر المُفَهِّم الأنسب" 
+                  desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." 
+                />
+                <HowItem 
+                  number="٣" 
+                  icon={Video} 
+                  title="ابدأ التعلم" 
+                  desc="انضم لجلسة التفهيم، استفسر عن كل التفاصيل، ولا تغلق الجلسة إلا بعد تحقيق هدف استفهامك تماماً." 
+                />
+                <HowItem 
+                  number="٤" 
+                  icon={Star} 
+                  title="قيم التجربة" 
+                  desc="ساعدنا على التحسين بتقييم المُفَهِّم وتقييم جودة الجلسة فور انتهائها." 
+                />
+              </div>
             </div>
 
+            {/* جهة اليسار: الفيديو */}
             <div className="relative group">
               <div className="absolute -inset-6 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 rounded-[4rem] blur-3xl opacity-40"></div>
               <div className="relative aspect-video w-full rounded-[3.5rem] md:rounded-[4.5rem] overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,0.2)] border-[15px] md:border-[25px] border-white bg-black">
-                <iframe 
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1&autoplay=0`}
-                  title="How it works"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                ></iframe>
+                {settings?.landingVideoId ? (
+                  <iframe 
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1&autoplay=0`}
+                    title="How it works"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                    <Play className="text-white opacity-20 h-24 w-24" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </section>
-      )}
+
+          {/* قسم لماذا تختار فهمني */}
+          <div className="space-y-16 pt-10">
+            <div className="text-center space-y-4">
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمني"}</span>؟</h2>
+              <p className="text-xl text-muted-foreground font-bold">مميزات تجعلنا رفيقك الأول في رحلتك التعليمية.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <WhyCard 
+                icon={Zap} 
+                title="شرح فوري" 
+                desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد."
+              />
+              <WhyCard 
+                icon={RefreshCw} 
+                title="مرونة كاملة" 
+                desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة إلى كونك مُفَهِّم يشارك خبرته ويحقق دخلاً إضافياً."
+              />
+              <WhyCard 
+                icon={ShieldCheck} 
+                title="أمان فائق" 
+                desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة من قبل فريقنا قبل ظهورها للعامة."
+              />
+              <WhyCard 
+                icon={Trophy} 
+                title="دقة ومصداقية" 
+                desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في المنصة."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -343,6 +415,39 @@ function LandingNavLink({ href, icon: Icon, label }: { href: string, icon: any, 
       </div>
       <span className="whitespace-nowrap">{label}</span>
     </Link>
+  );
+}
+
+function HowItem({ number, icon: Icon, title, desc }: any) {
+  return (
+    <div className="flex gap-6 group">
+      <div className="shrink-0 relative">
+        <div className="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+          {number}
+        </div>
+        <div className="absolute -top-2 -right-2 bg-white p-1 rounded-lg shadow-md">
+          <Icon size={14} className="text-accent" />
+        </div>
+      </div>
+      <div className="space-y-1 text-right">
+        <h4 className="text-xl font-black text-zinc-800">{title}</h4>
+        <p className="text-muted-foreground font-bold text-sm leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function WhyCard({ icon: Icon, title, desc }: any) {
+  return (
+    <div className="bg-white p-8 rounded-[2.5rem] border-2 border-transparent hover:border-primary/10 hover:shadow-xl transition-all flex items-start gap-6 group">
+      <div className="bg-primary/5 p-5 rounded-[1.5rem] text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 shadow-inner">
+        <Icon size={32} />
+      </div>
+      <div className="space-y-2 text-right">
+        <h4 className="text-2xl font-black text-zinc-800">{title}</h4>
+        <p className="text-muted-foreground font-bold leading-relaxed">{desc}</p>
+      </div>
+    </div>
   );
 }
 
