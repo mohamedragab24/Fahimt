@@ -45,7 +45,9 @@ import {
   Bot,
   UserSearch,
   Layout,
-  Search
+  Search,
+  RefreshCcw,
+  Phone
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -297,8 +299,18 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/contact-us"} onClick={handleLinkClick}>
+                      <Link href="/contact-us" className="font-bold text-xs flex items-center gap-2"><Phone size={12}/> اتصل بنا</Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild isActive={pathname === "/guarantees"} onClick={handleLinkClick}>
                       <Link href="/guarantees" className="font-bold text-xs">ضمان الحقوق</Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/refund-policy"} onClick={handleLinkClick}>
+                      <Link href="/refund-policy" className="font-bold text-xs flex items-center gap-2"><RefreshCcw size={12}/> سياسة الاسترجاع</Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
@@ -307,8 +319,8 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/privacy"} onClick={handleLinkClick}>
-                      <Link href="/privacy" className="font-bold text-xs">سياسة الخصوصية</Link>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/privacy-policy"} onClick={handleLinkClick}>
+                      <Link href="/privacy-policy" className="font-bold text-xs">سياسة الخصوصية</Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>

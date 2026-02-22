@@ -21,10 +21,15 @@ import {
   ChevronRight,
   BadgeCent,
   Lock,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  Download,
+  Printer
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import Link from "next/link";
 
 type PaymentMethod = 'wallet' | 'e-wallet' | 'card';
 
@@ -42,6 +47,11 @@ function CheckoutContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [phone, setPhone] = useState("");
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedRefund, setAgreedRefund] = useState(false);
+  
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
 
   const requestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -79,6 +89,11 @@ function CheckoutContent() {
   const handlePayment = async () => {
     if (!firestore || !user || !request) return;
 
+    if (!agreedTerms || !agreedRefund) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يجب الموافقة على الشروط وسياسة الاسترجاع للمتابعة." });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -88,21 +103,26 @@ function CheckoutContent() {
         return;
       }
 
+      const timestamp = new Date().toISOString();
+      const invoiceNumber = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+
       // تسجيل المعاملة
-      await addDoc(collection(firestore, "users", user.uid, "transactions"), {
+      const txRef = await addDoc(collection(firestore, "users", user.uid, "transactions"), {
         amount: amountToPay,
         type: 'payment',
-        details: `دفع مقابل استفهام: ${request.title} (${paymentMethod === 'wallet' ? 'محفظة الموقع' : paymentMethod === 'e-wallet' ? 'محفظة إلكترونية' : 'بطاقة ائتمان'})`,
+        details: `دفع مقابل استفهام: ${request.title}`,
         status: 'completed',
         method: paymentMethod,
-        timestamp: new Date().toISOString()
+        invoiceNumber,
+        timestamp
       });
 
       const updateData: any = {
         status: "paid",
-        paidAt: new Date().toISOString(),
+        paidAt: timestamp,
         paymentMethod: paymentMethod,
-        finalAmount: amountToPay
+        finalAmount: amountToPay,
+        invoiceNumber
       };
 
       if (offer) {
@@ -115,25 +135,110 @@ function CheckoutContent() {
 
       await updateDoc(requestRef!, updateData);
 
-      toast({ title: "تم الدفع بنجاح!", description: "المحاضرة جاهزة للبدء الآن." });
-      router.push(`/meeting/${requestId}`);
+      // تجهيز بيانات الفاتورة للعرض
+      setInvoiceData({
+        number: invoiceNumber,
+        date: new Date().toLocaleDateString('ar-EG'),
+        customerName: user.displayName || "عميل فهمت",
+        customerEmail: user.email,
+        customerPhone: phone || "غير مسجل",
+        productName: request.title,
+        price: amountToPay,
+        method: paymentMethod === 'wallet' ? 'محفظة الموقع' : paymentMethod === 'e-wallet' ? 'محفظة إلكترونية' : 'بطاقة بنكية',
+        status: 'مدفوع'
+      });
+
+      toast({ title: "تم الدفع بنجاح!" });
+      setShowInvoice(true);
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الدفع", description: "حدث خطأ غير متوقع." });
+      toast({ variant: "destructive", title: "خطأ في الدفع" });
     } finally {
       setIsProcessing(false);
     }
   };
 
   if (isRequestLoading || (offerId && isOfferLoading)) {
+    return <div className="p-20 text-center animate-pulse font-black">جاري تحضير بوابة الدفع...</div>;
+  }
+
+  // عرض الفاتورة بعد النجاح
+  if (showInvoice && invoiceData) {
     return (
-      <div className="p-20 text-center flex flex-col items-center gap-4 bg-white min-h-screen" dir="rtl">
-        <Loader2 className="animate-spin h-12 w-12 text-primary" />
-        <p className="font-black text-2xl">جاري تحضير بوابة الدفع الآمنة...</p>
+      <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-10" dir="rtl">
+        <div className="text-center space-y-4">
+          <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-green-600 shadow-xl mb-4">
+            <CheckCircle2 size={48} />
+          </div>
+          <h1 className="text-4xl font-black text-zinc-900">تمت العملية بنجاح!</h1>
+          <p className="text-muted-foreground font-bold">شكراً لثقتك في منصة فهمت. إليك تفاصيل فاتورتك.</p>
+        </div>
+
+        <Card className="rounded-[3rem] shadow-2xl border-4 border-zinc-100 bg-white overflow-hidden print:border-none print:shadow-none">
+          <div className="p-8 md:p-12 space-y-10">
+            <div className="flex justify-between items-start border-b pb-8">
+              <div className="text-right space-y-1">
+                <h2 className="text-3xl font-black text-primary">فاتورة إلكترونية</h2>
+                <p className="text-zinc-400 font-bold">رقم الفاتورة: {invoiceData.number}</p>
+                <p className="text-zinc-400 font-bold">التاريخ: {invoiceData.date}</p>
+              </div>
+              <div className="text-2xl font-black text-zinc-800">فهمت.</div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 text-right">
+              <div>
+                <Label className="text-zinc-400 font-black text-xs uppercase">بيانات العميل</Label>
+                <p className="font-black text-lg">{invoiceData.customerName}</p>
+                <p className="text-sm font-bold text-zinc-500">{invoiceData.customerEmail}</p>
+                <p className="text-sm font-bold text-zinc-500">{invoiceData.customerPhone}</p>
+              </div>
+              <div className="text-left">
+                <Label className="text-zinc-400 font-black text-xs uppercase">حالة الدفع</Label>
+                <Badge className="bg-green-100 text-green-600 text-lg px-6 py-1 block w-fit mr-auto font-black">{invoiceData.status}</Badge>
+                <p className="text-xs font-bold text-zinc-400 mt-2">وسيلة الدفع: {invoiceData.method}</p>
+              </div>
+            </div>
+
+            <div className="bg-zinc-50 rounded-2xl p-6">
+              <table className="w-full text-right">
+                <thead>
+                  <tr className="text-zinc-400 text-xs font-black uppercase border-b border-zinc-200">
+                    <th className="pb-4">الخدمة / المنتج</th>
+                    <th className="pb-4 text-left">السعر</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="text-lg font-black text-zinc-800">
+                    <td className="py-6">{invoiceData.productName}</td>
+                    <td className="py-6 text-left">{invoiceData.price} ج.م</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-primary">
+                    <td className="pt-6 font-black text-2xl text-primary">الإجمالي النهائي</td>
+                    <td className="pt-6 text-left font-black text-3xl text-primary">{invoiceData.price} ج.م</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="text-center pt-8 opacity-50 space-y-2">
+              <p className="text-xs font-bold italic">هذه الفاتورة صدرت إلكترونياً وتعتبر مستنداً رسمياً لعملية الشراء.</p>
+              <p className="text-[10px] font-black">شركة فهمت للتعلم الذكي - مصر</p>
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex gap-4">
+          <Button onClick={() => window.print()} variant="outline" className="flex-1 h-16 rounded-2xl font-black text-lg gap-2">
+            <Printer size={20} /> طباعة الفاتورة
+          </Button>
+          <Button onClick={() => router.push(`/meeting/${requestId}`)} className="flex-1 h-16 rounded-2xl font-black text-lg bg-primary shadow-xl">
+            الانتقال للمحاضرة الآن <ArrowRight size={20} className="mr-2 rotate-180" />
+          </Button>
+        </div>
       </div>
     );
   }
-
-  if (!request) return <div className="p-20 text-center font-bold text-red-500">الطلب غير موجود.</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-10 bg-zinc-50 min-h-screen" dir="rtl">
@@ -142,9 +247,6 @@ function CheckoutContent() {
           <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900">إتمام الدفع الآمن</h1>
           <p className="text-muted-foreground font-bold">اختر الوسيلة المناسبة لحجز جلستك التعليمية.</p>
         </div>
-        <Button variant="ghost" onClick={() => router.back()} className="h-12 rounded-xl font-bold gap-2">
-          <span>رجوع</span> <ArrowRight className="h-5 w-5" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -166,19 +268,10 @@ function CheckoutContent() {
                   <span>قيمة الجلسة</span>
                   <span>{amountToPay} ج.م</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-zinc-500">
-                  <span>رسوم الخدمة</span>
-                  <span className="text-green-600">مجاناً</span>
-                </div>
                 <div className="pt-3 border-t flex justify-between items-center">
                   <span className="font-black text-zinc-900">الإجمالي</span>
                   <span className="text-3xl font-black text-primary">{amountToPay} <span className="text-sm">ج.م</span></span>
                 </div>
-              </div>
-
-              <div className="p-4 bg-blue-50 rounded-2xl flex items-start gap-3 text-blue-700 text-xs font-bold border border-blue-100">
-                <ShieldCheck className="shrink-0" size={16} />
-                <p>يتم حجز المبلغ في المنصة ولا يتم تحريره للمفهم إلا بعد تأكيد فهمك للمعلومة.</p>
               </div>
             </CardContent>
           </Card>
@@ -188,100 +281,75 @@ function CheckoutContent() {
           <Card className="rounded-[2.5rem] shadow-2xl border-none overflow-hidden bg-white">
             <CardContent className="p-8 md:p-12 space-y-10">
               <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-4">
-                {/* المحفظة */}
                 <div 
-                  className={`flex items-center justify-between p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
+                  className={`flex items-center justify-between p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('wallet')}
                 >
                   <div className="flex items-center gap-4">
                     <RadioGroupItem value="wallet" id="wallet" />
-                    <div className="bg-white p-3 rounded-2xl shadow-sm text-primary">
-                      <Wallet size={24} />
-                    </div>
+                    <Wallet className="text-primary" />
                     <div>
                       <Label htmlFor="wallet" className="text-xl font-black cursor-pointer">محفظة الموقع</Label>
                       <p className={`text-sm font-bold ${walletBalance >= amountToPay ? 'text-green-600' : 'text-red-500'}`}>رصيدك الحالي: {walletBalance} ج.م</p>
                     </div>
                   </div>
-                  {paymentMethod === 'wallet' && walletBalance < amountToPay && (
-                    <Badge variant="destructive" className="font-black">رصيد غير كافٍ</Badge>
-                  )}
                 </div>
 
-                {/* المحافظ الإلكترونية */}
                 <div 
-                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'e-wallet' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
+                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'e-wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('e-wallet')}
                 >
                   <div className="flex items-center gap-4">
                     <RadioGroupItem value="e-wallet" id="e-wallet" />
-                    <div className="bg-white p-3 rounded-2xl shadow-sm text-green-600">
-                      <Smartphone size={24} />
-                    </div>
-                    <Label htmlFor="e-wallet" className="text-xl font-black cursor-pointer">المحافظ الإلكترونية (فودافون كاش)</Label>
+                    <Smartphone className="text-green-600" />
+                    <Label htmlFor="e-wallet" className="text-xl font-black cursor-pointer">محافظ إلكترونية (فودافون كاش)</Label>
                   </div>
                   {paymentMethod === 'e-wallet' && (
-                    <div className="space-y-3 animate-in slide-in-from-top-2 pr-10">
-                      <Label className="font-black">أدخل رقم المحفظة المحول منها</Label>
-                      <Input 
-                        placeholder="01xxxxxxxxx" 
-                        className="h-14 rounded-xl border-2 bg-white font-black text-xl text-center"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                      <p className="text-[10px] text-muted-foreground font-bold text-center italic">سيتم التحقق من عملية التحويل يدوياً خلال دقائق.</p>
-                    </div>
+                    <Input 
+                      placeholder="أدخل رقم المحفظة 01xxxxxxxxx" 
+                      className="h-14 rounded-xl border-2 bg-white font-black text-xl text-center"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
                   )}
                 </div>
 
-                {/* بطاقة الائتمان */}
                 <div 
-                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5 shadow-inner' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
+                  className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('card')}
                 >
                   <div className="flex items-center gap-4">
                     <RadioGroupItem value="card" id="card" />
-                    <div className="bg-white p-3 rounded-2xl shadow-sm text-blue-600">
-                      <CreditCard size={24} />
-                    </div>
-                    <Label htmlFor="card" className="text-xl font-black cursor-pointer">بطاقة ائتمان (Visa/Mastercard)</Label>
+                    <CreditCard className="text-blue-600" />
+                    <Label htmlFor="card" className="text-xl font-black cursor-pointer">بطاقة بنكية (Visa/Mastercard)</Label>
                   </div>
-                  {paymentMethod === 'card' && (
-                    <div className="space-y-4 animate-in slide-in-from-top-2 pr-10">
-                      <div className="space-y-2">
-                        <Label className="font-bold">رقم البطاقة</Label>
-                        <Input placeholder="**** **** **** ****" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-bold">تاريخ الانتهاء</Label>
-                          <Input placeholder="MM/YY" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-bold">رمز CVC</Label>
-                          <Input placeholder="***" className="h-14 rounded-xl border-2 bg-white font-mono text-center" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </RadioGroup>
 
-              <div className="pt-8 space-y-6">
+              {/* بنود الموافقة القانونية */}
+              <div className="space-y-4 p-6 bg-zinc-50 rounded-3xl border-2 border-dashed">
+                <div className="flex items-start gap-3">
+                  <Checkbox id="terms" checked={agreedTerms} onCheckedChange={(v) => setAgreedTerms(!!v)} className="mt-1" />
+                  <Label htmlFor="terms" className="text-sm font-bold leading-relaxed cursor-pointer">
+                    أوافق على <Link href="/terms" className="text-primary hover:underline">الشروط والأحكام</Link> الخاصة بالمنصة.
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="refund" checked={agreedRefund} onCheckedChange={(v) => setAgreedRefund(!!v)} className="mt-1" />
+                  <Label htmlFor="refund" className="text-sm font-bold leading-relaxed cursor-pointer">
+                    أوافق على <Link href="/refund-policy" className="text-primary hover:underline">سياسة الاسترجاع</Link> (14 يوماً وفق القانون المصري).
+                  </Label>
+                </div>
+              </div>
+
+              <div className="pt-8">
                 <Button 
-                  disabled={isProcessing || (paymentMethod === 'wallet' && walletBalance < amountToPay)} 
+                  disabled={isProcessing || !agreedTerms || !agreedRefund} 
                   onClick={handlePayment}
                   className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary shadow-2xl hover:scale-[1.02] transition-all"
                 >
-                  {isProcessing ? (
-                    <><Loader2 className="ml-3 h-8 w-8 animate-spin" /> جاري تأمين الدفع...</>
-                  ) : (
-                    <><Lock className="ml-3 h-6 w-6" /> تأكيد الدفع وتفعيل المحاضرة</>
-                  )}
+                  {isProcessing ? <Loader2 className="animate-spin" /> : <><Lock className="ml-3 h-6 w-6" /> إتمام الدفع الآن</>}
                 </Button>
-                <div className="flex items-center justify-center gap-2 text-zinc-400 font-bold text-sm">
-                  <ShieldCheck size={16} /> مدعوم بتقنيات تشفير عالمية آمنة
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -293,7 +361,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="p-20 text-center animate-pulse">جاري تحميل بوابة الدفع...</div>}>
+    <Suspense fallback={<div className="p-20 text-center animate-pulse">جاري تحميل صفحة الدفع...</div>}>
       <CheckoutContent />
     </Suspense>
   );

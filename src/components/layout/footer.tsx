@@ -20,7 +20,9 @@ import {
   Instagram,
   Twitter,
   Linkedin,
-  Globe
+  Globe,
+  RefreshCcw,
+  Phone
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -72,7 +74,8 @@ export function Footer() {
             </h4>
             <ul className="space-y-4">
               <FooterLink href="/terms" icon={FileText} label="شروط الاستخدام" />
-              <FooterLink href="/privacy" icon={ShieldCheck} label="سياسة الخصوصية" />
+              <FooterLink href="/privacy-policy" icon={ShieldCheck} label="سياسة الخصوصية" />
+              <FooterLink href="/refund-policy" icon={RefreshCcw} label="سياسة الاسترجاع" />
               <FooterLink href="/guarantees" icon={ShieldCheck} label="ضمان الحقوق" />
             </ul>
           </div>
@@ -83,9 +86,9 @@ export function Footer() {
               <span className="w-1.5 h-8 bg-zinc-800 rounded-full inline-block shrink-0"></span> المساعدة
             </h4>
             <ul className="space-y-4">
+              <FooterLink href="/contact-us" icon={Phone} label="اتصل بنا" />
               <FooterLink href="/support" icon={HelpCircle} label="الأسئلة الشائعة" />
               <FooterLink href="/support" icon={MessageSquare} label="تذاكر الدعم" />
-              <FooterLink href="/download" icon={HelpCircle} label="تحميل التطبيق" />
             </ul>
           </div>
 
