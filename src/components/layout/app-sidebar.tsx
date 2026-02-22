@@ -53,7 +53,8 @@ import {
   Cloud,
   Terminal,
   Activity,
-  UserPlus
+  UserPlus,
+  Clock
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
