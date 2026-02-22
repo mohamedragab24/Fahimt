@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -176,37 +177,10 @@ export default function HomePage() {
 
 function LandingPage({ router, settings }: any) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const firestore = useFirestore();
 
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
-
-  useEffect(() => {
-    if (!firestore || !searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const q = query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(5));
-        const snap = await getDocs(q);
-        const results = snap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter((ist: any) => ist.title?.toLowerCase().includes(searchTerm.toLowerCase()));
-        setSearchResults(results);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm, firestore]);
 
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
@@ -217,8 +191,8 @@ function LandingPage({ router, settings }: any) {
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none flex items-center justify-center">
-              <Menu className="h-7 w-7 text-white" />
+            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
+              <Menu className="h-6 w-6 md:h-7 md:size-7" />
             </SidebarTrigger>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
@@ -354,7 +328,6 @@ function WhyCard({ icon: Icon, title, desc }: any) {
 }
 
 function MustafhemView({ profile, settings, router }: any) {
-  const readySessionsQuery = useMemoFirebase(() => (doc(useFirestore(), "istifhams")), []);
   return (
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
