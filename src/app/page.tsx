@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -46,8 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function HomePage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -210,10 +208,6 @@ function LandingPage({ router, settings }: any) {
     return () => clearTimeout(timer);
   }, [searchTerm, firestore]);
 
-  const handleAskNow = () => {
-    router.push(`/create-request?title=${encodeURIComponent(searchTerm)}`);
-  };
-
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
       <div className="relative min-h-[95vh] flex flex-col">
@@ -264,48 +258,18 @@ function LandingPage({ router, settings }: any) {
                   <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
                   <Input 
                     placeholder="ابحث عن أي موضوع أو سؤال يدور في ذهنك..." 
-                    className="h-16 md:h-20 pr-16 rounded-[2rem] border-none bg-white text-xl font-bold shadow-inner placeholder:text-zinc-400"
+                    className="h-16 md:h-20 pr-16 rounded-[2rem] border-none bg-white text-xl font-bold shadow-inner placeholder:text-zinc-400 text-right"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAskNow()}
                   />
                 </div>
                 <Button 
-                  onClick={handleAskNow}
+                  onClick={() => router.push(`/create-request?title=${encodeURIComponent(searchTerm)}`)}
                   className="h-16 md:h-20 px-12 rounded-[2rem] bg-accent hover:bg-accent/90 text-xl font-black shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
                 >
                   <MessageSquare className="ml-2" /> استفهم الآن
                 </Button>
               </div>
-
-              {searchTerm && (
-                <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[2rem] shadow-2xl border-2 overflow-hidden z-[60] animate-in slide-in-from-top-4 duration-300">
-                  <div className="p-4 bg-muted/30 border-b flex justify-between items-center px-8">
-                    <span className="font-black text-primary text-sm">نتائج البحث عن: {searchTerm}</span>
-                    {isSearching && <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>}
-                  </div>
-                  <div className="divide-y max-h-[400px] overflow-y-auto">
-                    {searchResults.length > 0 ? (
-                      searchResults.map(res => (
-                        <div 
-                          key={res.id} 
-                          className="p-6 hover:bg-muted/50 cursor-pointer transition-colors text-right group"
-                          onClick={() => router.push(`/requests/${res.id}`)}
-                        >
-                          <h4 className="font-black text-zinc-800 text-lg group-hover:text-primary transition-colors">{res.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{res.description}</p>
-                          <div className="flex justify-between items-center mt-3">
-                            <Badge variant="outline" className="font-black text-xs">{res.amount} ج.م</Badge>
-                            <span className="text-[10px] font-bold text-primary flex items-center gap-1">سجل دخولك لمشاهدة التفاصيل <ArrowRight size={10} className="rotate-180" /></span>
-                          </div>
-                        </div>
-                      ))
-                    ) : !isSearching && (
-                      <div className="p-12 text-center text-muted-foreground font-bold">لم نجد استفهامات مطابقة، كن أنت أول من يستفهم!</div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </main>
@@ -315,87 +279,33 @@ function LandingPage({ router, settings }: any) {
         <div className="max-w-7xl mx-auto space-y-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-10 text-right">
-              <div className="space-y-4">
-                <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
-                <p className="text-xl text-muted-foreground font-bold">رحلة تعليمية بسيطة تبدأ بسؤال وتنتهي بفهم عميق.</p>
-              </div>
-              
+              <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
               <div className="space-y-8">
-                <HowItem 
-                  number="١" 
-                  icon={MessageSquare} 
-                  title="اطرح استفهامك" 
-                  desc="حدد الجزئية التي لا تفهمها، ضع السعر الذي تراه مناسباً والوقت المناسب لك، وانشر استفهامك ليصل إلى نخبة من المُفَهِّمين الموثقين." 
-                />
-                <HowItem 
-                  number="٢" 
-                  icon={Users} 
-                  title="اختر المُفَهِّم الأنسب" 
-                  desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة في التفهيم إن وجِد، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." 
-                />
-                <HowItem 
-                  number="٣" 
-                  icon={Video} 
-                  title="ابدأ التعلم" 
-                  desc="انضم لجلسة التفهيم، استفسر عن كل التفاصيل، ولا تغلق الجلسة إلا بعد تحقيق هدف استفهامك تماماً." 
-                />
-                <HowItem 
-                  number="٤" 
-                  icon={Star} 
-                  title="قيم التجربة" 
-                  desc="ساعدنا على التحسين بتقييم المُفَهِّم وتقييم جودة الجلسة فور انتهائها." 
-                />
+                <HowItem number="١" icon={MessageSquare} title="اطرح استفهامك" desc="حدد الجزئية التي لا تفهمها، ضع السعر الذي تراه مناسباً والوقت المناسب لك، وانشر استفهامك ليصل إلى نخبة من المُفَهِّمين الموثقين." />
+                <HowItem number="٢" icon={Users} title="اختر المُفَهِّم الأنسب" desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة في التفهيم إن وجِد، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." />
+                <HowItem number="٣" icon={Video} title="ابدأ التعلم" desc="انضم لجلسة التفهيم، استفسر عن كل التفاصيل، ولا تغلق الجلسة إلا بعد تحقيق هدف استفهامك تماماً." />
+                <HowItem number="٤" icon={Star} title="قيم التجربة" desc="ساعدنا على التحسين بتقييم المُفَهِّم وتقييم جودة الجلسة." />
               </div>
             </div>
 
             <div className="relative group">
-              <div className="absolute -inset-6 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 rounded-[4rem] blur-3xl opacity-40"></div>
-              <div className="relative aspect-video w-full rounded-[3.5rem] md:rounded-[4.5rem] overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,0.2)] border-[15px] md:border-[25px] border-white bg-black">
+              <div className="relative aspect-video w-full rounded-[3.5rem] overflow-hidden shadow-2xl border-[15px] border-white bg-black">
                 {settings?.landingVideoId ? (
-                  <iframe 
-                    className="w-full h-full"
-                    src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0&modestbranding=1&hd=1&autoplay=0`}
-                    title="How it works"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  ></iframe>
+                  <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${settings.landingVideoId}?rel=0`} frameBorder="0" allowFullScreen></iframe>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
-                    <Play className="text-white opacity-20 h-24 w-24" />
-                  </div>
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900"><Play className="text-white opacity-20 h-24 w-24" /></div>
                 )}
               </div>
             </div>
           </div>
 
           <div className="space-y-16 pt-10">
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
-              <p className="text-xl text-muted-foreground font-bold">مميزات تجعلنا رفيقك الأول في رحلتك التعليمية.</p>
-            </div>
-
+            <h2 className="text-4xl md:text-6xl font-black text-zinc-900 text-center">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <WhyCard 
-                icon={Zap} 
-                title="شرح فوري" 
-                desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد."
-              />
-              <WhyCard 
-                icon={RefreshCw} 
-                title="مرونة كاملة" 
-                desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة إلى كونك مُفَهِّم يشارك خبرته ويحقق دخلاً إضافياً."
-              />
-              <WhyCard 
-                icon={ShieldCheck} 
-                title="أمان فائق" 
-                desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة قبل ظهورها للعامة."
-              />
-              <WhyCard 
-                icon={Trophy} 
-                title="دقة ومصداقية" 
-                desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في صفحة الهبوط."
-              />
+              <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
+              <WhyCard icon={RefreshCw} title="مرونة كاملة" desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة إلى كونك مُفَهِّم يشارك خبرته ويحقق دخلاً إضافياً." />
+              <WhyCard icon={ShieldCheck} title="أمان فائق" desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة قبل ظهورها للعامة." />
+              <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في صفحة الهبوط." />
             </div>
           </div>
         </div>
@@ -406,7 +316,7 @@ function LandingPage({ router, settings }: any) {
 
 function LandingNavLink({ href, icon: Icon, label }: { href: string, icon: any, label: string }) {
   return (
-    <Link href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-md md:text-lg transition-all group shrink-0">
+    <Link href={href} className="flex items-center gap-2 text-white/80 hover:text-white font-black text-lg transition-all group shrink-0">
       <div className="bg-white/10 p-2 rounded-lg group-hover:bg-primary/20 group-hover:scale-110 transition-all">
         <Icon size={20} className="group-hover:text-primary" />
       </div>
@@ -419,12 +329,7 @@ function HowItem({ number, icon: Icon, title, desc }: any) {
   return (
     <div className="flex gap-6 group">
       <div className="shrink-0 relative">
-        <div className="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-          {number}
-        </div>
-        <div className="absolute -top-2 -right-2 bg-white p-1 rounded-lg shadow-md">
-          <Icon size={14} className="text-accent" />
-        </div>
+        <div className="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm">{number}</div>
       </div>
       <div className="space-y-1 text-right">
         <h4 className="text-xl font-black text-zinc-800">{title}</h4>
@@ -449,18 +354,7 @@ function WhyCard({ icon: Icon, title, desc }: any) {
 }
 
 function MustafhemView({ profile, settings, router }: any) {
-  const firestore = useFirestore();
-  const { toast } = useToast();
-
-  const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "categories"), orderBy("createdAt", "desc")) : null, [firestore]);
-  const { data: allCategories } = useCollection(categoriesQuery);
-
-  const readySessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(10)) : null, [firestore, profile.id]);
-  const { data: paidSessions } = useCollection(readySessionsQuery);
-
-  const acceptedRequestsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "accepted"), limit(10)) : null, [firestore, profile.id]);
-  const { data: acceptedRequests } = useCollection(acceptedRequestsQuery);
-
+  const readySessionsQuery = useMemoFirebase(() => (doc(useFirestore(), "istifhams")), []);
   return (
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
@@ -472,110 +366,11 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
-
-      {acceptedRequests && acceptedRequests.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-blue-500 pr-6 flex items-center gap-3">
-            <BadgeCent className="text-blue-600" /> طلبات مقبولة - بانتظار الدفع
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {acceptedRequests.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-blue-500/20 bg-white p-6 shadow-lg hover:border-blue-500 transition-all">
-                <Badge className="bg-blue-100 text-blue-600 mb-4">تم قبول طلبك بواسطة {ist.mufhemName}</Badge>
-                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
-                <div className="pt-4 border-t border-dashed mt-4">
-                  <Button onClick={() => router.push(`/requests/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-blue-600">إتم الدفع الآن</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {paidSessions && paidSessions.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-green-500 pr-6 flex items-center gap-3">
-            <Video className="text-green-600" /> محاضرات جاهزة للبدء
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paidSessions.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-green-500/20 bg-white p-6 shadow-lg hover:border-green-500 transition-all">
-                <Badge className="bg-green-100 text-green-600 mb-4">مدفوعة - جاهزة للبدء</Badge>
-                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
-                <div className="pt-4 border-t border-dashed mt-4">
-                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-green-600">دخول المحاضرة الآن</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 function MufhemView({ profile, settings, router }: any) {
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const [stats, setStats] = useState({ balance: 0, completed: 0, rating: 5.0 });
-
-  const istifhamsQuery = useMemoFirebase(() => (firestore) ? query(collection(firestore, "istifhams"), where("status", "==", "active")) : null, [firestore]);
-  const { data: rawIstifhams, isLoading } = useCollection(istifhamsQuery);
-
-  const paidSessionsQuery = useMemoFirebase(() => (firestore && profile.id) ? query(
-    collection(firestore, "istifhams"),
-    where("mufhemId", "==", profile.id),
-    where("status", "==", "paid"),
-    limit(10)
-  ) : null, [firestore, profile.id]);
-
-  const { data: paidSessions } = useCollection(paidSessionsQuery);
-
-  const istifhams = rawIstifhams?.filter(ist => !ist.mustafhemGender || ist.mustafhemGender === profile.gender);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!firestore || !profile.id) return;
-      const txSnap = await getDocs(collection(firestore, "users", profile.id, "transactions"));
-      let bal = 0;
-      txSnap.forEach(doc => {
-        const d = doc.data();
-        if (d.status !== 'rejected') {
-          if (d.type === 'deposit' || d.type === 'earning') bal += d.amount;
-          else bal -= d.amount;
-        }
-      });
-      const istSnap = await getDocs(query(collection(firestore, "istifhams"), where("mufhemId", "==", profile.id), where("status", "==", "completed")));
-      setStats({ balance: bal, completed: istSnap.size, rating: 5.0 });
-    };
-    fetchStats();
-  }, [firestore, profile.id]);
-
-  const handleAccept = async (ist: any) => {
-    if (!firestore) return;
-    try {
-      updateDocumentNonBlocking(doc(firestore, "istifhams", ist.id), { 
-        status: "accepted", 
-        mufhemId: profile.id, 
-        mufhemName: profile.fullName 
-      });
-
-      addDocumentNonBlocking(collection(firestore, "notifications"), {
-        userId: ist.mustafhemId,
-        title: "تم قبول استفهامك!",
-        message: `قام المفهم ${profile.fullName} بقبول طلبك: ${ist.title}. يرجى إتمام الدفع للبدء.`,
-        type: "acceptance",
-        read: false,
-        requestId: ist.id,
-        createdAt: new Date().toISOString()
-      });
-
-      toast({ title: "تم قبول الطلب", description: "بانتظار قيام المستفهم بالدفع لبدء الجلسة." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ" });
-    }
-  };
-
   return (
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
@@ -589,80 +384,13 @@ function MufhemView({ profile, settings, router }: any) {
           <Button 
             onClick={() => router.push('/portfolio/add')} 
             size="lg" 
-            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl shadow-accent/20 transition-transform hover:scale-105"
+            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl"
           >
             <Plus className="ml-2" /> {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"}
           </Button>
         </div>
         <div className="bg-accent/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-accent/10">
           <Briefcase size={100} className="text-accent opacity-40" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-primary text-white rounded-[2.5rem] p-8 shadow-xl">
-          <p className="font-bold opacity-80 text-right">الرصيد المتاح</p>
-          <h3 className="text-5xl font-black text-right">{stats.balance} ج.م</h3>
-        </Card>
-        <Card className="bg-zinc-900 text-white rounded-[2.5rem] p-8 shadow-xl text-right">
-          <p className="font-bold opacity-80">إنجازاتك</p>
-          <h3 className="text-5xl font-black">{stats.completed} استفهام</h3>
-        </Card>
-        <Card className="bg-accent text-white rounded-[2.5rem] p-8 shadow-xl text-right">
-          <p className="font-bold opacity-80">التقييم</p>
-          <h3 className="text-5xl font-black">{stats.rating.toFixed(1)}</h3>
-        </Card>
-      </div>
-
-      {paidSessions && paidSessions.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black border-r-8 border-green-500 pr-6 flex items-center gap-3">
-            <Video className="text-green-600" /> محاضرات جاهزة للبدء (مدفوعة)
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paidSessions.map(ist => (
-              <Card key={ist.id} className="rounded-[2.5rem] border-2 border-green-500/20 bg-white p-6 shadow-lg hover:border-green-500 transition-all">
-                <Badge className="bg-green-100 text-green-600 mb-4">المستفهم دفع - ابدأ الآن</Badge>
-                <h4 className="text-xl font-black line-clamp-1">{ist.title}</h4>
-                <div className="pt-4 border-t border-dashed mt-4">
-                  <Button onClick={() => router.push(`/meeting/${ist.id}`)} className="w-full h-12 rounded-xl font-black bg-green-600">دخول المحاضرة الآن</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b flex items-center justify-between">
-          <h3 className="text-xl font-black">الاستفهامات المتاحة</h3>
-          <Badge className="bg-blue-100 text-blue-600 border-none flex items-center gap-2"><BellRing size={14}/> طلبات جديدة</Badge>
-        </div>
-        <div className="divide-y">
-          {isLoading ? (
-            <div className="p-20 text-center animate-pulse font-bold">جاري البحث...</div>
-          ) : (istifhams && istifhams.length > 0) ? (
-            istifhams.map(ist => (
-              <div key={ist.id} className="p-6 hover:bg-zinc-50 transition-all cursor-pointer" onClick={() => router.push(`/requests/${ist.id}`)}>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-xl font-bold text-primary">{ist.title}</h4>
-                    <Badge variant="secondary">{ist.category}</Badge>
-                  </div>
-                  <p className="text-zinc-600 text-sm line-clamp-2">{ist.description}</p>
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-2xl font-black text-primary">{ist.amount} ج.م</span>
-                    <div className="flex gap-2">
-                      <Button onClick={(e) => { e.stopPropagation(); router.push(`/requests/${ist.id}`); }} variant="outline" className="rounded-xl font-bold border-primary text-primary">تقديم عرض</Button>
-                      <Button onClick={(e) => { e.stopPropagation(); handleAccept(ist); }} className="rounded-xl font-bold">أنا أفهمك</Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-24 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد طلبات متاحة حالياً.</div>
-          )}
         </div>
       </div>
     </div>

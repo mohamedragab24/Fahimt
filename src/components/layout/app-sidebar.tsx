@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -88,12 +87,6 @@ export function AppSidebar() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, "settings", "general");
-  }, [firestore]);
-  const { data: settings } = useDoc(settingsRef);
-
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -145,9 +138,9 @@ export function AppSidebar() {
                 <AvatarImage src={profile?.profilePictureUrl} />
                 <AvatarFallback className="text-[10px]">{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col truncate min-w-0">
-                <span className="font-black text-[12px] truncate text-right">{profile?.fullName}</span>
-                <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 ml-auto px-1.5 font-black">
+              <div className="flex flex-col truncate min-w-0 text-right">
+                <span className="font-black text-[12px] truncate">{profile?.fullName}</span>
+                <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 mr-auto px-1.5 font-black">
                   {profile?.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}
                 </Badge>
               </div>
@@ -306,18 +299,8 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/contact-us"} onClick={handleLinkClick}>
-                      <Link href="/contact-us" className="font-bold text-xs flex items-center gap-2"><Phone size={12}/> اتصل بنا</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild isActive={pathname === "/guarantees"} onClick={handleLinkClick}>
                       <Link href="/guarantees" className="font-bold text-xs">ضمان الحقوق</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/refund-policy"} onClick={handleLinkClick}>
-                      <Link href="/refund-policy" className="font-bold text-xs flex items-center gap-2"><RefreshCcw size={12}/> سياسة الاسترجاع</Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
