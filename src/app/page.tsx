@@ -224,14 +224,14 @@ function LandingPage({ router, settings }: any) {
         
         <header className="relative z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-black/20 backdrop-blur-md overflow-hidden">
           <div className="flex items-center gap-4 shrink-0">
+            <SidebarTrigger className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none flex items-center justify-center">
+              <Menu className="h-7 w-7 text-white" />
+            </SidebarTrigger>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
               </div>
             </Link>
-            <Button onClick={toggleSidebar} className="h-12 w-12 md:h-14 md:w-14 bg-accent hover:bg-accent/90 rounded-2xl shadow-xl border-none">
-              <Menu className="h-7 w-7 text-white" />
-            </Button>
           </div>
 
           <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">

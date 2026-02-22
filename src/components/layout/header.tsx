@@ -168,16 +168,35 @@ export function Header() {
               {/* زر الدخول أو البروفايل */}
               <div className="mr-2">
                 {user ? (
-                  <Button 
-                    variant="ghost" 
-                    onClick={goToProfile}
-                    className="h-10 w-10 md:h-14 md:w-14 rounded-2xl p-0 overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all shadow-md group"
-                  >
-                    <Avatar className="h-full w-full">
-                      <AvatarImage src={profile?.profilePictureUrl} />
-                      <AvatarFallback className="bg-primary/5 text-primary font-black text-lg">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
-                    </Avatar>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="h-10 w-10 md:h-14 md:w-14 rounded-2xl p-0 overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all shadow-md group"
+                      >
+                        <Avatar className="h-full w-full">
+                          <AvatarImage src={profile?.profilePictureUrl} />
+                          <AvatarFallback className="bg-primary/5 text-primary font-black text-lg">{profile?.fullName?.charAt(0) || "ف"}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-64 p-4 rounded-[2rem] shadow-2xl border-2" dir="rtl">
+                      <div className="flex flex-col items-center gap-3 py-4">
+                        <Avatar className="h-20 w-20 border-4 border-primary/10">
+                          <AvatarImage src={profile?.profilePictureUrl} />
+                          <AvatarFallback>{profile?.fullName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="text-center">
+                          <p className="font-black text-lg">{profile?.fullName}</p>
+                          <p className="text-xs text-muted-foreground font-bold">{profile?.email}</p>
+                          <Badge className="mt-2">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
+                        </div>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl font-bold cursor-pointer">الملف الشخصي</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl font-bold cursor-pointer">المحفظة</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <Button 
                     onClick={() => router.push('/login')}
