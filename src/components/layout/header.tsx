@@ -82,7 +82,7 @@ export function Header() {
           
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg transition-transform active:scale-95">
-              <Menu className="h-6 w-6 md:h-7 md:w-7" />
+              <Menu className="h-6 w-6 md:h-7 md:size-7" />
             </SidebarTrigger>
 
             <Link href="/" className="flex items-center group shrink-0">

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, collection, getDocs, addDoc, updateDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ function CheckoutContent() {
       const invoiceNumber = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
 
       // تسجيل المعاملة
-      const txRef = await addDoc(collection(firestore, "users", user.uid, "transactions"), {
+      await addDoc(collection(firestore, "users", user.uid, "transactions"), {
         amount: amountToPay,
         type: 'payment',
         details: `دفع مقابل استفهام: ${request.title}`,
@@ -135,7 +135,6 @@ function CheckoutContent() {
 
       await updateDoc(requestRef!, updateData);
 
-      // تجهيز بيانات الفاتورة للعرض
       setInvoiceData({
         number: invoiceNumber,
         date: new Date().toLocaleDateString('ar-EG'),
@@ -161,7 +160,6 @@ function CheckoutContent() {
     return <div className="p-20 text-center animate-pulse font-black">جاري تحضير بوابة الدفع...</div>;
   }
 
-  // عرض الفاتورة بعد النجاح
   if (showInvoice && invoiceData) {
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-10" dir="rtl">
@@ -202,19 +200,19 @@ function CheckoutContent() {
               <table className="w-full text-right">
                 <thead>
                   <tr className="text-zinc-400 text-xs font-black uppercase border-b border-zinc-200">
-                    <th className="pb-4">الخدمة / المنتج</th>
+                    <th className="pb-4 text-right">الخدمة / المنتج</th>
                     <th className="pb-4 text-left">السعر</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="text-lg font-black text-zinc-800">
-                    <td className="py-6">{invoiceData.productName}</td>
+                    <td className="py-6 text-right">{invoiceData.productName}</td>
                     <td className="py-6 text-left">{invoiceData.price} ج.م</td>
                   </tr>
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-primary">
-                    <td className="pt-6 font-black text-2xl text-primary">الإجمالي النهائي</td>
+                    <td className="pt-6 font-black text-2xl text-primary text-right">الإجمالي النهائي</td>
                     <td className="pt-6 text-left font-black text-3xl text-primary">{invoiceData.price} ج.م</td>
                   </tr>
                 </tfoot>
@@ -244,8 +242,8 @@ function CheckoutContent() {
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-10 bg-zinc-50 min-h-screen" dir="rtl">
       <div className="flex items-center justify-between border-r-8 border-primary pr-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900">إتمام الدفع الآمن</h1>
-          <p className="text-muted-foreground font-bold">اختر الوسيلة المناسبة لحجز جلستك التعليمية.</p>
+          <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900 text-right">إتمام الدفع الآمن</h1>
+          <p className="text-muted-foreground font-bold text-right">اختر الوسيلة المناسبة لحجز جلستك التعليمية.</p>
         </div>
       </div>
 
@@ -253,8 +251,9 @@ function CheckoutContent() {
         <div className="lg:col-span-1 space-y-6">
           <Card className="rounded-[2.5rem] shadow-xl border-none overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 border-b p-6">
-              <CardTitle className="text-xl font-black flex items-center gap-2">
-                <BadgeCent className="text-primary" /> ملخص الطلب
+              <CardTitle className="text-xl font-black flex items-center gap-2 justify-end">
+                <span>ملخص الطلب</span>
+                <BadgeCent className="text-primary" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
@@ -265,12 +264,12 @@ function CheckoutContent() {
               
               <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
                 <div className="flex justify-between text-sm font-bold text-zinc-500">
-                  <span>قيمة الجلسة</span>
                   <span>{amountToPay} ج.م</span>
+                  <span>قيمة الجلسة</span>
                 </div>
                 <div className="pt-3 border-t flex justify-between items-center">
-                  <span className="font-black text-zinc-900">الإجمالي</span>
                   <span className="text-3xl font-black text-primary">{amountToPay} <span className="text-sm">ج.م</span></span>
+                  <span className="font-black text-zinc-900">الإجمالي</span>
                 </div>
               </div>
             </CardContent>
@@ -278,17 +277,17 @@ function CheckoutContent() {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <Card className="rounded-[2.5rem] shadow-2xl border-none overflow-hidden bg-white">
+          <Card className="rounded-[2.5rem] shadow-2xl border-none overflow-hidden bg-white text-right">
             <CardContent className="p-8 md:p-12 space-y-10">
               <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-4">
                 <div 
                   className={`flex items-center justify-between p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('wallet')}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-row-reverse">
                     <RadioGroupItem value="wallet" id="wallet" />
                     <Wallet className="text-primary" />
-                    <div>
+                    <div className="text-right">
                       <Label htmlFor="wallet" className="text-xl font-black cursor-pointer">محفظة الموقع</Label>
                       <p className={`text-sm font-bold ${walletBalance >= amountToPay ? 'text-green-600' : 'text-red-500'}`}>رصيدك الحالي: {walletBalance} ج.م</p>
                     </div>
@@ -299,7 +298,7 @@ function CheckoutContent() {
                   className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'e-wallet' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('e-wallet')}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-row-reverse">
                     <RadioGroupItem value="e-wallet" id="e-wallet" />
                     <Smartphone className="text-green-600" />
                     <Label htmlFor="e-wallet" className="text-xl font-black cursor-pointer">محافظ إلكترونية (فودافون كاش)</Label>
@@ -318,7 +317,7 @@ function CheckoutContent() {
                   className={`flex flex-col gap-6 p-6 rounded-[2rem] border-4 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200'}`}
                   onClick={() => setPaymentMethod('card')}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-row-reverse">
                     <RadioGroupItem value="card" id="card" />
                     <CreditCard className="text-blue-600" />
                     <Label htmlFor="card" className="text-xl font-black cursor-pointer">بطاقة بنكية (Visa/Mastercard)</Label>
@@ -326,17 +325,16 @@ function CheckoutContent() {
                 </div>
               </RadioGroup>
 
-              {/* بنود الموافقة القانونية */}
               <div className="space-y-4 p-6 bg-zinc-50 rounded-3xl border-2 border-dashed">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 flex-row-reverse">
                   <Checkbox id="terms" checked={agreedTerms} onCheckedChange={(v) => setAgreedTerms(!!v)} className="mt-1" />
-                  <Label htmlFor="terms" className="text-sm font-bold leading-relaxed cursor-pointer">
+                  <Label htmlFor="terms" className="text-sm font-bold leading-relaxed cursor-pointer text-right">
                     أوافق على <Link href="/terms" className="text-primary hover:underline">الشروط والأحكام</Link> الخاصة بالمنصة.
                   </Label>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 flex-row-reverse">
                   <Checkbox id="refund" checked={agreedRefund} onCheckedChange={(v) => setAgreedRefund(!!v)} className="mt-1" />
-                  <Label htmlFor="refund" className="text-sm font-bold leading-relaxed cursor-pointer">
+                  <Label htmlFor="refund" className="text-sm font-bold leading-relaxed cursor-pointer text-right">
                     أوافق على <Link href="/refund-policy" className="text-primary hover:underline">سياسة الاسترجاع</Link> (14 يوماً وفق القانون المصري).
                   </Label>
                 </div>

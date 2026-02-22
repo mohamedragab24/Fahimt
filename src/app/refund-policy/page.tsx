@@ -55,7 +55,7 @@ export default function RefundPolicyPage() {
           </div>
           <Card className="rounded-[2rem] border-2 bg-white p-8 shadow-sm space-y-4">
             <ul className="list-disc list-inside space-y-3 text-zinc-600 font-bold">
-              <li>أن تكون الخدمة لم يتم استخدامها أو تفعيلها.</li>
+              <li>أن يكون المنتج أو الخدمة لم يتم استخدامها أو تفعيلها.</li>
               <li>في حالة الجلسات التعليمية، لا يمكن استرجاع المبلغ بعد بدء الجلسة أو تفعيل الرابط.</li>
               <li>في حالة وجود عيب فني مثبت في المنصة يمنع إتمام الخدمة، يتم مراجعة الطلب وتعويض العميل.</li>
             </ul>

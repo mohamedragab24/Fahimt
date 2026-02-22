@@ -47,9 +47,9 @@ export default function ContactUsPage() {
           </div>
           <CardContent className="p-10 space-y-6">
             <div className="space-y-4">
-              <input placeholder="الاسم الكامل" className="w-full h-14 rounded-2xl border-2 px-6 font-bold" />
-              <input placeholder="البريد الإلكتروني" type="email" className="w-full h-14 rounded-2xl border-2 px-6 font-bold" />
-              <textarea placeholder="كيف نساعدك؟" className="w-full h-40 rounded-2xl border-2 p-6 font-bold" />
+              <input placeholder="الاسم الكامل" className="w-full h-14 rounded-2xl border-2 px-6 font-bold text-right" />
+              <input placeholder="البريد الإلكتروني" type="email" className="w-full h-14 rounded-2xl border-2 px-6 font-bold text-right" />
+              <textarea placeholder="كيف نساعدك؟" className="w-full h-40 rounded-2xl border-2 p-6 font-bold text-right" />
               <Button className="w-full h-16 rounded-2xl font-black text-xl bg-primary shadow-xl hover:scale-[1.02] transition-all">
                 إرسال الآن <Send size={20} className="mr-2 rotate-180" />
               </Button>
@@ -68,7 +68,7 @@ function AddressCard({ city, address }: any) {
         <div className="bg-primary/10 p-3 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
           <MapPin size={24} />
         </div>
-        <div>
+        <div className="text-right">
           <h4 className="font-black text-xl text-zinc-800">{city}</h4>
           <p className="text-zinc-500 font-bold mt-1">{address}</p>
         </div>
@@ -79,9 +79,9 @@ function AddressCard({ city, address }: any) {
 
 function ContactItem({ icon: Icon, label, value }: any) {
   return (
-    <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+    <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex-row-reverse">
       <div className="bg-white p-2 rounded-lg shadow-sm text-accent"><Icon size={20} /></div>
-      <div>
+      <div className="text-right">
         <p className="text-[10px] font-black text-zinc-400 uppercase">{label}</p>
         <p className="font-black text-zinc-800">{value}</p>
       </div>

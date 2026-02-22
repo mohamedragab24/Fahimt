@@ -46,7 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function HomePage() {
@@ -181,7 +181,6 @@ function LandingPage({ router, settings }: any) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const firestore = useFirestore();
-  const { toggleSidebar } = useSidebar();
 
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
@@ -253,7 +252,7 @@ function LandingPage({ router, settings }: any) {
         <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 flex-1 py-20">
           <div className="max-w-5xl space-y-10">
             <h1 className="text-4xl md:text-8xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
-              {settings?.heroTitle || "اول منصة عربية لخدمات الشرح الفوري"}
+              {settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}
             </h1>
             <p className="text-xl md:text-3xl text-zinc-200 font-bold opacity-90 max-w-3xl mx-auto">
               {settings?.heroSubtitle || "شروحات مباشرة تقدم خصيصاً من أجلك؛ ابحث عن أي سؤال الآن."}
