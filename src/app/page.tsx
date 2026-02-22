@@ -177,7 +177,6 @@ export default function HomePage() {
 
 function LandingPage({ router, settings }: any) {
   const [searchTerm, setSearchTerm] = useState("");
-  const firestore = useFirestore();
 
   const landingImage = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl || "";
   const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
@@ -276,7 +275,7 @@ function LandingPage({ router, settings }: any) {
           <div className="space-y-16 pt-10">
             <h2 className="text-4xl md:text-6xl font-black text-zinc-900 text-center">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
+              <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً in جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
               <WhyCard icon={RefreshCw} title="مرونة كاملة" desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة إلى كونك مُفَهِّم يشارك خبرته ويحقق دخلاً إضافياً." />
               <WhyCard icon={ShieldCheck} title="أمان فائق" desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة قبل ظهورها للعامة." />
               <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في صفحة الهبوط." />
@@ -328,6 +327,14 @@ function WhyCard({ icon: Icon, title, desc }: any) {
 }
 
 function MustafhemView({ profile, settings, router }: any) {
+  const firestore = useFirestore();
+  const readySessionsQuery = useMemoFirebase(() => {
+    if (!firestore || !profile.id) return null;
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(5));
+  }, [firestore, profile.id]);
+
+  const { data: readySessions } = useCollection(readySessionsQuery);
+
   return (
     <div className="space-y-12">
       <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
@@ -339,6 +346,25 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
         <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
       </div>
+
+      {readySessions && readySessions.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">جلسات بانتظار الدخول</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {readySessions.map(session => (
+              <Card key={session.id} className="rounded-3xl border-2 bg-green-50/50 p-6 flex justify-between items-center">
+                <div className="text-right">
+                  <h4 className="font-black text-lg">{session.title}</h4>
+                  <p className="text-sm font-bold text-zinc-500">مع المفهم: {session.mufhemName}</p>
+                </div>
+                <Button onClick={() => router.push(`/meeting/${session.id}`)} className="bg-green-600 hover:bg-green-700 h-12 px-6 rounded-xl font-black">
+                  دخول الآن <Play size={16} className="mr-2" />
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

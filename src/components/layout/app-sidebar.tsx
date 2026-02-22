@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -53,7 +54,8 @@ import {
   Terminal,
   Activity,
   UserPlus,
-  Clock
+  Clock,
+  Ticket
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -331,6 +333,7 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-accent/20 space-y-1 mt-2 max-h-[400px] overflow-y-auto no-scrollbar pb-4">
                     <AdminLink href="/admin" icon={Home} label="نظرة عامة" active={pathname === "/admin"} />
+                    <AdminLink href="/admin/coupons" icon={Ticket} label="إدارة الكوبونات" active={pathname === "/admin/coupons"} />
                     <AdminLink href="/admin/manual-editor" icon={Edit3} label="المحرر الفائق و SEO" active={pathname === "/admin/manual-editor"} />
                     <AdminLink href="/admin/customize" icon={Palette} label="تخصيص المنصة" active={pathname === "/admin/customize"} />
                     <AdminLink href="/admin/assets" icon={ImageIcon} label="إدارة الصور والهوية" active={pathname === "/admin/assets"} />

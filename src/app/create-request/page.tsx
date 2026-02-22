@@ -4,14 +4,14 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Filter, Activity, Target, Clock, BadgeCent, FileText, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Layers, Filter, Activity, Target, Clock, BadgeCent, FileText, Sparkles, Loader2, ArrowRight, Ticket, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function CreateRequestContent() {
@@ -22,6 +22,10 @@ function CreateRequestContent() {
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+
   const [formData, setFormData] = useState({ 
     title: "", 
     description: "", 
@@ -50,6 +54,33 @@ function CreateRequestContent() {
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
   const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.categorySub)?.id) || [];
 
+  const handleValidateCoupon = async () => {
+    if (!firestore || !couponCode.trim()) return;
+    setIsValidatingCoupon(true);
+    try {
+      const couponRef = doc(firestore, "coupons", couponCode.trim().toUpperCase());
+      const snap = await getDoc(couponRef);
+      if (snap.exists() && snap.data().status === 'active') {
+        setAppliedCoupon(snap.data());
+        toast({ title: "تم تطبيق الخصم!" });
+      } else {
+        toast({ variant: "destructive", title: "كوبون غير صالح أو منتهي" });
+        setAppliedCoupon(null);
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل التحقق من الكوبون" });
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const calculateFinalAmount = () => {
+    const base = Number(formData.amount) || 0;
+    if (!appliedCoupon) return base;
+    if (appliedCoupon.type === 'fixed') return Math.max(0, base - appliedCoupon.value);
+    return Math.max(0, base * (1 - appliedCoupon.value / 100));
+  };
+
   const handleCreate = async () => {
     if (!formData.title || !formData.description || !formData.goal || !formData.category || !formData.amount || !formData.meetingTime) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول المطلوبة." });
@@ -57,8 +88,7 @@ function CreateRequestContent() {
     }
 
     if (!user) {
-      // حفظ البيانات في localStorage للزوار
-      localStorage.setItem('pending_istifham', JSON.stringify(formData));
+      localStorage.setItem('pending_istifham', JSON.stringify({ ...formData, coupon: appliedCoupon?.code }));
       toast({ title: "خطوة واحدة تفصلك!", description: "يرجى تسجيل حسابك الآن ليتم نشر استفهامك تلقائياً." });
       router.push("/login?mode=signup&returnTo=create-request");
       return;
@@ -66,9 +96,12 @@ function CreateRequestContent() {
 
     setIsSubmitting(true);
     try {
+      const finalAmount = calculateFinalAmount();
       await addDoc(collection(firestore!, "istifhams"), {
         ...formData,
-        amount: Number(formData.amount),
+        originalAmount: Number(formData.amount),
+        amount: finalAmount,
+        couponApplied: appliedCoupon?.code || null,
         status: "pending_approval",
         mustafhemId: user.uid,
         mustafhemName: user.displayName || "مستخدم",
@@ -175,7 +208,11 @@ function CreateRequestContent() {
                 className="h-16 rounded-2xl border-2 font-black text-3xl text-center shadow-inner" 
                 placeholder="0.00"
               />
-              <p className="text-xs text-muted-foreground text-center font-bold">بالجنيه المصري (ج.م)</p>
+              {appliedCoupon && (
+                <p className="text-xs text-green-600 font-black text-center animate-bounce">
+                  السعر بعد الخصم: {calculateFinalAmount()} ج.م
+                </p>
+              )}
             </div>
             <div className="space-y-3">
               <Label className="font-black text-lg flex items-center gap-2">الموعد المفضل <Clock size={18} className="text-blue-600"/></Label>
@@ -188,6 +225,26 @@ function CreateRequestContent() {
             </div>
           </div>
 
+          <div className="p-6 bg-zinc-50 rounded-3xl border-2 border-dashed space-y-4">
+            <Label className="font-black flex items-center gap-2"><Ticket size={18} className="text-primary"/> هل لديك كوبون خصم؟</Label>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="أدخل الرمز هنا..." 
+                className="h-12 rounded-xl border-2 font-bold uppercase"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+              />
+              <Button 
+                variant="outline" 
+                onClick={handleValidateCoupon} 
+                disabled={isValidatingCoupon || !couponCode}
+                className="h-12 px-6 rounded-xl border-primary text-primary font-black"
+              >
+                {isValidatingCoupon ? <Loader2 className="animate-spin h-4 w-4" /> : (appliedCoupon ? <Check className="h-4 w-4" /> : "تحقق")}
+              </Button>
+            </div>
+          </div>
+
           <div className="pt-10 border-t border-dashed">
             <Button 
               onClick={handleCreate} 
@@ -196,11 +253,6 @@ function CreateRequestContent() {
             >
               {isSubmitting ? <Loader2 className="animate-spin ml-3 h-10 w-10" /> : "تأكيد وإرسال للمراجعة"}
             </Button>
-            {!user && (
-              <p className="text-center text-sm font-bold text-zinc-400 mt-6">
-                * سيطلب منك النظام إنشاء حساب أو تسجيل الدخول لتأكيد الهوية بعد هذه الخطوة.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>

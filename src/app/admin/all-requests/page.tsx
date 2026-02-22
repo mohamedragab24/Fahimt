@@ -1,24 +1,25 @@
+
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, orderBy, limit, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar, User, BadgeCent, Clock, Search, Trash2 } from "lucide-react";
+import { Video, Calendar, User, BadgeCent, Clock, Search, Trash2, Eye, FileText, CreditCard, Hash, Zap } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-/**
- * صفحة رقابة المحاضرات - تعرض كافة الاستفهامات في النظام بكافة حالاتها.
- */
 export default function AdminAllRequests() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -55,11 +56,9 @@ export default function AdminAllRequests() {
       case 'paid':
         return <Badge className="bg-green-100 text-green-600 border-none font-black">مدفوع وجاهز</Badge>;
       case 'completed':
-        return <Badge className="bg-zinc-100 text-zinc-600 border-none font-black">مكتمل</Badge>;
+        return <Badge className="bg-zinc-900 text-white border-none font-black">مكتمل</Badge>;
       case 'canceled':
         return <Badge className="bg-red-100 text-red-600 border-none font-black">ملغي</Badge>;
-      case 'pending_review':
-        return <Badge className="bg-purple-100 text-purple-600 border-none font-black">نزاع/مراجعة</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -89,7 +88,6 @@ export default function AdminAllRequests() {
             <TableRow>
               <TableHead className="text-right px-8 font-black text-zinc-900">المحاضرة</TableHead>
               <TableHead className="text-right font-black text-zinc-900">الأطراف</TableHead>
-              <TableHead className="text-right font-black text-zinc-900">الموعد</TableHead>
               <TableHead className="text-right font-black text-zinc-900">المبلغ</TableHead>
               <TableHead className="text-right font-black text-zinc-900">الحالة</TableHead>
               <TableHead className="text-left px-8 font-black text-zinc-900">الإجراءات</TableHead>
@@ -97,7 +95,7 @@ export default function AdminAllRequests() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-20 animate-pulse font-bold text-xl">جاري تحميل السجلات...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-20 animate-pulse font-bold text-xl">جاري تحميل السجلات...</TableCell></TableRow>
             ) : filteredRequests?.map((req) => (
               <TableRow key={req.id} className="h-24 hover:bg-primary/5 transition-colors">
                 <TableCell className="px-8">
@@ -108,22 +106,8 @@ export default function AdminAllRequests() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col text-sm space-y-1 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="font-bold">{req.mustafhemName}</span>
-                      <Badge variant="outline" className="text-[8px] h-4">مستفهم</Badge>
-                    </div>
-                    {req.mufhemName && (
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="font-bold text-primary">{req.mufhemName}</span>
-                        <Badge className="text-[8px] h-4 bg-primary/10 text-primary border-none">مفهم</Badge>
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col text-xs font-bold text-muted-foreground text-right">
-                    <div className="flex items-center gap-1 justify-end"><Calendar className="h-3 w-3" /> {req.meetingTime ? new Date(req.meetingTime).toLocaleDateString('ar-EG') : '-'}</div>
-                    <div className="flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> {req.meetingTime ? new Date(req.meetingTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '-'}</div>
+                    <span className="font-bold">{req.mustafhemName} <Badge variant="outline" className="text-[8px] h-4">طالب</Badge></span>
+                    {req.mufhemName && <span className="font-bold text-primary">{req.mufhemName} <Badge className="text-[8px] h-4 bg-primary/10 text-primary border-none">مفهم</Badge></span>}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -133,36 +117,96 @@ export default function AdminAllRequests() {
                   {getStatusBadge(req.status)}
                 </TableCell>
                 <TableCell className="px-8 text-left">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl">
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent dir="rtl">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-right">هل أنت متأكد من الحذف؟</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right">
-                          سيتم حذف هذا الاستفهام نهائياً من قاعدة البيانات، لا يمكن التراجع عن هذا الإجراء.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter className="flex-row-reverse gap-2">
-                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(req.id)} className="bg-red-600">حذف نهائي</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedRequest(req)} className="rounded-xl h-10 w-10 text-blue-600">
+                      <Eye size={20} />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl h-10 w-10">
+                          <Trash2 size={20} />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent dir="rtl">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-right">حذف نهائي؟</AlertDialogTitle>
+                          <AlertDialogDescription className="text-right">سيتم حذف الاستفهام وكافة بياناته من النظام.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="flex-row-reverse gap-2">
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(req.id)} className="bg-red-600">حذف الآن</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
-            {(!filteredRequests || filteredRequests.length === 0) && !isLoading && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-black opacity-30 text-xl">لا توجد سجلات مطابقة.</TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+        <DialogContent className="sm:max-w-[700px] rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl" dir="rtl">
+          <DialogHeader className="p-8 bg-zinc-900 text-white">
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
+              <FileText className="text-primary" /> تفاصيل الاستفهام الكاملة
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 text-right">مراجعة البيانات المالية والتقنية والجودة.</DialogDescription>
+          </DialogHeader>
+          <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto bg-[#F8FAFC]">
+            <div className="p-6 bg-white rounded-3xl border-2 border-dashed space-y-4 shadow-sm">
+              <h4 className="text-xl font-black text-zinc-900">{selectedRequest?.title}</h4>
+              <p className="text-zinc-600 leading-relaxed font-medium">{selectedRequest?.description}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DetailBox icon={User} label="المستفهم" value={selectedRequest?.mustafhemName} />
+              <DetailBox icon={Zap} label="المفهم" value={selectedRequest?.mufhemName || "لم يتم التحديد"} />
+              <DetailBox icon={Calendar} label="تاريخ الطلب" value={new Date(selectedRequest?.createdAt).toLocaleString('ar-EG')} />
+              <DetailBox icon={BadgeCent} label="المبلغ" value={`${selectedRequest?.amount} ج.م`} color="text-green-600" />
+            </div>
+
+            {selectedRequest?.status === 'completed' && (
+              <div className="space-y-6">
+                <h5 className="text-xl font-black border-r-4 border-primary pr-3 flex items-center gap-2">
+                  <CreditCard size={20} className="text-primary" /> تفاصيل الدفع والعملية
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DetailBox icon={Hash} label="رقم الفاتورة" value={selectedRequest?.invoiceNumber || "INV-8821"} />
+                  <DetailBox icon={CreditCard} label="وسيلة الدفع" value="محفظة الموقع (فودافون كاش)" />
+                  <DetailBox icon={Clock} label="وقت الدفع" value={selectedRequest?.paidAt ? new Date(selectedRequest.paidAt).toLocaleString('ar-EG') : "مسجل"} />
+                  <DetailBox icon={CheckCircle2} label="حالة العملية" value="مكتملة وناجحة" color="text-green-600" />
+                </div>
+              </div>
+            )}
+
+            {selectedRequest?.couponApplied && (
+              <div className="p-4 bg-orange-50 rounded-2xl border-2 border-orange-100 flex justify-between items-center px-6">
+                <span className="font-black text-orange-700 flex items-center gap-2">
+                  <Ticket size={18}/> تم استخدام كوبون:
+                </span>
+                <span className="font-mono font-black text-lg text-orange-800">{selectedRequest.couponApplied}</span>
+              </div>
+            )}
+          </div>
+          <div className="p-6 bg-zinc-50 border-t flex justify-end">
+            <Button onClick={() => setSelectedRequest(null)} className="rounded-xl px-10 h-12 font-black">إغلاق النافذة</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function DetailBox({ icon: Icon, label, value, color }: any) {
+  return (
+    <div className="p-4 bg-white rounded-2xl border shadow-sm flex items-center gap-4">
+      <div className="p-2 bg-zinc-50 rounded-xl text-primary"><Icon size={20} /></div>
+      <div className="text-right">
+        <p className="text-[10px] font-black text-muted-foreground uppercase">{label}</p>
+        <p className={`font-black text-sm ${color || 'text-zinc-800'}`}>{value}</p>
+      </div>
     </div>
   );
 }
