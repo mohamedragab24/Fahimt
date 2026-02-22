@@ -151,7 +151,6 @@ export function AppSidebar() {
 
         <SidebarMenu className="space-y-1 pt-4 overflow-y-auto no-scrollbar px-1">
           
-          {/* الروابط الشخصية */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "/offers"} onClick={handleLinkClick}>
               <Link href="/offers">
@@ -172,7 +171,6 @@ export function AppSidebar() {
 
           <SidebarSeparator className="my-2" />
 
-          {/* التصفح العام */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "/teachers"} onClick={handleLinkClick}>
               <Link href="/teachers">
@@ -202,7 +200,6 @@ export function AppSidebar() {
 
           <SidebarSeparator className="my-2" />
 
-          {/* الإعدادات المنسدلة */}
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
@@ -247,7 +244,6 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </Collapsible>
 
-          {/* مركز المساعدة المنسدل */}
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
@@ -284,7 +280,6 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </Collapsible>
 
-          {/* المزيد المنسدل */}
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
@@ -321,7 +316,6 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </Collapsible>
 
-          {/* لوحة المسؤول - تظهر فقط للمسؤولين */}
           {profile?.isAdmin && (
             <Collapsible className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
               <SidebarMenuItem>
