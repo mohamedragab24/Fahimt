@@ -160,6 +160,10 @@ function CheckoutContent() {
     return <div className="p-20 text-center animate-pulse font-black">جاري تحضير بوابة الدفع...</div>;
   }
 
+  if (!request) {
+    return <div className="p-20 text-center font-bold text-red-500">عذراً، لم يتم العثور على بيانات هذا الاستفهام.</div>;
+  }
+
   if (showInvoice && invoiceData) {
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-10" dir="rtl">
@@ -191,7 +195,7 @@ function CheckoutContent() {
               </div>
               <div className="text-left">
                 <Label className="text-zinc-400 font-black text-xs uppercase">حالة الدفع</Label>
-                <Badge className="bg-green-100 text-green-600 text-lg px-6 py-1 block w-fit mr-auto font-black">{invoiceData.status}</Badge>
+                <Badge className="bg-green-100 text-green-600 text-lg px-6 py-1 block w-fit mr-auto font-black">مدفوع</Badge>
                 <p className="text-xs font-bold text-zinc-400 mt-2">وسيلة الدفع: {invoiceData.method}</p>
               </div>
             </div>
@@ -227,9 +231,9 @@ function CheckoutContent() {
         </Card>
 
         <div className="flex gap-4">
-          <Button onClick={() => window.print()} variant="outline" className="flex-1 h-16 rounded-2xl font-black text-lg gap-2">
+          <button onClick={() => window.print()} className="flex-1 h-16 rounded-2xl font-black text-lg gap-2 border-2 flex items-center justify-center hover:bg-zinc-50 transition-all">
             <Printer size={20} /> طباعة الفاتورة
-          </Button>
+          </button>
           <Button onClick={() => router.push(`/meeting/${requestId}`)} className="flex-1 h-16 rounded-2xl font-black text-lg bg-primary shadow-xl">
             الانتقال للمحاضرة الآن <ArrowRight size={20} className="mr-2 rotate-180" />
           </Button>
