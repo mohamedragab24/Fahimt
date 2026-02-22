@@ -2,8 +2,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { doc, collection, query, orderBy, addDoc, updateDoc } from "firebase/firestore";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { doc, collection, query, orderBy, addDoc, updateDoc, where } from "firebase/firestore";
 import { 
   Clock, 
   User, 
@@ -20,7 +20,8 @@ import {
   AlertCircle,
   MessageSquare,
   Star,
-  Send
+  Send,
+  Edit3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +31,6 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 export default function RequestDetailsPage() {
   const params = useParams();
@@ -42,10 +40,6 @@ export default function RequestDetailsPage() {
   const { user: currentUser } = useUser();
   const { toast } = useToast();
   
-  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
-  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
-  const [offerForm, setOfferForm] = useState({ amount: "", duration: "1", details: "" });
-
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, "settings", "general");
@@ -73,41 +67,6 @@ export default function RequestDetailsPage() {
 
   const { data: profile } = useDoc(userRef);
 
-  const handleMakeOffer = async () => {
-    if (!firestore || !currentUser || !profile || !offerForm.amount) return;
-    setIsSubmittingOffer(true);
-    try {
-      await addDoc(collection(firestore, "istifhams", requestId, "offers"), {
-        mufhemId: currentUser.uid,
-        mufhemName: profile.fullName,
-        mufhemAvatar: profile.profilePictureUrl || "",
-        amount: Number(offerForm.amount),
-        duration: offerForm.duration,
-        details: offerForm.details,
-        status: "pending",
-        createdAt: new Date().toISOString()
-      });
-
-      // إرسال إشعار لصاحب الطلب
-      await addDoc(collection(firestore, "notifications"), {
-        userId: request?.mustafhemId,
-        title: "عرض جديد على استفهامك!",
-        message: `قام المفهم ${profile.fullName} بتقديم عرض لشرح: ${request?.title}.`,
-        type: "new_offer",
-        read: false,
-        requestId: requestId,
-        createdAt: new Date().toISOString()
-      });
-
-      toast({ title: "تم إرسال عرضك بنجاح" });
-      setIsOfferModalOpen(false);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الإرسال" });
-    } finally {
-      setIsSubmittingOffer(false);
-    }
-  };
-
   const acceptOffer = (offer: any) => {
     router.push(`/checkout/${requestId}?offerId=${offer.id}`);
   };
@@ -123,7 +82,7 @@ export default function RequestDetailsPage() {
 
   const isOwner = currentUser?.uid === request.mustafhemId;
   const isMufhem = profile?.role === 'mufhem';
-  const hasAlreadyOffered = offers?.some((o: any) => o.mufhemId === currentUser?.uid);
+  const myOffer = offers?.find((o: any) => o.mufhemId === currentUser?.uid);
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
@@ -177,11 +136,11 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {/* زر تقديم عرض للمفهمين */}
-                {!isOwner && isMufhem && request.status === 'active' && !hasAlreadyOffered && (
+                {/* زر تقديم عرض للمفهمين - يوجه لصفحة مستقلة */}
+                {!isOwner && isMufhem && request.status === 'active' && !myOffer && (
                   <div className="pt-10">
                     <Button 
-                      onClick={() => setIsOfferModalOpen(true)}
+                      onClick={() => router.push(`/requests/${requestId}/make-offer`)}
                       className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary shadow-2xl hover:scale-[1.02] transition-all"
                     >
                       <Zap className="ml-2" /> أنا أفهمك.. قدم عرضك الآن
@@ -189,9 +148,17 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {hasAlreadyOffered && !isOwner && request.status === 'active' && (
-                  <div className="p-8 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 text-center">
-                    <p className="text-blue-700 font-black text-lg">لقد قمت بتقديم عرض لهذا الاستفهام بالفعل. بانتظار رد المستفهم.</p>
+                {myOffer && !isOwner && request.status === 'active' && (
+                  <div className="p-8 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-blue-700 font-black text-xl flex items-center gap-2"><CheckCircle2/> لقد قدمت عرضاً بالفعل</h4>
+                      <Badge className="bg-blue-600">قيد الانتظار</Badge>
+                    </div>
+                    <p className="text-blue-600 font-bold italic">"{myOffer.details}"</p>
+                    <div className="pt-4 border-t border-blue-100 flex justify-between items-center text-blue-800 font-black">
+                      <span>سعرك: {myOffer.amount} ج.م</span>
+                      <Button variant="ghost" onClick={()=>router.push(`/requests/${requestId}/make-offer`)} className="text-blue-600 hover:bg-blue-100"><Edit3 size={16} className="ml-2"/> تعديل العرض</Button>
+                    </div>
                   </div>
                 )}
 
@@ -315,7 +282,7 @@ export default function RequestDetailsPage() {
               <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12">
                 <BadgeCent size={120} />
               </div>
-              <h4 className="text-xl font-black flex items-center gap-2 relative z-10">ضمان فهمني <ShieldCheck size={24} className="text-primary" /></h4>
+              <h4 className="text-xl font-black flex items-center gap-2 relative z-10">ضمان فهمت <ShieldCheck size={24} className="text-primary" /></h4>
               <p className="text-zinc-400 font-bold text-sm leading-relaxed relative z-10">
                 أموالك في أمان تام؛ حيث لا يتم تحويل المستحقات للمفهم إلا بعد انتهاء الجلسة وتأكيدك بأنك "فهمت" المعلومة تماماً.
               </p>
@@ -323,37 +290,6 @@ export default function RequestDetailsPage() {
           </div>
         </div>
       </div>
-
-      {/* مودال تقديم عرض */}
-      <Dialog open={isOfferModalOpen} onOpenChange={setIsOfferModalOpen}>
-        <DialogContent className="sm:max-w-[550px] rounded-[2.5rem]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black">تقديم عرض مخصص</DialogTitle>
-            <DialogDescription className="text-right font-bold">اشرح للمستفهم لماذا أنت الشخص المناسب وحدد ميزانيتك.</DialogDescription>
-          </DialogHeader>
-          <div className="py-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 text-right">
-                <Label className="font-black">السعر (ج.م)</Label>
-                <Input type="number" placeholder="مثال: 120" value={offerForm.amount} onChange={(e)=>setOfferForm({...offerForm, amount: e.target.value})} className="h-14 rounded-xl border-2 font-black text-xl" />
-              </div>
-              <div className="space-y-2 text-right">
-                <Label className="font-black">تاريخ التوافر (يوم)</Label>
-                <Input type="number" placeholder="خلال كم يوم؟" value={offerForm.duration} onChange={(e)=>setOfferForm({...offerForm, duration: e.target.value})} className="h-14 rounded-xl border-2 font-bold" />
-              </div>
-            </div>
-            <div className="space-y-2 text-right">
-              <Label className="font-black">تفاصيل العرض</Label>
-              <Textarea placeholder="اشرح طريقتك في التفهيم وكيف ستغطي نقاط الاستفهام..." value={offerForm.details} onChange={(e)=>setOfferForm({...offerForm, details: e.target.value})} className="h-40 rounded-xl p-4 border-2 font-medium" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleMakeOffer} disabled={isSubmittingOffer} className="w-full h-16 rounded-2xl text-xl font-black bg-primary shadow-xl">
-              {isSubmittingOffer ? <Loader2 className="animate-spin" /> : <><Send size={20} className="ml-2 rotate-180"/> تأكيد وإرسال العرض</>}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
