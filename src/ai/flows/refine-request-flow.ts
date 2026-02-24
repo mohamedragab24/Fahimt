@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview تدفق ذكاء اصطناعي لمساعدة الطلاب في صياغة طلباتهم.
@@ -27,7 +28,7 @@ const refineFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await ai.generate({
-      prompt: `أنت مساعد تعليمي في منصة "فهمني". الطالب يريد مساعدة في: "${input.text}".
+      prompt: `أنت مساعد تعليمي في منصة "فهمت". الطالب يريد مساعدة في: "${input.text}".
       قم بصياغة عنوان جذاب واحترافي، ووصف دقيق يشجع المدرسين المتميزين على قبول الطلب.
       اجعل الرد بصيغة JSON تحتوي على refinedTitle و refinedDescription باللغة العربية.`,
       output: { schema: RefineOutputSchema }

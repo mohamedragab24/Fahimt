@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview تدفق إرسال الإشعارات والتذكيرات المطور.
@@ -33,7 +34,7 @@ const messagingFlow = ai.defineFlow(
         const formData = new FormData();
         formData.append('from', 'resraa355@selfserve.worlds-connected.co');
         formData.append('to', input.recipient.trim().toLowerCase());
-        formData.append('subject', input.subject || "تنبيه من منصة فهمني");
+        formData.append('subject', input.subject || "تنبيه من منصة فهمت");
         formData.append('text', input.body);
 
         const res = await fetch(`https://${baseUrl}/email/3/send`, {

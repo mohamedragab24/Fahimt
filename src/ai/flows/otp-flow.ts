@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) مع نظام تتبع أخطاء.
@@ -39,8 +40,8 @@ const otpFlow = ai.defineFlow(
         const formData = new FormData();
         formData.append('from', 'resraa355@selfserve.worlds-connected.co');
         formData.append('to', input.recipient.trim().toLowerCase());
-        formData.append('subject', 'رمز التحقق - منصة فهمني');
-        formData.append('text', `مرحباً، رمز التحقق الخاص بك في منصة فهمني هو: ${code}`);
+        formData.append('subject', 'رمز التحقق - منصة فهمت');
+        formData.append('text', `مرحباً، رمز التحقق الخاص بك في منصة فهمت هو: ${code}`);
 
         const response = await fetch(`https://${baseUrl}/email/3/send`, {
           method: 'POST',
@@ -73,7 +74,7 @@ const otpFlow = ai.defineFlow(
           body: JSON.stringify({
             "from": "447860099299",
             "to": formattedPhone,
-            "content": { "text": `رمز التحقق لمنصة فهمني هو: ${code}` }
+            "content": { "text": `رمز التحقق لمنصة فهمت هو: ${code}` }
           })
         });
 
@@ -91,7 +92,7 @@ const otpFlow = ai.defineFlow(
           };
         }
       } catch (err: any) {
-        return { success: false, code: '', message: 'خطأ في شبكة الواتساب.', debugInfo: err.message };
+        return { success: false, code, message: 'خطأ في شبكة الواتساب.', debugInfo: err.message };
       }
     }
   }

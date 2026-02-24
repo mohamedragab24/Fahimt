@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -52,15 +53,15 @@ export default function ManualEditorPage() {
   const { data: settings, isLoading } = useDoc(settingsRef);
 
   const [formData, setFormData] = useState({
-    siteTitle: "فهمني",
+    siteTitle: "فهمت",
     heroTitle: "أول منصة عربية لخدمات الشرح الفوري",
     heroSubtitle: "مُفهمين خبراء لخدمة كل مُستفهم طموح",
-    footerText: "جميع الحقوق محفوظة لمنصة فهمني",
+    footerText: "جميع الحقوق محفوظة لمنصة فهمت",
     primaryColor: "#29B6F6",
     accentColor: "#FF7043",
     backgroundColor: "#F8FAFC",
     borderRadius: "1rem",
-    metaTitle: "فهمني - منصة التعلم الذكي",
+    metaTitle: "فهمت - منصة التعلم الذكي",
     metaDescription: "أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل الخبرات والمعرفة.",
     metaKeywords: "تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, مفهم, مستفهم",
     googleSiteVerification: "",
@@ -86,16 +87,16 @@ export default function ManualEditorPage() {
     sideLogout: "تسجيل الخروج",
     sideToggleToStudent: "تبديل إلى مُستفهم",
     sideToggleToTeacher: "تبديل إلى مُفهم",
-    aboutTitle: "ما هي منصة فهمني؟",
-    aboutDescription: "فهمني هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية.",
+    aboutTitle: "ما هي منصة فهمت؟",
+    aboutDescription: "فهمت هي المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي لأغلب التخصصات الأكاديمية والتقنية والمهارية.",
     termsTitle: "شروط الاستخدام",
-    termsDescription: "استخدامك لـ 'فهمني' يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا.",
+    termsDescription: "استخدامك لـ 'فهمت' يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا.",
     privacyTitle: "سياسة الخصوصية",
-    privacyDescription: "كيف تتعامل منصة 'فهمني' مع بياناتك؟ نحن نلتزم بحماية خصوصيتك وتأمين بياناتك.",
+    privacyDescription: "كيف تتعامل منصة 'فهمت' مع بياناتك؟ نحن نلتزم بحماية خصوصيتك وتأمين بياناتك.",
     guaranteesTitle: "ضمان الحقوق",
-    guaranteesDescription: "نحن في 'فهمني' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
+    guaranteesDescription: "نحن في 'فهمت' نلعب دور الوسيط الضامن لتجربة عادلة ومرضية، حيث تبقى حقوقك المالية والمعرفية في أمان تام.",
     guideTitle: "الدليل الإرشادي",
-    guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمني' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
+    guideSubtitle: "الدليل الشامل لمستخدمي منصة 'فهمت' لضمان تجربة تعليمية مثمرة وسلسة للطرفين.",
     studentDashboardTitle: "عندك سؤال? اطرح استفهامك الآن",
     studentDashboardBtn: "طلب استفهام جديد",
     teacherDashboardTitle: "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك",
@@ -104,7 +105,7 @@ export default function ManualEditorPage() {
     teachersListTitle: "نخبة 'المفهمين' الموثقين",
     teachersListSearchPlaceholder: "ابحث باسم المدرس أو التخصص...",
     portfolioListTitle: "أعمال المفهمين",
-    portfolioListSubtitle: "نماذج تعليمية ملهمة من خبراء منصة فهمني.",
+    portfolioListSubtitle: "نماذج تعليمية ملهمة من خبراء منصة فهمت.",
     createIstifhamTitle: "تفاصيل الاستفهام",
     createIstifhamBtn: "تأكيد وإرسال للمراجعة"
   });
@@ -243,7 +244,7 @@ export default function ManualEditorPage() {
               <ColorInput label="اللون الأساسي" value={formData.primaryColor || ""} onChange={(v) => setFormData({...formData, primaryColor: v})} />
               <ColorInput label="لون التمييز" value={formData.accentColor || ""} onChange={(v) => setFormData({...formData, accentColor: v})} />
               <div className="space-y-2">
-                <Label className="text-[10px] font-black opacity-60">نصف قطر الزوايا</Label>
+                <Label className="text-[10px] font-black opacity-60 pr-2">نصف قطر الزوايا</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {["0px", "0.5rem", "1rem", "2rem", "3rem"].map(r => (
                     <button 

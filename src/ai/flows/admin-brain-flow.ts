@@ -21,7 +21,7 @@ const AdminBrainOutputSchema = z.object({
     accentColor: z.string().optional().describe('كود لون التمييز Hex'),
     backgroundColor: z.string().optional().describe('كود لون الخلفية Hex'),
     footerText: z.string().optional().describe('نص التذييل'),
-  }).describe('كائن يحتوي على الحقول المراد تحديثها في settings/general. لا تترك هذا الكائن فارغاً إذا كان هناك تعديل مطلوب.'),
+  }).describe('كائن يحتوي على الحقول المراد تحديثها in settings/general. لا تترك هذا الكائن فارغاً إذا كان هناك تعديل مطلوب.'),
   feedback: z.string().describe('رسالة توضح ما قام به الذكاء الاصطناعي.'),
 });
 
@@ -37,11 +37,11 @@ const adminBrainFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await ai.generate({
-      system: `أنت مدير تقني لمنصة "فهمني". مهمتك هي تحويل طلبات المسؤول النصية إلى تحديثات تقنية في مستند الإعدادات.
+      system: `أنت مدير تقني لمنصة "فهمت". مهمتك هي تحويل طلبات المسؤول النصية إلى تحديثات تقنية في مستند الإعدادات.
       يجب أن تعيد كائناً يحتوي فقط على الحقول التي طلب المسؤول تغييرها.
       تأكد من أن الكائن "updates" يحتوي على الأقل على حقل واحد إذا طلب المسؤول أي تغيير.
       مثال: إذا قال "غير لون الموقع للأخضر"، ابحث عن كود الأخضر المناسب وضعه في primaryColor.
-      إذا قال "سمي الموقع فهمني بلس"، غير siteTitle.`,
+      إذا قال "سمي الموقع فهمت بلس"، غير siteTitle.`,
       prompt: input.instruction,
       output: { schema: AdminBrainOutputSchema }
     });
