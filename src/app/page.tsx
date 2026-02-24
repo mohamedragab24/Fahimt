@@ -82,7 +82,7 @@ export default function HomePage() {
         status: "pending",
         createdAt: new Date().toISOString()
       });
-      toast({ title: "تم إرسال الطعن", description: "سيتم مراجعة طلبك من قبل الإدارة." });
+      toast({ title: "تم إرسال الطعن", description: "سيتم مراجعة طلبك من قبل إدارة فهمت." });
       setAppealReason("");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
@@ -108,15 +108,15 @@ export default function HomePage() {
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-50" dir="rtl">
         <Card className="w-full max-w-2xl shadow-2xl rounded-[3rem] border-t-8 border-red-600 overflow-hidden bg-white">
           <CardHeader className="text-center p-10 bg-red-50">
-            <CardTitle className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك</CardTitle>
+            <CardTitle className="text-4xl font-black text-zinc-900">عذراً، تم حظر حسابك في فهمت</CardTitle>
           </CardHeader>
           <CardContent className="p-10 space-y-8">
             <div className="p-6 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-4">
-              <h4 className="text-xl font-black flex items-center gap-2"><Scale className="text-red-600" /> تقديم طعن</h4>
-              <Textarea placeholder="اكتب رسالتك..." className="h-40 rounded-xl" value={appealReason} onChange={(e) => setAppealReason(e.target.value)} />
-              <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600 font-bold">إرسال طعن</Button>
+              <h4 className="text-xl font-black flex items-center gap-2"><Scale className="text-red-600" /> تقديم طعن للإدارة</h4>
+              <Textarea placeholder="اكتب سبب الطعن بوضوح..." className="h-40 rounded-xl" value={appealReason} onChange={(e) => setAppealReason(e.target.value)} />
+              <Button onClick={handleSendAppeal} disabled={isSendingAppeal} className="w-full h-14 bg-red-600 font-bold text-white rounded-xl shadow-lg">إرسال طعن</Button>
             </div>
-            <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-14 font-bold">خروج</Button>
+            <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-14 font-bold rounded-xl border-2">تسجيل الخروج</Button>
           </CardContent>
         </Card>
       </div>
@@ -134,7 +134,7 @@ export default function HomePage() {
             <CardTitle className="text-5xl font-black text-zinc-900">حسابك قيد المراجعة</CardTitle>
           </CardHeader>
           <CardContent className="px-12 pb-16 space-y-10">
-            <p className="text-lg text-muted-foreground font-medium">نحن بصدد مراجعة بيانات ملفك الشخصي لضمان جودة المنصة. ستتلقى إشعاراً فور تفعيل حسابك.</p>
+            <p className="text-lg text-muted-foreground font-medium">نحن بصدد مراجعة بيانات ملفك الشخصي في منصة فهمت لضمان الجودة. ستتلقى إشعاراً فور تفعيل حسابك.</p>
             <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))} className="w-full h-16 rounded-2xl text-xl font-bold border-2">
               <LogOut className="ml-2 h-6 w-6" /> تسجيل الخروج والعودة لاحقاً
             </Button>
@@ -151,7 +151,7 @@ export default function HomePage() {
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
-            <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً في فهمت</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {(profile.isVerified || profile.emailVerified || profile.whatsappVerified) && (
@@ -255,9 +255,9 @@ function LandingPage({ router, settings }: any) {
               <h2 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">كيف يعمل <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
               <div className="space-y-8">
                 <HowItem number="١" icon={MessageSquare} title="اطرح استفهامك" desc="حدد الجزئية التي لا تفهمها، ضع السعر الذي تراه مناسباً والوقت المناسب لك، وانشر استفهامك ليصل إلى نخبة من المُفَهِّمين الموثقين." />
-                <HowItem number="٢" icon={Users} title="اختر المُفَهِّم الأنسب" desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة في التفهيم إن وجِد، وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." />
-                <HowItem number="٣" icon={Video} title="ابدأ التعلم" desc="انضم لجلسة التفهيم، استفسر عن كل التفاصيل، ولا تغلق الجلسة إلا بعد تحقيق هدف استفهامك تماماً." />
-                <HowItem number="٤" icon={Star} title="قيم التجربة" desc="ساعدنا على التحسين بتقييم المُفَهِّم وتقييم جودة الجلسة." />
+                <HowItem number="٢" icon={Users} title="اختر المُفَهِّم الأنسب" desc="قارن بين عروض المُفَهِّمين، راجع معرض أعمالهم وتقييماتهم السابقة وتواصل معهم لاختيار من يمتلك أسلوب الشرح الأقرب لك." />
+                <HowItem number="٣" icon={Video} title="ابدأ التعلم" desc="انضم لجلسة التفهيم المباشرة، استفسر عن كل التفاصيل، ولا تغلق الجلسة إلا بعد تحقيق هدف استفهامك تماماً." />
+                <HowItem number="٤" icon={Star} title="قيم التجربة" desc="ساعدنا على التحسين بتقييم المُفَهِّم وتقييم جودة الجلسة لضمان استمرار الجودة في فهمت." />
               </div>
             </div>
 
@@ -275,10 +275,10 @@ function LandingPage({ router, settings }: any) {
           <div className="space-y-16 pt-10">
             <h2 className="text-4xl md:text-6xl font-black text-zinc-900 text-center">لماذا تختار <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>؟</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً in جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
-              <WhyCard icon={RefreshCw} title="مرونة كاملة" desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة إلى كونك مُفَهِّم يشارك خبرته ويحقق دخلاً إضافياً." />
-              <WhyCard icon={ShieldCheck} title="أمان فائق" desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة قبل ظهورها للعامة." />
-              <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل أن يتمكن من تقديم أي عرض تفهيم في صفحة الهبوط." />
+              <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
+              <WhyCard icon={RefreshCw} title="مرونة كاملة" desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة أو مُفَهِّم يشارك خبرته ويحقق دخلاً." />
+              <WhyCard icon={ShieldCheck} title="أمان فائق" desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة من إدارة فهمت قبل النشر." />
+              <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل التمكن من تقديم أي عرض في المنصة." />
             </div>
           </div>
         </div>
@@ -378,7 +378,7 @@ function MufhemView({ profile, settings, router }: any) {
             {settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}
           </h2>
           <p className="text-muted-foreground font-bold text-lg">
-            {settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة، زادت ثقة الطلاب باختيارك لمشاريعهم."}
+            {settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة، زادت ثقة طلاب فهمت باختيارك لمشاريعهم."}
           </p>
           <Button 
             onClick={() => router.push('/portfolio/add')} 

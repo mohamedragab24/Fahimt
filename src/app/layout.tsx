@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: 'فهمت - منصة التعلم الذكي',
   description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.',
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت',
-  manifest: '/manifest.json', // سيتم توجيهه للـ Dynamic Route
+  manifest: '/manifest.json', 
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

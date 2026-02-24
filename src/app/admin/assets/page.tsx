@@ -4,7 +4,7 @@
 import { useState, useRef } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, 
@@ -12,7 +12,6 @@ import {
   Upload, 
   Flower2, 
   Monitor, 
-  Zap, 
   Globe, 
   Smartphone,
   LayoutTemplate,
@@ -23,8 +22,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 /**
- * صفحة إدارة صور المنصة وأصول PWA.
- * كافة الصور هنا يتم ربطها بقاعدة البيانات وتحديثها لحظياً.
+ * مركز إدارة الأصول الرقمية لمنصة "فهمت".
+ * يسمح بتغيير كل صورة في الموقع بشكل مستقل وحفظها في Firestore.
  */
 export default function AdminAssets() {
   const firestore = useFirestore();
@@ -44,7 +43,7 @@ export default function AdminAssets() {
     const file = e.target.files?.[0];
     if (file && activeKey && firestore) {
       if (file.size > 1024 * 1024) {
-        toast({ variant: "destructive", title: "الملف كبير جداً", description: "يرجى اختيار صورة أقل من 1MB لضمان السرعة." });
+        toast({ variant: "destructive", title: "الملف كبير جداً", description: "يرجى اختيار صورة أقل من 1MB لضمان سرعة التحميل." });
         return;
       }
 
@@ -57,7 +56,7 @@ export default function AdminAssets() {
             [activeKey]: base64,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          toast({ title: "تم التحديث بنجاح", description: "الصورة الآن جزء من هوية المنصة الرقمية." });
+          toast({ title: "تم تحديث الأصل بنجاح", description: "التغيير سيظهر لكافة المستخدمين لحظياً." });
         } catch (err) {
           toast({ variant: "destructive", title: "خطأ في الحفظ" });
         } finally {
@@ -69,14 +68,13 @@ export default function AdminAssets() {
   };
 
   const assetItems = [
-    { key: 'logoUrl', label: 'اللوجو الرئيسي (Landing)', desc: 'يظهر بشكل كبير في صفحة الهبوط الرئيسية.', icon: Flower2 },
-    { key: 'miniIconUrl', label: 'اللوجو الصغير (Header)', desc: 'يظهر في الترويسة العلوية بجانب القائمة.', icon: AppWindow },
-    { key: 'landingBg', label: 'خلفية الهيرو', desc: 'خلفية صفحة الهبوط الكبيرة.', icon: Monitor },
-    { key: 'aboutImage', label: 'صورة "عن المنصة"', desc: 'تظهر في صفحة التعريف.', icon: Info },
-    { key: 'faviconUrl', label: 'أيقونة المتصفح (Favicon)', desc: 'تظهر في لسان المتصفح بالأعلى.', icon: Globe },
-    { key: 'icon192', label: 'أيقونة التطبيق (شاشة الهاتف)', desc: 'أيقونة البرنامج التي تظهر على الجوال بعد التثبيت (192x192).', icon: Smartphone },
-    { key: 'icon512', label: 'أيقونة التطبيق (المتجر)', desc: 'أيقونة البرنامج فائقة الجودة للمتصفحات والمتاجر (512x512).', icon: LayoutTemplate },
-    { key: 'ogImageUrl', label: 'صورة المشاركة (Social)', desc: 'تظهر عند مشاركة رابط الموقع في السوشيال.', icon: ImageIcon },
+    { key: 'logoUrl', label: 'اللوجو الرئيسي (Landing)', desc: 'يظهر في قلب صفحة الهبوط.', icon: Flower2 },
+    { key: 'miniIconUrl', label: 'اللوجو الصغير (Header)', desc: 'يظهر في الترويسة بجانب القائمة.', icon: AppWindow },
+    { key: 'landingBg', label: 'خلفية الهيرو', desc: 'الصورة الكبيرة خلف عنوان الموقع.', icon: Monitor },
+    { key: 'aboutImage', label: 'صورة "عن المنصة"', desc: 'تظهر في صفحة التعريف بالمنصة.', icon: Info },
+    { key: 'ogImageUrl', label: 'صورة المشاركة (SEO)', desc: 'تظهر عند مشاركة رابط الموقع.', icon: ImageIcon },
+    { key: 'icon192', label: 'أيقونة التطبيق (192x192)', desc: 'أيقونة PWA لشاشة الهاتف الرئيسية.', icon: Smartphone },
+    { key: 'icon512', label: 'أيقونة التطبيق (512x512)', desc: 'أيقونة PWA عالية الجودة للمتصفحات.', icon: LayoutTemplate },
     { key: 'verifiedBadgeUrl', label: 'شارة التوثيق الزرقاء', desc: 'تظهر بجانب أسماء الحسابات الموثقة.', icon: BadgeCheck }
   ];
 
@@ -84,11 +82,9 @@ export default function AdminAssets() {
 
   return (
     <div className="p-6 md:p-10 space-y-10 bg-zinc-50/50 min-h-screen" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
-        <div>
-          <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الصور والهوية</h1>
-          <p className="text-muted-foreground text-xl">تحكم كامل في كافة الرسوميات التي يراها المستخدم، بما في ذلك أيقونات البرنامج على الجوال.</p>
-        </div>
+      <div className="border-r-8 border-primary pr-6">
+        <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الهوية البصرية</h1>
+        <p className="text-muted-foreground text-xl">تحكم في كل صورة تظهر في منصة "فهمت" بشكل مستقل ودقيق.</p>
       </div>
 
       <input type="file" ref={fileInputRef} className="hidden" accept="image/png,image/jpeg,image/webp" onChange={handleFileChange} />
@@ -120,7 +116,7 @@ export default function AdminAssets() {
                   </Button>
                 </div>
 
-                <div className="relative aspect-video rounded-[2rem] overflow-hidden border-2 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center">
+                <div className="relative aspect-video rounded-[2rem] overflow-hidden border-2 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center group-hover:border-primary/30 transition-all">
                   <img 
                     src={currentImage} 
                     alt={item.label} 

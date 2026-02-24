@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { Bell, Mail, GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
-import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare } from "lucide-react";
+import { useFirestore, useDoc, useMemoFirebase, useFirebase, useUser } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ export function Header() {
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password" || pathname === "/signup";
   const shouldHideGlobalHeader = isExcludedPath && !user;
 
+  // استخدام اللوجو الصغير المخصص من الفايربيز
   const miniLogo = settings?.miniIconUrl || settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
 
   return (

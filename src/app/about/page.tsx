@@ -4,21 +4,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Info, 
-  Target, 
   ShieldCheck, 
   Zap, 
   Users, 
   MessageSquare, 
   Globe, 
-  Award,
-  Sparkles
+  Award
 } from "lucide-react";
-import Image from "next/image";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 /**
- * صفحة "عن المنصة" - كافة نصوصها وصورها مرتبطة ببيانات Firebase.
+ * صفحة "عن فهمت" - كافة نصوصها وصورها مرتبطة ببيانات Firebase.
  */
 export default function AboutPage() {
   const firestore = useFirestore();
@@ -38,7 +35,7 @@ export default function AboutPage() {
           <Info size={48} />
         </div>
         <h1 className="text-4xl md:text-7xl font-black font-headline tracking-tight text-zinc-900 leading-tight">
-          عن <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>
+          عن منصة <span className="text-primary">{settings?.siteTitle || "فهمت"}</span>
         </h1>
         <p className="text-muted-foreground text-xl md:text-2xl max-w-4xl mx-auto leading-relaxed font-bold">
           المنصة العربية الأولى المتخصصة في طلب وتقديم خدمات الشرح الفوري التفاعلي.
@@ -94,7 +91,7 @@ export default function AboutPage() {
         <ValueCard 
           icon={ShieldCheck} 
           title="ضمان الحقوق" 
-          desc="نضمن حقوق الطرفين المالية من خلال نظام وساطة مالي آمن."
+          desc="نضمن حقوق الطرفين المالية من خلال نظام وساطة مالي آمن في فهمت."
         />
       </div>
 
@@ -104,9 +101,9 @@ export default function AboutPage() {
           <MessageSquare size={120} />
         </div>
         <CardContent className="p-10 md:p-16 text-center space-y-8 relative z-10">
-          <h3 className="text-3xl md:text-5xl font-black font-headline leading-tight">ابدأ رحلة "الفهم" اليوم</h3>
+          <h3 className="text-3xl md:text-5xl font-black font-headline leading-tight">ابدأ رحلة "فهمت" اليوم</h3>
           <p className="text-zinc-400 text-xl max-w-3xl mx-auto font-medium leading-relaxed">
-            تتيح لك المنصة طرح "استفهامك" مجاناً لتتلقى عروضاً من مفهمين موثقين، ثم اختيار الأنسب لبدء جلسة تفهيم موثقة ومسجلة تحفظ حقك المعرفي.
+            تتيح لك منصة فهمت طرح "استفهامك" مجاناً لتتلقى عروضاً من مفهمين موثقين، ثم اختيار الأنسب لبدء جلسة تفهيم موثقة ومسجلة تحفظ حقك المعرفي.
           </p>
         </CardContent>
       </Card>

@@ -18,7 +18,6 @@ import {
   History,
   GraduationCap,
   ImageIcon,
-  CheckSquare,
   Shield,
   ShieldAlert,
   UserCog,
@@ -30,14 +29,12 @@ import {
   FileSearch,
   GalleryVertical,
   Edit3,
-  Wand2,
   Mail,
   Zap,
   Share2,
   MessageSquare,
   Send,
   Filter,
-  CloudUpload,
   User,
   Info,
   FileText,
@@ -48,16 +45,11 @@ import {
   Search,
   RefreshCcw,
   Phone,
-  Settings2,
   Palette,
   Cloud,
-  Terminal,
-  Activity,
-  UserPlus,
   Clock,
   Ticket,
-  CheckCircle2,
-  ListOrdered
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -115,7 +107,7 @@ export function AppSidebar() {
     try {
       handleLinkClick();
       await updateDoc(userRef, { role: newRole });
-      toast({ title: "تم تبديل نوع الحساب" });
+      toast({ title: "تم تبديل نوع الحساب في فهمت" });
       router.push("/");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
@@ -128,7 +120,7 @@ export function AppSidebar() {
     <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-sm fixed inset-y-0 z-50 bg-white">
       <SidebarHeader className="p-4 shrink-0">
         <div className="flex flex-col gap-1">
-          <span className="font-black text-xs text-zinc-400">القائمة الرئيسية</span>
+          <span className="font-black text-xs text-zinc-400">قائمة فهمت الرئيسية</span>
         </div>
       </SidebarHeader>
 
@@ -190,7 +182,7 @@ export function AppSidebar() {
             <SidebarMenuButton asChild isActive={pathname === "/portfolio"} onClick={handleLinkClick}>
               <Link href="/portfolio">
                 <Layout className="h-5 w-5 text-zinc-500" />
-                <span className="font-bold">تصفح أعمال المفهمين</span>
+                <span className="font-bold">أعمال المفهمين</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -199,7 +191,7 @@ export function AppSidebar() {
             <SidebarMenuButton asChild isActive={pathname === "/browse"} onClick={handleLinkClick}>
               <Link href="/browse">
                 <Search className="h-5 w-5 text-zinc-500" />
-                <span className="font-bold">تصفح الاستفهامات</span>
+                <span className="font-bold">الاستفهامات العامة</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -217,34 +209,9 @@ export function AppSidebar() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/profile"} onClick={handleLinkClick}>
-                      <Link href="/profile" className="font-bold text-xs flex items-center gap-2">
-                        <User size={14} /> حسابي
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/wallet"} onClick={handleLinkClick}>
-                      <Link href="/wallet" className="font-bold text-xs flex items-center gap-2">
-                        <Wallet size={14} /> محفظتي
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild onClick={handleLinkClick}>
-                      <Link href="/profile" className="font-bold text-xs flex items-center gap-2">
-                        <ShieldCheck size={14} /> توثيق الهوية
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild onClick={handleLinkClick}>
-                      <Link href="/portfolio/add" className="font-bold text-xs flex items-center gap-2">
-                        <ImageIcon size={14} /> معرض أعمالي
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/profile"} onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> حسابي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/wallet"} onClick={handleLinkClick}><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> محفظتي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs"><ShieldCheck size={14} className="ml-2"/> توثيق الهوية</Link></SidebarMenuSubButton></SidebarMenuSubItem>
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
@@ -261,62 +228,8 @@ export function AppSidebar() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/guide"} onClick={handleLinkClick}>
-                      <Link href="/guide" className="font-bold text-xs">الدليل الإرشادي</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}>
-                      <Link href="/support" className="font-bold text-xs">الأسئلة الشائعة</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}>
-                      <Link href="/support" className="font-bold text-xs">مساعد الذكاء الاصطناعي</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}>
-                      <Link href="/support" className="font-bold text-xs">الدعم الفني</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-
-          <Collapsible className="group/collapsible">
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton>
-                  <Info className="h-5 w-5 text-zinc-500" />
-                  <span className="font-bold">المزيد</span>
-                  <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/about"} onClick={handleLinkClick}>
-                      <Link href="/about" className="font-bold text-xs">عن فهمت</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/guarantees"} onClick={handleLinkClick}>
-                      <Link href="/guarantees" className="font-bold text-xs">ضمان الحقوق</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/terms"} onClick={handleLinkClick}>
-                      <Link href="/terms" className="font-bold text-xs">شروط الاستخدام</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/privacy-policy"} onClick={handleLinkClick}>
-                      <Link href="/privacy-policy" className="font-bold text-xs">سياسة الخصوصية</Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/guide"} onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs">الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs">الدعم الفني</Link></SidebarMenuSubButton></SidebarMenuSubItem>
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
@@ -337,34 +250,21 @@ export function AppSidebar() {
                     <AdminLink href="/admin" icon={Home} label="نظرة عامة" active={pathname === "/admin"} />
                     <AdminLink href="/admin/coupons" icon={Ticket} label="إدارة الكوبونات" active={pathname === "/admin/coupons"} />
                     <AdminLink href="/admin/completed-orders" icon={CheckCircle2} label="الطلبات المكتملة" active={pathname === "/admin/completed-orders"} />
-                    <AdminLink href="/admin/manual-editor" icon={Edit3} label="المحرر الفائق و SEO" active={pathname === "/admin/manual-editor"} />
+                    <AdminLink href="/admin/manual-editor" icon={Edit3} label="المحرر الفائق" active={pathname === "/admin/manual-editor"} />
                     <AdminLink href="/admin/customize" icon={Palette} label="تخصيص المنصة" active={pathname === "/admin/customize"} />
-                    <AdminLink href="/admin/assets" icon={ImageIcon} label="إدارة الصور والهوية" active={pathname === "/admin/assets"} />
+                    <AdminLink href="/admin/assets" icon={ImageIcon} label="إدارة الهوية والصور" active={pathname === "/admin/assets"} />
                     <AdminLink href="/admin/social-management" icon={Share2} label="روابط تابعنا" active={pathname === "/admin/social-management"} />
                     <AdminLink href="/admin/categories" icon={Layers} label="أقسام الموقع" active={pathname === "/admin/categories"} />
-                    <AdminLink href="/admin/teacher-categories" icon={Filter} label="أقسام المفهمين" active={pathname === "/admin/teacher-categories"} />
                     <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد" active={pathname === "/admin/approvals"} />
                     <AdminLink href="/admin/pending-requests" icon={Clock} label="مراجعة الاستفهامات" active={pathname === "/admin/pending-requests"} />
-                    <AdminLink href="/admin/portfolio-approvals" icon={GalleryVertical} label="مراجعة أعمال المفهمين" active={pathname === "/admin/portfolio-approvals"} />
-                    <AdminLink href="/admin/portfolio-management" icon={Layout} label="إدارة معرض الأعمال" active={pathname === "/admin/portfolio-management"} />
-                    <AdminLink href="/admin/verification" icon={ShieldCheck} label="مركز التوثيق" active={pathname === "/admin/verification"} />
+                    <AdminLink href="/admin/portfolio-approvals" icon={GalleryVertical} label="مراجعة الأعمال" active={pathname === "/admin/portfolio-approvals"} />
                     <AdminLink href="/admin/finance" icon={BadgeCent} label="إدارة المالية" active={pathname === "/admin/finance"} />
-                    <AdminLink href="/admin/all-requests" icon={FileSearch} label="رقابة المحاضرات" active={pathname === "/admin/all-requests"} />
-                    <AdminLink href="/admin/sessions" icon={Video} label="سجلات الرقابة والتوثيق" active={pathname === "/admin/sessions"} />
-                    <AdminLink href="/admin/direct-chats" icon={MessageSquare} label="سجل المحادثات المباشرة" active={pathname === "/admin/direct-chats"} />
-                    <AdminLink href="/admin/support" icon={HelpCircle} label="تذاكر الدعم الفني" active={pathname === "/admin/support"} />
-                    <AdminLink href="/admin/floating-chats" icon={MessageCircle} label="إدارة النافذة العائمة" active={pathname === "/admin/floating-chats"} />
-                    <AdminLink href="/admin/mufahems" icon={UserSearch} label="إدارة المفهمين" active={pathname === "/admin/mufahems"} />
-                    <AdminLink href="/admin/mustafhems" icon={Users} label="إدارة المستفهمين" active={pathname === "/admin/mustafhems"} />
-                    <AdminLink href="/admin/accounts" icon={UserCog} label="إدارة الحسابات" active={pathname === "/admin/accounts"} />
-                    <AdminLink href="/admin/roles" icon={Shield} label="فريق العمل والرتب" active={pathname === "/admin/roles"} />
-                    <AdminLink href="/admin/auto-bans" icon={ShieldAlert} label="سجل الحظر التلقائي" active={pathname === "/admin/auto-bans"} />
-                    <AdminLink href="/admin/appeals" icon={Scale} label="مركز الطعون" active={pathname === "/admin/appeals"} />
-                    <AdminLink href="/admin/jobs" icon={Briefcase} label="إدارة التوظيف" active={pathname === "/admin/jobs"} />
-                    <AdminLink href="/admin/logs" icon={History} label="سجل الرقابة الإدارية" active={pathname === "/admin/logs"} />
-                    <AdminLink href="/admin/ai" icon={Bot} label="Auto-Admin AI" active={pathname === "/admin/ai"} />
+                    <AdminLink href="/admin/direct-chats" icon={MessageSquare} label="سجل المحادثات" active={pathname === "/admin/direct-chats"} />
+                    <AdminLink href="/admin/support" icon={HelpCircle} label="تذاكر الدعم" active={pathname === "/admin/support"} />
+                    <AdminLink href="/admin/roles" icon={Shield} label="فريق العمل" active={pathname === "/admin/roles"} />
+                    <AdminLink href="/admin/auto-bans" icon={ShieldAlert} label="الحظر التلقائي" active={pathname === "/admin/auto-bans"} />
+                    <AdminLink href="/admin/logs" icon={History} label="سجل الرقابة" active={pathname === "/admin/logs"} />
                     <AdminLink href="/admin/deployment" icon={Cloud} label="التثبيت والنشر" active={pathname === "/admin/deployment"} />
-                    <AdminLink href="/admin/comm-test" icon={Send} label="اختبار المراسلات" active={pathname === "/admin/comm-test"} />
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
@@ -376,7 +276,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 border-t shrink-0">
         <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-destructive hover:bg-destructive/10 font-black">
           <LogOut className="h-5 w-5 shrink-0" />
-          <span className="text-[13px]">تسجيل الخروج</span>
+          <span className="text-[13px]">خروج من فهمت</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
