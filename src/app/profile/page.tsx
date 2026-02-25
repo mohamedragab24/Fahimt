@@ -113,21 +113,24 @@ export default function ProfilePage() {
     if (!userRef) return;
     setIsSaving(true);
     
-    // تحديد حالة الاعتماد والتوثيق بناءً على التغييرات
-    const needsPictureApproval = formData.profilePictureUrl !== profile?.profilePictureUrl;
-    const needsIDApproval = (formData.idCardFront && formData.idCardFront !== profile?.idCardFront) || 
-                           (formData.idCardBack && formData.idCardBack !== profile?.idCardBack);
+    // التحقق من التغييرات التي تتطلب مراجعة إدارية
+    const pictureChanged = formData.profilePictureUrl !== profile?.profilePictureUrl && formData.profilePictureUrl !== "";
+    const idChanged = (formData.idCardFront && formData.idCardFront !== profile?.idCardFront) || 
+                      (formData.idCardBack && formData.idCardBack !== profile?.idCardBack);
 
     const updateData: any = {
       ...formData,
       updatedAt: new Date().toISOString()
     };
 
-    if (needsPictureApproval) {
+    // إذا تغيرت الصورة، نضعها في حالة "انتظار المراجعة" ونعلم المسؤول
+    if (pictureChanged) {
       updateData.isProfileApproved = false;
+      updateData.profilePicturePending = true;
     }
 
-    if (needsIDApproval) {
+    // إذا تغيرت البطاقة، نضع التوثيق في حالة "انتظار"
+    if (idChanged) {
       updateData.verificationStatus = 'pending';
     }
 
@@ -141,7 +144,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) return <div className="p-20 text-center animate-pulse font-black text-2xl">جاري تحميل بياناتك...</div>;
+  if (isLoading) return <div className="p-20 text-center font-black text-2xl">جاري تحميل بياناتك...</div>;
   if (!profile) return <div className="p-20 text-center font-bold">يرجى تسجيل الدخول للوصول لهذه الصفحة.</div>;
 
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
@@ -159,11 +162,10 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* العمود الأيمن: المعلومات والاعتماد */}
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-2xl border-2 rounded-[3.5rem] overflow-hidden bg-white">
             <div className="h-40 bg-gradient-to-r from-primary/30 via-primary/10 to-accent/10 relative">
-              {!profile.isProfileApproved && formData.profilePictureUrl && (
+              {profile.profilePicturePending && (
                 <div className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black animate-pulse shadow-lg flex items-center gap-2">
                   <Clock size={12}/> الصورة قيد المراجعة الإدارية
                 </div>
@@ -232,7 +234,6 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        {/* العمود الأيسر: التوثيق بالبطاقة */}
         <div className="space-y-8">
           <Card className="shadow-2xl border-2 rounded-[3.5rem] overflow-hidden bg-white">
             <CardHeader className="bg-zinc-900 text-white p-8 space-y-4">
