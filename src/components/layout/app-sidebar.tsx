@@ -33,7 +33,14 @@ import {
   Clock,
   Ticket,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  Filter,
+  UserCog,
+  FileSearch,
+  Activity,
+  Bot,
+  Send,
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -228,14 +235,13 @@ export function AppSidebar() {
                 <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
                   <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/guide"} onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs"><BookOpen size={14} className="ml-2"/> الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
                   <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs"><HelpCircle size={14} className="ml-2"/> الأسئلة الشائعة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs"><MessageSquare size={14} className="ml-2"/> تذاكر الدعم</Link></SidebarMenuSubButton></SidebarMenuSubItem>
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
 
           {profile?.isAdmin && (
-            <Collapsible className="group/collapsible" defaultOpen={pathname.startsWith('/admin')}>
+            <Collapsible className="group/collapsible" defaultOpen={true}>
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="mt-4 bg-accent/5 hover:bg-accent/10">
@@ -245,13 +251,48 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-accent/20 space-y-1 mt-2 max-h-[400px] overflow-y-auto no-scrollbar pb-4">
+                  <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-accent/20 space-y-1 mt-2 max-h-[500px] overflow-y-auto no-scrollbar pb-10">
                     <AdminLink href="/admin" icon={Home} label="نظرة عامة" active={pathname === "/admin"} />
+                    
+                    <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">المالية والكوبونات</div>
                     <AdminLink href="/admin/coupons" icon={Ticket} label="إدارة الكوبونات" active={pathname === "/admin/coupons"} />
                     <AdminLink href="/admin/completed-orders" icon={CheckCircle2} label="الطلبات المكتملة" active={pathname === "/admin/completed-orders"} />
-                    <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد" active={pathname === "/admin/approvals"} />
                     <AdminLink href="/admin/finance" icon={BadgeCent} label="إدارة المالية" active={pathname === "/admin/finance"} />
+                    
+                    <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">الرقابة والاعتماد</div>
+                    <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد" active={pathname === "/admin/approvals"} />
+                    <AdminLink href="/admin/verification" icon={ShieldCheck} label="مركز التوثيق" active={pathname === "/admin/verification"} />
+                    <AdminLink href="/admin/pending-requests" icon={Clock} label="مراجعة الاستفهامات" active={pathname === "/admin/pending-requests"} />
+                    <AdminLink href="/admin/portfolio-approvals" icon={FileSearch} label="مراجعة أعمال المفهمين" active={pathname === "/admin/portfolio-approvals"} />
+                    <AdminLink href="/admin/all-requests" icon={Eye} label="رقابة المحاضرات" active={pathname === "/admin/all-requests"} />
+                    <AdminLink href="/admin/sessions" icon={History} label="سجلات الرقابة والتوثيق" active={pathname === "/admin/sessions"} />
+                    
+                    <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">المحتوى والأقسام</div>
+                    <AdminLink href="/admin/categories" icon={Layers} label="إدارة الأقسام" active={pathname === "/admin/categories"} />
+                    <AdminLink href="/admin/teacher-categories" icon={Filter} label="أقسام المفهمين" active={pathname === "/admin/teacher-categories"} />
+                    <AdminLink href="/admin/jobs" icon={Briefcase} label="إدارة التوظيف" active={pathname === "/admin/jobs"} />
+                    <AdminLink href="/admin/portfolio-management" icon={Layout} label="إدارة معرض الأعمال" active={pathname === "/admin/portfolio-management"} />
+                    
+                    <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">المستخدمين والدعم</div>
+                    <AdminLink href="/admin/mufahems" icon={Users} label="إدارة المفهمين" active={pathname === "/admin/mufahems"} />
+                    <AdminLink href="/admin/mustafhems" icon={Users} label="إدارة المستفهمين" active={pathname === "/admin/mustafhems"} />
+                    <AdminLink href="/admin/roles" icon={UserCog} label="إدارة الرتب" active={pathname === "/admin/roles"} />
+                    <AdminLink href="/admin/auto-bans" icon={ShieldAlert} label="سجل الحظر التلقائي" active={pathname === "/admin/auto-bans"} />
+                    <AdminLink href="/admin/appeals" icon={Scale} label="مركز الطعون" active={pathname === "/admin/appeals"} />
+                    <AdminLink href="/admin/support" icon={MessageSquare} label="تذاكر الدعم" active={pathname === "/admin/support"} />
+                    <AdminLink href="/admin/floating-chats" icon={Zap} label="النافذة العائمة" active={pathname === "/admin/floating-chats"} />
+                    <AdminLink href="/admin/direct-chats" icon={MessageSquare} label="سجل المحادثات المباشرة" active={pathname === "/admin/direct-chats"} />
+                    
+                    <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">النظام والتقنية</div>
+                    <AdminLink href="/admin/ai" icon={Bot} label="الذكاء الاصطناعي" active={pathname === "/admin/ai"} />
                     <AdminLink href="/admin/deployment" icon={Cloud} label="النشر المباشر" active={pathname === "/admin/deployment"} />
+                    <AdminLink href="/admin/assets" icon={ImageIcon} label="إدارة الصور والأصول" active={pathname === "/admin/assets"} />
+                    <AdminLink href="/admin/customize" icon={Palette} label="تخصيص المنصة" active={pathname === "/admin/customize"} />
+                    <AdminLink href="/admin/manual-editor" icon={Settings} label="المحرر الفائق و SEO" active={pathname === "/admin/manual-editor"} />
+                    <AdminLink href="/admin/social-management" icon={Share2} label="إدارة قائمة تابعنا" active={pathname === "/admin/social-management"} />
+                    <AdminLink href="/admin/logs" icon={History} label="سجل الرقابة الإدارية" active={pathname === "/admin/logs"} />
+                    <AdminLink href="/admin/comm-test" icon={Send} label="اختبار المراسلات" active={pathname === "/admin/comm-test"} />
+                    <AdminLink href="/admin/accounts" icon={Search} label="إدارة الحسابات" active={pathname === "/admin/accounts"} />
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
