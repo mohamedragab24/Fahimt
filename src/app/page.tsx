@@ -19,27 +19,23 @@ import {
   Video,
   BadgeCent,
   Zap,
-  BellRing,
   Clock,
   Play,
   Menu,
-  Mail,
-  Bell,
   UserPlus,
-  CheckCircle2,
   Users,
   ShieldCheck,
   Star,
-  Target,
-  Smartphone,
-  RefreshCw,
-  Trophy,
-  Briefcase
+  Briefcase,
+  History,
+  ClipboardList,
+  Activity,
+  Trophy
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -147,14 +143,14 @@ export default function HomePage() {
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
-    <div className="p-4 md:p-10 max-7xl mx-auto space-y-10" dir="rtl">
+    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="space-y-4 text-right">
             <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً في فهمت</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
-              {(profile.isVerified || profile.emailVerified || profile.whatsappVerified) && (
+              {profile.isVerified && (
                 <img src={verifiedBadgeUrl} alt="Verified" className="h-12 w-12" />
               )}
             </div>
@@ -330,49 +326,77 @@ function MustafhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
   const readySessionsQuery = useMemoFirebase(() => {
     if (!firestore || !profile.id) return null;
-    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(5));
+    return query(
+      collection(firestore, "istifhams"), 
+      where("mustafhemId", "==", profile.id), 
+      where("status", "==", "paid"), 
+      limit(5)
+    );
   }, [firestore, profile.id]);
 
   const { data: readySessions } = useCollection(readySessionsQuery);
 
   return (
     <div className="space-y-12">
-      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
-        <div className="space-y-4 text-right flex-1">
-          <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
-          <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl">
-            {settings?.studentDashboardBtn || "طلب استفهام جديد"}
-          </Button>
-        </div>
-        <BookOpen size={120} className="text-primary opacity-20 hidden md:block" />
-      </div>
-
+      {/* قسم الجلسات الجاهزة - يظهر أولاً للطالب */}
       {readySessions && readySessions.length > 0 && (
         <div className="space-y-6">
-          <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">جلسات بانتظار الدخول</h3>
+          <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-green-600 pr-4 flex items-center gap-3">
+            <Zap className="text-green-600 animate-pulse" /> جلسات جاهزة للتفهيم
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {readySessions.map(session => (
-              <Card key={session.id} className="rounded-3xl border-2 bg-green-50/50 p-6 flex justify-between items-center">
-                <div className="text-right">
-                  <h4 className="font-black text-lg">{session.title}</h4>
-                  <p className="text-sm font-bold text-zinc-500">مع المفهم: {session.mufhemName}</p>
+              <Card key={session.id} className="rounded-3xl border-2 border-green-100 bg-green-50/30 p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm hover:shadow-md transition-all">
+                <div className="text-right flex-1">
+                  <h4 className="font-black text-2xl text-zinc-800">{session.title}</h4>
+                  <p className="text-sm font-bold text-zinc-500 mt-1 flex items-center gap-2">
+                    <ShieldCheck size={14} className="text-green-600" /> مع المفهم: {session.mufhemName}
+                  </p>
                 </div>
-                <Button onClick={() => router.push(`/meeting/${session.id}`)} className="bg-green-600 hover:bg-green-700 h-12 px-6 rounded-xl font-black">
-                  دخول الآن <Play size={16} className="mr-2" />
+                <Button onClick={() => router.push(`/meeting/${session.id}`)} className="bg-green-600 hover:bg-green-700 h-16 px-10 rounded-2xl font-black text-xl shadow-lg shadow-green-600/20">
+                  دخول الآن <Play size={20} className="mr-2 fill-current" />
                 </Button>
               </Card>
             ))}
           </div>
         </div>
       )}
+
+      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-primary/20 transition-all">
+        <div className="space-y-4 text-right flex-1">
+          <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
+          <p className="text-lg text-muted-foreground font-bold">انشر طلبك وسيصلك عروض من أفضل الخبراء في تخصصك.</p>
+          <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-lg">
+            {settings?.studentDashboardBtn || "طلب استفهام جديد"}
+          </Button>
+        </div>
+        <div className="bg-primary/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-primary/10">
+          <BookOpen size={100} className="text-primary opacity-40" />
+        </div>
+      </div>
     </div>
   );
 }
 
 function MufhemView({ profile, settings, router }: any) {
+  const firestore = useFirestore();
+  
+  // استعلام الاستفهامات المتاحة للمفهمين (التي تنتظر عروضاً)
+  const availableRequestsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, "istifhams"),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+  }, [firestore]);
+
+  const { data: availableRequests, isLoading } = useCollection(availableRequestsQuery);
+
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8">
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-accent/20 transition-all">
         <div className="space-y-4 text-right flex-1">
           <h2 className="text-3xl md:text-4xl font-black text-zinc-800 leading-tight">
             {settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}
@@ -392,6 +416,65 @@ function MufhemView({ profile, settings, router }: any) {
           <Briefcase size={100} className="text-accent opacity-40" />
         </div>
       </div>
+
+      {/* قسم الاستفهامات المتاحة - يظهر للمفهم ليجد عملاً */}
+      <div className="space-y-8">
+        <div className="flex justify-between items-center border-r-8 border-primary pr-4">
+          <h3 className="text-2xl font-black text-zinc-800">استفهامات تبحث عن مُفهم</h3>
+          <Button variant="ghost" onClick={() => router.push('/browse')} className="font-black text-primary gap-2">
+            تصفح الكل <ArrowRight size={18} className="rotate-180" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isLoading ? (
+            <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الفرص المتاحة...</div>
+          ) : availableRequests && availableRequests.length > 0 ? (
+            availableRequests.map((req) => (
+              <Card 
+                key={req.id} 
+                onClick={() => router.push(`/requests/${req.id}`)}
+                className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden"
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
+                    <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
+                  </div>
+                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                    {req.title}
+                  </h4>
+                  <div className="pt-4 border-t border-dashed flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-green-600 font-black">
+                      <BadgeCent size={16} /> <span>{req.amount} ج.م</span>
+                    </div>
+                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
+                      <ClipboardList size={12} /> بانتظار العروض
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center bg-zinc-50 rounded-[2.5rem] border-2 border-dashed border-zinc-200">
+              <Activity className="mx-auto text-zinc-300 mb-4" size={48} />
+              <p className="text-xl font-black text-zinc-400">لا توجد استفهامات جديدة حالياً. تأكد من تفعيل التنبيهات!</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
+}
+
+function getTimeAgo(dateStr: string) {
+  if (!dateStr) return "لحظات";
+  const diff = new Date().getTime() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 60) return `${minutes}د`;
+  if (hours < 24) return `${hours}س`;
+  return `${days}ي`;
 }
