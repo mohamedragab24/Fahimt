@@ -2,8 +2,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
-import { doc, collection, query, where, limit } from "firebase/firestore";
+import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import { 
   Star, 
   Clock, 
@@ -14,7 +14,8 @@ import {
   Layers,
   Zap,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +28,9 @@ export default function PortfolioItemDetails() {
   const { id } = useParams();
   const router = useRouter();
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
   const { toast } = useToast();
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   const workRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -42,6 +45,48 @@ export default function PortfolioItemDetails() {
   }, [firestore, work?.mufhemId]);
 
   const { data: teacher } = useDoc(teacherRef);
+
+  const handleStartChat = async () => {
+    if (!currentUser) {
+      toast({ title: "تنبيه", description: "يرجى تسجيل الدخول أولاً لبدء المحادثة." });
+      router.push("/login");
+      return;
+    }
+
+    if (currentUser.uid === work?.mufhemId) {
+      toast({ variant: "destructive", title: "تنبيه", description: "لا يمكنك بدء محادثة مع نفسك." });
+      return;
+    }
+
+    setIsStartingChat(true);
+    try {
+      // إنشاء معرف فريد للمحادثة بين الطرفين
+      const chatId = [currentUser.uid, work?.mufhemId].sort().join('_');
+      const chatRef = doc(firestore!, "direct_chats", chatId);
+
+      await setDoc(chatRef, {
+        id: chatId,
+        participants: [currentUser.uid, work?.mufhemId],
+        studentId: currentUser.uid,
+        studentName: currentUser.displayName || "طالب",
+        teacherId: work?.mufhemId,
+        teacherName: teacher?.fullName || "مفهم",
+        teacherAvatar: teacher?.profilePictureUrl || "",
+        requestTitle: work?.title,
+        requestId: id,
+        lastMessage: "بدأت محادثة مباشرة بخصوص: " + work?.title,
+        updatedAt: new Date().toISOString(),
+        hasUnread: true,
+        lastSenderId: currentUser.uid
+      }, { merge: true });
+
+      router.push(`/messages/${chatId}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل بدء المحادثة المباشرة." });
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
 
   if (isWorkLoading) return <div className="p-20 text-center font-black animate-pulse text-2xl">جاري تحميل العمل...</div>;
   if (!work) return <div className="p-20 text-center font-bold text-red-500">العمل غير متاح.</div>;
@@ -95,11 +140,12 @@ export default function PortfolioItemDetails() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 pt-4">
-                <Button onClick={() => router.push(`/messages`)} className="h-16 rounded-2xl bg-primary text-white font-black text-lg gap-2 shadow-lg hover:scale-105 transition-all">
-                  <Send size={20} className="rotate-180" /> استفهم مني
-                </Button>
-                <Button variant="outline" onClick={() => router.push(`/create-request?title=${encodeURIComponent(work.title)}`)} className="h-16 rounded-2xl border-2 font-black text-lg gap-2 hover:bg-zinc-50">
-                  طلب عمل مماثل
+                <Button 
+                  onClick={handleStartChat} 
+                  disabled={isStartingChat}
+                  className="h-16 rounded-2xl bg-primary text-white font-black text-lg gap-2 shadow-lg hover:scale-105 transition-all"
+                >
+                  {isStartingChat ? <Loader2 className="animate-spin" /> : <><Send size={20} className="rotate-180" /> استفهم مني</>}
                 </Button>
               </div>
             </Card>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,6 @@ function CreateRequestContent() {
     amount: "", 
     category: "", 
     categorySub: "", 
-    categoryOption: "", 
     meetingTime: ""
   });
 
@@ -52,7 +51,6 @@ function CreateRequestContent() {
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
-  const options = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.categorySub)?.id) || [];
 
   const handleValidateCoupon = async () => {
     if (!firestore || !couponCode.trim()) return;
@@ -145,10 +143,10 @@ function CreateRequestContent() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <Label className="font-black flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
-              <Select value={formData.category} onValueChange={(v)=>setFormData({...formData, category: v, categorySub: "", categoryOption: ""})}>
+              <Select value={formData.category} onValueChange={(v)=>setFormData({...formData, category: v, categorySub: ""})}>
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                 <SelectContent>
                   {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
@@ -158,20 +156,10 @@ function CreateRequestContent() {
             </div>
             <div className="space-y-3">
               <Label className="font-black flex items-center gap-2">التخصص <Filter size={16}/></Label>
-              <Select disabled={!formData.category || formData.category === 'أخرى'} value={formData.categorySub} onValueChange={(v)=>setFormData({...formData, categorySub: v, categoryOption: ""})}>
+              <Select disabled={!formData.category || formData.category === 'أخرى'} value={formData.categorySub} onValueChange={(v)=>setFormData({...formData, categorySub: v})}>
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                 <SelectContent>
                   {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
-                  <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-3">
-              <Label className="font-black flex items-center gap-2">خيار إضافي <Activity size={16}/></Label>
-              <Select disabled={!formData.categorySub || formData.categorySub === 'أخرى'} value={formData.categoryOption} onValueChange={(v)=>setFormData({...formData, categoryOption: v})}>
-                <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
-                <SelectContent>
-                  {options.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
                   <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
                 </SelectContent>
               </Select>

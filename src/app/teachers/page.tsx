@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useDoc, useUser } from "@/firebase";
+import { collection, query, where, doc, setDoc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Search, MapPin, User, Briefcase, PlayCircle } from "lucide-react";
+import { Star, Search, MapPin, User, Briefcase, PlayCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TeachersPage() {
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -62,7 +68,46 @@ export default function TeachersPage() {
     t.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // سحب شارة التوثيق من الفايربيز
+  const handleStartChat = async () => {
+    if (!currentUser || !selectedTeacher) {
+      toast({ title: "تنبيه", description: "يرجى تسجيل الدخول أولاً لبدء المحادثة." });
+      router.push("/login");
+      return;
+    }
+
+    if (currentUser.uid === selectedTeacher.id) {
+      toast({ variant: "destructive", title: "تنبيه", description: "لا يمكنك بدء محادثة مع نفسك." });
+      return;
+    }
+
+    setIsStartingChat(true);
+    try {
+      const chatId = [currentUser.uid, selectedTeacher.id].sort().join('_');
+      const chatRef = doc(firestore!, "direct_chats", chatId);
+
+      await setDoc(chatRef, {
+        id: chatId,
+        participants: [currentUser.uid, selectedTeacher.id],
+        studentId: currentUser.uid,
+        studentName: currentUser.displayName || "طالب",
+        teacherId: selectedTeacher.id,
+        teacherName: selectedTeacher.fullName,
+        teacherAvatar: selectedTeacher.profilePictureUrl || "",
+        requestTitle: "استفسار مباشر",
+        lastMessage: "بدأت محادثة مباشرة جديدة.",
+        updatedAt: new Date().toISOString(),
+        hasUnread: true,
+        lastSenderId: currentUser.uid
+      }, { merge: true });
+
+      router.push(`/messages/${chatId}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل بدء المحادثة المباشرة." });
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
+
   const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
@@ -174,6 +219,19 @@ export default function TeachersPage() {
                 <div className="p-6 bg-zinc-50 rounded-2xl text-lg leading-relaxed text-zinc-600 italic">
                   "{selectedTeacher?.bio || "لم يقم هذا المفهم بإضافة نبذة تعريفية بعد."}"
                 </div>
+                <div className="flex justify-between items-center text-sm font-bold text-zinc-400 px-2">
+                  <span>انضم للمنصة: {selectedTeacher?.createdAt ? new Date(selectedTeacher.createdAt).toLocaleDateString('ar-EG', {month: 'long', year: 'numeric'}) : "جديد"}</span>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  onClick={handleStartChat} 
+                  disabled={isStartingChat}
+                  className="w-full h-16 rounded-2xl bg-primary text-white font-black text-xl gap-2 shadow-xl"
+                >
+                  {isStartingChat ? <Loader2 className="animate-spin" /> : <><Send size={24} className="rotate-180" /> استفهم مني الآن</>}
+                </Button>
               </div>
 
               {teacherPortfolio && teacherPortfolio.length > 0 && (
@@ -181,7 +239,7 @@ export default function TeachersPage() {
                   <h5 className="text-xl font-black text-zinc-800 border-r-4 border-accent pr-3">معرض الأعمال</h5>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {teacherPortfolio.map(item => (
-                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm group relative bg-black">
+                      <div key={item.id} className="aspect-square rounded-xl overflow-hidden border-2 shadow-sm group relative bg-black cursor-pointer" onClick={() => router.push(`/portfolio/${item.id}`)}>
                         {item.mediaType === 'video' ? (
                           <div className="w-full h-full relative">
                             <video src={item.mediaUrl} className="w-full h-full object-cover" muted playsInline />
