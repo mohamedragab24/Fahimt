@@ -30,7 +30,9 @@ import {
   History,
   ClipboardList,
   Activity,
-  Trophy
+  Trophy,
+  RefreshCw,
+  Timer
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -146,12 +148,12 @@ export default function HomePage() {
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="space-y-4 text-right">
+          <div className="space-y-4 text-right flex-1">
             <h1 className="text-2xl md:text-3xl font-black text-primary/80">أهلاً بك مجدداً في فهمت</h1>
             <div className="flex items-center gap-4 justify-end md:justify-start">
-              <span className="text-5xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
+              <span className="text-4xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {profile.isVerified && (
-                <img src={verifiedBadgeUrl} alt="Verified" className="h-12 w-12" />
+                <img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10 md:h-12 md:w-12" />
               )}
             </div>
           </div>
@@ -274,7 +276,7 @@ function LandingPage({ router, settings }: any) {
               <WhyCard icon={Zap} title="شرح فوري" desc="لا تنتظر شروحات مسجلة، تواصل مع المفهم المناسب فوراً في جلسة خاصة وآمنة واستفسر عن كل ما تريد." />
               <WhyCard icon={RefreshCw} title="مرونة كاملة" desc="بحساب واحد فقط، يمكنك التبديل في أي وقت بين كونك مُستَفهِم يبحث عن معلومة أو مُفَهِّم يشارك خبرته ويحقق دخلاً." />
               <WhyCard icon={ShieldCheck} title="أمان فائق" desc="تخضع كل الاستفهامات، وصور الملفات الشخصية، وأعمال المفهمين للمراجعة الدقيقة من إدارة فهمت قبل النشر." />
-              <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل التمكن من تقديم أي عرض في المنصة." />
+              <WhyCard icon={Trophy} title="دقة ومصداقية" desc="لا نسمح بوجود مُفَهِّم مجهول؛ توثيق الهوية شرط أساسي لكل مُفَهِّم قبل التمكن من تقديم أول عرض تفهيم رسمي في المنصة." />
             </div>
           </div>
         </div>
@@ -324,6 +326,8 @@ function WhyCard({ icon: Icon, title, desc }: any) {
 
 function MustafhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
+  
+  // 1. الجلسات الجاهزة (مدفوعة)
   const readySessionsQuery = useMemoFirebase(() => {
     if (!firestore || !profile.id) return null;
     return query(
@@ -334,27 +338,55 @@ function MustafhemView({ profile, settings, router }: any) {
     );
   }, [firestore, profile.id]);
 
+  // 2. الاستفهامات العامة (للتصفح)
+  const publicRequestsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, "istifhams"),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc"),
+      limit(6)
+    );
+  }, [firestore]);
+
   const { data: readySessions } = useCollection(readySessionsQuery);
+  const { data: publicRequests, isLoading: isPublicLoading } = useCollection(publicRequestsQuery);
 
   return (
     <div className="space-y-12">
-      {/* قسم الجلسات الجاهزة - يظهر أولاً للطالب */}
+      {/* CTA الرئيسي للطالب */}
+      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-primary/20 transition-all group">
+        <div className="space-y-4 text-right flex-1">
+          <h2 className="text-3xl md:text-4xl font-black text-zinc-800 group-hover:text-primary transition-colors">
+            {settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}
+          </h2>
+          <p className="text-lg text-muted-foreground font-bold">انشر طلبك وسيصلك عروض من أفضل الخبراء في تخصصك.</p>
+          <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-lg transition-transform hover:scale-105 active:scale-95">
+            <Plus className="ml-2" /> {settings?.studentDashboardBtn || "طلب استفهام جديد"}
+          </Button>
+        </div>
+        <div className="bg-primary/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-primary/10 group-hover:rotate-12 transition-transform">
+          <BookOpen size={100} className="text-primary opacity-40" />
+        </div>
+      </div>
+
+      {/* قسم الجلسات الجاهزة */}
       {readySessions && readySessions.length > 0 && (
         <div className="space-y-6">
           <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-green-600 pr-4 flex items-center gap-3">
-            <Zap className="text-green-600 animate-pulse" /> جلسات جاهزة للتفهيم
+            <Zap className="text-green-600 animate-pulse" /> جلسات بانتظارك
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {readySessions.map(session => (
               <Card key={session.id} className="rounded-3xl border-2 border-green-100 bg-green-50/30 p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm hover:shadow-md transition-all">
                 <div className="text-right flex-1">
-                  <h4 className="font-black text-2xl text-zinc-800">{session.title}</h4>
-                  <p className="text-sm font-bold text-zinc-500 mt-1 flex items-center gap-2">
-                    <ShieldCheck size={14} className="text-green-600" /> مع المفهم: {session.mufhemName}
+                  <h4 className="font-black text-xl text-zinc-800 line-clamp-1">{session.title}</h4>
+                  <p className="text-sm font-bold text-zinc-500 mt-1 flex items-center gap-2 justify-end">
+                    <span>{session.mufhemName}</span> <ShieldCheck size={14} className="text-green-600" />
                   </p>
                 </div>
-                <Button onClick={() => router.push(`/meeting/${session.id}`)} className="bg-green-600 hover:bg-green-700 h-16 px-10 rounded-2xl font-black text-xl shadow-lg shadow-green-600/20">
-                  دخول الآن <Play size={20} className="mr-2 fill-current" />
+                <Button onClick={() => router.push(`/meeting/${session.id}`)} className="bg-green-600 hover:bg-green-700 h-14 px-8 rounded-xl font-black text-lg shadow-lg">
+                  دخول الآن <Play size={18} className="mr-2 fill-current" />
                 </Button>
               </Card>
             ))}
@@ -362,16 +394,50 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
       )}
 
-      <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-primary/20 transition-all">
-        <div className="space-y-4 text-right flex-1">
-          <h2 className="text-4xl font-black text-zinc-800">{settings?.studentDashboardTitle || "عندك سؤال؟ اطرح استفهامك الآن"}</h2>
-          <p className="text-lg text-muted-foreground font-bold">انشر طلبك وسيصلك عروض من أفضل الخبراء في تخصصك.</p>
-          <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-lg">
-            {settings?.studentDashboardBtn || "طلب استفهام جديد"}
+      {/* قسم الاستفهامات العامة المتاحة */}
+      <div className="space-y-8">
+        <div className="flex justify-between items-center border-r-8 border-primary pr-4">
+          <h3 className="text-2xl font-black text-zinc-800">استفهامات تعليمية جارية</h3>
+          <Button variant="ghost" onClick={() => router.push('/browse')} className="font-black text-primary gap-2">
+            تصفح الكل <ArrowRight size={18} className="rotate-180" />
           </Button>
         </div>
-        <div className="bg-primary/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-primary/10">
-          <BookOpen size={100} className="text-primary opacity-40" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isPublicLoading ? (
+            <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الاستفهامات...</div>
+          ) : publicRequests && publicRequests.length > 0 ? (
+            publicRequests.map((req) => (
+              <Card 
+                key={req.id} 
+                onClick={() => router.push(`/requests/${req.id}`)}
+                className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden"
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
+                    <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
+                  </div>
+                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                    {req.title}
+                  </h4>
+                  <div className="pt-4 border-t border-dashed flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-green-600 font-black text-sm">
+                      <BadgeCent size={14} /> <span>{req.amount} ج.م</span>
+                    </div>
+                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
+                      <User size={12} /> {req.mustafhemName}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center bg-zinc-50 rounded-[2.5rem] border-2 border-dashed border-zinc-200">
+              <Activity className="mx-auto text-zinc-300 mb-4" size={48} />
+              <p className="text-xl font-black text-zinc-400">كن أول من يطرح استفهاماً اليوم!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -381,7 +447,6 @@ function MustafhemView({ profile, settings, router }: any) {
 function MufhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
   
-  // استعلام الاستفهامات المتاحة للمفهمين (التي تنتظر عروضاً)
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -396,9 +461,9 @@ function MufhemView({ profile, settings, router }: any) {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-accent/20 transition-all">
+      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-accent/20 transition-all group">
         <div className="space-y-4 text-right flex-1">
-          <h2 className="text-3xl md:text-4xl font-black text-zinc-800 leading-tight">
+          <h2 className="text-3xl md:text-4xl font-black text-zinc-800 leading-tight group-hover:text-accent transition-colors">
             {settings?.teacherDashboardTitle || "اعرض مهاراتك.. أضف عملاً جديداً لمعرضك"}
           </h2>
           <p className="text-muted-foreground font-bold text-lg">
@@ -407,20 +472,19 @@ function MufhemView({ profile, settings, router }: any) {
           <Button 
             onClick={() => router.push('/portfolio/add')} 
             size="lg" 
-            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl"
+            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl transition-transform hover:scale-105"
           >
             <Plus className="ml-2" /> {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"}
           </Button>
         </div>
-        <div className="bg-accent/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-accent/10">
+        <div className="bg-accent/5 p-8 rounded-full hidden md:block shrink-0 border-4 border-dashed border-accent/10 group-hover:-rotate-12 transition-transform">
           <Briefcase size={100} className="text-accent opacity-40" />
         </div>
       </div>
 
-      {/* قسم الاستفهامات المتاحة - يظهر للمفهم ليجد عملاً */}
       <div className="space-y-8">
         <div className="flex justify-between items-center border-r-8 border-primary pr-4">
-          <h3 className="text-2xl font-black text-zinc-800">استفهامات تبحث عن مُفهم</h3>
+          <h3 className="text-2xl font-black text-zinc-800">فرص بانتظار خبير</h3>
           <Button variant="ghost" onClick={() => router.push('/browse')} className="font-black text-primary gap-2">
             تصفح الكل <ArrowRight size={18} className="rotate-180" />
           </Button>
