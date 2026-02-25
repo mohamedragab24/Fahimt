@@ -40,7 +40,9 @@ import {
   Activity,
   Bot,
   Send,
-  Eye
+  Eye,
+  Layout,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
