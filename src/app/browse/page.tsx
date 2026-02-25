@@ -1,19 +1,16 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, limit } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Clock, User, BadgeCent, MessageSquare, ArrowRight, ClipboardList, Zap } from "lucide-react";
+import { Search, Clock, User, BadgeCent, ArrowRight, ClipboardList, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-/**
- * صفحة تصفح الاستفهامات العامة (للطلاب والزوار).
- */
 export default function BrowseRequestsPage() {
   const firestore = useFirestore();
   const router = useRouter();
@@ -21,20 +18,25 @@ export default function BrowseRequestsPage() {
 
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // تم إزالة orderBy من الاستعلام لتجنب أخطاء الفهارس
     return query(
       collection(firestore, "istifhams"), 
       where("status", "==", "active"),
-      orderBy("createdAt", "desc"),
       limit(100)
     );
   }, [firestore]);
 
-  const { data: requests, isLoading } = useCollection(requestsQuery);
+  const { data: rawRequests, isLoading } = useCollection(requestsQuery);
 
-  const filteredRequests = requests?.filter(r => 
-    r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRequests = useMemo(() => {
+    if (!rawRequests) return [];
+    return rawRequests
+      .filter(r => 
+        r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rawRequests, searchTerm]);
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12 bg-white min-h-screen" dir="rtl">
@@ -57,7 +59,7 @@ export default function BrowseRequestsPage() {
       <div className="grid gap-6">
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-black text-2xl">جاري تحميل الاستفهامات...</div>
-        ) : filteredRequests && filteredRequests.length > 0 ? (
+        ) : filteredRequests.length > 0 ? (
           filteredRequests.map((req) => (
             <Card key={req.id} className="rounded-[2.5rem] border-2 border-transparent hover:border-primary/20 transition-all shadow-md overflow-hidden bg-white group cursor-pointer" onClick={() => router.push(`/requests/${req.id}`)}>
               <CardContent className="p-8 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -90,7 +92,6 @@ export default function BrowseRequestsPage() {
         )}
       </div>
 
-      {/* CTA Section for Teachers */}
       <Card className="rounded-[3rem] bg-primary text-white p-10 md:p-16 overflow-hidden relative border-none">
         <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12">
           <Zap size={150} />
@@ -113,7 +114,6 @@ function getTimeAgo(dateStr: string) {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-
   if (minutes < 60) return `${minutes} دقيقة`;
   if (hours < 24) return `${hours} ساعة`;
   return `${days} يوم`;

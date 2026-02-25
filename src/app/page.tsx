@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,7 +159,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col items-center bg-muted/20 p-8 rounded-3xl shrink-0">
             <Badge className="mt-2 px-6 py-2 text-md font-black">
-              {profile.isAdmin ? "مسؤول النظام" : (profile.role === "mufhem" ? "مُفهم معتمد" : "مُستفهم طموح")}
+              {profile.isAdmin ? "مسؤول النظام" : (profile.role === "mufhem" ? "مُفهم" : "مُستفهم")}
             </Badge>
           </div>
         </div>
@@ -330,31 +330,30 @@ function MustafhemView({ profile, settings, router }: any) {
   // 1. الجلسات الجاهزة (مدفوعة)
   const readySessionsQuery = useMemoFirebase(() => {
     if (!firestore || !profile.id) return null;
-    return query(
-      collection(firestore, "istifhams"), 
-      where("mustafhemId", "==", profile.id), 
-      where("status", "==", "paid"), 
-      limit(5)
-    );
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(5));
   }, [firestore, profile.id]);
 
-  // 2. الاستفهامات العامة (للتصفح)
+  // 2. الاستفهامات الخاصة بي (المعلقة والنشطة)
+  const myRequestsQuery = useMemoFirebase(() => {
+    if (!firestore || !profile.id) return null;
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), limit(10));
+  }, [firestore, profile.id]);
+
+  // 3. الاستفهامات العامة (للتصفح)
   const publicRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(
-      collection(firestore, "istifhams"),
-      where("status", "==", "active"),
-      orderBy("createdAt", "desc"),
-      limit(6)
-    );
+    return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(6));
   }, [firestore]);
 
   const { data: readySessions } = useCollection(readySessionsQuery);
-  const { data: publicRequests, isLoading: isPublicLoading } = useCollection(publicRequestsQuery);
+  const { data: rawMyRequests } = useCollection(myRequestsQuery);
+  const { data: rawPublicRequests, isLoading: isPublicLoading } = useCollection(publicRequestsQuery);
+
+  const myRequests = useMemo(() => rawMyRequests ? [...rawMyRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawMyRequests]);
+  const publicRequests = useMemo(() => rawPublicRequests ? [...rawPublicRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawPublicRequests]);
 
   return (
     <div className="space-y-12">
-      {/* CTA الرئيسي للطالب */}
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-primary/20 transition-all group">
         <div className="space-y-4 text-right flex-1">
           <h2 className="text-3xl md:text-4xl font-black text-zinc-800 group-hover:text-primary transition-colors">
@@ -370,7 +369,6 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
       </div>
 
-      {/* قسم الجلسات الجاهزة */}
       {readySessions && readySessions.length > 0 && (
         <div className="space-y-6">
           <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-green-600 pr-4 flex items-center gap-3">
@@ -394,7 +392,21 @@ function MustafhemView({ profile, settings, router }: any) {
         </div>
       )}
 
-      {/* قسم الاستفهامات العامة المتاحة */}
+      {myRequests && myRequests.some(r => r.status === 'pending_approval') && (
+        <div className="space-y-6">
+          <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-orange-500 pr-4">استفهاماتي قيد المراجعة</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {myRequests.filter(r => r.status === 'pending_approval').map(req => (
+              <Card key={req.id} className="rounded-3xl border-2 border-dashed p-6 space-y-4 opacity-70 bg-zinc-50">
+                <Badge className="bg-orange-100 text-orange-600 border-none font-bold">بانتظار موافقة الإدارة</Badge>
+                <h4 className="font-black text-lg text-zinc-800 line-clamp-2">{req.title}</h4>
+                <div className="text-xs font-bold text-zinc-400">سيتم نشره فور مراجعة المحتوى</div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-8">
         <div className="flex justify-between items-center border-r-8 border-primary pr-4">
           <h3 className="text-2xl font-black text-zinc-800">استفهامات تعليمية جارية</h3>
@@ -408,26 +420,16 @@ function MustafhemView({ profile, settings, router }: any) {
             <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الاستفهامات...</div>
           ) : publicRequests && publicRequests.length > 0 ? (
             publicRequests.map((req) => (
-              <Card 
-                key={req.id} 
-                onClick={() => router.push(`/requests/${req.id}`)}
-                className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden"
-              >
+              <Card key={req.id} onClick={() => router.push(`/requests/${req.id}`)} className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
                     <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
                   </div>
-                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                    {req.title}
-                  </h4>
+                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">{req.title}</h4>
                   <div className="pt-4 border-t border-dashed flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-green-600 font-black text-sm">
-                      <BadgeCent size={14} /> <span>{req.amount} ج.م</span>
-                    </div>
-                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
-                      <User size={12} /> {req.mustafhemName}
-                    </div>
+                    <div className="flex items-center gap-2 text-green-600 font-black text-sm"><BadgeCent size={14} /> <span>{req.amount} ج.م</span></div>
+                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><User size={12} /> {req.mustafhemName}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -449,15 +451,11 @@ function MufhemView({ profile, settings, router }: any) {
   
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(
-      collection(firestore, "istifhams"),
-      where("status", "==", "active"),
-      orderBy("createdAt", "desc"),
-      limit(10)
-    );
+    return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(10));
   }, [firestore]);
 
-  const { data: availableRequests, isLoading } = useCollection(availableRequestsQuery);
+  const { data: rawAvailableRequests, isLoading } = useCollection(availableRequestsQuery);
+  const availableRequests = useMemo(() => rawAvailableRequests ? [...rawAvailableRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawAvailableRequests]);
 
   return (
     <div className="space-y-12">
@@ -469,11 +467,7 @@ function MufhemView({ profile, settings, router }: any) {
           <p className="text-muted-foreground font-bold text-lg">
             {settings?.teacherDashboardSubtitle || "كلما زادت أعمالك المميزة، زادت ثقة طلاب فهمت باختيارك لمشاريعهم."}
           </p>
-          <Button 
-            onClick={() => router.push('/portfolio/add')} 
-            size="lg" 
-            className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl transition-transform hover:scale-105"
-          >
+          <Button onClick={() => router.push('/portfolio/add')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl bg-accent hover:bg-accent/90 shadow-xl transition-transform hover:scale-105">
             <Plus className="ml-2" /> {settings?.teacherDashboardBtn || "إضافة عمل جديد للمعرض"}
           </Button>
         </div>
@@ -484,7 +478,7 @@ function MufhemView({ profile, settings, router }: any) {
 
       <div className="space-y-8">
         <div className="flex justify-between items-center border-r-8 border-primary pr-4">
-          <h3 className="text-2xl font-black text-zinc-800">فرص بانتظار خبير</h3>
+          <h3 className="text-2xl font-black text-zinc-800">فرص بانتظار مُفهم</h3>
           <Button variant="ghost" onClick={() => router.push('/browse')} className="font-black text-primary gap-2">
             تصفح الكل <ArrowRight size={18} className="rotate-180" />
           </Button>
@@ -495,26 +489,16 @@ function MufhemView({ profile, settings, router }: any) {
             <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الفرص المتاحة...</div>
           ) : availableRequests && availableRequests.length > 0 ? (
             availableRequests.map((req) => (
-              <Card 
-                key={req.id} 
-                onClick={() => router.push(`/requests/${req.id}`)}
-                className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden"
-              >
+              <Card key={req.id} onClick={() => router.push(`/requests/${req.id}`)} className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
                     <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
                   </div>
-                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                    {req.title}
-                  </h4>
+                  <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">{req.title}</h4>
                   <div className="pt-4 border-t border-dashed flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-green-600 font-black">
-                      <BadgeCent size={16} /> <span>{req.amount} ج.م</span>
-                    </div>
-                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
-                      <ClipboardList size={12} /> بانتظار العروض
-                    </div>
+                    <div className="flex items-center gap-2 text-green-600 font-black"><BadgeCent size={16} /> <span>{req.amount} ج.م</span></div>
+                    <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><ClipboardList size={12} /> بانتظار العروض</div>
                   </div>
                 </CardContent>
               </Card>
@@ -522,7 +506,7 @@ function MufhemView({ profile, settings, router }: any) {
           ) : (
             <div className="col-span-full py-20 text-center bg-zinc-50 rounded-[2.5rem] border-2 border-dashed border-zinc-200">
               <Activity className="mx-auto text-zinc-300 mb-4" size={48} />
-              <p className="text-xl font-black text-zinc-400">لا توجد استفهامات جديدة حالياً. تأكد من تفعيل التنبيهات!</p>
+              <p className="text-xl font-black text-zinc-400">لا توجد استفهامات جديدة حالياً. تابعنا باستمرار!</p>
             </div>
           )}
         </div>
@@ -537,7 +521,6 @@ function getTimeAgo(dateStr: string) {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-
   if (minutes < 60) return `${minutes}د`;
   if (hours < 24) return `${hours}س`;
   return `${days}ي`;
