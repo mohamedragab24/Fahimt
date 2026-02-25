@@ -43,7 +43,8 @@ import {
   Eye,
   Layout,
   Scale,
-  IdCard
+  IdCard,
+  Bell
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -154,6 +155,24 @@ export function AppSidebar() {
 
           {user && (
             <>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/notifications"} onClick={handleLinkClick}>
+                  <Link href="/notifications">
+                    <Bell className="h-5 w-5 text-primary" />
+                    <span className="font-bold">الإشعارات</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/messages"} onClick={handleLinkClick}>
+                  <Link href="/messages">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <span className="font-bold">رسائلي</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/offers"} onClick={handleLinkClick}>
                   <Link href="/offers">

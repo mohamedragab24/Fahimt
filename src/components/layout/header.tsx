@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, useFirebase, useUser } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare, Bell } from "lucide-react";
+import { useFirestore, useDoc, useMemoFirebase, useFirebase, useUser, useCollection } from "@/firebase";
+import { doc, collection, query, where } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -40,10 +40,32 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
+  // استعلام الرسائل غير المقروءة
+  const unreadChatsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "direct_chats"),
+      where("participants", "array-contains", user.uid),
+      where("hasUnread", "==", true)
+    );
+  }, [firestore, user]);
+  const { data: unreadChats } = useCollection(unreadChatsQuery);
+  const unreadMessagesCount = unreadChats?.filter(c => c.lastSenderId !== user?.uid).length || 0;
+
+  // استعلام الإشعارات غير المقروءة
+  const unreadNotifsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "notifications"),
+      where("userId", "==", user.uid),
+      where("read", "==", false)
+    );
+  }, [firestore, user]);
+  const { data: unreadNotifs } = useCollection(unreadNotifsQuery);
+
   const isExcludedPath = pathname === "/" || pathname === "/login" || pathname === "/forgot-password" || pathname === "/signup";
   const shouldHideGlobalHeader = isExcludedPath && !user;
 
-  // استخدام اللوجو الصغير المخصص من الفايربيز
   const miniLogo = settings?.miniIconUrl || settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
 
   return (
@@ -74,6 +96,40 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-1 md:gap-2">
+              {user && (
+                <>
+                  {/* أيقونة الرسائل */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="relative h-10 w-10 rounded-xl hover:bg-primary/5"
+                    onClick={() => router.push('/messages')}
+                  >
+                    <MessageSquare className="h-5 w-5 text-zinc-600" />
+                    {unreadMessagesCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-lg animate-bounce">
+                        {unreadMessagesCount}
+                      </span>
+                    )}
+                  </Button>
+
+                  {/* أيقونة الإشعارات */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="relative h-10 w-10 rounded-xl hover:bg-primary/5"
+                    onClick={() => router.push('/notifications')}
+                  >
+                    <Bell className="h-5 w-5 text-zinc-600" />
+                    {unreadNotifs && unreadNotifs.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-black text-white shadow-lg">
+                        {unreadNotifs.length}
+                      </span>
+                    )}
+                  </Button>
+                </>
+              )}
+
               <div className="mr-2">
                 {user ? (
                   <DropdownMenu>
@@ -93,6 +149,7 @@ export function Header() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl font-bold cursor-pointer">الملف الشخصي</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl font-bold cursor-pointer">المحفظة</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/notifications')} className="p-3 rounded-xl font-bold cursor-pointer">الإشعارات</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
