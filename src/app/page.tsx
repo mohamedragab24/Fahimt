@@ -22,6 +22,7 @@ import {
   Clock,
   Play,
   Menu,
+  User,
   UserPlus,
   Users,
   ShieldCheck,
