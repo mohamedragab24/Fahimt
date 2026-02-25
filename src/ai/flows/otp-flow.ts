@@ -1,8 +1,7 @@
 
 'use server';
 /**
- * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) مع نظام تتبع أخطاء.
- * يستخدم FormData للبريد لضمان استقرار الخدمة.
+ * @fileOverview تدفق Genkit المطور لإدارة رموز التحقق (OTP) لمنصة فهمت.
  */
 
 import { ai } from '@/ai/genkit';
@@ -41,7 +40,7 @@ const otpFlow = ai.defineFlow(
         formData.append('from', 'resraa355@selfserve.worlds-connected.co');
         formData.append('to', input.recipient.trim().toLowerCase());
         formData.append('subject', 'رمز التحقق - منصة فهمت');
-        formData.append('text', `مرحباً، رمز التحقق الخاص بك في منصة فهمت هو: ${code}`);
+        formData.append('text', `مرحباً بك في منصة فهمت، رمز التحقق الخاص بك هو: ${code}`);
 
         const response = await fetch(`https://${baseUrl}/email/3/send`, {
           method: 'POST',
@@ -54,7 +53,7 @@ const otpFlow = ai.defineFlow(
 
         const data = await response.json();
         if (response.ok) {
-          return { success: true, code, message: 'تم إرسال كود التحقق للبريد.' };
+          return { success: true, code, message: 'تم إرسال كود التحقق لبريد منصة فهمت.' };
         } else {
           return { success: false, code: '', message: 'سيرفر البريد رفض الطلب.', debugInfo: data };
         }
@@ -74,7 +73,7 @@ const otpFlow = ai.defineFlow(
           body: JSON.stringify({
             "from": "447860099299",
             "to": formattedPhone,
-            "content": { "text": `رمز التحقق لمنصة فهمت هو: ${code}` }
+            "content": { "text": `رمز التحقق الخاص بك لمنصة فهمت هو: ${code}` }
           })
         });
 
@@ -82,7 +81,7 @@ const otpFlow = ai.defineFlow(
         const isRejected = data.messages?.[0]?.status?.groupName === 'REJECTED';
 
         if (response.ok && !isRejected) {
-          return { success: true, code, message: 'تم إرسال كود التحقق للواتساب.' };
+          return { success: true, code, message: 'تم إرسال كود التحقق للواتساب بنجاح.' };
         } else {
           return { 
             success: false, 

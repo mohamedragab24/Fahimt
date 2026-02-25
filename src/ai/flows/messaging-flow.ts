@@ -1,8 +1,7 @@
 
 'use server';
 /**
- * @fileOverview تدفق إرسال الإشعارات والتذكيرات المطور.
- * يستخدم FormData للبريد الإلكتروني لضمان التوافق مع Infobip API.
+ * @fileOverview تدفق إرسال الإشعارات لمنصة فهمت.
  */
 
 import { ai } from '@/ai/genkit';
@@ -50,7 +49,7 @@ const messagingFlow = ai.defineFlow(
         try { data = await res.json(); } catch { data = { error: 'Invalid JSON response' }; }
 
         if (res.ok) {
-          return { success: true, message: 'تم إرسال البريد بنجاح.' };
+          return { success: true, message: 'تم إرسال بريد فهمت بنجاح.' };
         } else {
           return { 
             success: false, 
@@ -59,7 +58,7 @@ const messagingFlow = ai.defineFlow(
           };
         }
       } catch (err: any) { 
-        return { success: false, message: 'فشل الاتصال التقني بسيرفر البريد.', rawError: err.message }; 
+        return { success: false, message: 'فشل الاتصال بسيرفر بريد فهمت.', rawError: err.message }; 
       }
     } else {
       try {
@@ -84,16 +83,16 @@ const messagingFlow = ai.defineFlow(
         const isRejected = data.messages?.[0]?.status?.groupName === 'REJECTED';
         
         if (res.ok && !isRejected) {
-          return { success: true, message: 'تم إرسال رسالة الواتساب بنجاح.' };
+          return { success: true, message: 'تم إرسال رسالة واتساب فهمت بنجاح.' };
         } else {
           return { 
             success: false, 
-            message: data.messages?.[0]?.status?.description || data.requestError?.serviceException?.text || 'فشل إرسال الواتساب.',
+            message: data.messages?.[0]?.status?.description || data.requestError?.serviceException?.text || 'فشل إرسال واتساب فهمت.',
             rawError: data
           };
         }
       } catch (err: any) { 
-        return { success: false, message: 'فشل الاتصال التقني بسيرفر الواتساب.', rawError: err.message }; 
+        return { success: false, message: 'فشل الاتصال بسيرفر واتساب فهمت.', rawError: err.message }; 
       }
     }
   }

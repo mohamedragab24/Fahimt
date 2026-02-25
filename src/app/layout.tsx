@@ -4,7 +4,7 @@ import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
 
 /**
- * إعدادات الميتا أصبحت تقرأ رابط الـ manifest الديناميكي لضمان تحديث PWA من الفايربيز.
+ * إعدادات الميتا لمنصة فهمت - تم تحديث المسميات لضمان اتساق SEO.
  */
 export const viewport: Viewport = {
   width: 'device-width',
@@ -14,9 +14,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'فهمت - منصة التعلم الذكي',
-  description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين لتبادل المعرفة.',
-  keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت',
+  title: 'فهمت - منصة التعلم الذكي والشرح الفوري',
+  description: 'فهمت هي أول منصة عربية لخدمات الشرح الفوري والربط المباشر بين المفهمين والمستفهمين لتبادل المعرفة بأمان وجودة عالية.',
+  keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت, منصة فهمت, خبير تعليمي',
   manifest: '/manifest.json', 
   appleWebApp: {
     capable: true,
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'فهمت - منصة التعلم الذكي',
-    description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.',
+    description: 'انضم لمنصة فهمت، أول منصة عربية لخدمات الشرح الفوري والربط المباشر بين المفهمين والمستفهمين.',
     type: 'website',
     locale: 'ar_EG',
     siteName: 'فهمت',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'فهمت - منصة التعلم الذكي',
-    description: 'أول منصة عربية لخدمات الشرح الفوري والربط بين المفهمين والمستفهمين.',
+    description: 'فهمت تربطك بأفضل الخبراء لشرح أي معلومة تحتاجها في جلسات مباشرة.',
   },
 };
 

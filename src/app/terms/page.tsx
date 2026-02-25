@@ -126,10 +126,10 @@ export default function TermsPage() {
           <FileText size={48} />
         </div>
         <h1 className="text-4xl md:text-7xl font-black font-headline tracking-tight text-zinc-900">
-          <span className="text-primary">{settings?.termsTitle || "شروط الاستخدام"}</span>
+          <span className="text-primary">{settings?.termsTitle || "شروط استخدام فهمت"}</span>
         </h1>
         <p className="text-muted-foreground text-xl md:text-2xl max-w-4xl mx-auto leading-relaxed font-bold">
-          {settings?.termsDescription || "استخدامك لـ 'فهمني' يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا."}
+          {settings?.termsDescription || "استخدامك لـ 'فهمت' يعني موافقتك الكاملة وغير المشروطة على هذه الشروط المنظمة للعلاقة بيننا."}
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export default function TermsPage() {
           </div>
           <h3 className="text-2xl md:text-4xl font-black font-headline">تعديل الشروط والأحكام</h3>
           <p className="text-zinc-400 text-xl max-w-3xl mx-auto font-medium leading-relaxed">
-            يمكن لـ "فهمني" تعديل هذه الشروط في أي وقت، ويعتبر استمرارك في الاستخدام موافقة على التعديلات، لذا يرجى متابعة هذه الصفحة باستمرار للبقاء على اطلاع دائم.
+            يمكن لـ "فهمت" تعديل هذه الشروط في أي وقت، ويعتبر استمرارك في الاستخدام موافقة على التعديلات، لذا يرجى متابعة هذه الصفحة باستمرار للبقاء على اطلاع دائم.
           </p>
         </CardContent>
       </Card>
