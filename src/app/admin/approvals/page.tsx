@@ -25,19 +25,27 @@ import {
   FileText,
   MessageSquare,
   ImageIcon,
-  ShieldCheck
+  ShieldCheck,
+  IdCard,
+  AlertCircle,
+  FileCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
+/**
+ * مركز الاعتماد الموحد - يضم مراجعة الصور، الاستفهامات، وتوثيق الهوية.
+ */
 export default function AdminApprovals() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedIstifham, setSelectedIstifham] = useState<any>(null);
+  const [selectedVerification, setSelectedVerification] = useState<any>(null);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -49,21 +57,29 @@ export default function AdminApprovals() {
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const canReadApprovals = adminProfile?.isAdmin || isMasterAdmin;
 
-  // جلب الحسابات التي تحتاج لمراجعة الصورة الشخصية
+  // 1. جلب الحسابات التي تحتاج لمراجعة الصورة الشخصية
   const profilesQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "users"), where("isProfileApproved", "==", false), limit(500));
   }, [firestore, canReadApprovals]);
 
-  // جلب الاستفهامات التي تحتاج لمراجعة المحتوى
+  // 2. جلب الاستفهامات التي تحتاج لمراجعة المحتوى
   const istifhamsQuery = useMemoFirebase(() => {
     if (!firestore || !canReadApprovals) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "pending_approval"));
   }, [firestore, canReadApprovals]);
 
+  // 3. جلب طلبات توثيق الهوية (البطاقات)
+  const identityQuery = useMemoFirebase(() => {
+    if (!firestore || !canReadApprovals) return null;
+    return query(collection(firestore, "users"), where("verificationStatus", "==", "pending"), limit(500));
+  }, [firestore, canReadApprovals]);
+
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
+  const { data: verifications, isLoading: verificationsLoading } = useCollection(identityQuery);
 
+  // --- دوال التحكم في الصور الشخصية ---
   const handleApproveProfile = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
@@ -72,13 +88,13 @@ export default function AdminApprovals() {
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: u.id,
       title: "تم اعتماد صورتك الشخصية!",
-      message: "تهانينا، تم مراجعة صورتك الشخصية واعتماد حسابك بنجاح. ملفك الآن يظهر بشكل رسمي للجميع.",
+      message: "تهانينا، تم مراجعة صورتك الشخصية واعتماد حسابك بنجاح في فهمت.",
       type: "approval",
       read: false,
       createdAt: new Date().toISOString()
     });
 
-    toast({ title: "تم الاعتماد", description: "تم تفعيل الصورة الشخصية وإرسال إشعار للمستخدم." });
+    toast({ title: "تم الاعتماد", description: "تم تفعيل الصورة الشخصية بنجاح." });
     setSelectedUser(null);
   };
 
@@ -90,16 +106,17 @@ export default function AdminApprovals() {
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: u.id,
       title: "تم رفض الصورة الشخصية",
-      message: "عذراً، الصورة الشخصية التي قمت برفعها لا تستوفي شروط المنصة. يرجى رفع صورة واضحة واحترافية.",
+      message: "عذراً، الصورة الشخصية لا تستوفي المعايير. يرجى رفع صورة بديلة واضحة.",
       type: "rejection",
       read: false,
       createdAt: new Date().toISOString()
     });
 
-    toast({ variant: "destructive", title: "تم الرفض", description: "تم حذف الصورة وإخطار المستخدم بضرورة رفع صورة بديلة." });
+    toast({ variant: "destructive", title: "تم الرفض", description: "تم حذف الصورة وإبلاغ المستخدم." });
     setSelectedUser(null);
   };
 
+  // --- دوال التحكم في الاستفهامات ---
   const handleApproveIstifham = (ist: any) => {
     if (!firestore) return;
     const istRef = doc(firestore, "istifhams", ist.id);
@@ -107,7 +124,7 @@ export default function AdminApprovals() {
       status: "active",
       approvedAt: new Date().toISOString()
     });
-    toast({ title: "تم النشر بنجاح", description: "الاستفهام متاح الآن لكافة المُفهمين." });
+    toast({ title: "تم النشر", description: "الاستفهام متاح الآن للجميع." });
     setSelectedIstifham(null);
   };
 
@@ -115,8 +132,53 @@ export default function AdminApprovals() {
     if (!firestore) return;
     const istRef = doc(firestore, "istifhams", id);
     updateDocumentNonBlocking(istRef, { status: "canceled" });
-    toast({ variant: "destructive", title: "تم رفض الاستفهام", description: "تم إلغاء الطلب ولن يظهر للعامة." });
+    toast({ variant: "destructive", title: "تم الرفض", description: "تم إلغاء طلب الاستفهام." });
     setSelectedIstifham(null);
+  };
+
+  // --- دوال توثيق الهوية (البطاقة) ---
+  const handleApproveIdentity = (u: any) => {
+    if (!firestore) return;
+    const uRef = doc(firestore, "users", u.id);
+    updateDocumentNonBlocking(uRef, { 
+      isVerified: true, 
+      verificationStatus: 'verified',
+      verifiedAt: new Date().toISOString()
+    });
+    
+    addDocumentNonBlocking(collection(firestore, "notifications"), {
+      userId: u.id,
+      title: "تم توثيق هويتك بنجاح!",
+      message: "مبروك! تم التحقق من هويتك وحصلت على شارة التوثيق الزرقاء في فهمت.",
+      type: "verification_success",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    toast({ title: "تم التوثيق!", description: "تم منح المستخدم شارة التوثيق الزرقاء." });
+    setSelectedVerification(null);
+  };
+
+  const handleRejectIdentity = (u: any) => {
+    if (!firestore) return;
+    const uRef = doc(firestore, "users", u.id);
+    updateDocumentNonBlocking(uRef, { 
+      verificationStatus: 'rejected',
+      idCardFront: null,
+      idCardBack: null
+    });
+    
+    addDocumentNonBlocking(collection(firestore, "notifications"), {
+      userId: u.id,
+      title: "فشل توثيق الهوية",
+      message: "عذراً، لم نتمكن من قبول وثائق الهوية المرفوعة. يرجى المحاولة بصور أوضح.",
+      type: "verification_failed",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    toast({ variant: "destructive", title: "تم الرفض", description: "تم رفض وثائق الهوية." });
+    setSelectedVerification(null);
   };
 
   if (!canReadApprovals && adminProfile) {
@@ -126,20 +188,24 @@ export default function AdminApprovals() {
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6 text-right">
-        <h1 className="text-4xl font-black font-headline text-zinc-900">مركز الاعتماد والرقابة</h1>
-        <p className="text-muted-foreground text-lg">مراجعة الصور الشخصية والطلبات الجديدة لضمان بيئة تعليمية احترافية.</p>
+        <h1 className="text-4xl font-black font-headline text-zinc-900">مركز الاعتماد والرقابة الموحد</h1>
+        <p className="text-muted-foreground text-lg">إدارة كافة عمليات المراجعة والاعتماد لضمان بيئة تعليمية احترافية وآمنة.</p>
       </div>
 
       <Tabs defaultValue="profiles" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-16 p-1 bg-muted rounded-2xl mb-8">
+        <TabsList className="grid w-full grid-cols-3 h-16 p-1 bg-muted rounded-2xl mb-8">
           <TabsTrigger value="profiles" className="rounded-xl text-lg font-bold">
-            <ImageIcon className="ml-2 h-5 w-5" /> مراجعة الصور ({profiles?.length || 0})
+            <ImageIcon className="ml-2 h-5 w-5" /> الصور ({profiles?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="istifhams" className="rounded-xl text-lg font-bold">
-            <MessageSquare className="ml-2 h-5 w-5" /> مراجعة الاستفهامات ({istifhams?.length || 0})
+            <MessageSquare className="ml-2 h-5 w-5" /> الاستفهامات ({istifhams?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="identity" className="rounded-xl text-lg font-bold">
+            <IdCard className="ml-2 h-5 w-5" /> توثيق الهوية ({verifications?.length || 0})
           </TabsTrigger>
         </TabsList>
 
+        {/* التبويب 1: الصور الشخصية */}
         <TabsContent value="profiles">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {profilesLoading ? <p className="col-span-full text-center font-bold animate-pulse">جاري تحميل الحسابات...</p> : 
@@ -156,24 +222,23 @@ export default function AdminApprovals() {
                       </div>
                     </div>
                     <CardTitle className="font-black text-xl">{p.fullName}</CardTitle>
-                    <Badge variant="outline" className="mt-2 text-primary font-bold border-primary/20">
-                      {p.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}
-                    </Badge>
+                    <Badge variant="outline" className="mt-2 text-primary font-bold">{p.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> معاينة كاملة</Button>
+                    <Button variant="outline" onClick={() => setSelectedUser(p)} className="w-full h-12 rounded-xl font-bold border-2"><Eye className="ml-2 h-5 w-5" /> معاينة</Button>
                     <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => handleApproveProfile(p)} className="bg-green-600 hover:bg-green-700 font-black rounded-xl h-12 text-white">اعتماد الصورة</Button>
-                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="font-black rounded-xl h-12">رفض الصورة</Button>
+                      <Button onClick={() => handleApproveProfile(p)} className="bg-green-600 hover:bg-green-700 font-black rounded-xl h-12 text-white shadow-md shadow-green-600/20">اعتماد</Button>
+                      <Button onClick={() => handleRejectProfile(p)} variant="destructive" className="font-black rounded-xl h-12 shadow-md shadow-red-600/20">رفض</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             }
-            {!profilesLoading && profiles?.length === 0 && <div className="col-span-full py-32 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد صور شخصية معلقة للمراجعة.</div>}
+            {!profilesLoading && profiles?.length === 0 && <NoData message="لا توجد صور شخصية بانتظار المراجعة." />}
           </div>
         </TabsContent>
 
+        {/* التبويب 2: الاستفهامات */}
         <TabsContent value="istifhams">
           <div className="grid gap-6">
             {istifhamsLoading ? <p className="text-center font-bold animate-pulse">جاري تحميل الاستفهامات...</p> :
@@ -185,7 +250,7 @@ export default function AdminApprovals() {
                       <Badge className="bg-primary/10 text-primary border-none font-bold">{ist.category}</Badge>
                     </div>
                     <h4 className="text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors text-right">{ist.title}</h4>
-                    <p className="font-bold text-muted-foreground text-right">بواسطة: <span className="text-zinc-900">{ist.mustafhemName}</span> | الميزانية: <span className="text-green-600">{ist.amount} ج.م</span></p>
+                    <p className="font-bold text-muted-foreground text-right">بواسطة: <span className="text-zinc-900">{ist.mustafhemName}</span> | الميزانية: <span className="text-green-600 font-black">{ist.amount} ج.م</span></p>
                   </div>
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
                     <Button variant="outline" onClick={() => setSelectedIstifham(ist)} className="h-14 px-8 font-black rounded-2xl border-2"><Eye className="ml-2 h-5 w-5" /> التفاصيل</Button>
@@ -194,17 +259,51 @@ export default function AdminApprovals() {
                 </Card>
               ))
             }
-            {!istifhamsLoading && istifhams?.length === 0 && <div className="col-span-full py-32 text-center text-muted-foreground font-black text-xl opacity-30">لا توجد استفهامات جديدة للمراجعة.</div>}
+            {!istifhamsLoading && istifhams?.length === 0 && <NoData message="لا توجد استفهامات جديدة للمراجعة." />}
+          </div>
+        </TabsContent>
+
+        {/* التبويب 3: توثيق الهوية */}
+        <TabsContent value="identity">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {verificationsLoading ? <p className="col-span-full text-center font-bold animate-pulse">جاري تحميل طلبات التوثيق...</p> :
+              verifications?.map((v) => (
+                <Card key={v.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border-2 hover:border-accent/20 transition-all bg-white group">
+                  <CardHeader className="bg-accent/5 p-8 flex flex-col items-center gap-4 text-center">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+                        <AvatarImage src={v.profilePictureUrl} />
+                        <AvatarFallback className="text-3xl font-black">{v.fullName?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full shadow-md text-accent">
+                        <IdCard size={20} />
+                      </div>
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-black">{v.fullName}</CardTitle>
+                      <Badge variant="outline" className="mt-2 font-bold border-accent/20 text-accent">{v.role === 'mufhem' ? 'مفهم' : 'طالب'}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <Button variant="outline" onClick={() => setSelectedVerification(v)} className="w-full h-12 rounded-xl font-black border-2"><Eye className="ml-2 h-5 w-5" /> مراجعة البطاقة</Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button onClick={() => handleApproveIdentity(v)} className="bg-green-600 hover:bg-green-700 font-black rounded-xl h-12 text-white shadow-md">توثيق</Button>
+                      <Button onClick={() => handleRejectIdentity(v)} variant="destructive" className="font-black rounded-xl h-12 shadow-md">رفض</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            }
+            {!verificationsLoading && verifications?.length === 0 && <NoData message="لا توجد طلبات توثيق هوية معلقة." />}
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* مودال تفاصيل الحساب */}
+      {/* مودال مراجعة الصورة الشخصية */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent className="sm:max-w-[600px] rounded-[3rem]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><UserCircle className="text-primary h-8 w-8" /> مراجعة الصورة والبيانات</DialogTitle>
-            <DialogDescription className="text-right">التأكد من مطابقة الصورة الشخصية لمعايير منصة فهمت.</DialogDescription>
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><UserCircle className="text-primary h-8 w-8" /> مراجعة بيانات الحساب</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="py-6 space-y-8">
@@ -221,66 +320,81 @@ export default function AdminApprovals() {
                   </div>
                 </div>
               </div>
-              
-              <div className="p-6 bg-zinc-50 rounded-2xl space-y-4">
-                <h5 className="font-black text-sm text-zinc-400 uppercase">النبذة التعريفية</h5>
-                <p className="text-zinc-700 font-medium italic">"{selectedUser.bio || 'لا توجد نبذة مكتوبة.'}"</p>
-              </div>
-
+              <div className="p-6 bg-zinc-50 rounded-2xl"><p className="text-zinc-700 font-medium italic">"{selectedUser.bio || 'لا توجد نبذة.'}"</p></div>
               <div className="grid grid-cols-2 gap-4">
-                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white shadow-xl">اعتماد الصورة الآن</Button>
-                <Button onClick={() => handleRejectProfile(selectedUser)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-xl">رفض وحذف الصورة</Button>
+                <Button onClick={() => handleApproveProfile(selectedUser)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white shadow-xl">اعتماد</Button>
+                <Button onClick={() => handleRejectProfile(selectedUser)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-xl">رفض</Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* مودال تفاصيل الاستفهام */}
+      {/* مودال مراجعة الاستفهام */}
       <Dialog open={!!selectedIstifham} onOpenChange={() => setSelectedIstifham(null)}>
         <DialogContent className="sm:max-w-[650px] rounded-[3rem]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><HelpCircle className="text-primary h-8 w-8" /> مراجعة طلب الاستفهام</DialogTitle>
-            <DialogDescription className="text-right">مراجعة المحتوى، الأهداف، والميزانية قبل النشر للعامة.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><HelpCircle className="text-primary h-8 w-8" /> مراجعة الاستفهام</DialogTitle></DialogHeader>
           {selectedIstifham && (
             <div className="py-6 space-y-6 max-h-[70vh] overflow-y-auto">
               <div className="p-8 bg-primary/5 rounded-[2.5rem] border-2 border-dashed space-y-6 text-right">
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary">عنوان الطلب</Label>
-                  <h4 className="text-2xl font-black text-zinc-900">{selectedIstifham.title}</h4>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary">تفاصيل الشرح المطلوب</Label>
-                  <p className="text-zinc-700 leading-relaxed font-medium text-lg">{selectedIstifham.description}</p>
-                </div>
-                {selectedIstifham.goal && (
-                  <div className="space-y-2 border-t pt-4">
-                    <Label className="text-xs font-black text-accent">الهدف النهائي (شرط الإكمال)</Label>
-                    <p className="text-zinc-800 font-black italic">"{selectedIstifham.goal}"</p>
-                  </div>
-                )}
+                <h4 className="text-2xl font-black text-zinc-900">{selectedIstifham.title}</h4>
+                <p className="text-zinc-700 leading-relaxed font-medium text-lg">{selectedIstifham.description}</p>
+                {selectedIstifham.goal && <p className="text-zinc-800 font-black italic border-t pt-4">الهدف: "{selectedIstifham.goal}"</p>}
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-zinc-50 rounded-2xl border text-right space-y-1">
-                  <Label className="text-[10px] font-black text-muted-foreground block uppercase">الميزانية المقترحة</Label>
-                  <span className="font-black text-2xl text-green-600">{selectedIstifham.amount} ج.م</span>
-                </div>
-                <div className="p-5 bg-zinc-50 rounded-2xl border text-right space-y-1">
-                  <Label className="text-[10px] font-black text-muted-foreground block uppercase">الموعد المطلوب</Label>
-                  <span className="font-bold text-sm block">{new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')}</span>
-                </div>
+                <div className="p-5 bg-zinc-50 rounded-2xl border text-right"><span className="text-[10px] font-black text-muted-foreground block uppercase">الميزانية</span><span className="font-black text-2xl text-green-600">{selectedIstifham.amount} ج.م</span></div>
+                <div className="p-5 bg-zinc-50 rounded-2xl border text-right"><span className="text-[10px] font-black text-muted-foreground block uppercase">الموعد</span><span className="font-bold text-sm block">{new Date(selectedIstifham.meetingTime).toLocaleString('ar-EG')}</span></div>
               </div>
-
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white shadow-xl">نشر الطلب فوراً</Button>
+                <Button onClick={() => handleApproveIstifham(selectedIstifham)} className="h-16 rounded-2xl bg-green-600 hover:bg-green-700 font-black text-xl text-white shadow-xl">نشر الآن</Button>
                 <Button onClick={() => handleRejectIstifham(selectedIstifham.id)} variant="destructive" className="h-16 rounded-2xl font-black text-xl shadow-xl">رفض الطلب</Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* مودال مراجعة توثيق الهوية */}
+      <Dialog open={!!selectedVerification} onOpenChange={() => setSelectedVerification(null)}>
+        <DialogContent className="sm:max-w-[800px] rounded-[3.5rem] p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="p-8 bg-zinc-900 text-white">
+            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3"><ShieldCheck className="text-primary h-10 w-10" /> مراجعة وثائق الهوية</DialogTitle>
+            <DialogDescription className="text-right text-zinc-400 font-bold">المستخدم: {selectedVerification?.fullName}</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[75vh]">
+            <div className="p-8 space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الأمامي</Label>
+                  <div className="aspect-[1.6/1] bg-zinc-100 rounded-3xl overflow-hidden border-4 border-white shadow-xl">
+                    {selectedVerification?.idCardFront ? <img src={selectedVerification.idCardFront} className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400"><AlertCircle size={40} /><p>لم ترفع</p></div>}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الخلفي</Label>
+                  <div className="aspect-[1.6/1] bg-zinc-100 rounded-3xl overflow-hidden border-4 border-white shadow-xl">
+                    {selectedVerification?.idCardBack ? <img src={selectedVerification.idCardBack} className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400"><AlertCircle size={40} /><p>لم ترفع</p></div>}
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 bg-blue-50 rounded-[2rem] border-2 border-dashed border-blue-200 text-blue-800 text-sm font-bold">يرجى مطابقة الاسم والبيانات في البطاقة مع بيانات الحساب قبل التوثيق.</div>
+              <div className="grid grid-cols-2 gap-6 pb-6">
+                <Button onClick={() => handleApproveIdentity(selectedVerification)} className="h-20 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl text-white shadow-2xl">اعتماد التوثيق</Button>
+                <Button onClick={() => handleRejectIdentity(selectedVerification)} variant="destructive" className="h-20 rounded-[2rem] font-black text-2xl shadow-2xl">رفض وحذف</Button>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function NoData({ message }: { message: string }) {
+  return (
+    <div className="col-span-full py-32 text-center text-muted-foreground font-black text-xl opacity-30 flex flex-col items-center gap-4">
+      <FileCheck size={64} />
+      {message}
     </div>
   );
 }

@@ -42,7 +42,8 @@ import {
   Send,
   Eye,
   Layout,
-  Scale
+  Scale,
+  IdCard
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -262,8 +263,7 @@ export function AppSidebar() {
                     <AdminLink href="/admin/finance" icon={BadgeCent} label="إدارة المالية" active={pathname === "/admin/finance"} />
                     
                     <div className="text-[10px] font-black text-zinc-400 uppercase mt-4 mb-2 pr-2">الرقابة والاعتماد</div>
-                    <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد" active={pathname === "/admin/approvals"} />
-                    <AdminLink href="/admin/verification" icon={ShieldCheck} label="مركز التوثيق" active={pathname === "/admin/verification"} />
+                    <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد الموحد" active={pathname === "/admin/approvals"} />
                     <AdminLink href="/admin/pending-requests" icon={Clock} label="مراجعة الاستفهامات" active={pathname === "/admin/pending-requests"} />
                     <AdminLink href="/admin/portfolio-approvals" icon={FileSearch} label="مراجعة أعمال المفهمين" active={pathname === "/admin/portfolio-approvals"} />
                     <AdminLink href="/admin/all-requests" icon={Eye} label="رقابة المحاضرات" active={pathname === "/admin/all-requests"} />
