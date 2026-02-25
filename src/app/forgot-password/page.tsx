@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -28,6 +29,17 @@ const COUNTRIES = [
   { code: "+213", name: "الجزائر", flag: "🇩🇿" },
   { code: "+216", name: "تونس", flag: "🇹🇳" },
   { code: "+218", name: "ليبيا", flag: "🇱🇾" },
+  { code: "+961", name: "لبنان", flag: "🇱🇧" },
+  { code: "+963", name: "سوريا", flag: "🇸🇾" },
+  { code: "+964", name: "العراق", flag: "🇮🇶" },
+  { code: "+970", name: "فلسطين", flag: "🇵🇸" },
+  { code: "+249", name: "السودان", flag: "🇸🇩" },
+  { code: "+967", name: "اليمن", flag: "🇾🇪" },
+  { code: "+1", name: "أمريكا", flag: "🇺🇸" },
+  { code: "+44", name: "بريطانيا", flag: "🇬🇧" },
+  { code: "+90", name: "تركيا", flag: "🇹🇷" },
+  { code: "+33", name: "فرنسا", flag: "🇫🇷" },
+  { code: "+49", name: "ألمانيا", flag: "🇩🇪" },
 ];
 
 export default function ForgotPasswordPage() {
@@ -143,9 +155,9 @@ export default function ForgotPasswordPage() {
                       <SelectTrigger className="w-[100px] h-16 rounded-2xl border-2 font-black">
                         <SelectValue placeholder="الرمز" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-80">
                         {COUNTRIES.map((c) => (
-                          <SelectItem key={c.code} value={c.code} className="font-bold">
+                          <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
                             <span className="ml-2">{c.flag}</span> {c.code}
                           </SelectItem>
                         ))}

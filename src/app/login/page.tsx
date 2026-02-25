@@ -43,6 +43,41 @@ const COUNTRIES = [
   { code: "962", name: "الأردن", flag: "🇯🇴", length: 9 },
   { code: "968", name: "عمان", flag: "🇴🇲", length: 8 },
   { code: "973", name: "البحرين", flag: "🇧🇭", length: 8 },
+  { code: "212", name: "المغرب", flag: "🇲🇦", length: 9 },
+  { code: "213", name: "الجزائر", flag: "🇩🇿", length: 9 },
+  { code: "216", name: "تونس", flag: "🇹🇳", length: 8 },
+  { code: "218", name: "ليبيا", flag: "🇱🇾", length: 9 },
+  { code: "961", name: "لبنان", flag: "🇱🇧", length: 8 },
+  { code: "963", name: "سوريا", flag: "🇸🇾", length: 9 },
+  { code: "964", name: "العراق", flag: "🇮🇶", length: 10 },
+  { code: "970", name: "فلسطين", flag: "🇵🇸", length: 9 },
+  { code: "249", name: "السودان", flag: "🇸🇩", length: 9 },
+  { code: "967", name: "اليمن", flag: "🇾🇪", length: 9 },
+  { code: "251", name: "إثيوبيا", flag: "🇪🇹", length: 9 },
+  { code: "252", name: "الصومال", flag: "🇸🇴", length: 9 },
+  { code: "253", name: "جيبوتي", flag: "🇩🇯", length: 8 },
+  { code: "222", name: "موريتانيا", flag: "🇲🇷", length: 8 },
+  { code: "269", name: "جزر القمر", flag: "🇰🇲", length: 7 },
+  { code: "1", name: "أمريكا", flag: "🇺🇸", length: 10 },
+  { code: "44", name: "بريطانيا", flag: "🇬🇧", length: 10 },
+  { code: "1", name: "كندا", flag: "🇨🇦", length: 10 },
+  { code: "90", name: "تركيا", flag: "🇹🇷", length: 10 },
+  { code: "33", name: "فرنسا", flag: "🇫🇷", length: 9 },
+  { code: "49", name: "ألمانيا", flag: "🇩🇪", length: 11 },
+  { code: "39", name: "إيطاليا", flag: "🇮🇹", length: 10 },
+  { code: "34", name: "إسبانيا", flag: "🇪🇸", length: 9 },
+  { code: "7", name: "روسيا", flag: "🇷🇺", length: 10 },
+  { code: "86", name: "الصين", flag: "🇨🇳", length: 11 },
+  { code: "81", name: "اليابان", flag: "🇯🇵", length: 10 },
+  { code: "82", name: "كوريا ج", flag: "🇰🇷", length: 10 },
+  { code: "91", name: "الهند", flag: "🇮🇳", length: 10 },
+  { code: "61", name: "أستراليا", flag: "🇦🇺", length: 9 },
+  { code: "55", name: "البرازيل", flag: "🇧🇷", length: 11 },
+  { code: "60", name: "ماليزيا", flag: "🇲🇾", length: 9 },
+  { code: "62", name: "إندونيسيا", flag: "🇮🇩", length: 11 },
+  { code: "92", name: "باكستان", flag: "🇵🇰", length: 10 },
+  { code: "234", name: "نيجيريا", flag: "🇳🇬", length: 10 },
+  { code: "27", name: "جنوب أفريقيا", flag: "🇿🇦", length: 9 },
 ];
 
 function LoginContent() {
@@ -257,10 +292,10 @@ function LoginContent() {
                           <SelectTrigger className="w-[110px] h-14 rounded-xl border-2 font-black">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="max-h-60">
+                          <SelectContent className="max-h-80">
                             {COUNTRIES.map((c) => (
-                              <SelectItem key={c.code} value={c.code} className="font-bold">
-                                <span>{c.flag}</span> +{c.code}
+                              <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
+                                <span className="ml-2">{c.flag}</span> +{c.code}
                               </SelectItem>
                             ))}
                           </SelectContent>
