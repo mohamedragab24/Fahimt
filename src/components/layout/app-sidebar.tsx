@@ -13,43 +13,27 @@ import {
   BadgeCent,
   ChevronDown,
   Layers,
-  Video,
   LifeBuoy,
   History,
   GraduationCap,
   ImageIcon,
   Shield,
   ShieldAlert,
-  UserCog,
-  RefreshCw,
   FileCheck,
   Briefcase,
-  Scale,
-  MessageCircle,
-  FileSearch,
-  GalleryVertical,
-  Edit3,
-  Mail,
+  HelpCircle,
+  MessageSquare,
   Zap,
   Share2,
-  MessageSquare,
-  Send,
-  Filter,
   User,
-  Info,
-  FileText,
-  HelpCircle,
-  Bot,
-  UserSearch,
-  Layout,
   Search,
-  RefreshCcw,
-  Phone,
+  RefreshCw,
   Palette,
   Cloud,
   Clock,
   Ticket,
-  CheckCircle2
+  CheckCircle2,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -107,65 +91,78 @@ export function AppSidebar() {
     try {
       handleLinkClick();
       await updateDoc(userRef, { role: newRole });
-      toast({ title: "تم تبديل نوع الحساب في فهمت" });
+      toast({ title: "تم تبديل نوع الحساب بنجاح" });
       router.push("/");
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ" });
     }
   };
 
-  if (!user) return null;
-
   return (
     <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-sm fixed inset-y-0 z-50 bg-white">
       <SidebarHeader className="p-4 shrink-0">
         <div className="flex flex-col gap-1">
-          <span className="font-black text-xs text-zinc-400">قائمة فهمت الرئيسية</span>
+          <span className="font-black text-xs text-zinc-400">قائمة "فهمت"</span>
         </div>
       </SidebarHeader>
 
       <SidebarSeparator />
 
       <SidebarContent className="px-1.5">
-        <div className="p-1.5 shrink-0">
-          <div className="bg-primary/5 p-3 rounded-2xl space-y-2.5 border border-primary/5 shadow-inner">
-            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { handleLinkClick(); router.push('/profile'); }}>
-              <Avatar className="h-10 w-10 border-2 border-white shadow-md shrink-0">
-                <AvatarImage src={profile?.profilePictureUrl} />
-                <AvatarFallback className="text-[10px]">{profile?.fullName?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col truncate min-w-0 text-right">
-                <span className="font-black text-[12px] truncate">{profile?.fullName}</span>
-                <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 mr-auto px-1.5 font-black">
-                  {profile?.role === 'mufhem' ? 'مُفهم معتمد' : 'مُستفهم طموح'}
-                </Badge>
+        {user && (
+          <div className="p-1.5 shrink-0">
+            <div className="bg-primary/5 p-3 rounded-2xl space-y-2.5 border border-primary/5 shadow-inner">
+              <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { handleLinkClick(); router.push('/profile'); }}>
+                <Avatar className="h-10 w-10 border-2 border-white shadow-md shrink-0">
+                  <AvatarImage src={profile?.profilePictureUrl} />
+                  <AvatarFallback className="text-[10px] font-black">{profile?.fullName?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col truncate min-w-0 text-right">
+                  <span className="font-black text-[12px] truncate">{profile?.fullName}</span>
+                  <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 mr-auto px-1.5 font-black">
+                    {profile?.role === 'mufhem' ? 'مفهم' : 'مستفهم'}
+                  </Badge>
+                </div>
               </div>
+              <button onClick={toggleRole} className="w-full h-10 rounded-xl text-[11px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                <RefreshCw className="h-4 w-4" /> تبديل إلى {profile?.role === 'mufhem' ? 'مستفهم' : 'مفهم'}
+              </button>
             </div>
-            <button onClick={toggleRole} className="w-full h-10 rounded-xl text-[11px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm">
-              <RefreshCw className="h-4 w-4" /> تبديل الحساب
-            </button>
           </div>
-        </div>
+        )}
 
         <SidebarMenu className="space-y-1 pt-4 overflow-y-auto no-scrollbar px-1">
           
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/offers"} onClick={handleLinkClick}>
-              <Link href="/offers">
-                <Zap className="h-5 w-5 text-primary" />
-                <span className="font-bold">عروضي</span>
+            <SidebarMenuButton asChild isActive={pathname === "/"} onClick={handleLinkClick}>
+              <Link href="/">
+                <Home className="h-5 w-5 text-primary" />
+                <span className="font-bold">الرئيسية</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/requests"} onClick={handleLinkClick}>
-              <Link href="/requests">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <span className="font-bold">استفهاماتي</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {user && (
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/offers"} onClick={handleLinkClick}>
+                  <Link href="/offers">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <span className="font-bold">عروضي</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/requests"} onClick={handleLinkClick}>
+                  <Link href="/requests">
+                    <ClipboardList className="h-5 w-5 text-primary" />
+                    <span className="font-bold">استفهاماتي</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
+          )}
 
           <SidebarSeparator className="my-2" />
 
@@ -181,7 +178,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "/portfolio"} onClick={handleLinkClick}>
               <Link href="/portfolio">
-                <Layout className="h-5 w-5 text-zinc-500" />
+                <Briefcase className="h-5 w-5 text-zinc-500" />
                 <span className="font-bold">أعمال المفهمين</span>
               </Link>
             </SidebarMenuButton>
@@ -198,24 +195,25 @@ export function AppSidebar() {
 
           <SidebarSeparator className="my-2" />
 
-          <Collapsible className="group/collapsible">
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton>
-                  <Settings className="h-5 w-5 text-zinc-500" />
-                  <span className="font-bold">الإعدادات</span>
-                  <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/profile"} onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> حسابي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/wallet"} onClick={handleLinkClick}><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> محفظتي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs"><ShieldCheck size={14} className="ml-2"/> توثيق الهوية</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
+          {user && (
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton>
+                    <Settings className="h-5 w-5 text-zinc-500" />
+                    <span className="font-bold">الإعدادات</span>
+                    <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/profile"} onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> ملفي الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/wallet"} onClick={handleLinkClick}><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> المحفظة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          )}
 
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
@@ -228,8 +226,9 @@ export function AppSidebar() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-3 pr-3 border-r-2 border-zinc-100">
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/guide"} onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs">الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs">الدعم الفني</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/guide"} onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs"><BookOpen size={14} className="ml-2"/> الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs"><HelpCircle size={14} className="ml-2"/> الأسئلة الشائعة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  <SidebarMenuSubItem><SidebarMenuSubButton asChild isActive={pathname === "/support"} onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs"><MessageSquare size={14} className="ml-2"/> تذاكر الدعم</Link></SidebarMenuSubButton></SidebarMenuSubItem>
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
@@ -250,21 +249,9 @@ export function AppSidebar() {
                     <AdminLink href="/admin" icon={Home} label="نظرة عامة" active={pathname === "/admin"} />
                     <AdminLink href="/admin/coupons" icon={Ticket} label="إدارة الكوبونات" active={pathname === "/admin/coupons"} />
                     <AdminLink href="/admin/completed-orders" icon={CheckCircle2} label="الطلبات المكتملة" active={pathname === "/admin/completed-orders"} />
-                    <AdminLink href="/admin/manual-editor" icon={Edit3} label="المحرر الفائق" active={pathname === "/admin/manual-editor"} />
-                    <AdminLink href="/admin/customize" icon={Palette} label="تخصيص المنصة" active={pathname === "/admin/customize"} />
-                    <AdminLink href="/admin/assets" icon={ImageIcon} label="إدارة الهوية والصور" active={pathname === "/admin/assets"} />
-                    <AdminLink href="/admin/social-management" icon={Share2} label="روابط تابعنا" active={pathname === "/admin/social-management"} />
-                    <AdminLink href="/admin/categories" icon={Layers} label="أقسام الموقع" active={pathname === "/admin/categories"} />
                     <AdminLink href="/admin/approvals" icon={FileCheck} label="مركز الاعتماد" active={pathname === "/admin/approvals"} />
-                    <AdminLink href="/admin/pending-requests" icon={Clock} label="مراجعة الاستفهامات" active={pathname === "/admin/pending-requests"} />
-                    <AdminLink href="/admin/portfolio-approvals" icon={GalleryVertical} label="مراجعة الأعمال" active={pathname === "/admin/portfolio-approvals"} />
                     <AdminLink href="/admin/finance" icon={BadgeCent} label="إدارة المالية" active={pathname === "/admin/finance"} />
-                    <AdminLink href="/admin/direct-chats" icon={MessageSquare} label="سجل المحادثات" active={pathname === "/admin/direct-chats"} />
-                    <AdminLink href="/admin/support" icon={HelpCircle} label="تذاكر الدعم" active={pathname === "/admin/support"} />
-                    <AdminLink href="/admin/roles" icon={Shield} label="فريق العمل" active={pathname === "/admin/roles"} />
-                    <AdminLink href="/admin/auto-bans" icon={ShieldAlert} label="الحظر التلقائي" active={pathname === "/admin/auto-bans"} />
-                    <AdminLink href="/admin/logs" icon={History} label="سجل الرقابة" active={pathname === "/admin/logs"} />
-                    <AdminLink href="/admin/deployment" icon={Cloud} label="التثبيت والنشر" active={pathname === "/admin/deployment"} />
+                    <AdminLink href="/admin/deployment" icon={Cloud} label="النشر المباشر" active={pathname === "/admin/deployment"} />
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
@@ -274,10 +261,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3 border-t shrink-0">
-        <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-destructive hover:bg-destructive/10 font-black">
-          <LogOut className="h-5 w-5 shrink-0" />
-          <span className="text-[13px]">خروج من فهمت</span>
-        </SidebarMenuButton>
+        {user ? (
+          <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-destructive hover:bg-destructive/10 font-black">
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span className="text-[13px]">خروج من فهمت</span>
+          </SidebarMenuButton>
+        ) : (
+          <SidebarMenuButton asChild onClick={handleLinkClick}>
+            <Link href="/login" className="h-12 rounded-xl bg-primary text-white font-black flex items-center justify-center">
+              <span>تسجيل دخول</span>
+            </Link>
+          </SidebarMenuButton>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

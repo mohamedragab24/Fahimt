@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -10,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { 
   Upload, 
   ImageIcon, 
@@ -18,12 +18,9 @@ import {
   Video,
   CloudUpload,
   Layers,
-  Filter,
-  Activity,
-  CheckCircle2
+  Filter
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AddPortfolioWork() {
@@ -37,11 +34,8 @@ export default function AddPortfolioWork() {
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState("");
-  
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState("");
   
@@ -49,9 +43,7 @@ export default function AddPortfolioWork() {
     title: "",
     description: "",
     category: "",
-    categorySub: "",
-    categoryOption: "",
-    agreed: false
+    categorySub: ""
   });
 
   const categoriesQuery = useMemoFirebase(() => {
@@ -63,142 +55,96 @@ export default function AddPortfolioWork() {
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>, type: 'video' | 'image') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('video/')) {
-        toast({ variant: "destructive", title: "خطأ في الملف", description: "يرجى اختيار ملف فيديو فقط." });
-        return;
+      if (type === 'video') {
+        setVideoFile(file);
+        setVideoPreview(URL.createObjectURL(file));
+      } else {
+        setThumbFile(file);
+        setThumbPreview(URL.createObjectURL(file));
       }
-      setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleThumbChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({ variant: "destructive", title: "خطأ في الملف", description: "يرجى اختيار صورة فقط للغلاف." });
-        return;
-      }
-      setThumbFile(file);
-      setThumbPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const uploadFile = async (file: File, path: string): Promise<string> => {
-    const storageRef = ref(storage!, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    
-    return new Promise((resolve, reject) => {
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => reject(error),
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(url);
-        }
-      );
-    });
+  const upload = async (file: File, path: string) => {
+    const sRef = ref(storage!, path);
+    await uploadBytesResumable(sRef, file);
+    return getDownloadURL(sRef);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !storage || !user || !videoFile || !thumbFile || !formData.category) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول ورفع الفيديو والصورة المصغرة." });
-      return;
-    }
-
+    if (!user || !videoFile || !thumbFile || !formData.category) return;
     setIsSubmitting(true);
     try {
-      const timestamp = Date.now();
-      const videoUrl = await uploadFile(videoFile, `portfolio/${user.uid}/videos/${timestamp}`);
-      const thumbUrl = await uploadFile(thumbFile, `portfolio/${user.uid}/thumbs/${timestamp}`);
+      const vUrl = await upload(videoFile, `portfolio/${user.uid}/v_${Date.now()}`);
+      const tUrl = await upload(thumbFile, `portfolio/${user.uid}/t_${Date.now()}`);
       
-      await addDoc(collection(firestore, "portfolio"), {
+      await addDoc(collection(firestore!, "portfolio"), {
         mufhemId: user.uid,
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        mediaUrl: videoUrl,
-        thumbnailUrl: thumbUrl,
+        ...formData,
+        mediaUrl: vUrl,
+        thumbnailUrl: tUrl,
         mediaType: "video",
         status: "pending_approval",
         createdAt: new Date().toISOString()
       });
-
       toast({ title: "تم الإرسال للمراجعة" });
       router.push("/portfolio");
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "خطأ في الرفع" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الرفع" });
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10 mb-20" dir="rtl">
-      <div className="space-y-2 text-right">
-        <h1 className="text-4xl font-black text-zinc-900">إضافة عمل جديد للمعرض</h1>
-        <p className="text-muted-foreground font-bold text-lg">اعرض مهاراتك التعليمية للطلاب (تخضع الأعمال للمراجعة).</p>
-      </div>
-
-      <Card className="shadow-2xl rounded-[3rem] border-2 bg-white">
-        <CardContent className="p-10">
-          <form onSubmit={handleSubmit} className="space-y-10">
-            <div className="space-y-3 text-right">
-              <Label className="text-lg font-black">عنوان العمل</Label>
-              <Input 
-                placeholder="ضع عنواناً مميزاً يصف عملك بدقة"
-                className="h-16 rounded-2xl border-2 font-bold text-xl px-6"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                required
-              />
+    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10 mb-24 text-right" dir="rtl">
+      <h1 className="text-4xl font-black">إضافة نموذج تفهيم</h1>
+      <Card className="rounded-[3rem] border-2 shadow-2xl p-10 bg-white">
+        <form onSubmit={handleSubmit} className="space-y-10">
+          <div className="space-y-2"><Label className="font-black">العنوان</Label><Input value={formData.title} onChange={(e)=>setFormData({...formData, title: e.target.value})} className="h-14 rounded-xl border-2" required /></div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2 text-right">
+              <Label className="font-black">القسم</Label>
+              <Select value={formData.category} onValueChange={(v)=>setFormData({...formData, category: v, categorySub: ""})}>
+                <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                <SelectContent>{mainCategories.map(c=><SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
+            <div className="space-y-2 text-right">
+              <Label className="font-black">التخصص</Label>
+              <Select disabled={!formData.category} value={formData.categorySub} onValueChange={(v)=>setFormData({...formData, categorySub: v})}>
+                <SelectTrigger className="h-14 rounded-xl border-2"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
+                <SelectContent>{subCategories.map(c=><SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3 text-right">
-                <Label className="text-lg font-black flex items-center gap-2 justify-end">الصورة المصغرة (صورة فقط) <ImageIcon size={18}/></Label>
-                <div 
-                  onClick={() => thumbInputRef.current?.click()}
-                  className="relative h-60 rounded-[2.5rem] border-4 border-dashed border-zinc-200 bg-zinc-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden"
-                >
-                  {thumbPreview ? <img src={thumbPreview} className="w-full h-full object-cover" /> : <Upload size={32} className="text-primary" />}
-                </div>
-                <input type="file" ref={thumbInputRef} className="hidden" accept="image/*" onChange={handleThumbChange} />
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <Label className="font-black">الصورة المصغرة</Label>
+              <div onClick={()=>thumbInputRef.current?.click()} className="h-48 rounded-3xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden">
+                {thumbPreview ? <img src={thumbPreview} className="w-full h-full object-cover" /> : <ImageIcon className="text-zinc-200" size={40}/>}
               </div>
-
-              <div className="space-y-3 text-right">
-                <Label className="text-lg font-black flex items-center gap-2 justify-end">فيديو الشرح (فيديو فقط) <Video size={18}/></Label>
-                <div 
-                  onClick={() => videoInputRef.current?.click()}
-                  className="relative h-60 rounded-[2.5rem] border-4 border-dashed border-zinc-200 bg-zinc-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden"
-                >
-                  {videoPreview ? <video src={videoPreview} className="w-full h-full object-contain" muted /> : <CloudUpload size={32} className="text-accent" />}
-                </div>
-                <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={handleVideoChange} />
+              <input type="file" ref={thumbInputRef} className="hidden" accept="image/*" onChange={(e)=>handleFile(e, 'image')} />
+            </div>
+            <div className="space-y-3">
+              <Label className="font-black">فيديو الشرح</Label>
+              <div onClick={()=>videoInputRef.current?.click()} className="h-48 rounded-3xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden">
+                {videoPreview ? <video src={videoPreview} className="w-full h-full object-contain" muted /> : <Video className="text-zinc-200" size={40}/>}
               </div>
+              <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={(e)=>handleFile(e, 'video')} />
             </div>
+          </div>
 
-            <div className="space-y-3 text-right">
-              <Label className="text-lg font-black">اشرح محتوى هذا العمل بالتفصيل</Label>
-              <Textarea 
-                className="h-48 rounded-[2rem] border-2 p-8 text-lg font-medium"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                required
-              />
-            </div>
-
-            <Button type="submit" disabled={isSubmitting} className="w-full h-24 rounded-[2.5rem] text-3xl font-black bg-primary">
-              {isSubmitting ? <Loader2 className="animate-spin" /> : "نشر العمل للمراجعة"}
-            </Button>
-          </form>
-        </CardContent>
+          <div className="space-y-2"><Label className="font-black">الشرح التفصيلي</Label><Textarea value={formData.description} onChange={(e)=>setFormData({...formData, description: e.target.value})} className="h-40 rounded-2xl border-2" required /></div>
+          <Button type="submit" disabled={isSubmitting} className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary">
+            {isSubmitting ? <Loader2 className="animate-spin" /> : "نشر العمل للمراجعة"}
+          </Button>
+        </form>
       </Card>
     </div>
   );

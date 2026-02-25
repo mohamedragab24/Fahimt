@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -16,7 +16,10 @@ import {
   CreditCard,
   Download,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Smartphone,
+  Phone
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
@@ -26,8 +29,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSearchParams } from "next/navigation";
+
+type WithdrawalMethod = 'insta_pay' | 'e_wallet' | 'bank_transfer';
 
 function WalletContent() {
   const { user } = useUser();
@@ -36,14 +41,8 @@ function WalletContent() {
   const searchParams = useSearchParams();
   const [amount, setAmount] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    const preAmount = searchParams?.get('amount');
-    if (preAmount) {
-      setAmount(preAmount);
-      setIsModalOpen(true);
-    }
-  }, [searchParams]);
+  const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('e_wallet');
+  const [transferTarget, setTarget] = useState("");
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -52,15 +51,10 @@ function WalletContent() {
 
   const { data: profile } = useDoc(userRef);
 
-  const transactionsRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return collection(firestore, "users", user.uid, "transactions");
-  }, [firestore, user]);
-
   const transactionsQuery = useMemoFirebase(() => {
-    if (!transactionsRef) return null;
-    return query(transactionsRef, orderBy("timestamp", "desc"));
-  }, [transactionsRef]);
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "transactions"), orderBy("timestamp", "desc"));
+  }, [firestore, user]);
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
@@ -75,19 +69,17 @@ function WalletContent() {
     
     const numAmount = Number(amount);
     if (numAmount <= 0) {
-      toast({ variant: "destructive", title: "خطأ", description: "يرجى إدخال مبلغ صحيح." });
+      toast({ variant: "destructive", title: "مبلغ غير صحيح" });
       return;
     }
 
-    const isTeacher = profile.role === 'mufhem';
-    
-    if (isTeacher) {
+    if (profile.role === 'mufhem') {
       if (numAmount > balance) {
-        toast({ 
-          variant: "destructive", 
-          title: "المبلغ غير متوفر", 
-          description: "عذراً، رصيدك الحالي أقل من المبلغ الذي تحاول سحبه." 
-        });
+        toast({ variant: "destructive", title: "رصيد غير كافٍ" });
+        return;
+      }
+      if (!transferTarget) {
+        toast({ variant: "destructive", title: "يرجى تحديد رقم/عنوان التحويل" });
         return;
       }
       
@@ -95,8 +87,10 @@ function WalletContent() {
         const txRef = await addDoc(collection(firestore, "users", user.uid, "transactions"), {
           amount: numAmount,
           type: 'withdrawal',
-          details: 'طلب سحب أرباح',
+          details: `طلب سحب أرباح (${withdrawalMethod})`,
           status: 'pending',
+          transferTarget,
+          method: withdrawalMethod,
           timestamp: new Date().toISOString()
         });
 
@@ -105,18 +99,17 @@ function WalletContent() {
           userName: profile.fullName,
           userEmail: profile.email,
           phoneNumber: profile.phoneNumber,
+          method: withdrawalMethod,
+          transferTarget,
           amount: numAmount,
           status: 'pending',
           transactionId: txRef.id,
           timestamp: new Date().toISOString()
         });
 
-        toast({
-          title: "تم تقديم الطلب",
-          description: `تم خصم ${numAmount} ج.م من رصيدك مؤقتاً لحين مراجعة التحويل.`,
-        });
+        toast({ title: "تم تقديم طلب السحب بنجاح" });
       } catch (e) {
-        toast({ variant: "destructive", title: "خطأ", description: "فشل العملية، يرجى المحاولة لاحقاً." });
+        toast({ variant: "destructive", title: "فشل العملية" });
       }
     } else {
       createTransactionNonBlocking(firestore, user.uid, {
@@ -125,188 +118,106 @@ function WalletContent() {
         details: 'شحن رصيد المحفظة',
         status: 'completed'
       });
-      toast({
-        title: "تم شحن الرصيد",
-        description: `تم إضافة ${numAmount} ج.م لمحفظتك بنجاح وتظهر الآن في سجل المعاملات.`,
-      });
+      toast({ title: "تم شحن الرصيد بنجاح" });
     }
 
     setIsModalOpen(false);
     setAmount("");
+    setTarget("");
   };
 
-  if (isLoading || !profile) return <div className="p-10 text-center font-bold animate-pulse">جاري تحميل بيانات المحفظة...</div>;
+  if (isLoading || !profile) return <div className="p-10 text-center font-bold">جاري تحميل المحفظة...</div>;
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-2 border-r-8 border-primary pr-6">
-          <h1 className="text-5xl font-black font-headline tracking-tight">المحفظة</h1>
-          <p className="text-muted-foreground text-xl">إدارة أرباحك ومدفوعاتك التعليمية بكل شفافية.</p>
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12 mb-20" dir="rtl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-r-8 border-primary pr-6">
+        <div>
+          <h1 className="text-5xl font-black font-headline">محفظة فهمت</h1>
+          <p className="text-muted-foreground text-xl">إدارة رصيدك والتحكم في أرباحك ومدفوعاتك.</p>
         </div>
-        <div className="flex items-center gap-3 bg-green-100 text-green-700 px-6 py-3 rounded-2xl font-black text-lg shadow-sm">
-          <ShieldCheck size={24} />
-          معاملات آمنة 100%
+        <div className="bg-green-100 text-green-700 px-6 py-3 rounded-2xl font-black flex items-center gap-3">
+          <ShieldCheck /> معاملات مؤمنة بالكامل
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <Card className="lg:col-span-2 bg-gradient-to-br from-primary via-primary/90 to-accent text-white border-none shadow-[0_30px_60px_rgba(0,0,0,0.15)] overflow-hidden relative rounded-[3rem]">
-          <div className="absolute top-0 right-0 p-16 opacity-10 pointer-events-none">
-            <Wallet size={200} />
+        <Card className="lg:col-span-2 bg-zinc-900 text-white border-none shadow-2xl rounded-[3rem] p-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-16 opacity-5 pointer-events-none rotate-12">
+            <Wallet size={300} />
           </div>
-          <CardHeader className="pt-12 px-12">
-            <CardTitle className="text-2xl opacity-90 font-bold flex items-center gap-3">
-              <CreditCard size={28} /> الرصيد المتاح
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-12 px-12 pb-16">
-            <div className="flex items-baseline gap-4">
-              <span className="text-8xl font-black tabular-nums tracking-tighter">{balance}</span>
-              <span className="text-4xl font-bold opacity-80">ج.م</span>
+          <div className="relative z-10 space-y-10">
+            <div className="space-y-2">
+              <span className="text-zinc-400 font-black text-xl">الرصيد المتاح</span>
+              <div className="flex items-baseline gap-4">
+                <span className="text-8xl font-black tabular-nums tracking-tighter">{balance}</span>
+                <span className="text-3xl font-bold opacity-60">ج.م</span>
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-6 relative z-10">
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-white text-primary hover:bg-gray-100 px-14 py-10 rounded-3xl font-black text-2xl shadow-2xl transition-all hover:scale-105 active:scale-95 group">
-                    {profile.role === 'mustafhem' ? (
-                      <><Plus className="ml-3 h-8 w-8 group-hover:rotate-90 transition-transform" /> إضافة رصيد</>
-                    ) : (
-                      <><Download className="ml-3 h-8 w-8" /> طلب سحب أرباح</>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent dir="rtl" className="rounded-[2.5rem] sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-right text-3xl font-black mb-2">
-                      {profile.role === 'mustafhem' ? 'شحن المحفظة' : 'سحب الأرباح'}
-                    </DialogTitle>
-                    <DialogDescription className="text-right text-lg">
-                      {profile.role === 'mustafhem' 
-                        ? 'أدخل المبلغ المراد شحنه عبر فودافون كاش أو أي محفظة إلكترونية.' 
-                        : 'سيتم مراجعة طلب السحب وتحويل المبلغ لرقمك خلال 24 ساعة.'}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-8 space-y-6">
-                    <div className="space-y-3">
-                      <Label className="text-xl font-bold">المبلغ المطلوب (ج.م)</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="100" 
-                        value={amount} 
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="h-20 text-4xl font-black text-center rounded-3xl border-2 focus:border-primary transition-all"
-                      />
-                    </div>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-white hover:bg-primary/90 px-12 py-10 rounded-3xl font-black text-2xl shadow-xl transition-all group">
+                  {profile.role === 'mustafhem' ? <><Plus className="ml-3 h-8 w-8" /> إضافة رصيد</> : <><Download className="ml-3 h-8 w-8" /> سحب الأرباح</>}
+                </Button>
+              </DialogTrigger>
+              <DialogContent dir="rtl" className="rounded-[3rem] sm:max-w-[550px]">
+                <DialogHeader>
+                  <DialogTitle className="text-right text-3xl font-black">{profile.role === 'mustafhem' ? 'شحن المحفظة' : 'سحب الأرباح'}</DialogTitle>
+                  <DialogDescription className="text-right text-lg font-bold">حدد المبلغ وطريقة {profile.role === 'mustafhem' ? 'الدفع' : 'التحويل'}.</DialogDescription>
+                </DialogHeader>
+                <div className="py-6 space-y-8">
+                  <div className="space-y-3">
+                    <Label className="font-black text-xl">المبلغ (ج.م)</Label>
+                    <Input type="number" placeholder="100" value={amount} onChange={(e)=>setAmount(e.target.value)} className="h-20 text-4xl font-black text-center rounded-3xl border-2" />
                   </div>
-                  <DialogFooter>
-                    <Button onClick={handleTransaction} className="w-full py-10 text-2xl font-black rounded-3xl shadow-xl">
-                      تأكيد العملية الآن
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardContent>
+
+                  {profile.role === 'mufhem' && (
+                    <div className="space-y-6">
+                      <Label className="font-black text-xl">وسيلة السحب المتاحة</Label>
+                      <RadioGroup value={withdrawalMethod} onValueChange={(v:any)=>setWithdrawalMethod(v)} className="grid grid-cols-1 gap-3">
+                        <WithdrawMethodItem id="w1" val="e_wallet" label="محفظة إلكترونية" icon={Smartphone} />
+                        <WithdrawMethodItem id="w2" val="insta_pay" label="إنستا باي (InstaPay)" icon={CheckCircle2} />
+                        <WithdrawMethodItem id="w3" val="bank_transfer" label="تحويل بنكي" icon={Building2} />
+                      </RadioGroup>
+                      <div className="space-y-3">
+                        <Label className="font-black">رقم المحفظة / عنوان إنستا باي / رقم الحساب</Label>
+                        <Input value={transferTarget} onChange={(e)=>setTarget(e.target.value)} className="h-14 rounded-xl border-2 font-bold" placeholder="أدخل البيانات هنا..." />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter><Button onClick={handleTransaction} className="w-full py-10 text-2xl font-black rounded-3xl shadow-xl">تأكيد العملية</Button></DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </Card>
 
-        <Card className="shadow-2xl border-2 rounded-[3rem] p-4 flex flex-col justify-center bg-white">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-4 font-black text-primary">
-              <Banknote className="h-8 w-8" />
-              بيانات التحويل
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="p-8 bg-muted/30 rounded-[2rem] space-y-4 border-2 border-dashed border-primary/20">
-              <span className="text-sm text-muted-foreground font-black block">رقم المحفظة الإلكترونية</span>
-              <p className="font-mono text-3xl font-black text-primary tracking-[0.2em]">{profile.phoneNumber || "غير مسجل"}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm font-bold text-muted-foreground">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                السحب متاح لمبالغ فوق 50 ج.م
-              </div>
-              <div className="flex items-center gap-3 text-sm font-bold text-muted-foreground">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                التحويل يتم خلال 24 ساعة عمل
-              </div>
-            </div>
-          </CardContent>
+        <Card className="shadow-2xl border-2 rounded-[3rem] p-8 flex flex-col justify-center bg-white space-y-8">
+          <h3 className="text-2xl font-black text-primary border-r-4 border-primary pr-4">سياسة المالية</h3>
+          <div className="space-y-6">
+            <PolicyItem text="السحب متاح لمبالغ تبدأ من 50 ج.م" />
+            <PolicyItem text="تتم مراجعة السحب خلال 24 ساعة عمل" />
+            <PolicyItem text="المنصة تضمن حقوقك المالية بالكامل" />
+          </div>
         </Card>
       </div>
 
-      <div className="space-y-8">
-        <h2 className="text-4xl font-black font-headline flex items-center gap-4 border-r-8 border-primary pr-6">
-          <History className="h-10 w-10 text-primary" /> سجل المعاملات
-        </h2>
-        
+      <div className="space-y-8 pt-10">
+        <h2 className="text-3xl font-black flex items-center gap-3"><History className="text-primary"/> سجل المعاملات الأخيرة</h2>
         <Card className="shadow-2xl border-2 overflow-hidden rounded-[3rem] bg-white">
-          <Table dir="rtl">
-            <TableHeader className="bg-muted/30 h-20">
-              <TableRow className="border-none">
-                <TableHead className="text-right text-xl font-black px-10">العملية</TableHead>
-                <TableHead className="text-right text-xl font-black">التاريخ</TableHead>
-                <TableHead className="text-right text-xl font-black">المبلغ</TableHead>
-                <TableHead className="text-right text-xl font-black px-10">الحالة</TableHead>
-              </TableRow>
+          <Table>
+            <TableHeader className="bg-muted/30 h-16">
+              <TableRow><TableHead className="text-right px-8 font-black">العملية</TableHead><TableHead className="text-right font-black">التاريخ</TableHead><TableHead className="text-right font-black">المبلغ</TableHead><TableHead className="text-right px-8 font-black">الحالة</TableHead></TableRow>
             </TableHeader>
             <TableBody>
-              {transactions && transactions.map((tx: any) => (
-                <TableRow key={tx.id} className="h-28 hover:bg-primary/5 transition-colors border-b border-dashed">
-                  <TableCell className="font-black text-xl px-10">
-                    <div className="flex items-center gap-6">
-                      <div className={`p-4 rounded-2xl shadow-sm ${tx.type === 'deposit' || tx.type === 'earning' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                        {tx.type === 'deposit' || tx.type === 'earning' ? <ArrowDownLeft size={28} /> : <ArrowUpRight size={28} />}
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="leading-none">{tx.details}</span>
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">REF: {tx.id.slice(0, 8)}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-lg font-bold">
-                    {new Date(tx.timestamp).toLocaleDateString('ar-EG')}
-                  </TableCell>
-                  <TableCell className={`font-black text-3xl tabular-nums ${tx.type === 'deposit' || tx.type === 'earning' ? 'text-green-600' : 'text-red-600'}`}>
-                    {tx.type === 'deposit' || tx.type === 'earning' ? `+${tx.amount}` : `-${tx.amount}`}
-                    <span className="text-sm mr-2">ج.م</span>
-                  </TableCell>
-                  <TableCell className="px-10">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`px-6 py-2 text-md font-black rounded-xl border-none ${
-                        tx.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                        tx.status === 'pending' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {tx.status === 'completed' ? 'ناجحة' : tx.status === 'pending' ? 'قيد المراجعة' : 'مرفوضة'}
-                      </Badge>
-                      {tx.status === 'rejected' && tx.details?.includes('مرفوض:') && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <AlertCircle className="h-5 w-5 text-red-500" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="font-bold">{tx.details}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </TableCell>
+              {transactions?.map((tx: any) => (
+                <TableRow key={tx.id} className="h-20 hover:bg-muted/5">
+                  <TableCell className="px-8"><div className="flex items-center gap-4"><div className={`p-2 rounded-xl ${tx.type === 'deposit' || tx.type === 'earning' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{tx.type === 'deposit' || tx.type === 'earning' ? <ArrowDownLeft size={20}/> : <ArrowUpRight size={20}/>}</div><span className="font-bold">{tx.details}</span></div></TableCell>
+                  <TableCell className="text-muted-foreground font-bold">{new Date(tx.timestamp).toLocaleDateString('ar-EG')}</TableCell>
+                  <TableCell className={`font-black text-2xl ${tx.type === 'deposit' || tx.type === 'earning' ? 'text-green-600' : 'text-red-600'}`}>{tx.type === 'deposit' || tx.type === 'earning' ? '+' : '-'}{tx.amount} <span className="text-xs">ج.م</span></TableCell>
+                  <TableCell className="px-8"><Badge className={tx.status === 'completed' ? 'bg-green-100 text-green-600' : tx.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}>{tx.status === 'completed' ? 'ناجحة' : tx.status === 'pending' ? 'بانتظار المراجعة' : 'مرفوضة'}</Badge></TableCell>
                 </TableRow>
               ))}
-              {(!transactions || transactions.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-32 text-muted-foreground text-2xl font-black opacity-30">
-                    <div className="flex flex-col items-center gap-6">
-                      <History size={80} />
-                      سجل المعاملات فارغ حالياً
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </Card>
@@ -315,9 +226,30 @@ function WalletContent() {
   );
 }
 
+function WithdrawMethodItem({ id, val, label, icon: Icon }: any) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-2xl border-2 hover:bg-zinc-50 transition-all cursor-pointer">
+      <div className="flex items-center gap-3">
+        <Icon size={20} className="text-primary" />
+        <Label htmlFor={id} className="font-black cursor-pointer">{label}</Label>
+      </div>
+      <RadioGroupItem value={val} id={id} />
+    </div>
+  );
+}
+
+function PolicyItem({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-3 text-zinc-600 font-bold">
+      <div className="w-2 h-2 bg-primary rounded-full" />
+      {text}
+    </div>
+  );
+}
+
 export default function WalletPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center font-bold animate-pulse">جاري تحميل المحفظة...</div>}>
+    <Suspense fallback={<div className="p-10 text-center font-bold">جاري التحميل...</div>}>
       <WalletContent />
     </Suspense>
   );
