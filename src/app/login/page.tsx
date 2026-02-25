@@ -32,6 +32,7 @@ import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 const COUNTRIES = [
   { code: "20", name: "مصر", flag: "🇪🇬", length: 10 },
