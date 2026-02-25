@@ -16,14 +16,18 @@ export default function BrowseRequestsPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // حالات الفلترة الهرمية
+  const [selectedMain, setSelectedMain] = useState("all");
+  const [selectedSub, setSelectedSub] = useState("all");
+  const [selectedOpt, setSelectedOpt] = useState("all");
 
-  // جلب الأقسام الرئيسية للتصفية
+  // جلب كافة التصنيفات لبناء الهرم
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "categories"), where("type", "==", "main"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "categories"), orderBy("name", "asc"));
   }, [firestore]);
-  const { data: categories } = useCollection(categoriesQuery);
+  const { data: allCategories } = useCollection(categoriesQuery);
 
   // جلب الاستفهامات النشطة
   const requestsQuery = useMemoFirebase(() => {
@@ -37,7 +41,20 @@ export default function BrowseRequestsPage() {
 
   const { data: rawRequests, isLoading } = useCollection(requestsQuery);
 
-  // منطق التصفية المشترك (بحث نصي + قسم)
+  // تصنيفات المستويات
+  const mainCategories = useMemo(() => allCategories?.filter(c => c.type === 'main' || !c.type) || [], [allCategories]);
+  const subCategories = useMemo(() => {
+    if (selectedMain === "all") return [];
+    const parent = mainCategories.find(c => c.name === selectedMain);
+    return allCategories?.filter(c => c.type === 'sub' && c.parentId === parent?.id) || [];
+  }, [allCategories, selectedMain, mainCategories]);
+  const optCategories = useMemo(() => {
+    if (selectedSub === "all") return [];
+    const parent = subCategories.find(c => c.name === selectedSub);
+    return allCategories?.filter(c => c.type === 'option' && c.parentId === parent?.id) || [];
+  }, [allCategories, selectedSub, subCategories]);
+
+  // منطق التصفية المطور (الهرمي)
   const filteredRequests = useMemo(() => {
     if (!rawRequests) return [];
     
@@ -45,14 +62,18 @@ export default function BrowseRequestsPage() {
       .filter(r => {
         const matchesSearch = !searchTerm.trim() || (
           r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          r.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.mustafhemName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        const matchesCategory = selectedCategory === "all" || r.category === selectedCategory;
+        const matchesMain = selectedMain === "all" || r.category === selectedMain;
+        const matchesSub = selectedSub === "all" || r.categorySub === selectedSub;
+        // ملاحظة: r.categoryOpt غير موجود حالياً في الداتا، لكننا نطبق المنطق للمستقبل
+        const matchesOpt = selectedOpt === "all" || r.categoryOpt === selectedOpt;
         
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesMain && matchesSub && matchesOpt;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [rawRequests, searchTerm, selectedCategory]);
+  }, [rawRequests, searchTerm, selectedMain, selectedSub, selectedOpt]);
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-10 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
@@ -64,7 +85,7 @@ export default function BrowseRequestsPage() {
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث بالعنوان أو محتوى الطلب..." 
+            placeholder="ابحث باسم المفهم..." 
             className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -72,41 +93,50 @@ export default function BrowseRequestsPage() {
         </div>
       </div>
 
-      {/* Category Filter Pills */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center gap-2 text-zinc-400 font-black text-xs uppercase tracking-widest px-2">
-            <Filter size={14} /> تصفية حسب الأقسام
+      {/* Hierarchical Category Filter */}
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Row 1: Main Category */}
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+            <Filter size={12} /> الأقسام الرئيسية
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={cn(
-                "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2",
-                selectedCategory === "all" 
-                  ? "bg-primary border-primary text-white shadow-lg scale-105" 
-                  : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
-              )}
-            >
-              الكل
-            </button>
-            {categories?.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={cn(
-                  "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2 flex items-center gap-2",
-                  selectedCategory === cat.name 
-                    ? "bg-primary border-primary text-white shadow-lg scale-105" 
-                    : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
-                )}
-              >
-                {selectedCategory === cat.name && <Check size={14} />}
-                {cat.name}
-              </button>
+          <div className="flex flex-wrap gap-2">
+            <FilterPill label="الكل" active={selectedMain === "all"} onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} />
+            {mainCategories.map((cat) => (
+              <FilterPill key={cat.id} label={cat.name} active={selectedMain === cat.name} onClick={() => { setSelectedMain(cat.name); setSelectedSub("all"); setSelectedOpt("all"); }} />
             ))}
           </div>
         </div>
+
+        {/* Row 2: Sub Category */}
+        {subCategories.length > 0 && (
+          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+              <ChevronRight size={12} className="rotate-180" /> التخصصات الفرعية
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill label="الكل" active={selectedSub === "all"} onClick={() => { setSelectedSub("all"); setSelectedOpt("all"); }} />
+              {subCategories.map((cat) => (
+                <FilterPill key={cat.id} label={cat.name} active={selectedSub === cat.name} onClick={() => { setSelectedSub(cat.name); setSelectedOpt("all"); }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Row 3: Options / Skills */}
+        {optCategories.length > 0 && (
+          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+              <Zap size={12} /> مهارات وخيارات دقيقة
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill label="الكل" active={selectedOpt === "all"} onClick={() => setSelectedOpt("all")} />
+              {optCategories.map((cat) => (
+                <FilterPill key={cat.id} label={cat.name} active={selectedOpt === cat.name} onClick={() => setSelectedOpt(cat.name)} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Requests Feed */}
@@ -142,24 +172,28 @@ export default function BrowseRequestsPage() {
           <div className="py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-zinc-100 shadow-inner flex flex-col items-center gap-6">
             <div className="bg-zinc-50 p-8 rounded-full shadow-inner"><ClipboardList size={64} className="text-zinc-200" /></div>
             <p className="text-2xl font-black text-zinc-300">لا توجد استفهامات منشورة في هذا القسم حالياً.</p>
-            <Button variant="ghost" onClick={() => setSelectedCategory("all")} className="font-bold text-primary">عرض كافة الاستفهامات</Button>
+            <Button variant="ghost" onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} className="font-bold text-primary">عرض كافة الاستفهامات</Button>
           </div>
         )}
       </div>
-
-      <Card className="rounded-[3rem] bg-primary text-white p-10 md:p-16 overflow-hidden relative border-none mt-10 shadow-2xl">
-        <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12">
-          <Zap size={150} />
-        </div>
-        <div className="relative z-10 text-center space-y-8">
-          <h3 className="text-3xl md:text-5xl font-black font-headline">هل تمتلك خبرة الشرح المبسط؟</h3>
-          <p className="text-xl font-bold opacity-90 max-w-3xl mx-auto leading-relaxed">انضم لنخبة المفهمين في الوطن العربي وابدأ في مشاركة خبرتك مع الطلاب وتحقيق عوائد مجزية.</p>
-          <Button onClick={() => router.push('/login')} className="h-20 px-16 rounded-[2rem] bg-white text-primary hover:bg-zinc-100 text-2xl font-black shadow-2xl transition-transform hover:scale-105">
-            ابدأ رحلة التفهيم الآن
-          </Button>
-        </div>
-      </Card>
     </div>
+  );
+}
+
+function FilterPill({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-5 py-2.5 rounded-xl text-xs font-black transition-all border-2",
+        active 
+          ? "bg-primary border-primary text-white shadow-md scale-105" 
+          : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
+      )}
+    >
+      {active && <Check size={12} className="inline-block ml-1.5" />}
+      {label}
+    </button>
   );
 }
 

@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Layout, PlayCircle, Plus, Filter, Check } from "lucide-react";
+import { Search, Layout, PlayCircle, Plus, Filter, Check, ChevronRight, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,11 @@ export default function GlobalPortfolioPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // حالات الفلترة الهرمية
+  const [selectedMain, setSelectedMain] = useState("all");
+  const [selectedSub, setSelectedSub] = useState("all");
+  const [selectedOpt, setSelectedOpt] = useState("all");
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -32,12 +36,25 @@ export default function GlobalPortfolioPage() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  // جلب الأقسام الرئيسية للتصفية
+  // جلب كافة التصنيفات
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "categories"), where("type", "==", "main"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "categories"), orderBy("name", "asc"));
   }, [firestore]);
-  const { data: categories } = useCollection(categoriesQuery);
+  const { data: allCats } = useCollection(categoriesQuery);
+
+  // تصنيفات المستويات
+  const mainCategories = useMemo(() => allCats?.filter(c => c.type === 'main' || !c.type) || [], [allCats]);
+  const subCategories = useMemo(() => {
+    if (selectedMain === "all") return [];
+    const parent = mainCategories.find(c => c.name === selectedMain);
+    return allCats?.filter(c => c.type === 'sub' && c.parentId === parent?.id) || [];
+  }, [allCats, selectedMain, mainCategories]);
+  const optCategories = useMemo(() => {
+    if (selectedSub === "all") return [];
+    const parent = subCategories.find(c => c.name === selectedSub);
+    return allCats?.filter(c => c.type === 'option' && c.parentId === parent?.id) || [];
+  }, [allCats, selectedSub, subCategories]);
 
   // عرض الأعمال المعتمدة فقط
   const portfolioQuery = useMemoFirebase(() => {
@@ -57,7 +74,7 @@ export default function GlobalPortfolioPage() {
 
   const { data: allUsers } = useCollection(usersQuery);
 
-  // منطق التصفية المصلح والمحسن
+  // منطق التصفية الهرمي المصلح
   const filteredItems = useMemo(() => {
     if (!rawPortfolioItems) return [];
     
@@ -65,20 +82,19 @@ export default function GlobalPortfolioPage() {
       .filter(item => {
         const teacher = allUsers?.find(u => u.id === item.mufhemId);
         
-        // تصفية البحث النصي
         const matchesSearch = !searchTerm.trim() || (
           item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          teacher?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+          teacher?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-        // تصفية القسم (الربط الصحيح)
-        const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+        const matchesMain = selectedMain === "all" || item.category === selectedMain;
+        const matchesSub = selectedSub === "all" || item.categorySub === selectedSub;
+        const matchesOpt = selectedOpt === "all" || item.categoryOpt === selectedOpt;
 
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesMain && matchesSub && matchesOpt;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [rawPortfolioItems, allUsers, searchTerm, selectedCategory]);
+  }, [rawPortfolioItems, allUsers, searchTerm, selectedMain, selectedSub, selectedOpt]);
 
   return (
     <div className="p-6 md:p-10 space-y-10 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
@@ -95,7 +111,7 @@ export default function GlobalPortfolioPage() {
           {currentUserProfile?.role === 'mufhem' && (
             <Button 
               onClick={() => router.push('/portfolio/add')} 
-              className="h-14 px-8 rounded-2xl font-black text-lg bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20"
+              className="h-14 px-8 rounded-2xl font-black text-lg bg-accent hover:bg-accent/90 shadow-lg"
             >
               <Plus className="ml-2" /> أضف عملك الآن
             </Button>
@@ -103,7 +119,7 @@ export default function GlobalPortfolioPage() {
           <div className="relative w-full md:w-80">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input 
-              placeholder={settings?.teachersListSearchPlaceholder || "ابحث عن عمل، تخصص، أو مفهم..."} 
+              placeholder="ابحث باسم المفهم..." 
               className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg text-right"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -112,41 +128,47 @@ export default function GlobalPortfolioPage() {
         </div>
       </div>
 
-      {/* Category Filter Pills */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center gap-2 text-zinc-400 font-black text-xs uppercase tracking-widest px-2">
-            <Filter size={14} /> تصفية حسب الأقسام
+      {/* Hierarchical Filter Pills */}
+      <div className="max-w-7xl mx-auto space-y-6 bg-white/50 p-6 rounded-[2.5rem] border-2 border-dashed">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+            <Filter size={12} /> الأقسام الرئيسية
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={cn(
-                "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2",
-                selectedCategory === "all" 
-                  ? "bg-primary border-primary text-white shadow-lg scale-105" 
-                  : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
-              )}
-            >
-              الكل
-            </button>
-            {categories?.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={cn(
-                  "px-6 py-3 rounded-2xl text-sm font-black transition-all border-2 flex items-center gap-2",
-                  selectedCategory === cat.name 
-                    ? "bg-primary border-primary text-white shadow-lg scale-105" 
-                    : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
-                )}
-              >
-                {selectedCategory === cat.name && <Check size={14} />}
-                {cat.name}
-              </button>
+          <div className="flex flex-wrap gap-2">
+            <FilterPill label="الكل" active={selectedMain === "all"} onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} />
+            {mainCategories.map((cat) => (
+              <FilterPill key={cat.id} label={cat.name} active={selectedMain === cat.name} onClick={() => { setSelectedMain(cat.name); setSelectedSub("all"); setSelectedOpt("all"); }} />
             ))}
           </div>
         </div>
+
+        {subCategories.length > 0 && (
+          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+              <ChevronRight size={12} className="rotate-180" /> التخصصات
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill label="الكل" active={selectedSub === "all"} onClick={() => { setSelectedSub("all"); setSelectedOpt("all"); }} />
+              {subCategories.map((cat) => (
+                <FilterPill key={cat.id} label={cat.name} active={selectedSub === cat.name} onClick={() => { setSelectedSub(cat.name); setSelectedOpt("all"); }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {optCategories.length > 0 && (
+          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+              <Zap size={12} /> مهارات محددة
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill label="الكل" active={selectedOpt === "all"} onClick={() => setSelectedOpt("all")} />
+              {optCategories.map((cat) => (
+                <FilterPill key={cat.id} label={cat.name} active={selectedOpt === cat.name} onClick={() => setSelectedOpt(cat.name)} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grid Content */}
@@ -165,56 +187,33 @@ export default function GlobalPortfolioPage() {
                 <div className="relative aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl bg-zinc-200 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
                   {item.mediaType === 'video' ? (
                     <div className="relative w-full h-full">
-                      <video 
-                        src={item.mediaUrl} 
-                        className="w-full h-full object-cover" 
-                        muted 
-                        playsInline
-                      />
+                      <video src={item.mediaUrl} className="w-full h-full object-cover" muted playsInline />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
                         <PlayCircle className="text-white h-16 w-16 drop-shadow-2xl opacity-80 group-hover:scale-110 transition-transform" />
                       </div>
                     </div>
                   ) : (
-                    <img 
-                      src={item.mediaUrl} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   )}
                   
                   <div className="absolute top-4 right-4 flex flex-col gap-2">
-                    <Badge className="bg-[#FFC107] text-zinc-900 font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">
-                      مميز
-                    </Badge>
-                    {item.category && (
-                      <Badge className="bg-primary text-white font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">
-                        {item.category}
-                      </Badge>
-                    )}
+                    <Badge className="bg-[#FFC107] text-zinc-900 font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">مميز</Badge>
+                    {item.category && <Badge className="bg-primary text-white font-black border-none px-4 py-1.5 rounded-lg text-xs shadow-md">{item.category}</Badge>}
                   </div>
 
                   <div className="absolute bottom-4 right-4">
                     <Avatar className="h-16 w-16 border-[6px] border-white shadow-2xl transition-transform group-hover:scale-110">
                       <AvatarImage src={teacher?.profilePictureUrl} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">
-                        {teacher?.fullName?.charAt(0)}
-                      </AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">{teacher?.fullName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </div>
                 </div>
                 
                 <div className="px-4 space-y-2 text-right">
-                  <h3 className="font-black text-xl text-zinc-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                    {item.title}
-                  </h3>
+                  <h3 className="font-black text-xl text-zinc-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">{item.title}</h3>
                   <div className="flex flex-col">
-                    <p className="text-sm text-zinc-400 font-bold">
-                      {teacher?.fullName}
-                    </p>
-                    <p className="text-xs text-zinc-300 font-bold mt-1">
-                      {item.categorySub || item.category || "خبير تعليمي"}
-                    </p>
+                    <p className="text-sm text-zinc-400 font-bold">{teacher?.fullName}</p>
+                    <p className="text-xs text-zinc-300 font-bold mt-1">{item.categorySub || item.category || "خبير تعليمي"}</p>
                   </div>
                 </div>
               </div>
@@ -224,12 +223,29 @@ export default function GlobalPortfolioPage() {
           <div className="col-span-full py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-zinc-100 shadow-inner">
             <div className="max-w-md mx-auto space-y-4">
               <Layout size={64} className="mx-auto text-zinc-200" />
-              <p className="text-2xl font-black text-zinc-300">لا توجد أعمال منشورة في هذا القسم حالياً.</p>
-              <Button variant="ghost" onClick={() => setSelectedCategory("all")} className="font-bold text-primary">عرض كافة الأعمال</Button>
+              <p className="text-2xl font-black text-zinc-300">لا توجد أعمال مطابقة في هذا القسم.</p>
+              <Button variant="ghost" onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} className="font-bold text-primary">عرض كافة الأعمال</Button>
             </div>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function FilterPill({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-5 py-2.5 rounded-xl text-xs font-black transition-all border-2",
+        active 
+          ? "bg-primary border-primary text-white shadow-md scale-105" 
+          : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
+      )}
+    >
+      {active && <Check size={12} className="inline-block ml-1.5" />}
+      {label}
+    </button>
   );
 }
