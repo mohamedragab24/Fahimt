@@ -30,7 +30,8 @@ import {
   IdCard,
   Clock,
   Loader2,
-  XCircle
+  XCircle,
+  Shield
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from "@/firebase";
@@ -113,7 +114,6 @@ export default function ProfilePage() {
     if (!userRef) return;
     setIsSaving(true);
     
-    // التحقق من التغييرات التي تتطلب مراجعة إدارية
     const pictureChanged = formData.profilePictureUrl !== profile?.profilePictureUrl && formData.profilePictureUrl !== "";
     const idChanged = (formData.idCardFront && formData.idCardFront !== profile?.idCardFront) || 
                       (formData.idCardBack && formData.idCardBack !== profile?.idCardBack);
@@ -123,13 +123,11 @@ export default function ProfilePage() {
       updatedAt: new Date().toISOString()
     };
 
-    // إذا تغيرت الصورة، نضعها في حالة "انتظار المراجعة" ونعلم المسؤول
     if (pictureChanged) {
       updateData.isProfileApproved = false;
       updateData.profilePicturePending = true;
     }
 
-    // إذا تغيرت البطاقة، نضع التوثيق في حالة "انتظار"
     if (idChanged) {
       updateData.verificationStatus = 'pending';
     }
@@ -192,11 +190,20 @@ export default function ProfilePage() {
                   </h2>
                   <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                     <Badge variant="outline" className="px-6 py-1.5 text-md text-primary font-black border-primary/20 bg-primary/5 rounded-xl">{profile.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
+                    
+                    {/* حالة التوثيق العام */}
+                    {profile.isVerified ? (
+                      <Badge className="bg-green-100 text-green-600 border-none font-black flex items-center gap-2 px-4 py-1.5 rounded-xl shadow-sm"><BadgeCheck size={14}/> موثوق</Badge>
+                    ) : profile.verificationStatus === 'pending' ? (
+                      <Badge className="bg-orange-100 text-orange-600 border-none font-black flex items-center gap-2 px-4 py-1.5 rounded-xl animate-pulse"><Clock size={14}/> قيد التحقق</Badge>
+                    ) : null}
+
+                    {/* حالة الصورة الشخصية */}
                     {profile.isProfileApproved ? (
-                      <Badge className="bg-green-100 text-green-600 border-none font-black flex items-center gap-2 px-4 py-1.5 rounded-xl"><CheckCircle2 size={14}/> صورة معتمدة</Badge>
-                    ) : (
+                      <Badge className="bg-blue-100 text-blue-600 border-none font-black flex items-center gap-2 px-4 py-1.5 rounded-xl"><CheckCircle2 size={14}/> صورة معتمدة</Badge>
+                    ) : profile.profilePicturePending ? (
                       <Badge className="bg-orange-100 text-orange-600 border-none font-black flex items-center gap-2 px-4 py-1.5 rounded-xl animate-pulse"><Clock size={14}/> قيد التدقيق</Badge>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -239,25 +246,25 @@ export default function ProfilePage() {
             <CardHeader className="bg-zinc-900 text-white p-8 space-y-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-2xl font-black flex items-center gap-3">
-                  <IdCard className="text-primary" /> توثيق الهوية
+                  <ShieldCheck className="text-primary" /> توثيق الهوية
                 </CardTitle>
-                {profile.verificationStatus === 'verified' && <BadgeCheck className="text-primary h-8 w-8" />}
+                {profile.isVerified && <BadgeCheck className="text-primary h-8 w-8" />}
               </div>
-              <CardDescription className="text-zinc-400 font-bold text-sm">ارفع صورة البطاقة الشخصية (وجه وظهر) للحصول على شارة التوثيق الزرقاء وسحب أرباحك فوراً.</CardDescription>
+              <CardDescription className="text-zinc-400 font-bold text-sm">ارفع صورة البطاقة الشخصية للحصول على شارة "**موثوق**" الخضراء.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-              {profile.verificationStatus === 'verified' ? (
+              {profile.isVerified ? (
                 <div className="bg-green-50 p-8 rounded-[2rem] border-2 border-dashed border-green-200 text-center space-y-4">
                   <CheckCircle2 size={64} className="text-green-600 mx-auto" />
-                  <h4 className="text-2xl font-black text-green-900">هويتك موثقة بنجاح</h4>
-                  <p className="text-green-700 font-bold text-sm">أنت الآن خبير معتمد في منصة فهمت.</p>
+                  <h4 className="text-2xl font-black text-green-900">حسابك موثوق</h4>
+                  <p className="text-green-700 font-bold text-sm">أنت الآن خبير معتمد وموثوق في منصة فهمت.</p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <Label className="font-black text-sm">البطاقة الشخصية (الوجه)</Label>
-                      {profile.verificationStatus === 'pending' && <Badge className="bg-orange-500 text-[8px] h-4">بانتظار المراجعة</Badge>}
+                      {profile.verificationStatus === 'pending' && <Badge className="bg-orange-500 text-[10px] h-5 px-3 rounded-full font-black">قيد التحقق</Badge>}
                     </div>
                     <div 
                       onClick={() => idFrontRef.current?.click()}
@@ -290,7 +297,7 @@ export default function ProfilePage() {
                   <div className="p-5 bg-orange-50 rounded-2xl flex items-start gap-4 border border-orange-100 shadow-inner">
                     <AlertCircle className="text-orange-600 shrink-0 mt-1" size={24} />
                     <p className="text-[11px] font-bold text-orange-800 leading-relaxed">
-                      تنبيه: مراجعة وثائق الهوية تتم يدوياً من قبل الإدارة لضمان الأمان المالي. لن تظهر هذه الصور لأي مستخدم آخر.
+                      تنبيه: مراجعة وثائق الهوية تتم يدوياً من قبل الإدارة. لن تظهر هذه الصور لأي مستخدم آخر.
                     </p>
                   </div>
                 </>
@@ -299,25 +306,24 @@ export default function ProfilePage() {
           </Card>
 
           <div className="p-10 bg-primary/5 rounded-[3rem] border-2 border-dashed border-primary/20 space-y-6">
-            <h4 className="font-black text-primary text-xl flex items-center gap-3"><BadgeCheck size={28}/> مزايا التوثيق</h4>
+            <h4 className="font-black text-primary text-xl flex items-center gap-3"><BadgeCheck size={28}/> مزايا حساب "موثوق"</h4>
             <ul className="space-y-4">
-              <FeatureItem text="شارة التوثيق الزرقاء الرسمية" />
-              <FeatureItem text="سحب الأرباح فورياً بدون انتظار" />
-              <FeatureItem text="أولوية ظهور استفهاماتك وعروضك" />
-              <FeatureItem text="زيادة ثقة الطلاب في أسلوب شرحك" />
+              <li className="flex items-center gap-3 text-sm font-bold text-zinc-600">
+                <CheckCircle2 size={16} className="text-green-500 shrink-0" />
+                <span>شارة التوثيق الرسمية في الملف</span>
+              </li>
+              <li className="flex items-center gap-3 text-sm font-bold text-zinc-600">
+                <CheckCircle2 size={16} className="text-green-500 shrink-0" />
+                <span>أولوية سحب الأرباح فورياً</span>
+              </li>
+              <li className="flex items-center gap-3 text-sm font-bold text-zinc-600">
+                <CheckCircle2 size={16} className="text-green-500 shrink-0" />
+                <span>ثقة أكبر من قبل الطلاب والمفهمين</span>
+              </li>
             </ul>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function FeatureItem({ text }: { text: string }) {
-  return (
-    <li className="flex items-center gap-3 text-sm font-bold text-zinc-600">
-      <CheckCircle2 size={16} className="text-green-500 shrink-0" />
-      <span>{text}</span>
-    </li>
   );
 }
