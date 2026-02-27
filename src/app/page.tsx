@@ -171,11 +171,13 @@ export default function HomePage() {
 function LandingPage({ router, settings }: any) {
   const [searchTerm, setSearchTerm] = useState("");
   const defaultLogo = settings?.logoUrl || PlaceHolderImages.find(img => img.id === 'logo-official')?.imageUrl;
+  const landingBg = settings?.landingBg || PlaceHolderImages.find(img => img.id === 'landing-bg')?.imageUrl;
 
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
-      <div className="relative min-h-[85vh] flex flex-col bg-zinc-50 justify-center">
-        <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white border-b shadow-sm">
+      <div className="relative min-h-screen flex flex-col">
+        {/* Header Overlay */}
+        <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
               <Menu className="h-6 w-6 md:h-7 md:size-7" />
@@ -203,17 +205,31 @@ function LandingPage({ router, settings }: any) {
           </div>
         </header>
 
-        <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-20">
-          <div className="max-w-5xl space-y-12">
-            <h1 className="text-5xl md:text-9xl font-black text-zinc-900 leading-tight tracking-tight">
-              {settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}
-            </h1>
-            <p className="text-xl md:text-4xl text-zinc-500 font-bold max-w-3xl mx-auto leading-relaxed">
-              {settings?.heroSubtitle || "اربط عقلك بأفضل الخبراء واحصل على شرح مخصص لك في جلسات تفاعلية مباشرة."}
-            </p>
+        {/* Hero Section with Image Background */}
+        <main className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden">
+          {/* Background Image with Dark Overlay */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={landingBg} 
+              className="w-full h-full object-cover brightness-[0.35]" 
+              alt="Landing Background"
+              data-ai-hint="learning background"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
+          </div>
 
-            <div className="relative max-w-4xl w-full mx-auto mt-12 group">
-              <div className="flex flex-col md:flex-row gap-4 p-4 bg-white rounded-[3rem] border-4 border-primary/10 shadow-2xl transition-all group-hover:border-primary/30">
+          <div className="relative z-10 w-full max-w-6xl px-4 pt-32 pb-20 space-y-12">
+            <div className="space-y-8">
+              <h1 className="text-5xl md:text-9xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
+                {settings?.heroTitle || "أول منصة عربية لخدمات الشرح الفوري"}
+              </h1>
+              <p className="text-xl md:text-4xl text-zinc-200 font-bold max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
+                {settings?.heroSubtitle || "اربط عقلك بأفضل الخبراء واحصل على شرح مخصص لك في جلسات تفاعلية مباشرة."}
+              </p>
+            </div>
+
+            <div className="relative max-w-4xl w-full mx-auto mt-12 group animate-in slide-in-from-bottom-8 duration-700">
+              <div className="flex flex-col md:flex-row gap-4 p-4 bg-white/95 backdrop-blur-xl rounded-[3rem] border-4 border-primary/20 shadow-[0_30px_100px_rgba(0,0,0,0.3)] transition-all group-hover:border-primary/40">
                 <div className="relative flex-1">
                   <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-8 w-8" />
                   <Input 
