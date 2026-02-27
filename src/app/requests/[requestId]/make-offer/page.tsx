@@ -152,7 +152,7 @@ export default function MakeOfferPage() {
                 />
               </div>
 
-              <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 flex items-start gap-4 text-blue-800">
+              <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 space-y-4">
                 <AlertCircle size={24} className="shrink-0 mt-1" />
                 <p className="text-xs font-bold leading-relaxed">
                   تنبيه: التزامك بالسعر والمدة المحددة في العرض هو أساس الثقة في فهمت. لا يحق لك طلب مبالغ إضافية خارج المنصة.
