@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useFirebase, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter, useSearchParams } from "next/navigation";
-import { doc, setDoc, collection, addDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, 
@@ -83,7 +83,10 @@ const COUNTRIES = [
 function LoginContent() {
   const searchParams = useSearchParams();
   const initialMode = searchParams?.get('mode') === 'signup' ? false : true;
-  const returnTo = searchParams?.get('returnTo');
+  const router = useRouter();
+  const { auth, firestore } = useFirebase();
+  const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
 
   const [isLogin, setIsLogin] = useState(initialMode);
   const [step, setStep] = useState<'info' | 'verify'>('info');
@@ -103,11 +106,6 @@ function LoginContent() {
   const [generatedCode, setGeneratedCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-
-  const { auth, firestore } = useFirebase();
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (user && !isUserLoading && isLogin) {
@@ -131,12 +129,10 @@ function LoginContent() {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
     }
-
     if (password !== confirmPassword) {
       toast({ variant: "destructive", title: "كلمات المرور غير متطابقة" });
       return;
     }
-
     if (!agreedToTerms) {
       toast({ variant: "destructive", title: "تنبيه", description: "يجب الموافقة على الشروط للمتابعة." });
       return;
@@ -212,31 +208,14 @@ function LoginContent() {
     });
   };
 
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, "settings", "general");
-  }, [firestore]);
-  const { data: settings } = useDoc(settingsRef);
-
   const passwordStrength = getPasswordStrength(password);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-[#F8FAFC]" dir="rtl">
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 -z-10"></div>
-      
       <Card className="w-full max-w-xl shadow-2xl border-4 border-white rounded-[4rem] bg-white overflow-hidden animate-in fade-in duration-700">
         <CardHeader className="text-center pt-12 pb-6 space-y-8">
-          <div className="mx-auto w-fit group">
-            {settings?.logoUrl ? (
-              <div className="h-32 md:h-44 flex items-center justify-center">
-                <img src={settings.logoUrl} className="max-h-full max-w-full object-contain" alt="Logo" />
-              </div>
-            ) : (
-              <div className="w-24 h-24 flex items-center justify-center text-primary text-5xl font-black mx-auto">ف</div>
-            )}
-          </div>
           <CardTitle className="text-4xl font-black text-zinc-900 tracking-tight">
-            {isLogin ? "دخول المنصة" : "التسجيل في " + (settings?.siteTitle || "فهمت")}
+            {isLogin ? "دخول المنصة" : "التسجيل في فهمت"}
           </CardTitle>
         </CardHeader>
         
@@ -265,7 +244,7 @@ function LoginContent() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-primary shadow-xl shadow-primary/20">
+              <Button type="submit" disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-primary shadow-xl">
                 {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تسجيل الدخول"}
               </Button>
             </form>
@@ -274,18 +253,18 @@ function LoginContent() {
               {step === 'info' && (
                 <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 text-right">
+                    <div className="space-y-2">
                       <Label className="font-black">الاسم الأول</Label>
                       <Input placeholder="أحمد" value={firstName} onChange={(e)=>setFirstName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
                     </div>
-                    <div className="space-y-2 text-right">
+                    <div className="space-y-2">
                       <Label className="font-black">الاسم الأخير</Label>
                       <Input placeholder="محمد" value={lastName} onChange={(e)=>setLastName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2 text-right">
+                    <div className="space-y-2">
                       <Label className="font-black">الدولة ورقم الهاتف</Label>
                       <div className="flex gap-2" dir="ltr">
                         <Select value={countryCode} onValueChange={setCountryCode}>
@@ -308,20 +287,19 @@ function LoginContent() {
                           className="h-14 flex-1 rounded-xl border-2 font-black text-lg text-left" 
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground font-bold">اكتب الرقم بدون مفتاح الدولة (بحد أقصى {selectedCountry?.length} أرقام)</p>
                     </div>
-                    <div className="space-y-2 text-right">
+                    <div className="space-y-2">
                       <Label className="font-black">تاريخ الميلاد</Label>
                       <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black" />
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-right">
+                  <div className="space-y-2">
                     <Label className="font-black">البريد الإلكتروني</Label>
                     <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-14 rounded-xl border-2 font-bold" />
                   </div>
 
-                  <div className="space-y-2 text-right">
+                  <div className="space-y-2">
                     <Label className="font-black">كلمة المرور</Label>
                     <div className="relative">
                       <Input 
@@ -337,23 +315,17 @@ function LoginContent() {
                     </div>
                     <div className="space-y-1">
                       <Progress value={passwordStrength} className={cn("h-1.5 rounded-full transition-all", 
-                        passwordStrength < 40 ? "bg-red-100" : passwordStrength < 80 ? "bg-yellow-100" : "bg-green-100"
+                        passwordStrength < 40 ? "bg-red-500" : passwordStrength < 80 ? "bg-yellow-500" : "bg-green-500"
                       )} />
-                      <p className="text-[10px] font-bold text-muted-foreground">
+                      <p className="text-[10px] font-bold text-muted-foreground text-right">
                         قوة كلمة المرور: {passwordStrength < 40 ? "ضعيفة" : passwordStrength < 80 ? "متوسطة" : "قوية"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-right">
+                  <div className="space-y-2">
                     <Label className="font-black">تأكيد كلمة المرور</Label>
-                    <Input 
-                      type="password"
-                      value={confirmPassword} 
-                      onChange={(e)=>setConfirmPassword(e.target.value)} 
-                      required 
-                      className="h-14 rounded-xl border-2 font-black pr-6" 
-                    />
+                    <Input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} required className="h-14 rounded-xl border-2 font-black pr-6" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -385,20 +357,6 @@ function LoginContent() {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-primary/5 rounded-[2rem] border-2 border-primary/10 space-y-4">
-                    <div className="flex items-center justify-center gap-2 text-primary font-black text-sm">
-                      <ShieldCheck size={18} /> <span>اختر وسيلة تأكيد الحساب</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => setOtpMethod('whatsapp')} variant={otpMethod === 'whatsapp' ? 'default' : 'outline'} className={`h-12 rounded-xl font-black text-sm transition-all ${otpMethod === 'whatsapp' ? 'bg-primary shadow-md' : 'bg-white'}`}>
-                        <MessageSquare size={16} className="ml-2"/> واتساب
-                      </Button>
-                      <Button onClick={() => setOtpMethod('email')} variant={otpMethod === 'email' ? 'default' : 'outline'} className={`h-12 rounded-xl font-black text-sm transition-all ${otpMethod === 'email' ? 'bg-primary shadow-md' : 'bg-white'}`}>
-                        <Mail size={16} className="ml-2"/> بريد
-                      </Button>
-                    </div>
-                  </div>
-
                   <div className="flex items-start gap-3 p-4 bg-muted/20 rounded-2xl border-2 border-dashed border-primary/10">
                     <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(v) => setAgreedToTerms(!!v)} className="mt-1" />
                     <Label htmlFor="terms" className="text-xs font-bold leading-relaxed cursor-pointer select-none text-right">
@@ -406,7 +364,7 @@ function LoginContent() {
                     </Label>
                   </div>
 
-                  <Button onClick={handleStartSignUp} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-xl shadow-accent/20">
+                  <Button onClick={handleStartSignUp} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-xl">
                     {isProcessing ? <><Loader2 className="animate-spin ml-3 h-8 w-8" /> جاري التحضير...</> : "التسجيل الآن"}
                   </Button>
                 </div>
@@ -415,9 +373,6 @@ function LoginContent() {
               {step === 'verify' && (
                 <div className="space-y-10 animate-in slide-in-from-left duration-500 py-10">
                   <div className="text-center space-y-4">
-                    <div className="bg-accent/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-accent animate-pulse">
-                      <ShieldCheck size={48} />
-                    </div>
                     <h3 className="text-3xl font-black text-zinc-900">أدخل رمز التحقق</h3>
                     <p className="text-lg font-bold text-zinc-500">تحقق من {otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'} وأدخل الرمز للمتابعة.</p>
                   </div>
