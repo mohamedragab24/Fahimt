@@ -26,6 +26,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * صفحة تقديم عرض تفهيم - تم تثبيت كافة الاستيرادات المفقودة (Badge, User).
+ */
 export default function MakeOfferPage() {
   const { requestId } = useParams();
   const router = useRouter();
@@ -97,10 +100,10 @@ export default function MakeOfferPage() {
       <div className="grid grid-cols-1 gap-10">
         <Card className="rounded-[2.5rem] bg-zinc-900 text-white p-8 md:p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12"><HelpCircle size={150}/></div>
-          <div className="relative z-10 space-y-4">
+          <div className="relative z-10 space-y-4 text-right">
             <Badge variant="outline" className="text-primary border-primary/30 font-black">أنت تقدم عرضاً على:</Badge>
             <h2 className="text-3xl font-black">{request?.title}</h2>
-            <div className="pt-4 border-t border-white/10 flex gap-6 text-sm font-bold text-zinc-400">
+            <div className="pt-4 border-t border-white/10 flex gap-6 text-sm font-bold text-zinc-400 justify-end">
               <span className="flex items-center gap-2"><User size={16}/> المستفهم: {request?.mustafhemName}</span>
               <span className="flex items-center gap-2"><BadgeCent size={16}/> ميزانية الطالب: {request?.amount} ج.م</span>
             </div>
@@ -116,7 +119,7 @@ export default function MakeOfferPage() {
           <CardContent className="p-8 md:p-12 space-y-10 text-right">
             <form onSubmit={handleSendOffer} className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
+                <div className="space-y-3 text-right">
                   <Label className="font-black text-lg flex items-center gap-2 justify-end">سعرك المقترح (ج.م) <BadgeCent size={18} className="text-green-600"/></Label>
                   <Input 
                     type="number" 
@@ -127,7 +130,7 @@ export default function MakeOfferPage() {
                   />
                   <p className="text-[10px] text-muted-foreground font-bold text-center">يمكنك اقتراح سعر أعلى أو أقل من ميزانية الطالب حسب جهدك.</p>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3 text-right">
                   <Label className="font-black text-lg flex items-center gap-2 justify-end">موعد الجاهزية (أيام) <Clock size={18} className="text-blue-600"/></Label>
                   <Input 
                     type="number" 
@@ -141,7 +144,7 @@ export default function MakeOfferPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 text-right">
                 <Label className="font-black text-lg flex items-center gap-2 justify-end">كيف ستشرح هذا الموضوع؟ <FileText size={18} className="text-primary"/></Label>
                 <Textarea 
                   className="h-48 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed focus:border-primary" 
@@ -153,8 +156,8 @@ export default function MakeOfferPage() {
               </div>
 
               <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 space-y-4">
-                <AlertCircle size={24} className="shrink-0 mt-1" />
-                <p className="text-xs font-bold leading-relaxed">
+                <AlertCircle size={24} className="shrink-0 mt-1 text-blue-600" />
+                <p className="text-xs font-bold leading-relaxed text-blue-800">
                   تنبيه: التزامك بالسعر والمدة المحددة في العرض هو أساس الثقة في فهمت. لا يحق لك طلب مبالغ إضافية خارج المنصة.
                 </p>
               </div>

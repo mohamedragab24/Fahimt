@@ -41,7 +41,7 @@ import {
   Layers
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
@@ -405,8 +405,8 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <AvatarImage src={avatar} />
           <AvatarFallback className="bg-primary/10 text-primary font-black">{req.mustafhemName?.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div className="space-y-1">
-          <p className="font-black text-md leading-tight">{req.mustafhemName}</p>
+        <div className="space-y-1 text-center">
+          <p className="font-black text-md leading-tight text-zinc-900">{req.mustafhemName}</p>
           <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم طموح"}</p>
         </div>
       </div>

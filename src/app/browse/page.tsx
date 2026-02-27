@@ -29,6 +29,9 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+/**
+ * صفحة تصفح الاستفهامات - تم تثبيت كافة الاستيرادات المفقودة والتنسيق الهيكلي المطلوب.
+ */
 export default function BrowseRequestsPage() {
   const firestore = useFirestore();
   const router = useRouter();
@@ -72,17 +75,16 @@ export default function BrowseRequestsPage() {
   const filteredRequests = useMemo(() => {
     if (!rawRequests) return [];
     return rawRequests.filter(r => {
-      const requester = allUsers?.find(u => u.id === r.mustafhemId);
       const matchesSearch = !searchTerm.trim() || (
         r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        requester?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+        r.mustafhemName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       const matchesMain = selectedMain === "all" || r.category === selectedMain;
       const matchesSub = selectedSub === "all" || r.categorySub === selectedSub;
       const matchesOpt = selectedOpt === "all" || r.categoryOpt === selectedOpt;
       return matchesSearch && matchesMain && matchesSub && matchesOpt;
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [rawRequests, searchTerm, selectedMain, selectedSub, selectedOpt, allUsers]);
+  }, [rawRequests, searchTerm, selectedMain, selectedSub, selectedOpt]);
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
@@ -175,20 +177,18 @@ function IstifhamCard({ req, allUsers, router }: any) {
       onClick={() => router.push(`/requests/${req.id}`)} 
       className="rounded-[3rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-lg overflow-hidden flex flex-col md:flex-row"
     >
-      {/* الجهة اليمنى: بيانات المستفهم */}
       <div className="md:w-64 bg-zinc-50/50 p-8 flex flex-col items-center justify-center text-center border-l shrink-0">
         <Avatar className="h-24 w-24 border-4 border-white shadow-xl mb-4 group-hover:scale-105 transition-transform">
           <AvatarImage src={avatar} />
           <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{req.mustafhemName?.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div className="space-y-1">
+        <div className="space-y-1 text-center">
           <p className="font-black text-xl text-zinc-900 leading-tight">{req.mustafhemName}</p>
-          <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم"}</p>
+          <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم طموح"}</p>
         </div>
       </div>
 
       <div className="flex-1 p-8 md:p-10 flex flex-col space-y-6">
-        {/* الشريط العلوي: معلومات الجلسة */}
         <div className="flex flex-wrap items-center gap-4 text-[11px] font-black text-zinc-400 border-b border-dashed pb-6">
           <span className="bg-green-100 text-green-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><BadgeCent size={14} /> {req.amount} ج.م</span>
           <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><Calendar size={14} /> {new Date(req.meetingTime).toLocaleString('ar-EG')}</span>
@@ -198,7 +198,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <Badge className="mr-auto bg-primary/10 text-primary border-none px-4 py-1.5 rounded-lg font-black">{req.status === 'active' ? 'مفتوح' : req.status === 'completed' ? 'منتهي' : 'ملغي'}</Badge>
         </div>
 
-        {/* المحتوى الأساسي: العنوان والوصف */}
         <div className="space-y-3 text-right">
           <h3 className="text-2xl md:text-3xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-lg leading-relaxed">{req.description}</p>

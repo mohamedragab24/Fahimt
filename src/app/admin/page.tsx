@@ -8,20 +8,15 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Users, 
-  ShieldCheck, 
   BadgeCent, 
   TrendingUp, 
-  Clock, 
   Activity,
   ArrowUpRight,
-  Wallet,
-  Users2,
   Star,
   Download,
   FileCheck,
-  IdCard,
-  MessageSquare,
-  User
+  User,
+  Users2
 } from "lucide-react";
 import { 
   BarChart, 
@@ -37,6 +32,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+/**
+ * صفحة الملخص العام للوحة التحكم - تم إصلاح كافة الاستيرادات المفقودة.
+ */
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -85,15 +83,10 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       if (!firestore) return;
       try {
-        // المستخدمين
         const mufQuery = query(collection(firestore, "users"), where("role", "==", "mufhem"));
         const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
-        
-        // الاعتمادات والتوثيق
         const appQuery = query(collection(firestore, "users"), where("profilePicturePending", "==", true));
         const verQuery = query(collection(firestore, "users"), where("verificationStatus", "==", "pending"));
-        
-        // المالية
         const completedRequestsQuery = query(collection(firestore, "istifhams"), where("status", "==", "completed"));
         const lastRequestsQuery = query(collection(firestore, "istifhams"), orderBy("createdAt", "desc"), limit(5));
         const payoutQuery = query(collection(firestore, "payoutRequests"), where("status", "==", "pending"));
@@ -176,10 +169,9 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* مركز الاعتماد السريع */}
         <Card className="shadow-2xl rounded-[3rem] border-2 overflow-hidden bg-white hover:border-primary/20 transition-all">
           <CardHeader className="bg-primary/5 p-8 border-b">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-primary">
               <FileCheck className="text-primary" /> مراجعات معلقة
             </CardTitle>
           </CardHeader>
@@ -201,10 +193,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* مخطط السيولة */}
         <Card className="lg:col-span-2 shadow-2xl rounded-[3rem] border-2 p-8 bg-white">
           <CardHeader className="p-0 mb-8">
-            <CardTitle className="font-black text-2xl flex items-center gap-3 justify-end">
+            <CardTitle className="font-black text-2xl flex items-center gap-3 justify-end text-zinc-800">
               توزيع السيولة والنمو <TrendingUp className="text-primary" />
             </CardTitle>
           </CardHeader>
@@ -234,7 +225,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <Card className="shadow-2xl rounded-[3rem] border-2 overflow-hidden bg-white">
           <CardHeader className="bg-muted/30 border-b p-6">
-            <CardTitle className="font-black text-xl flex items-center gap-3 justify-end">
+            <CardTitle className="font-black text-xl flex items-center gap-3 justify-end text-zinc-800">
               أحدث النشاطات في النظام <Activity className="text-primary" />
             </CardTitle>
           </CardHeader>

@@ -27,6 +27,9 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
+/**
+ * صفحة الملف الشخصي - تم تثبيت كافة الاستيرادات المفقودة (Textarea).
+ */
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
@@ -145,7 +148,15 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2"><Label className="font-black">الاسم الكامل</Label><Input value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName: e.target.value})} className="h-14 rounded-xl border-2" /></div>
                 <div className="space-y-2"><Label className="font-black">تاريخ الميلاد</Label><Input type="date" value={formData.birthDate} onChange={(e)=>setFormData({...formData, birthDate: e.target.value})} className="h-14 rounded-xl border-2" /></div>
-                <div className="md:col-span-2 space-y-2"><Label className="font-black">نبذة تعريفية</Label><Textarea value={formData.bio} onChange={(e)=>setFormData({...formData, bio: e.target.value})} className="h-32 rounded-xl border-2" placeholder="اشرح مهاراتك أو ما تبحث عنه..." /></div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label className="font-black">نبذة تعريفية</Label>
+                  <Textarea 
+                    value={formData.bio} 
+                    onChange={(e)=>setFormData({...formData, bio: e.target.value})} 
+                    className="h-32 rounded-xl border-2" 
+                    placeholder="اشرح مهاراتك أو ما تبحث عنه..." 
+                  />
+                </div>
               </div>
               <Button onClick={handleSave} disabled={isSaving} className="w-full h-16 mt-10 rounded-2xl font-black text-xl shadow-xl">
                 {isSaving ? <Loader2 className="animate-spin ml-2" /> : "حفظ التغييرات"}
