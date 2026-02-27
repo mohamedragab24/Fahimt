@@ -10,7 +10,7 @@ import {
   FileCheck, ShieldCheck, MessageSquare, Image as ImageIcon, 
   Layers, Filter, Palette, Share2, ClipboardList, Video, 
   History, Download, Ticket, CloudUpload, Bot, Bug, Lock, 
-  Fingerprint, Scale, Archive
+  Fingerprint, Scale, Archive, GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
