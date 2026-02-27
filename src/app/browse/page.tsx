@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -5,6 +6,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { 
   Search, 
   Clock, 
@@ -18,7 +20,8 @@ import {
   Calendar, 
   Layers,
   ChevronRight,
-  Timer
+  Timer,
+  Activity
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -96,7 +99,6 @@ export default function BrowseRequestsPage() {
         </div>
       </div>
 
-      {/* نظام الفلترة الهرمي العلوي */}
       <div className="space-y-6 bg-white p-8 rounded-[3rem] shadow-sm border-2 border-primary/5">
         <div className="space-y-2">
           <Label className="font-black text-[10px] text-zinc-400 uppercase tracking-widest px-2">الأقسام الرئيسية</Label>
@@ -173,7 +175,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
       onClick={() => router.push(`/requests/${req.id}`)} 
       className="rounded-[3rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-lg overflow-hidden flex flex-col md:flex-row"
     >
-      {/* الجهة اليمنى (بيانات المستفهم) */}
       <div className="md:w-64 bg-zinc-50/50 p-8 flex flex-col items-center justify-center text-center border-l shrink-0">
         <Avatar className="h-24 w-24 border-4 border-white shadow-xl mb-4 group-hover:scale-105 transition-transform">
           <AvatarImage src={avatar} />
@@ -181,12 +182,11 @@ function IstifhamCard({ req, allUsers, router }: any) {
         </Avatar>
         <div className="space-y-1">
           <p className="font-black text-xl text-zinc-900 leading-tight">{req.mustafhemName}</p>
-          <p className="text-xs text-zinc-400 font-bold">{requester?.specialization || "مستفهم"}</p>
+          <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم"}</p>
         </div>
       </div>
 
       <div className="flex-1 p-8 md:p-10 flex flex-col space-y-6">
-        {/* الشريط العلوي الأفقي الشامل */}
         <div className="flex flex-wrap items-center gap-4 text-[11px] font-black text-zinc-400 border-b border-dashed pb-6">
           <span className="bg-green-100 text-green-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><BadgeCent size={14} /> {req.amount} ج.م</span>
           <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><Calendar size={14} /> {new Date(req.meetingTime).toLocaleString('ar-EG')}</span>
@@ -196,7 +196,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <Badge className="mr-auto bg-primary/10 text-primary border-none px-4 py-1.5 rounded-lg">مفتوح</Badge>
         </div>
 
-        {/* منطقة المحتوى المركزية */}
         <div className="space-y-3 text-right">
           <h3 className="text-2xl md:text-3xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-lg leading-relaxed">{req.description}</p>

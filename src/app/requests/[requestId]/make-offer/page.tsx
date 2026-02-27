@@ -26,10 +26,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-/**
- * صفحة تقديم عرض مخصص للمفهم.
- * تسمح للمفهم بتعديل السعر المقترح والمدة ووصف طريقة التفهيم.
- */
 export default function MakeOfferPage() {
   const { requestId } = useParams();
   const router = useRouter();
@@ -45,7 +41,6 @@ export default function MakeOfferPage() {
 
   useEffect(() => {
     if (request) {
-      // تعبئة المبلغ المبدئي بميزانية الطالب كمقترح
       setFormData(prev => ({ ...prev, amount: request.amount.toString() }));
     }
   }, [request]);
@@ -103,7 +98,7 @@ export default function MakeOfferPage() {
         <Card className="rounded-[2.5rem] bg-zinc-900 text-white p-8 md:p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12"><HelpCircle size={150}/></div>
           <div className="relative z-10 space-y-4">
-            <Badge variant="outline" className="text-primary border-primary/30 font-black">أنت تقديم عرضاً على:</Badge>
+            <Badge variant="outline" className="text-primary border-primary/30 font-black">أنت تقدم عرضاً على:</Badge>
             <h2 className="text-3xl font-black">{request?.title}</h2>
             <div className="pt-4 border-t border-white/10 flex gap-6 text-sm font-bold text-zinc-400">
               <span className="flex items-center gap-2"><User size={16}/> المستفهم: {request?.mustafhemName}</span>

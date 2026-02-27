@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -25,7 +26,6 @@ import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
@@ -88,9 +88,14 @@ export default function ProfilePage() {
         needsProfileCompletion: false
       };
       
-      // إذا تم تغيير الصور، نحتاج مراجعة الإدارة
-      if (formData.profilePictureUrl !== profile?.profilePictureUrl) updateData.isProfileApproved = false;
-      if (formData.idCardFront !== profile?.idCardFront) updateData.verificationStatus = 'pending';
+      if (formData.profilePictureUrl !== profile?.profilePictureUrl) {
+        updateData.isProfileApproved = false;
+        updateData.profilePicturePending = true;
+      }
+      
+      if (formData.idCardFront !== profile?.idCardFront) {
+        updateData.verificationStatus = 'pending';
+      }
 
       await updateDoc(userRef, updateData);
       toast({ title: "تم التحديث بنجاح", description: "سيقوم فريق فهمت بمراجعة التغييرات." });

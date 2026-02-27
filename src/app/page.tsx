@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -386,9 +387,6 @@ function MufhemView({ profile, settings, router }: any) {
   );
 }
 
-/**
- * مكون بطاقة الاستفهام الموحد (نقطة 10)
- */
 function IstifhamCard({ req, allUsers, router }: any) {
   const requester = allUsers?.find((u: any) => u.id === req.mustafhemId);
   const defaultMaleAvatar = "https://picsum.photos/seed/male/200/200";
@@ -400,7 +398,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
       onClick={() => router.push(`/requests/${req.id}`)} 
       className="rounded-[2.5rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-md overflow-hidden flex flex-col md:flex-row"
     >
-      {/* الجهة اليمنى (المنطقة الخضراء - بيانات المستفهم) */}
       <div className="md:w-64 bg-zinc-50/50 p-6 flex flex-col items-center justify-center text-center border-l shrink-0">
         <Avatar className="h-20 w-20 border-4 border-white shadow-lg mb-3">
           <AvatarImage src={avatar} />
@@ -413,7 +410,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
       </div>
 
       <div className="flex-1 p-6 md:p-8 flex flex-col space-y-4">
-        {/* الشريط العلوي (المنطقة الحمراء/الزرقاء - شريط المعلومات الأفقي) */}
         <div className="flex flex-wrap items-center gap-3 text-[10px] font-black text-zinc-400 border-b border-dashed pb-4">
           <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg flex items-center gap-1"><BadgeCent size={12} /> {req.amount} ج.م</span>
           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg flex items-center gap-1"><Calendar size={12} /> {new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
@@ -423,7 +419,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <Badge className="mr-auto bg-primary/10 text-primary border-none">مفتوح</Badge>
         </div>
 
-        {/* المنتصف (المحتوى الأساسي) */}
         <div className="space-y-2 text-right">
           <h3 className="text-xl md:text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-sm leading-relaxed">{req.description}</p>
