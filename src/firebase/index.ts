@@ -3,11 +3,12 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
  * تهيئة الفايربيز بشكل مستقر لضمان عدم حدوث تضارب في الحالة الداخلية للـ SDK.
+ * تم تفعيل Long Polling لضمان الاتصال في كافة بيئات الشبكة.
  */
 export function initializeFirebase() {
   let firebaseApp: FirebaseApp;
@@ -15,7 +16,6 @@ export function initializeFirebase() {
   if (getApps().length > 0) {
     firebaseApp = getApp();
   } else {
-    // استخدام الإعدادات المباشرة دائماً لضمان استقرار الاتصال في كافة البيئات
     firebaseApp = initializeApp(firebaseConfig);
   }
 
@@ -23,10 +23,15 @@ export function initializeFirebase() {
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
+  // تفعيل Long Polling لحل مشاكل الاتصال (Timeout)
+  const firestore = initializeFirestore(firebaseApp, {
+    experimentalForceLongPolling: true,
+  });
+
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
+    firestore,
     storage: getStorage(firebaseApp)
   };
 }

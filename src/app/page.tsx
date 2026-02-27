@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -35,19 +34,21 @@ import {
   RefreshCw,
   Timer,
   HelpCircle,
-  CheckCircle2
+  CheckCircle2,
+  Calendar,
+  AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, collection, query, limit, where, orderBy, addDoc } from "firebase/firestore";
+import { doc, collection, query, limit, where, orderBy, addDoc, getDocs } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const FAQS = [
   { q: "كيف أبدأ كـ 'مستفهم'؟", a: "ببساطة اضغط على 'طرح استفهام' في الصفحة الرئيسية، صف معلومتك وحدد سعرك، وسيتواصل معك المفهمون المناسبون." },
@@ -136,8 +137,6 @@ export default function HomePage() {
     return null;
   }
 
-  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
-
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
@@ -147,7 +146,7 @@ export default function HomePage() {
             <div className="flex items-center gap-4 justify-end md:justify-start">
               <span className="text-4xl md:text-7xl font-black text-primary tracking-tighter">{profile.fullName}</span>
               {profile.isVerified && (
-                <img src={verifiedBadgeUrl} alt="Verified" className="h-10 w-10 md:h-12 md:w-12" />
+                <ShieldCheck className="h-10 w-10 md:h-12 md:w-12 text-blue-500 fill-blue-500/10" />
               )}
             </div>
           </div>
@@ -275,29 +274,28 @@ function MustafhemView({ profile, settings, router }: any) {
     return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(5));
   }, [firestore, profile.id]);
 
-  const myRequestsQuery = useMemoFirebase(() => {
-    if (!firestore || !profile.id) return null;
-    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), limit(10));
-  }, [firestore, profile.id]);
-
   const publicRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(6));
   }, [firestore]);
 
   const { data: readySessions } = useCollection(readySessionsQuery);
-  const { data: rawMyRequests } = useCollection(myRequestsQuery);
   const { data: rawPublicRequests, isLoading: isPublicLoading } = useCollection(publicRequestsQuery);
 
-  const myRequests = useMemo(() => rawMyRequests ? [...rawMyRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawMyRequests]);
   const publicRequests = useMemo(() => rawPublicRequests ? [...rawPublicRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawPublicRequests]);
+
+  const allUsersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"));
+  }, [firestore]);
+  const { data: allUsers } = useCollection(allUsersQuery);
 
   return (
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-primary/20 transition-all group">
         <div className="space-y-4 text-right flex-1">
-          <h2 className="text-3xl md:text-4xl font-black text-zinc-800">طرح استفهام جديد</h2>
-          <p className="text-lg text-muted-foreground font-bold">صف معلومتك وحدد سعرك لتصل إلى أفضل المفهمين.</p>
+          <h2 className="text-3xl md:text-4xl font-black text-zinc-800">عندك سؤال؟ اطرح استفهامك الآن</h2>
+          <p className="text-lg text-muted-foreground font-bold">صف معلومتك وحدد سعرك لتصل إلى أفضل المفهمين في فهمت.</p>
           <Button onClick={() => router.push('/create-request')} size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-lg">
             <Plus className="ml-2" /> طلب استفهام جديد
           </Button>
@@ -330,23 +328,11 @@ function MustafhemView({ profile, settings, router }: any) {
 
       <div className="space-y-8">
         <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">استفهامات تعليمية جارية</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {isPublicLoading ? (
             <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الاستفهامات...</div>
           ) : publicRequests.map((req) => (
-            <Card key={req.id} onClick={() => router.push(`/requests/${req.id}`)} className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
-                  <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
-                </div>
-                <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">{req.title}</h4>
-                <div className="pt-4 border-t border-dashed flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-green-600 font-black text-sm"><BadgeCent size={14} /> <span>{req.amount} ج.م</span></div>
-                  <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><User size={12} /> {req.mustafhemName}</div>
-                </div>
-              </CardContent>
-            </Card>
+            <IstifhamCard key={req.id} req={req} allUsers={allUsers} router={router} />
           ))}
         </div>
       </div>
@@ -365,6 +351,12 @@ function MufhemView({ profile, settings, router }: any) {
   const { data: rawAvailableRequests, isLoading } = useCollection(availableRequestsQuery);
   const availableRequests = useMemo(() => rawAvailableRequests ? [...rawAvailableRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawAvailableRequests]);
 
+  const allUsersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"));
+  }, [firestore]);
+  const { data: allUsers } = useCollection(allUsersQuery);
+
   return (
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] shadow-xl border-2 gap-8 hover:border-accent/20 transition-all group">
@@ -382,27 +374,62 @@ function MufhemView({ profile, settings, router }: any) {
 
       <div className="space-y-8">
         <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">فرص بانتظار مُفهم</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {isLoading ? (
             <div className="col-span-full py-20 text-center animate-pulse font-black text-zinc-300">جاري جلب الفرص المتاحة...</div>
           ) : availableRequests.map((req) => (
-            <Card key={req.id} onClick={() => router.push(`/requests/${req.id}`)} className="rounded-3xl border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">{req.category}</Badge>
-                  <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><Clock size={10}/> {getTimeAgo(req.createdAt)}</span>
-                </div>
-                <h4 className="font-black text-lg text-zinc-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">{req.title}</h4>
-                <div className="pt-4 border-t border-dashed flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-green-600 font-black"><BadgeCent size={16} /> <span>{req.amount} ج.م</span></div>
-                  <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><ClipboardList size={12} /> بانتظار العروض</div>
-                </div>
-              </CardContent>
-            </Card>
+            <IstifhamCard key={req.id} req={req} allUsers={allUsers} router={router} />
           ))}
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * مكون بطاقة الاستفهام الموحد (نقطة 10)
+ */
+function IstifhamCard({ req, allUsers, router }: any) {
+  const requester = allUsers?.find((u: any) => u.id === req.mustafhemId);
+  const defaultMaleAvatar = "https://picsum.photos/seed/male/200/200";
+  const defaultFemaleAvatar = "https://picsum.photos/seed/female/200/200";
+  const avatar = requester?.profilePictureUrl || (requester?.gender === 'female' ? defaultFemaleAvatar : defaultMaleAvatar);
+
+  return (
+    <Card 
+      onClick={() => router.push(`/requests/${req.id}`)} 
+      className="rounded-[2.5rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-md overflow-hidden flex flex-col md:flex-row"
+    >
+      {/* الجهة اليمنى (المنطقة الخضراء - بيانات المستفهم) */}
+      <div className="md:w-64 bg-zinc-50/50 p-6 flex flex-col items-center justify-center text-center border-l shrink-0">
+        <Avatar className="h-20 w-20 border-4 border-white shadow-lg mb-3">
+          <AvatarImage src={avatar} />
+          <AvatarFallback className="bg-primary/10 text-primary font-black">{req.mustafhemName?.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <p className="font-black text-md leading-tight">{req.mustafhemName}</p>
+          <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم طموح"}</p>
+        </div>
+      </div>
+
+      <div className="flex-1 p-6 md:p-8 flex flex-col space-y-4">
+        {/* الشريط العلوي (المنطقة الحمراء/الزرقاء - شريط المعلومات الأفقي) */}
+        <div className="flex flex-wrap items-center gap-3 text-[10px] font-black text-zinc-400 border-b border-dashed pb-4">
+          <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg flex items-center gap-1"><BadgeCent size={12} /> {req.amount} ج.م</span>
+          <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg flex items-center gap-1"><Calendar size={12} /> {new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
+          <span className="bg-zinc-100 text-zinc-600 px-3 py-1 rounded-lg flex items-center gap-1"><Layers size={12} /> {req.category}</span>
+          <span className="bg-zinc-100 text-zinc-600 px-3 py-1 rounded-lg flex items-center gap-1"><ClipboardList size={12} /> {req.offersCount || 0} عروض</span>
+          <span className="flex items-center gap-1"><Clock size={12} /> {getTimeAgo(req.createdAt)}</span>
+          <Badge className="mr-auto bg-primary/10 text-primary border-none">مفتوح</Badge>
+        </div>
+
+        {/* المنتصف (المحتوى الأساسي) */}
+        <div className="space-y-2 text-right">
+          <h3 className="text-xl md:text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
+          <p className="text-zinc-500 font-medium line-clamp-2 text-sm leading-relaxed">{req.description}</p>
+        </div>
+      </div>
+    </Card>
   );
 }
 
