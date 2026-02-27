@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useUser, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, collection, addDoc } from "firebase/firestore";
 import { 
   Zap, 
@@ -15,7 +15,8 @@ import {
   FileText,
   ShieldCheck,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +103,7 @@ export default function MakeOfferPage() {
         <Card className="rounded-[2.5rem] bg-zinc-900 text-white p-8 md:p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12"><HelpCircle size={150}/></div>
           <div className="relative z-10 space-y-4">
-            <Badge variant="outline" className="text-primary border-primary/30 font-black">أنت تقدم عرضاً على:</Badge>
+            <Badge variant="outline" className="text-primary border-primary/30 font-black">أنت تقديم عرضاً على:</Badge>
             <h2 className="text-3xl font-black">{request?.title}</h2>
             <div className="pt-4 border-t border-white/10 flex gap-6 text-sm font-bold text-zinc-400">
               <span className="flex items-center gap-2"><User size={16}/> المستفهم: {request?.mustafhemName}</span>
