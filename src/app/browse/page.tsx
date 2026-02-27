@@ -18,7 +18,8 @@ import {
   Check, 
   Calendar, 
   Layers,
-  ChevronRight
+  ChevronRight,
+  Timer
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,13 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+/**
+ * صفحة الاستفهامات المطروحة - تم تحديثها لتطابق التصميم المطلوب:
+ * 1. بيانات المستفهم على اليمين.
+ * 2. شريط المعلومات (سعر، وقت، تصنيف، عروض، حالة) في الأعلى.
+ * 3. العنوان والوصف في المنتصف.
+ * 4. نظام فلترة هرمي في الأعلى وحذف الجمل الزائدة.
+ */
 export default function BrowseRequestsPage() {
   const firestore = useFirestore();
   const router = useRouter();
@@ -50,7 +58,7 @@ export default function BrowseRequestsPage() {
   }, [firestore]);
   const { data: allUsers } = useCollection(usersQuery);
 
-  // جلب الاستفهامات النشطة
+  // جلب الاستفهامات
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -75,7 +83,7 @@ export default function BrowseRequestsPage() {
     return allCategories?.filter(c => c.type === 'option' && c.parentId === parent?.id) || [];
   }, [allCategories, selectedSub, subCategories]);
 
-  // منطق التصفية المطور (الهرمي)
+  // منطق التصفية
   const filteredRequests = useMemo(() => {
     if (!rawRequests) return [];
     
@@ -83,7 +91,6 @@ export default function BrowseRequestsPage() {
       .filter(r => {
         const matchesSearch = !searchTerm.trim() || (
           r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           r.mustafhemName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         const matchesMain = selectedMain === "all" || r.category === selectedMain;
@@ -113,12 +120,11 @@ export default function BrowseRequestsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="space-y-2 text-right w-full md:w-auto border-r-8 border-primary pr-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="space-y-1 text-right w-full md:w-auto border-r-8 border-primary pr-6">
           <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900">الاستفهامات المطروحة</h1>
-          <p className="text-muted-foreground font-bold">اكتشف أحدث التحديات التعليمية وشارك خبرتك الآن.</p>
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
@@ -131,11 +137,11 @@ export default function BrowseRequestsPage() {
         </div>
       </div>
 
-      {/* Hierarchical Category Filter (Top) */}
-      <div className="space-y-6 bg-white p-8 rounded-[2.5rem] shadow-sm border">
-        <div className="flex flex-col space-y-3">
+      {/* Hierarchical Filter (Top) */}
+      <div className="space-y-4 bg-white p-6 rounded-[2rem] shadow-sm border">
+        <div className="flex flex-col space-y-2">
           <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
-            <Filter size={12} /> الأقسام الرئيسية
+            <Filter size={12} /> الأقسام
           </div>
           <div className="flex flex-wrap gap-2">
             <FilterPill label="الكل" active={selectedMain === "all"} onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} />
@@ -146,9 +152,9 @@ export default function BrowseRequestsPage() {
         </div>
 
         {subCategories.length > 0 && (
-          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
-              <ChevronRight size={12} className="rotate-180" /> التخصصات الفرعية
+              <ChevronRight size={12} className="rotate-180" /> التخصصات
             </div>
             <div className="flex flex-wrap gap-2">
               <FilterPill label="الكل" active={selectedSub === "all"} onClick={() => { setSelectedSub("all"); setSelectedOpt("all"); }} />
@@ -160,7 +166,7 @@ export default function BrowseRequestsPage() {
         )}
       </div>
 
-      {/* Requests Feed (New Layout) */}
+      {/* Requests Feed */}
       <div className="grid gap-6">
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل الاستفهامات...</div>
@@ -173,58 +179,59 @@ export default function BrowseRequestsPage() {
                 className="rounded-[2.5rem] border-2 border-transparent hover:border-primary/20 transition-all shadow-md overflow-hidden bg-white group cursor-pointer" 
                 onClick={() => router.push(`/requests/${req.id}`)}
               >
-                <CardContent className="p-6 md:p-10 space-y-8">
-                  {/* Top Metadata Row (Red/Blue instructions) */}
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-black text-zinc-400 border-b border-zinc-50 pb-6">
-                    <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-xl border border-green-100 shadow-sm">
-                      <BadgeCent size={14} /> <span>{req.amount} ج.م</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border">
-                      <Calendar size={14} className="text-primary" /> 
-                      <span dir="ltr">{new Date(req.meetingTime).toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border">
-                      <Layers size={14} className="text-primary" /> <span>{req.category}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ClipboardList size={14} className="text-zinc-300" /> <span>0 عروض</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className="text-zinc-300" /> <span>منذ {getTimeAgo(req.createdAt)}</span>
-                    </div>
-                    <div className="mr-auto">
-                      {getStatusBadge(req.status)}
+                <CardContent className="p-0 flex flex-col md:flex-row h-full">
+                  {/* Right: Requester Data */}
+                  <div className="md:w-64 bg-zinc-50/50 p-6 flex flex-col items-center justify-center text-center border-l border-zinc-100 shrink-0">
+                    <Avatar className="h-20 w-24 md:h-24 md:w-24 border-4 border-white shadow-xl mb-4">
+                      <AvatarImage src={requester?.profilePictureUrl} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{req.mustafhemName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <p className="font-black text-zinc-900 text-lg leading-tight">{req.mustafhemName}</p>
+                      <p className="text-[10px] text-primary font-bold uppercase tracking-tighter">
+                        {requester?.specialization || "مستفهم طموح"}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Middle Content Section */}
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-10">
-                    <div className="space-y-4 text-right flex-1 order-2 md:order-1">
-                      <h3 className="text-2xl md:text-4xl font-black text-zinc-900 group-hover:text-primary transition-colors leading-tight">
+                  {/* Left: Content & Metadata */}
+                  <div className="flex-1 p-6 md:p-8 flex flex-col justify-between space-y-6">
+                    {/* Top Bar: Metadata */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-black text-zinc-400">
+                      <div className="flex items-center gap-1.5 text-green-600 bg-green-50 px-3 py-1 rounded-lg border border-green-100">
+                        <BadgeCent size={14} /> <span>{req.amount} ج.م</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-zinc-50 px-3 py-1 rounded-lg border border-zinc-100">
+                        <Calendar size={14} className="text-primary" /> 
+                        <span dir="ltr">{new Date(req.meetingTime).toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-zinc-50 px-3 py-1 rounded-lg border border-zinc-100">
+                        <Layers size={14} className="text-primary" /> <span>{req.category}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-zinc-50 px-3 py-1 rounded-lg border border-zinc-100">
+                        <ClipboardList size={14} className="text-primary" /> <span>0 عروض</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} className="text-zinc-300" /> <span>منذ {getTimeAgo(req.createdAt)}</span>
+                      </div>
+                      <div className="mr-auto">
+                        {getStatusBadge(req.status)}
+                      </div>
+                    </div>
+
+                    {/* Middle: Title & Desc */}
+                    <div className="space-y-3 text-right">
+                      <h3 className="text-2xl md:text-3xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight line-clamp-1">
                         {req.title}
                       </h3>
-                      <p className="text-zinc-500 font-medium leading-relaxed text-lg line-clamp-2">
+                      <p className="text-zinc-500 font-medium leading-relaxed text-md line-clamp-2">
                         {req.description}
                       </p>
                     </div>
 
-                    {/* Requester Info (Right Green instruction) */}
-                    <div className="flex items-center gap-4 shrink-0 order-1 md:order-2 self-end md:self-center bg-zinc-50/50 p-4 rounded-[2rem] border border-zinc-100 md:min-w-[220px] justify-end">
-                      <div className="text-right">
-                        <p className="font-black text-zinc-900 text-lg leading-none">{req.mustafhemName}</p>
-                        <p className="text-[10px] text-primary font-bold mt-1.5 uppercase tracking-tighter">
-                          {requester?.specialization || "مستفهم طموح"}
-                        </p>
-                      </div>
-                      <Avatar className="h-16 w-16 border-4 border-white shadow-xl">
-                        <AvatarImage src={requester?.profilePictureUrl} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">{req.mustafhemName?.charAt(0)}</AvatarFallback>
-                      </Avatar>
+                    <div className="flex justify-end pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-primary font-black text-xs flex items-center gap-2">عرض التفاصيل الكاملة <ArrowRight className="rotate-180" size={14} /></span>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-primary font-black flex items-center gap-2">عرض كامل التفاصيل <ArrowRight className="rotate-180" size={16} /></span>
                   </div>
                 </CardContent>
               </Card>
@@ -232,8 +239,8 @@ export default function BrowseRequestsPage() {
           })
         ) : (
           <div className="py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-zinc-100 shadow-inner flex flex-col items-center gap-6">
-            <div className="bg-zinc-50 p-8 rounded-full shadow-inner"><ClipboardList size={64} className="text-zinc-200" /></div>
-            <p className="text-2xl font-black text-zinc-300">لا توجد استفهامات منشورة مطابقة حالياً.</p>
+            <ClipboardList size={64} className="text-zinc-200" />
+            <p className="text-2xl font-black text-zinc-300">لا توجد استفهامات مطابقة حالياً.</p>
             <Button variant="ghost" onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} className="font-bold text-primary">إعادة تعيين الفلاتر</Button>
           </div>
         )}
@@ -247,13 +254,13 @@ function FilterPill({ label, active, onClick }: { label: string, active: boolean
     <button
       onClick={onClick}
       className={cn(
-        "px-6 py-3 rounded-2xl text-xs font-black transition-all border-2",
+        "px-5 py-2.5 rounded-xl text-xs font-black transition-all border-2",
         active 
-          ? "bg-primary border-primary text-white shadow-lg scale-105" 
+          ? "bg-primary border-primary text-white shadow-md scale-105" 
           : "bg-white border-zinc-100 text-zinc-500 hover:border-primary/30"
       )}
     >
-      {active && <Check size={14} className="inline-block ml-2" />}
+      {active && <Check size={12} className="inline-block ml-1.5" />}
       {label}
     </button>
   );
@@ -265,7 +272,7 @@ function getTimeAgo(dateStr: string) {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  if (minutes < 60) return `${minutes} دقيقة`;
-  if (hours < 24) return `${hours} ساعة`;
-  return `${days} يوم`;
+  if (minutes < 60) return `${minutes} د`;
+  if (hours < 24) return `${hours} س`;
+  return `${days} ي`;
 }

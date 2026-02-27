@@ -74,23 +74,20 @@ export default function GlobalPortfolioPage() {
 
   const { data: allUsers } = useCollection(usersQuery);
 
-  // منطق التصفية الهرمي المصلح
+  // منطق التصفية
   const filteredItems = useMemo(() => {
     if (!rawPortfolioItems) return [];
     
     return rawPortfolioItems
       .filter(item => {
         const teacher = allUsers?.find(u => u.id === item.mufhemId);
-        
         const matchesSearch = !searchTerm.trim() || (
           item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           teacher?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
-
         const matchesMain = selectedMain === "all" || item.category === selectedMain;
         const matchesSub = selectedSub === "all" || item.categorySub === selectedSub;
         const matchesOpt = selectedOpt === "all" || item.categoryOpt === selectedOpt;
-
         return matchesSearch && matchesMain && matchesSub && matchesOpt;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -104,7 +101,6 @@ export default function GlobalPortfolioPage() {
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
             <Layout className="text-primary" /> {settings?.portfolioListTitle || "أعمال المفهمين"}
           </h1>
-          <p className="text-muted-foreground font-bold">{settings?.portfolioListSubtitle || "نماذج تعليمية ملهمة من خبراء منصة فهمت."}</p>
         </div>
         
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -129,10 +125,10 @@ export default function GlobalPortfolioPage() {
       </div>
 
       {/* Hierarchical Filter Pills */}
-      <div className="max-w-7xl mx-auto space-y-6 bg-white/50 p-6 rounded-[2.5rem] border-2 border-dashed">
-        <div className="flex flex-col space-y-3">
+      <div className="max-w-7xl mx-auto space-y-6 bg-white p-6 rounded-[2.5rem] shadow-sm border">
+        <div className="flex flex-col space-y-2">
           <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
-            <Filter size={12} /> الأقسام الرئيسية
+            <Filter size={12} /> الأقسام
           </div>
           <div className="flex flex-wrap gap-2">
             <FilterPill label="الكل" active={selectedMain === "all"} onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} />
@@ -143,7 +139,7 @@ export default function GlobalPortfolioPage() {
         </div>
 
         {subCategories.length > 0 && (
-          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
               <ChevronRight size={12} className="rotate-180" /> التخصصات
             </div>
@@ -151,20 +147,6 @@ export default function GlobalPortfolioPage() {
               <FilterPill label="الكل" active={selectedSub === "all"} onClick={() => { setSelectedSub("all"); setSelectedOpt("all"); }} />
               {subCategories.map((cat) => (
                 <FilterPill key={cat.id} label={cat.name} active={selectedSub === cat.name} onClick={() => { setSelectedSub(cat.name); setSelectedOpt("all"); }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {optCategories.length > 0 && (
-          <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
-              <Zap size={12} /> مهارات محددة
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <FilterPill label="الكل" active={selectedOpt === "all"} onClick={() => setSelectedOpt("all")} />
-              {optCategories.map((cat) => (
-                <FilterPill key={cat.id} label={cat.name} active={selectedOpt === cat.name} onClick={() => setSelectedOpt(cat.name)} />
               ))}
             </div>
           </div>
@@ -221,11 +203,9 @@ export default function GlobalPortfolioPage() {
           })
         ) : (
           <div className="col-span-full py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-zinc-100 shadow-inner">
-            <div className="max-w-md mx-auto space-y-4">
-              <Layout size={64} className="mx-auto text-zinc-200" />
-              <p className="text-2xl font-black text-zinc-300">لا توجد أعمال مطابقة في هذا القسم.</p>
-              <Button variant="ghost" onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} className="font-bold text-primary">عرض كافة الأعمال</Button>
-            </div>
+            <Layout size={64} className="mx-auto text-zinc-200 mb-4" />
+            <p className="text-2xl font-black text-zinc-300">لا توجد أعمال مطابقة.</p>
+            <Button variant="ghost" onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} className="font-bold text-primary">عرض الكل</Button>
           </div>
         )}
       </div>
