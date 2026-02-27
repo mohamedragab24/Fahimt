@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -174,6 +175,7 @@ function IstifhamCard({ req, allUsers, router }: any) {
       onClick={() => router.push(`/requests/${req.id}`)} 
       className="rounded-[3rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-lg overflow-hidden flex flex-col md:flex-row"
     >
+      {/* الجهة اليمنى: بيانات المستفهم */}
       <div className="md:w-64 bg-zinc-50/50 p-8 flex flex-col items-center justify-center text-center border-l shrink-0">
         <Avatar className="h-24 w-24 border-4 border-white shadow-xl mb-4 group-hover:scale-105 transition-transform">
           <AvatarImage src={avatar} />
@@ -186,15 +188,17 @@ function IstifhamCard({ req, allUsers, router }: any) {
       </div>
 
       <div className="flex-1 p-8 md:p-10 flex flex-col space-y-6">
+        {/* الشريط العلوي: معلومات الجلسة */}
         <div className="flex flex-wrap items-center gap-4 text-[11px] font-black text-zinc-400 border-b border-dashed pb-6">
           <span className="bg-green-100 text-green-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><BadgeCent size={14} /> {req.amount} ج.م</span>
           <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><Calendar size={14} /> {new Date(req.meetingTime).toLocaleString('ar-EG')}</span>
           <span className="bg-zinc-100 text-zinc-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><Layers size={14} /> {req.category}</span>
           <span className="bg-zinc-100 text-zinc-600 px-4 py-1.5 rounded-xl flex items-center gap-1.5"><ClipboardList size={14} /> {req.offersCount || 0} عرض</span>
           <span className="flex items-center gap-1.5"><Clock size={14} /> منذ {getTimeAgo(req.createdAt)}</span>
-          <Badge className="mr-auto bg-primary/10 text-primary border-none px-4 py-1.5 rounded-lg">مفتوح</Badge>
+          <Badge className="mr-auto bg-primary/10 text-primary border-none px-4 py-1.5 rounded-lg font-black">{req.status === 'active' ? 'مفتوح' : req.status === 'completed' ? 'منتهي' : 'ملغي'}</Badge>
         </div>
 
+        {/* المحتوى الأساسي: العنوان والوصف */}
         <div className="space-y-3 text-right">
           <h3 className="text-2xl md:text-3xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-lg leading-relaxed">{req.description}</p>

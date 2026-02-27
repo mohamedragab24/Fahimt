@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -92,7 +93,7 @@ export function AppSidebar() {
                 </div>
               </div>
               <button onClick={toggleRole} className="w-full h-10 rounded-xl text-[11px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5">
-                <RefreshCw className="h-4 w-4" /> التبديل إلى {profile?.role === 'mufhem' ? 'مستفهم' : 'مفهم'}
+                <RefreshCw className="h-4 w-4" /> التبديل بين: {profile?.role === 'mufhem' ? 'مستفهم' : 'مفهم'}
               </button>
             </div>
           </div>

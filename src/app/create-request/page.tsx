@@ -145,7 +145,6 @@ function CreateRequestContent() {
             />
           </div>
 
-          {/* نظام الفلترة الثلاثي المطور */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <Label className="font-black flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
@@ -153,7 +152,7 @@ function CreateRequestContent() {
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                 <SelectContent>
                   {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
-                  <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                  <SelectItem value="أخرى" className="font-bold text-primary italic text-right">أخرى</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,7 +162,7 @@ function CreateRequestContent() {
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                 <SelectContent>
                   {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
-                  <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                  <SelectItem value="أخرى" className="font-bold text-primary italic text-right">أخرى</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -173,7 +172,7 @@ function CreateRequestContent() {
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
                 <SelectContent>
                   {optCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
-                  <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                  <SelectItem value="أخرى" className="font-bold text-primary italic text-right">أخرى</SelectItem>
                 </SelectContent>
               </Select>
             </div>
