@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useUser, useMemoFirebase, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useUser, useMemoFirebase } from "@/firebase";
 import { doc, collection, addDoc } from "firebase/firestore";
 import { 
   Zap, 
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * صفحة تقديم عرض مخصص للمفهم.

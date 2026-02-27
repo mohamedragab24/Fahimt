@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,7 @@ import {
   Check, 
   Calendar, 
   Layers,
-  ChevronRight,
-  Info
+  ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -125,7 +124,7 @@ export default function BrowseRequestsPage() {
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
             placeholder="ابحث باسم المفهم..." 
-            className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg"
+            className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white focus:ring-2 focus:ring-primary/20 text-lg text-right"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -161,7 +160,7 @@ export default function BrowseRequestsPage() {
         )}
       </div>
 
-      {/* Requests Feed (Redesigned Cards) */}
+      {/* Requests Feed (New Layout) */}
       <div className="grid gap-6">
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل الاستفهامات...</div>
