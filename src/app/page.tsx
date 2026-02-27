@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -422,6 +421,10 @@ function IstifhamCard({ req, allUsers, router }: any) {
         <div className="space-y-2 text-right">
           <h3 className="text-xl md:text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-sm leading-relaxed">{req.description}</p>
+          <div className="pt-4 border-t border-dashed flex justify-between items-center">
+            <div className="flex items-center gap-2 text-green-600 font-black text-sm"><BadgeCent size={14} /> <span>{req.amount} ج.م</span></div>
+            <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><User size={12} /> {req.mustafhemName}</div>
+          </div>
         </div>
       </div>
     </Card>

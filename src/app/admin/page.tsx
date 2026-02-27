@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,7 +19,8 @@ import {
   Download,
   FileCheck,
   IdCard,
-  MessageSquare
+  MessageSquare,
+  User
 } from "lucide-react";
 import { 
   BarChart, 
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
         const musQuery = query(collection(firestore, "users"), where("role", "==", "mustafhem"));
         
         // الاعتمادات والتوثيق
-        const appQuery = query(collection(firestore, "users"), where("isProfileApproved", "==", false));
+        const appQuery = query(collection(firestore, "users"), where("profilePicturePending", "==", true));
         const verQuery = query(collection(firestore, "users"), where("verificationStatus", "==", "pending"));
         
         // المالية
@@ -141,9 +141,9 @@ export default function AdminDashboard() {
     fetchStats();
   }, [firestore]);
 
-  if (isUserLoading || isProfileLoading) return <div className="p-20 text-center font-black animate-pulse text-2xl">جاري التحقق من صلاحيات المسؤول...</div>;
-  
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
+  
+  if (isUserLoading || isProfileLoading) return <div className="p-20 text-center font-black animate-pulse text-2xl">جاري التحقق من صلاحيات المسؤول...</div>;
   if (!profile?.isAdmin && !isMasterAdmin) return null;
 
   const chartData = [
@@ -238,22 +238,22 @@ export default function AdminDashboard() {
           <Table dir="rtl">
             <TableHeader className="bg-muted/10 h-14">
               <TableRow>
-                <TableHead className="text-right font-black">الحدث</TableHead>
-                <TableHead className="text-right font-black">القيمة</TableHead>
-                <TableHead className="text-right font-black">الحالة</TableHead>
+                <TableHead className="text-right font-black text-zinc-900">الحدث</TableHead>
+                <TableHead className="text-right font-black text-zinc-900">القيمة</TableHead>
+                <TableHead className="text-right font-black text-zinc-900">الحالة</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recentRequests.map((req) => (
                 <TableRow key={req.id} className="h-20 hover:bg-muted/5">
                   <TableCell className="font-bold text-sm">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col text-right">
                       <span className="font-black text-zinc-800">{req.title}</span>
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Users size={10}/> {req.mustafhemName}</span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><User size={10}/> {req.mustafhemName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-black text-primary">{req.amount} ج.م</TableCell>
-                  <TableCell>
+                  <TableCell className="font-black text-primary text-right">{req.amount} ج.م</TableCell>
+                  <TableCell className="text-right">
                     <Badge className={`text-[10px] font-black px-3 py-1 rounded-lg ${
                       req.status === 'completed' ? 'bg-green-100 text-green-700' : 
                       req.status === 'paid' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'

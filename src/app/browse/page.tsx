@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -87,7 +86,7 @@ export default function BrowseRequestsPage() {
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline tracking-tight">الاستفهامات المطروحة</h1>
+        <h1 className="text-4xl font-black font-headline tracking-tight text-zinc-900">الاستفهامات المطروحة</h1>
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
