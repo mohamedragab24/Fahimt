@@ -5,13 +5,16 @@ import { useState, useMemo } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Layout, PlayCircle, Plus, Filter, Check, ChevronRight, Zap } from "lucide-react";
+import { Search, Layout, PlayCircle, Plus, Filter, Check, ChevronRight, Zap, Layers, Activity } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+/**
+ * صفحة معرض الأعمال - تم تحديثها لتشمل خيار "أخرى" في الفلترة الهرمية.
+ */
 export default function GlobalPortfolioPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -126,19 +129,22 @@ export default function GlobalPortfolioPage() {
 
       {/* Hierarchical Filter Pills */}
       <div className="max-w-7xl mx-auto space-y-6 bg-white p-6 rounded-[2.5rem] shadow-sm border">
+        {/* المستوى الأول: الأقسام */}
         <div className="flex flex-col space-y-2">
           <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
-            <Filter size={12} /> الأقسام
+            <Filter size={12} /> الأقسام الرئيسية
           </div>
           <div className="flex flex-wrap gap-2">
             <FilterPill label="الكل" active={selectedMain === "all"} onClick={() => { setSelectedMain("all"); setSelectedSub("all"); setSelectedOpt("all"); }} />
             {mainCategories.map((cat) => (
               <FilterPill key={cat.id} label={cat.name} active={selectedMain === cat.name} onClick={() => { setSelectedMain(cat.name); setSelectedSub("all"); setSelectedOpt("all"); }} />
             ))}
+            <FilterPill label="أخرى" active={selectedMain === "أخرى"} onClick={() => { setSelectedMain("أخرى"); setSelectedSub("all"); setSelectedOpt("all"); }} />
           </div>
         </div>
 
-        {subCategories.length > 0 && (
+        {/* المستوى الثاني: التخصصات */}
+        {selectedMain !== "all" && (
           <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
               <ChevronRight size={12} className="rotate-180" /> التخصصات
@@ -148,6 +154,23 @@ export default function GlobalPortfolioPage() {
               {subCategories.map((cat) => (
                 <FilterPill key={cat.id} label={cat.name} active={selectedSub === cat.name} onClick={() => { setSelectedSub(cat.name); setSelectedOpt("all"); }} />
               ))}
+              <FilterPill label="أخرى" active={selectedSub === "أخرى"} onClick={() => { setSelectedSub("أخرى"); setSelectedOpt("all"); }} />
+            </div>
+          </div>
+        )}
+
+        {/* المستوى الثالث: الخيارات */}
+        {selectedSub !== "all" && (
+          <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
+              <Activity size={12} /> المهارات
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill label="الكل" active={selectedOpt === "all"} onClick={() => setSelectedOpt("all")} />
+              {optCategories.map((cat) => (
+                <FilterPill key={cat.id} label={cat.name} active={selectedOpt === cat.name} onClick={() => setSelectedOpt(cat.name)} />
+              ))}
+              <FilterPill label="أخرى" active={selectedOpt === "أخرى"} onClick={() => setSelectedOpt("أخرى")} />
             </div>
           </div>
         )}

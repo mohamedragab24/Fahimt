@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Filter, Activity, Target, Clock, BadgeCent, FileText, Sparkles, Loader2, ArrowRight, Ticket, Check } from "lucide-react";
+import { Layers, Filter, Activity, Target, Clock, BadgeCent, FileText, Sparkles, Loader2, ArrowRight, Ticket, Check, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function CreateRequestContent() {
@@ -33,6 +33,7 @@ function CreateRequestContent() {
     amount: "", 
     category: "", 
     categorySub: "", 
+    categoryOpt: "",
     meetingTime: ""
   });
 
@@ -45,12 +46,13 @@ function CreateRequestContent() {
 
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "categories"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "categories"), orderBy("name", "asc"));
   }, [firestore]);
   const { data: allCategories } = useCollection(categoriesQuery);
 
   const mainCategories = allCategories?.filter(c => c.type === 'main' || !c.type) || [];
   const subCategories = allCategories?.filter(c => c.type === 'sub' && c.parentId === allCategories?.find(m => m.name === formData.category)?.id) || [];
+  const optCategories = allCategories?.filter(c => c.type === 'option' && c.parentId === allCategories?.find(s => s.name === formData.categorySub)?.id) || [];
 
   const handleValidateCoupon = async () => {
     if (!firestore || !couponCode.trim()) return;
@@ -143,10 +145,11 @@ function CreateRequestContent() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* نظام الفلترة الثلاثي المطور */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <Label className="font-black flex items-center gap-2">القسم الرئيسي <Layers size={16}/></Label>
-              <Select value={formData.category} onValueChange={(v)=>setFormData({...formData, category: v, categorySub: ""})}>
+              <Select value={formData.category} onValueChange={(v)=>setFormData({...formData, category: v, categorySub: "", categoryOpt: ""})}>
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر القسم" /></SelectTrigger>
                 <SelectContent>
                   {mainCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
@@ -156,10 +159,20 @@ function CreateRequestContent() {
             </div>
             <div className="space-y-3">
               <Label className="font-black flex items-center gap-2">التخصص <Filter size={16}/></Label>
-              <Select disabled={!formData.category || formData.category === 'أخرى'} value={formData.categorySub} onValueChange={(v)=>setFormData({...formData, categorySub: v})}>
+              <Select disabled={!formData.category} value={formData.categorySub} onValueChange={(v)=>setFormData({...formData, categorySub: v, categoryOpt: ""})}>
                 <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                 <SelectContent>
                   {subCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
+                  <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <Label className="font-black flex items-center gap-2">المهارة/الخيار <Activity size={16}/></Label>
+              <Select disabled={!formData.categorySub} value={formData.categoryOpt} onValueChange={(v)=>setFormData({...formData, categoryOpt: v})}>
+                <SelectTrigger className="h-14 rounded-xl border-2 font-bold shadow-sm"><SelectValue placeholder="اختر المهارة" /></SelectTrigger>
+                <SelectContent>
+                  {optCategories.map(c => <SelectItem key={c.id} value={c.name} className="font-bold text-right">{c.name}</SelectItem>)}
                   <SelectItem value="أخرى" className="font-bold text-primary italic">أخرى</SelectItem>
                 </SelectContent>
               </Select>
