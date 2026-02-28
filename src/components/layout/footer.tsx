@@ -18,13 +18,33 @@ import {
   MessageSquare,
   Globe,
   RefreshCcw,
-  Phone
+  Phone,
+  Instagram,
+  Twitter,
+  Linkedin
 } from "lucide-react";
+
+const ICON_MAP: Record<string, any> = {
+  Facebook,
+  Youtube,
+  Send,
+  MessageSquare,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Globe
+};
 
 export function Footer() {
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => (firestore) ? doc(firestore, "settings", "general") : null, [firestore]);
   const { data: settings } = useDoc(settingsRef);
+
+  const socialLinks = settings?.socialLinks || [
+    { id: '1', label: 'فيسبوك', url: '#', icon: 'Facebook', color: '#1877F2' },
+    { id: '2', label: 'يوتيوب', url: '#', icon: 'Youtube', color: '#FF0000' },
+    { id: '3', label: 'تليجرام', url: '#', icon: 'Send', color: '#26A5E4' }
+  ];
 
   return (
     <footer className="bg-white border-t mt-auto py-16" dir="rtl">
@@ -55,10 +75,23 @@ export function Footer() {
           </div>
           <div className="space-y-6">
             <h4 className="font-black text-xl text-primary">تابعنا</h4>
-            <div className="flex gap-4">
-              <a href="#" className="p-3 bg-zinc-100 rounded-xl text-blue-600 hover:scale-110 transition-transform"><Facebook size={24}/></a>
-              <a href="#" className="p-3 bg-zinc-100 rounded-xl text-green-500 hover:scale-110 transition-transform"><MessageSquare size={24}/></a>
-              <a href="#" className="p-3 bg-zinc-100 rounded-xl text-red-600 hover:scale-110 transition-transform"><Youtube size={24}/></a>
+            <div className="flex flex-wrap gap-4">
+              {socialLinks.map((link: any) => {
+                const Icon = ICON_MAP[link.icon] || Globe;
+                return (
+                  <a 
+                    key={link.id} 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-3 bg-zinc-100 rounded-xl transition-all hover:scale-110 hover:shadow-lg"
+                    style={{ color: link.color }}
+                    title={link.label}
+                  >
+                    <Icon size={24} />
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>

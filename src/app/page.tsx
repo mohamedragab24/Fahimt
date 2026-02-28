@@ -16,7 +16,7 @@ import {
   ArrowRight,
   MessageSquare,
   Plus,
-  Video,
+  Video as VideoIcon,
   BadgeCent,
   Zap,
   Clock,
@@ -38,7 +38,10 @@ import {
   CheckCircle2,
   Calendar,
   AlertCircle,
-  Layers
+  Layers,
+  PlayCircle,
+  Shield,
+  Target
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
@@ -205,15 +208,13 @@ function LandingPage({ router, settings }: any) {
           </div>
         </header>
 
-        {/* Hero Section with Image Background */}
+        {/* Hero Section */}
         <main className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden">
-          {/* Background Image with Dark Overlay */}
           <div className="absolute inset-0 z-0">
             <img 
               src={landingBg} 
               className="w-full h-full object-cover brightness-[0.35]" 
               alt="Landing Background"
-              data-ai-hint="learning background"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
           </div>
@@ -251,15 +252,82 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
+      {/* قسم كيف يعمل فهمت؟ */}
+      <section className="bg-zinc-50 py-24 px-6 border-y">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="space-y-10">
+            <div className="space-y-4 text-right">
+              <Badge className="bg-primary/10 text-primary font-black px-4 py-1 text-md">الرحلة التعليمية</Badge>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 leading-tight">كيف يعمل فهمت؟</h2>
+              <p className="text-xl text-zinc-500 font-bold leading-relaxed">خطوات بسيطة تفصلك عن المعلومة التي تبحث عنها بأسلوب ميسر وشرح بشري مباشر.</p>
+            </div>
+            
+            <div className="space-y-8">
+              <StepItem icon={MessageSquare} color="bg-blue-500" title="1. اطرح استفهامك" desc="صف الجزئية التي لا تفهمها بدقة وحدد ميزانيتك المقترحة." />
+              <StepItem icon={Zap} color="bg-orange-500" title="2. استقبل العروض" desc="سيقوم المفهمون المتخصصون بتقديم عروضهم وشرح أسلوبهم." />
+              <StepItem icon={PlayCircle} color="bg-green-600" title="3. ابدأ الجلسة" desc="ادخل غرفة المحاضرة المباشرة واستفهم حتى تصل للفهم التام." />
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-gradient-to-tr from-primary to-accent rounded-[4rem] blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            <div className="relative aspect-video bg-black rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-white group-hover:scale-[1.02] transition-transform">
+              {settings?.landingVideoId ? (
+                <iframe 
+                  className="w-full h-full" 
+                  src={`https://www.youtube.com/embed/${settings.landingVideoId}?autoplay=0&controls=1`} 
+                  title="YouTube video player" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 gap-4">
+                  <PlayCircle size={80} />
+                  <p className="font-black text-xl">فيديو تعريفي عن المنصة</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* قسم لماذا تختار فهمت؟ */}
       <section className="bg-white py-24 px-6">
-        <div className="max-w-7xl mx-auto space-y-24">
+        <div className="max-w-7xl mx-auto space-y-20">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار فهمت؟</h2>
+            <p className="text-xl text-zinc-500 font-bold max-w-2xl mx-auto">نحن نوفر لك البيئة الأكثر أماناً وجودة للتبادل المعرفي في العالم العربي.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <FeatureCard 
+              icon={ShieldCheck} 
+              title="أمان مالي تام" 
+              desc="لا يتم تحويل المستحقات للمفهم إلا بعد تأكيدك بأنك فهمت المعلومة بنسبة 100%."
+            />
+            <FeatureCard 
+              icon={Users} 
+              title="خبراء موثقون" 
+              desc="كافة المفهمين يتم مراجعة هويتهم وخبراتهم يدوياً قبل اعتمادهم في المنصة."
+            />
+            <FeatureCard 
+              icon={Target} 
+              title="شرح مخصص لك" 
+              desc="بدل مشاهدة فيديوهات عامة، احصل على شرح دقيق لنقطة ضعفك أنت شخصياً."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* قسم الأسئلة الشائعة */}
+      <section className="bg-zinc-50 py-24 px-6 border-t">
+        <div className="max-w-7xl mx-auto space-y-20">
           <div className="text-center space-y-6">
             <h2 className="text-4xl md:text-6xl font-black text-zinc-900">الأسئلة الشائعة</h2>
             <p className="text-xl text-zinc-500 font-bold">كل ما تحتاج معرفته عن منصة فهمت في مكان واحد.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {FAQS.map((faq, i) => (
-              <Card key={i} className="rounded-[2.5rem] border-2 bg-zinc-50 p-10 space-y-4 hover:border-primary/20 transition-all shadow-sm">
+              <Card key={i} className="rounded-[2.5rem] border-2 bg-white p-10 space-y-4 hover:border-primary/20 transition-all shadow-sm">
                 <h4 className="text-2xl font-black text-zinc-800 flex items-center gap-3">
                   <HelpCircle className="text-primary" /> {faq.q}
                 </h4>
@@ -270,6 +338,32 @@ function LandingPage({ router, settings }: any) {
         </div>
       </section>
     </div>
+  );
+}
+
+function StepItem({ icon: Icon, color, title, desc }: any) {
+  return (
+    <div className="flex gap-6 items-start text-right group">
+      <div className={`${color} p-4 rounded-2xl text-white shadow-xl group-hover:scale-110 transition-transform`}>
+        <Icon size={28} />
+      </div>
+      <div className="space-y-1">
+        <h4 className="text-2xl font-black text-zinc-800">{title}</h4>
+        <p className="text-lg text-zinc-500 font-bold leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({ icon: Icon, title, desc }: any) {
+  return (
+    <Card className="rounded-[3rem] border-2 p-10 text-center space-y-6 hover:shadow-2xl transition-all border-primary/5 hover:border-primary/20">
+      <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner">
+        <Icon size={40} />
+      </div>
+      <h4 className="text-2xl font-black text-zinc-800">{title}</h4>
+      <p className="text-lg text-zinc-500 font-bold leading-relaxed">{desc}</p>
+    </Card>
   );
 }
 
@@ -286,22 +380,17 @@ function LandingNavLink({ href, icon: Icon, label }: { href: string, icon: any, 
 
 function MustafhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
-  
   const readySessionsQuery = useMemoFirebase(() => {
     if (!firestore || !profile.id) return null;
     return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), where("status", "==", "paid"), limit(5));
   }, [firestore, profile.id]);
-
   const publicRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(6));
   }, [firestore]);
-
   const { data: readySessions } = useCollection(readySessionsQuery);
   const { data: rawPublicRequests, isLoading: isPublicLoading } = useCollection(publicRequestsQuery);
-
   const publicRequests = useMemo(() => rawPublicRequests ? [...rawPublicRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawPublicRequests]);
-
   const allUsersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "users"));
@@ -322,7 +411,6 @@ function MustafhemView({ profile, settings, router }: any) {
           <BookOpen size={100} className="text-primary opacity-40" />
         </div>
       </div>
-
       {readySessions && readySessions.length > 0 && (
         <div className="space-y-6">
           <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-green-600 pr-4 flex items-center gap-3">
@@ -343,7 +431,6 @@ function MustafhemView({ profile, settings, router }: any) {
           </div>
         </div>
       )}
-
       <div className="space-y-8">
         <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">استفهامات تعليمية جارية</h3>
         <div className="grid grid-cols-1 gap-6">
@@ -360,15 +447,12 @@ function MustafhemView({ profile, settings, router }: any) {
 
 function MufhemView({ profile, settings, router }: any) {
   const firestore = useFirestore();
-  
   const availableRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(10));
   }, [firestore]);
-
   const { data: rawAvailableRequests, isLoading } = useCollection(availableRequestsQuery);
   const availableRequests = useMemo(() => rawAvailableRequests ? [...rawAvailableRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [], [rawAvailableRequests]);
-
   const allUsersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "users"));
@@ -389,7 +473,6 @@ function MufhemView({ profile, settings, router }: any) {
           <Briefcase size={100} className="text-accent opacity-40" />
         </div>
       </div>
-
       <div className="space-y-8">
         <h3 className="text-2xl font-black text-zinc-800 border-r-8 border-primary pr-4">فرص بانتظار مُفهم</h3>
         <div className="grid grid-cols-1 gap-6">
@@ -415,7 +498,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
       onClick={() => router.push(`/requests/${req.id}`)} 
       className="rounded-[2.5rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-md overflow-hidden flex flex-col md:flex-row"
     >
-      {/* الجهة اليمنى: بيانات المستفهم */}
       <div className="md:w-64 bg-zinc-50/50 p-6 flex flex-col items-center justify-center text-center border-l shrink-0">
         <Avatar className="h-20 w-20 border-4 border-white shadow-lg mb-3">
           <AvatarImage src={avatar} />
@@ -423,12 +505,10 @@ function IstifhamCard({ req, allUsers, router }: any) {
         </Avatar>
         <div className="space-y-1 text-center">
           <p className="font-black text-md leading-tight text-zinc-900">{req.mustafhemName}</p>
-          <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم طموح"}</p>
+          <p className="text-[10px] text-zinc-400 font-bold">{requester?.role === 'mustafhem' ? 'مستفهم طموح' : 'مستفهم'}</p>
         </div>
       </div>
-
       <div className="flex-1 p-6 md:p-8 flex flex-col space-y-4">
-        {/* الشريط العلوي: معلومات الجلسة */}
         <div className="flex flex-wrap items-center gap-3 text-[10px] font-black text-zinc-400 border-b border-dashed pb-4">
           <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg flex items-center gap-1"><BadgeCent size={12} /> {req.amount} ج.م</span>
           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg flex items-center gap-1"><Calendar size={12} /> {new Date(req.meetingTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</span>
@@ -437,8 +517,6 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <span className="flex items-center gap-1"><Clock size={12} /> منذ {getTimeAgo(req.createdAt)}</span>
           <Badge className="mr-auto bg-primary/10 text-primary border-none font-black px-3 py-1 rounded-lg">{req.status === 'active' ? 'مفتوح' : req.status === 'completed' ? 'مكتمل' : 'ملغي'}</Badge>
         </div>
-
-        {/* المحتوى الأساسي: العنوان والوصف */}
         <div className="space-y-2 text-right">
           <h3 className="text-xl md:text-2xl font-black text-zinc-800 group-hover:text-primary transition-colors leading-tight">{req.title}</h3>
           <p className="text-zinc-500 font-medium line-clamp-2 text-sm leading-relaxed">{req.description}</p>
