@@ -27,9 +27,6 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
-/**
- * صفحة الملف الشخصي - تم تثبيت كافة الاستيرادات المفقودة (Textarea).
- */
 export default function ProfilePage() {
   const { user, auth } = useFirebase();
   const firestore = useFirestore();
@@ -41,10 +38,7 @@ export default function ProfilePage() {
   
   const [isSaving, setIsSaving] = useState(false);
 
-  const userRef = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return doc(firestore, "users", user.uid);
-  }, [firestore, user?.uid]);
+  const userRef = useMemoFirebase(() => (firestore && user?.uid) ? doc(firestore, "users", user.uid) : null, [firestore, user?.uid]);
 
   const { data: profile, isLoading } = useDoc(userRef);
 
@@ -118,7 +112,7 @@ export default function ProfilePage() {
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12 mb-24" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline">إكمال بيانات الملف الشخصي</h1>
+        <h1 className="text-4xl font-black font-headline text-zinc-900">إكمال بيانات الملف الشخصي</h1>
         <Button variant="outline" onClick={() => signOut(auth).then(()=>router.push("/login"))} className="rounded-xl h-12 font-bold text-red-600 border-red-100">
           <LogOut className="ml-2" /> خروج
         </Button>
@@ -128,7 +122,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-2xl border-2 rounded-[3.5rem] overflow-hidden bg-white">
             <div className="h-32 bg-primary/10"></div>
-            <CardContent className="px-8 md:px-12 pb-12 relative">
+            <CardContent className="px-8 md:px-12 pb-12 relative text-right">
               <div className="flex flex-col md:flex-row items-center md:items-end gap-8 -mt-16 mb-12">
                 <div className="relative">
                   <div className="h-40 w-44 rounded-full border-[8px] border-white shadow-xl overflow-hidden bg-zinc-100">
@@ -146,8 +140,23 @@ export default function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2"><Label className="font-black">الاسم الكامل</Label><Input value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName: e.target.value})} className="h-14 rounded-xl border-2" /></div>
-                <div className="space-y-2"><Label className="font-black">تاريخ الميلاد</Label><Input type="date" value={formData.birthDate} onChange={(e)=>setFormData({...formData, birthDate: e.target.value})} className="h-14 rounded-xl border-2" /></div>
+                <div className="space-y-2">
+                  <Label className="font-black">الاسم الكامل</Label>
+                  <Input 
+                    value={formData.fullName} 
+                    onChange={(e)=>setFormData({...formData, fullName: e.target.value})} 
+                    className="h-14 rounded-xl border-2" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-black">تاريخ الميلاد</Label>
+                  <Input 
+                    type="date" 
+                    value={formData.birthDate} 
+                    onChange={(e)=>setFormData({...formData, birthDate: e.target.value})} 
+                    className="h-14 rounded-xl border-2" 
+                  />
+                </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label className="font-black">نبذة تعريفية</Label>
                   <Textarea 
@@ -167,28 +176,60 @@ export default function ProfilePage() {
 
         <div className="space-y-8">
           <Card className="shadow-2xl border-2 rounded-[3.5rem] overflow-hidden bg-white">
-            <CardHeader className="bg-zinc-900 text-white p-8">
-              <CardTitle className="text-xl font-black flex items-center gap-2"><ShieldCheck className="text-primary" /> توثيق الهوية</CardTitle>
+            <CardHeader className="bg-zinc-900 text-white p-8 text-right">
+              <CardTitle className="text-xl font-black flex items-center gap-2 justify-end">
+                توثيق الهوية <ShieldCheck className="text-primary" />
+              </CardTitle>
               <CardDescription className="text-zinc-400 font-bold">ارفع صورة البطاقة الشخصية للحصول على شارة التوثيق.</CardDescription>
             </CardHeader>
-            <CardContent className="p-8 space-y-6">
+            <CardContent className="p-8 space-y-6 text-right">
               <div className="space-y-4">
                 <Label className="font-black">الوجه الأمامي (Front)</Label>
-                <div onClick={()=>idFrontRef.current?.click()} className="h-40 rounded-2xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden">
-                  {formData.idCardFront ? <img src={formData.idCardFront} className="w-full h-full object-cover" /> : <Upload className="text-zinc-200" size={32} />}
+                <div onClick={()=>idFrontRef.current?.click()} className="h-40 rounded-2xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden relative group">
+                  {formData.idCardFront ? (
+                    <img src={formData.idCardFront} className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload className="text-zinc-200" size={32} />
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white font-black text-xs">تغيير الصورة</p>
+                  </div>
                 </div>
                 <input type="file" ref={idFrontRef} className="hidden" onChange={(e)=>handleFileUpload(e, 'idCardFront')} />
               </div>
               <div className="space-y-4">
                 <Label className="font-black">الوجه الخلفي (Back)</Label>
-                <div onClick={()=>idBackRef.current?.click()} className="h-40 rounded-2xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden">
-                  {formData.idCardBack ? <img src={formData.idCardBack} className="w-full h-full object-cover" /> : <Upload className="text-zinc-200" size={32} />}
+                <div onClick={()=>idBackRef.current?.click()} className="h-40 rounded-2xl border-4 border-dashed border-zinc-100 bg-zinc-50 flex items-center justify-center cursor-pointer overflow-hidden relative group">
+                  {formData.idCardBack ? (
+                    <img src={formData.idCardBack} className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload className="text-zinc-200" size={32} />
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white font-black text-xs">تغيير الصورة</p>
+                  </div>
                 </div>
                 <input type="file" ref={idBackRef} className="hidden" onChange={(e)=>handleFileUpload(e, 'idCardBack')} />
               </div>
-              {profile?.isVerified && (
-                <div className="bg-green-50 p-4 rounded-xl flex items-center gap-2 text-green-700 font-black text-xs">
-                  <CheckCircle2 size={16} /> تم التحقق من صورة الهوية الشخصية بنجاح
+              
+              {profile?.verificationStatus === 'verified' && (
+                <div className="bg-green-50 p-4 rounded-xl flex items-center gap-2 text-green-700 font-black text-xs border border-green-100">
+                  <CheckCircle2 size={16} className="shrink-0" />
+                  <span>تم التحقق من صورة الهوية الشخصية بنجاح</span>
+                </div>
+              )}
+              
+              {profile?.verificationStatus === 'pending' && (
+                <div className="bg-orange-50 p-4 rounded-xl flex items-center gap-2 text-orange-700 font-black text-xs border border-orange-100">
+                  <Clock size={16} className="shrink-0 animate-pulse" />
+                  <span>طلب التوثيق قيد المراجعة حالياً</span>
+                </div>
+              )}
+
+              {profile?.verificationStatus === 'rejected' && (
+                <div className="bg-red-50 p-4 rounded-xl flex items-center gap-2 text-red-700 font-black text-xs border border-red-100">
+                  <AlertCircle size={16} className="shrink-0" />
+                  <span>تم رفض الوثائق. يرجى رفع صور أوضح.</span>
                 </div>
               )}
             </CardContent>
