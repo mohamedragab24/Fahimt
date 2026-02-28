@@ -3,9 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
 
-/**
- * إعدادات الميتا لمنصة فهمت - تم تحديث المسميات لضمان اتساق SEO.
- */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -18,6 +15,10 @@ export const metadata: Metadata = {
   description: 'فهمت هي أول منصة عربية لخدمات الشرح الفوري والربط المباشر بين المفهمين والمستفهمين لتبادل المعرفة بأمان وجودة عالية.',
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت, منصة فهمت, خبير تعليمي',
   manifest: '/manifest.json', 
+  icons: {
+    icon: 'https://picsum.photos/seed/fahimt-logo/32/32',
+    apple: 'https://picsum.photos/seed/fahimt-logo/180/180',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

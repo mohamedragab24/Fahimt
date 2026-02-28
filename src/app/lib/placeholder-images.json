@@ -3,9 +3,9 @@
   "placeholderImages": [
     {
       "id": "logo-official",
-      "description": "Fahimni Official Logo - Blue square with orange triangle",
-      "imageUrl": "https://i.ibb.co/vzX8MLm/fahimni-logo.png",
-      "imageHint": "fahimni logo"
+      "description": "Fahimt Official New Logo",
+      "imageUrl": "https://picsum.photos/seed/fahimt-logo/512/512",
+      "imageHint": "company logo"
     },
     {
       "id": "user-avatar",
@@ -27,7 +27,7 @@
     },
     {
       "id": "landing-bg",
-      "description": "Person reading book with glowing lightbulb idea",
+      "description": "Person reading book with glowing lightbulb idea - Bright version",
       "imageUrl": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=1920",
       "imageHint": "book lightbulb"
     },
