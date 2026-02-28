@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useFirebase, useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter, useSearchParams } from "next/navigation";
 import { doc, setDoc } from "firebase/firestore";
@@ -28,7 +28,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import Link from "next/link";
-import { generateAndSendOTP } from "@/ai/flows/otp-flow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -89,7 +88,6 @@ function LoginContent() {
   const { toast } = useToast();
 
   const [isLogin, setIsLogin] = useState(initialMode);
-  const [step, setStep] = useState<'info' | 'verify'>('info');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -101,9 +99,6 @@ function LoginContent() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("20");
   const [birthDate, setBirthDate] = useState("");
-  const [otpMethod, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
-  const [otpCode, setOtpCode] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
@@ -124,7 +119,7 @@ function LoginContent() {
     return strength;
   };
 
-  const handleStartSignUp = async () => {
+  const handleSignUp = async () => {
     if (!firstName || !lastName || !phoneNumber || !birthDate || !email || !password || !confirmPassword) {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
@@ -138,32 +133,6 @@ function LoginContent() {
       return;
     }
 
-    setIsProcessing(true);
-    try {
-      const cleanPhone = phoneNumber.replace(/\D/g, '').startsWith('0') ? phoneNumber.replace(/\D/g, '').substring(1) : phoneNumber.replace(/\D/g, '');
-      const fullPhone = `${countryCode}${cleanPhone}`;
-      const recipient = otpMethod === 'whatsapp' ? fullPhone : email;
-      
-      const result = await generateAndSendOTP({ recipient, method: otpMethod });
-      if (result.success) {
-        setGeneratedCode(result.code);
-        setStep('verify');
-        toast({ title: "تم إرسال الرمز" });
-      } else {
-        toast({ variant: "destructive", title: "فشل الإرسال", description: result.message });
-      }
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الاتصال" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleVerifyAndRegister = async () => {
-    if (otpCode !== generatedCode) {
-      toast({ variant: "destructive", title: "رمز التحقق خاطئ" });
-      return;
-    }
     setIsProcessing(true);
     try {
       const cred = await initiateEmailSignUp(auth, email, password);
@@ -191,7 +160,7 @@ function LoginContent() {
         router.push("/profile");
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "فشل التسجيل" });
+      toast({ variant: "destructive", title: "فشل التسجيل", description: "البريد قد يكون مستخدماً بالفعل." });
     } finally {
       setIsProcessing(false);
     }
@@ -249,142 +218,122 @@ function LoginContent() {
               </Button>
             </form>
           ) : (
-            <div className="space-y-8">
-              {step === 'info' && (
-                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="font-black">الاسم الأول</Label>
-                      <Input placeholder="أحمد" value={firstName} onChange={(e)=>setFirstName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-black">الاسم الأخير</Label>
-                      <Input placeholder="محمد" value={lastName} onChange={(e)=>setLastName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="font-black">الدولة ورقم الهاتف</Label>
-                      <div className="flex gap-2" dir="ltr">
-                        <Select value={countryCode} onValueChange={setCountryCode}>
-                          <SelectTrigger className="w-[110px] h-14 rounded-xl border-2 font-black">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-80">
-                            {COUNTRIES.map((c) => (
-                              <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
-                                <span className="ml-2">{c.flag}</span> +{c.code}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input 
-                          placeholder={"رقم الهاتف"} 
-                          maxLength={selectedCountry?.length}
-                          value={phoneNumber} 
-                          onChange={(e)=>setPhoneNumber(e.target.value.replace(/\D/g, ''))} 
-                          className="h-14 flex-1 rounded-xl border-2 font-black text-lg text-left" 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-black">تاريخ الميلاد</Label>
-                      <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-black">البريد الإلكتروني</Label>
-                    <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-14 rounded-xl border-2 font-bold" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-black">كلمة المرور</Label>
-                    <div className="relative">
-                      <Input 
-                        type={showPassword ? "text" : "password"} 
-                        value={password} 
-                        onChange={(e)=>setPassword(e.target.value)} 
-                        required 
-                        className="h-14 rounded-xl border-2 font-black pr-6" 
-                      />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                      </button>
-                    </div>
-                    <div className="space-y-1">
-                      <Progress value={passwordStrength} className={cn("h-1.5 rounded-full transition-all", 
-                        passwordStrength < 40 ? "bg-red-500" : passwordStrength < 80 ? "bg-yellow-500" : "bg-green-500"
-                      )} />
-                      <p className="text-[10px] font-bold text-muted-foreground text-right">
-                        قوة كلمة المرور: {passwordStrength < 40 ? "ضعيفة" : passwordStrength < 80 ? "متوسطة" : "قوية"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-black">تأكيد كلمة المرور</Label>
-                    <Input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} required className="h-14 rounded-xl border-2 font-black pr-6" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
-                      <Label className="text-xs font-black block text-center">نوع الحساب</Label>
-                      <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex justify-center gap-2">
-                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                          <RadioGroupItem value="mustafhem" id="r1" />
-                          <Label htmlFor="r1" className="text-[10px] font-black cursor-pointer">مستفهم</Label>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                          <RadioGroupItem value="mufhem" id="r2" />
-                          <Label htmlFor="r2" className="text-[10px] font-black cursor-pointer">مفهم</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
-                      <Label className="text-xs font-black block text-center">الجنس</Label>
-                      <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex justify-center gap-2">
-                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                          <RadioGroupItem value="male" id="g1" />
-                          <Label htmlFor="g1" className="text-[10px] font-black cursor-pointer">ذكر</Label>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                          <RadioGroupItem value="female" id="g2" />
-                          <Label htmlFor="g2" className="text-[10px] font-black cursor-pointer">أنثى</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-muted/20 rounded-2xl border-2 border-dashed border-primary/10">
-                    <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(v) => setAgreedToTerms(!!v)} className="mt-1" />
-                    <Label htmlFor="terms" className="text-xs font-bold leading-relaxed cursor-pointer select-none text-right">
-                      أوافق على <Link href="/terms" target="_blank" className="text-primary underline">شروط الاستخدام</Link> و <Link href="/privacy" target="_blank" className="text-primary underline">سياسة الخصوصية</Link>.
-                    </Label>
-                  </div>
-
-                  <Button onClick={handleStartSignUp} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-xl">
-                    {isProcessing ? <><Loader2 className="animate-spin ml-3 h-8 w-8" /> جاري التحضير...</> : "التسجيل الآن"}
-                  </Button>
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="font-black">الاسم الأول</Label>
+                  <Input placeholder="أحمد" value={firstName} onChange={(e)=>setFirstName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label className="font-black">الاسم الأخير</Label>
+                  <Input placeholder="محمد" value={lastName} onChange={(e)=>setLastName(e.target.value)} className="h-14 rounded-xl border-2 font-bold" />
+                </div>
+              </div>
 
-              {step === 'verify' && (
-                <div className="space-y-10 animate-in slide-in-from-left duration-500 py-10">
-                  <div className="text-center space-y-4">
-                    <h3 className="text-3xl font-black text-zinc-900">أدخل رمز التحقق</h3>
-                    <p className="text-lg font-bold text-zinc-500">تحقق من {otpMethod === 'whatsapp' ? 'الواتساب' : 'البريد'} وأدخل الرمز للمتابعة.</p>
-                  </div>
-                  <div className="space-y-6">
-                    <Input maxLength={6} placeholder="0 0 0 0 0 0" className="h-24 text-5xl font-black text-center tracking-[0.4em] rounded-[2rem] border-4 border-accent/20 bg-zinc-50" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
-                    <Button onClick={handleVerifyAndRegister} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-2xl">
-                      {isProcessing ? <Loader2 className="animate-spin h-8 w-8" /> : "تأكيد وتفعيل الحساب"}
-                    </Button>
-                    <Button variant="ghost" onClick={() => setStep('info')} className="w-full font-black text-zinc-400">تعديل البيانات</Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="font-black">الدولة ورقم الهاتف</Label>
+                  <div className="flex gap-2" dir="ltr">
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger className="w-[110px] h-14 rounded-xl border-2 font-black">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
+                            <span className="ml-2">{c.flag}</span> +{c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      placeholder={"رقم الهاتف"} 
+                      maxLength={selectedCountry?.length}
+                      value={phoneNumber} 
+                      onChange={(e)=>setPhoneNumber(e.target.value.replace(/\D/g, ''))} 
+                      className="h-14 flex-1 rounded-xl border-2 font-black text-lg text-left" 
+                    />
                   </div>
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label className="font-black">تاريخ الميلاد</Label>
+                  <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-black">البريد الإلكتروني</Label>
+                <Input type="email" placeholder="name@example.com" value={email} onChange={(e)=>setEmail(e.target.value)} required className="h-14 rounded-xl border-2 font-bold" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-black">كلمة المرور</Label>
+                <div className="relative">
+                  <Input 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={(e)=>setPassword(e.target.value)} 
+                    required 
+                    className="h-14 rounded-xl border-2 font-black pr-6" 
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  <Progress value={passwordStrength} className={cn("h-1.5 rounded-full transition-all", 
+                    passwordStrength < 40 ? "bg-red-500" : passwordStrength < 80 ? "bg-yellow-500" : "bg-green-500"
+                  )} />
+                  <p className="text-[10px] font-bold text-muted-foreground text-right">
+                    قوة كلمة المرور: {passwordStrength < 40 ? "ضعيفة" : passwordStrength < 80 ? "متوسطة" : "قوية"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-black">تأكيد كلمة المرور</Label>
+                <Input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} required className="h-14 rounded-xl border-2 font-black pr-6" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
+                  <Label className="text-xs font-black block text-center">نوع الحساب</Label>
+                  <RadioGroup value={role} onValueChange={(v:any)=>setRole(v)} className="flex justify-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                      <RadioGroupItem value="mustafhem" id="r1" />
+                      <Label htmlFor="r1" className="text-[10px] font-black cursor-pointer">مستفهم</Label>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                      <RadioGroupItem value="mufhem" id="r2" />
+                      <Label htmlFor="r2" className="text-[10px] font-black cursor-pointer">مفهم</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-dashed space-y-3">
+                  <Label className="text-xs font-black block text-center">الجنس</Label>
+                  <RadioGroup value={gender} onValueChange={(v:any)=>setGender(v)} className="flex justify-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                      <RadioGroupItem value="male" id="g1" />
+                      <Label htmlFor="g1" className="text-[10px] font-black cursor-pointer">ذكر</Label>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                      <RadioGroupItem value="female" id="g2" />
+                      <Label htmlFor="g2" className="text-[10px] font-black cursor-pointer">أنثى</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-muted/20 rounded-2xl border-2 border-dashed border-primary/10">
+                <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(v) => setAgreedToTerms(!!v)} className="mt-1" />
+                <Label htmlFor="terms" className="text-xs font-bold leading-relaxed cursor-pointer select-none text-right">
+                  أوافق على <Link href="/terms" target="_blank" className="text-primary underline">شروط الاستخدام</Link> و <Link href="/privacy" target="_blank" className="text-primary underline">سياسة الخصوصية</Link>.
+                </Label>
+              </div>
+
+              <Button onClick={handleSignUp} disabled={isProcessing} className="w-full h-20 text-2xl font-black rounded-3xl bg-accent shadow-xl">
+                {isProcessing ? <><Loader2 className="animate-spin ml-3 h-8 w-8" /> جاري التحضير...</> : "التسجيل الآن"}
+              </Button>
             </div>
           )}
         </CardContent>
