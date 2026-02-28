@@ -14,19 +14,14 @@ import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, 
-  ShieldCheck, 
   Loader2, 
-  KeyRound, 
   ChevronRight, 
   Smartphone, 
-  MessageSquare, 
   User, 
-  Lock, 
   Eye, 
   EyeOff,
-  CheckCircle2,
-  AlertCircle,
-  Globe
+  Globe,
+  Lock
 } from "lucide-react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,33 +31,33 @@ import { cn } from "@/lib/utils";
 
 // قائمة الدول مرتبة أبجدياً بالعربية مع الأعلام وأطوال الأرقام وتنسيقات البداية
 const COUNTRIES = [
-  { code: "962", name: "الأردن", flag: "🇯🇴", length: 9, start: ["7"] },
-  { code: "971", name: "الإمارات", flag: "🇦🇪", length: 9, start: ["5"] },
-  { code: "973", name: "البحرين", flag: "🇧🇭", length: 8, start: ["3", "6"] },
-  { code: "213", name: "الجزائر", flag: "🇩🇿", length: 9, start: ["5", "6", "7"] },
-  { code: "249", name: "السودان", flag: "🇸🇩", length: 9, start: ["9", "1"] },
-  { code: "966", name: "السعودية", flag: "🇸🇦", length: 9, start: ["5"] },
-  { code: "252", name: "الصومال", flag: "🇸🇴", length: 9, start: [] },
-  { code: "964", name: "العراق", flag: "🇮🇶", length: 10, start: ["7"] },
-  { code: "965", name: "الكويت", flag: "🇰🇼", length: 8, start: ["5", "6", "9"] },
-  { code: "212", name: "المغرب", flag: "🇲🇦", length: 9, start: ["6", "7"] },
-  { code: "967", name: "اليمن", flag: "🇾🇪", length: 9, start: ["7"] },
-  { code: "216", name: "تونس", flag: "🇹🇳", length: 8, start: ["2", "4", "5", "9"] },
-  { code: "269", name: "جزر القمر", flag: "🇰🇲", length: 7, start: [] },
-  { code: "253", name: "جيبوتي", flag: "🇩🇯", length: 8, start: [] },
-  { code: "963", name: "سوريا", flag: "🇸🇾", length: 9, start: ["9"] },
-  { code: "968", name: "عمان", flag: "🇴🇲", length: 8, start: ["7", "9"] },
-  { code: "970", name: "فلسطين", flag: "🇵🇸", length: 9, start: ["5"] },
-  { code: "974", name: "قطر", flag: "🇶🇦", length: 8, start: ["3", "5", "6", "7"] },
-  { code: "961", name: "لبنان", flag: "🇱🇧", length: 8, start: ["3", "7", "8"] },
-  { code: "218", name: "ليبيا", flag: "🇱🇾", length: 9, start: ["9"] },
-  { code: "20", name: "مصر", flag: "🇪🇬", length: 10, start: ["10", "11", "12", "15"] },
-  { code: "222", name: "موريتانيا", flag: "🇲🇷", length: 8, start: ["2", "3", "4"] },
-  { code: "1", name: "أمريكا", flag: "🇺🇸", length: 10, start: [] },
-  { code: "44", name: "بريطانيا", flag: "🇬🇧", length: 10, start: [] },
-  { code: "90", name: "تركيا", flag: "🇹🇷", length: 10, start: ["5"] },
-  { code: "33", name: "فرنسا", flag: "🇫🇷", length: 9, start: ["6", "7"] },
-  { code: "49", name: "ألمانيا", flag: "🇩🇪", length: 11, start: ["1"] },
+  { code: "962", name: "الأردن", flag: "🇯🇴", length: 9, start: ["7"], iso: "JO" },
+  { code: "971", name: "الإمارات", flag: "🇦🇪", length: 9, start: ["5"], iso: "AE" },
+  { code: "973", name: "البحرين", flag: "🇧🇭", length: 8, start: ["3", "6"], iso: "BH" },
+  { code: "213", name: "الجزائر", flag: "🇩🇿", length: 9, start: ["5", "6", "7"], iso: "DZ" },
+  { code: "249", name: "السودان", flag: "🇸🇩", length: 9, start: ["9", "1"], iso: "SD" },
+  { code: "966", name: "السعودية", flag: "🇸🇦", length: 9, start: ["5"], iso: "SA" },
+  { code: "252", name: "الصومال", flag: "🇸🇴", length: 9, start: [], iso: "SO" },
+  { code: "964", name: "العراق", flag: "🇮🇶", length: 10, start: ["7"], iso: "IQ" },
+  { code: "965", name: "الكويت", flag: "🇰🇼", length: 8, start: ["5", "6", "9"], iso: "KW" },
+  { code: "212", name: "المغرب", flag: "🇲🇦", length: 9, start: ["6", "7"], iso: "MA" },
+  { code: "967", name: "اليمن", flag: "🇾🇪", length: 9, start: ["7"], iso: "YE" },
+  { code: "216", name: "تونس", flag: "🇹🇳", length: 8, start: ["2", "4", "5", "9"], iso: "TN" },
+  { code: "269", name: "جزر القمر", flag: "🇰🇲", length: 7, start: [], iso: "KM" },
+  { code: "253", name: "جيبوتي", flag: "🇩🇯", length: 8, start: [], iso: "DJ" },
+  { code: "963", name: "سوريا", flag: "🇸🇾", length: 9, start: ["9"], iso: "SY" },
+  { code: "968", name: "عمان", flag: "🇴🇲", length: 8, start: ["7", "9"], iso: "OM" },
+  { code: "970", name: "فلسطين", flag: "🇵🇸", length: 9, start: ["5"], iso: "PS" },
+  { code: "974", name: "قطر", flag: "🇶🇦", length: 8, start: ["3", "5", "6", "7"], iso: "QA" },
+  { code: "961", name: "لبنان", flag: "🇱🇧", length: 8, start: ["3", "7", "8"], iso: "LB" },
+  { code: "218", name: "ليبيا", flag: "🇱🇾", length: 9, start: ["9"], iso: "LY" },
+  { code: "20", name: "مصر", flag: "🇪🇬", length: 10, start: ["10", "11", "12", "15"], iso: "EG" },
+  { code: "222", name: "موريتانيا", flag: "🇲🇷", length: 8, start: ["2", "3", "4"], iso: "MR" },
+  { code: "1", name: "أمريكا", flag: "🇺🇸", length: 10, start: [], iso: "US" },
+  { code: "44", name: "بريطانيا", flag: "🇬🇧", length: 10, start: [], iso: "GB" },
+  { code: "90", name: "تركيا", flag: "🇹🇷", length: 10, start: ["5"], iso: "TR" },
+  { code: "33", name: "فرنسا", flag: "🇫🇷", length: 9, start: ["6", "7"], iso: "FR" },
+  { code: "49", name: "ألمانيا", flag: "🇩🇪", length: 11, start: ["1"], iso: "DE" },
 ].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
 function LoginContent() {
@@ -88,6 +83,23 @@ function LoginContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  // الكشف عن الدولة تلقائياً حسب IP
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        const detected = COUNTRIES.find(c => c.iso === data.country_code);
+        if (detected) {
+          setCountryCode(detected.code);
+        }
+      } catch (err) {
+        console.warn("IP detection failed, using default.");
+      }
+    };
+    if (!isLogin) detectCountry();
+  }, [isLogin]);
+
   useEffect(() => {
     if (user && !isUserLoading && isLogin) {
       router.push("/");
@@ -109,7 +121,6 @@ function LoginContent() {
     const country = COUNTRIES.find(c => c.code === code);
     if (!country) return { valid: false, msg: "يرجى اختيار الدولة" };
 
-    // 1. فحص الطول
     if (num.length !== country.length) {
       return { 
         valid: false, 
@@ -117,7 +128,6 @@ function LoginContent() {
       };
     }
 
-    // 2. فحص البداية (إذا كانت معرفة في القائمة)
     if (country.start.length > 0) {
       const matchesStart = country.start.some(prefix => num.startsWith(prefix));
       if (!matchesStart) {
@@ -132,7 +142,6 @@ function LoginContent() {
   };
 
   const handleSignUp = async () => {
-    // 1. فحص السن (أقل من 16 عام - مواليد بعد 2011)
     if (!birthDate) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال تاريخ الميلاد." });
       return;
@@ -152,7 +161,6 @@ function LoginContent() {
       return;
     }
 
-    // 2. التحقق الذكي من رقم الهاتف
     const phoneValidation = validatePhone(countryCode, phoneNumber);
     if (!phoneValidation.valid) {
       toast({ 
@@ -270,48 +278,44 @@ function LoginContent() {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-black flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> اختر الدولة</Label>
-                <Select value={countryCode} onValueChange={setCountryCode}>
-                  <SelectTrigger className="h-14 rounded-xl border-2 font-black">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-80">
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
-                        <div className="flex items-center gap-3 w-full justify-end" dir="rtl">
-                          <span className="text-xl">{c.flag}</span>
-                          <span className="flex-1 text-right">{c.name}</span>
-                          <span className="text-muted-foreground font-mono">+{c.code}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="font-black">رقم الهاتف</Label>
-                  <div className="relative" dir="ltr">
+                <Label className="font-black">رقم الهاتف</Label>
+                <div className="flex gap-2" dir="ltr">
+                  <div className="w-32 shrink-0">
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger className="h-14 rounded-xl border-2 font-black">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
+                            <span className="text-xl ml-2">{c.flag}</span>
+                            <span>+{c.code}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1 relative">
                     <Input 
-                      placeholder={"أدخل الأرقام فقط"} 
+                      placeholder={`أدخل ${selectedCountry?.length} أرقام`} 
                       maxLength={selectedCountry?.length}
                       value={phoneNumber} 
                       onChange={(e)=>setPhoneNumber(e.target.value.replace(/\D/g, ''))} 
-                      className="h-14 rounded-xl border-2 font-black text-lg text-left pl-16" 
+                      className="h-14 rounded-xl border-2 font-black text-lg text-left" 
                     />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-black border-r pr-3">
-                      +{countryCode}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary opacity-20 group-hover:opacity-100">
+                      <Smartphone size={20} />
                     </div>
                   </div>
-                  <p className="text-[9px] font-bold text-muted-foreground pr-2">
-                    مطلوب {selectedCountry?.length} أرقام {selectedCountry?.start.length ? `تبدأ بـ ${selectedCountry.start.join('/')}` : ''}.
-                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-black">تاريخ الميلاد</Label>
-                  <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black" />
-                </div>
+                <p className="text-[9px] font-bold text-muted-foreground pr-2 text-right">
+                  {selectedCountry?.name}: مطلوب {selectedCountry?.length} أرقام {selectedCountry?.start.length ? `تبدأ بـ ${selectedCountry.start.join('/')}` : ''}.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-black">تاريخ الميلاد</Label>
+                <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="h-14 rounded-xl border-2 font-black" />
               </div>
 
               <div className="space-y-2">
