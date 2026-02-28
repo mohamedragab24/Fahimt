@@ -25,7 +25,8 @@ import {
   Eye, 
   EyeOff,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,36 +34,36 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-// قائمة الدول مرتبة أبجدياً بالعربية مع الأعلام وأطوال الأرقام
+// قائمة الدول مرتبة أبجدياً بالعربية مع الأعلام وأطوال الأرقام وتنسيقات البداية
 const COUNTRIES = [
-  { code: "962", name: "الأردن", flag: "🇯🇴", length: 9 },
-  { code: "971", name: "الإمارات", flag: "🇦🇪", length: 9 },
-  { code: "973", name: "البحرين", flag: "🇧🇭", length: 8 },
-  { code: "213", name: "الجزائر", flag: "🇩🇿", length: 9 },
-  { code: "249", name: "السودان", flag: "🇸🇩", length: 9 },
-  { code: "966", name: "السعودية", flag: "🇸🇦", length: 9 },
-  { code: "252", name: "الصومال", flag: "🇸🇴", length: 9 },
-  { code: "964", name: "العراق", flag: "🇮🇶", length: 10 },
-  { code: "965", name: "الكويت", flag: "🇰🇼", length: 8 },
-  { code: "212", name: "المغرب", flag: "🇲🇦", length: 9 },
-  { code: "967", name: "اليمن", flag: "🇾🇪", length: 9 },
-  { code: "216", name: "تونس", flag: "🇹🇳", length: 8 },
-  { code: "269", name: "جزر القمر", flag: "🇰🇲", length: 7 },
-  { code: "253", name: "جيبوتي", flag: "🇩🇯", length: 8 },
-  { code: "963", name: "سوريا", flag: "🇸🇾", length: 9 },
-  { code: "968", name: "عمان", flag: "🇴🇲", length: 8 },
-  { code: "970", name: "فلسطين", flag: "🇵🇸", length: 9 },
-  { code: "974", name: "قطر", flag: "🇶🇦", length: 8 },
-  { code: "961", name: "لبنان", flag: "🇱🇧", length: 8 },
-  { code: "218", name: "ليبيا", flag: "🇱🇾", length: 9 },
-  { code: "20", name: "مصر", flag: "🇪🇬", length: 10 },
-  { code: "222", name: "موريتانيا", flag: "🇲🇷", length: 8 },
-  { code: "1", name: "أمريكا", flag: "🇺🇸", length: 10 },
-  { code: "44", name: "بريطانيا", flag: "🇬🇧", length: 10 },
-  { code: "90", name: "تركيا", flag: "🇹🇷", length: 10 },
-  { code: "33", name: "فرنسا", flag: "🇫🇷", length: 9 },
-  { code: "49", name: "ألمانيا", flag: "🇩🇪", length: 11 },
-];
+  { code: "962", name: "الأردن", flag: "🇯🇴", length: 9, start: ["7"] },
+  { code: "971", name: "الإمارات", flag: "🇦🇪", length: 9, start: ["5"] },
+  { code: "973", name: "البحرين", flag: "🇧🇭", length: 8, start: ["3", "6"] },
+  { code: "213", name: "الجزائر", flag: "🇩🇿", length: 9, start: ["5", "6", "7"] },
+  { code: "249", name: "السودان", flag: "🇸🇩", length: 9, start: ["9", "1"] },
+  { code: "966", name: "السعودية", flag: "🇸🇦", length: 9, start: ["5"] },
+  { code: "252", name: "الصومال", flag: "🇸🇴", length: 9, start: [] },
+  { code: "964", name: "العراق", flag: "🇮🇶", length: 10, start: ["7"] },
+  { code: "965", name: "الكويت", flag: "🇰🇼", length: 8, start: ["5", "6", "9"] },
+  { code: "212", name: "المغرب", flag: "🇲🇦", length: 9, start: ["6", "7"] },
+  { code: "967", name: "اليمن", flag: "🇾🇪", length: 9, start: ["7"] },
+  { code: "216", name: "تونس", flag: "🇹🇳", length: 8, start: ["2", "4", "5", "9"] },
+  { code: "269", name: "جزر القمر", flag: "🇰🇲", length: 7, start: [] },
+  { code: "253", name: "جيبوتي", flag: "🇩🇯", length: 8, start: [] },
+  { code: "963", name: "سوريا", flag: "🇸🇾", length: 9, start: ["9"] },
+  { code: "968", name: "عمان", flag: "🇴🇲", length: 8, start: ["7", "9"] },
+  { code: "970", name: "فلسطين", flag: "🇵🇸", length: 9, start: ["5"] },
+  { code: "974", name: "قطر", flag: "🇶🇦", length: 8, start: ["3", "5", "6", "7"] },
+  { code: "961", name: "لبنان", flag: "🇱🇧", length: 8, start: ["3", "7", "8"] },
+  { code: "218", name: "ليبيا", flag: "🇱🇾", length: 9, start: ["9"] },
+  { code: "20", name: "مصر", flag: "🇪🇬", length: 10, start: ["10", "11", "12", "15"] },
+  { code: "222", name: "موريتانيا", flag: "🇲🇷", length: 8, start: ["2", "3", "4"] },
+  { code: "1", name: "أمريكا", flag: "🇺🇸", length: 10, start: [] },
+  { code: "44", name: "بريطانيا", flag: "🇬🇧", length: 10, start: [] },
+  { code: "90", name: "تركيا", flag: "🇹🇷", length: 10, start: ["5"] },
+  { code: "33", name: "فرنسا", flag: "🇫🇷", length: 9, start: ["6", "7"] },
+  { code: "49", name: "ألمانيا", flag: "🇩🇪", length: 11, start: ["1"] },
+].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -104,45 +105,62 @@ function LoginContent() {
     return strength;
   };
 
+  const validatePhone = (code: string, num: string) => {
+    const country = COUNTRIES.find(c => c.code === code);
+    if (!country) return { valid: false, msg: "يرجى اختيار الدولة" };
+
+    // 1. فحص الطول
+    if (num.length !== country.length) {
+      return { 
+        valid: false, 
+        msg: `في ${country.name}، يجب أن يتكون الرقم من ${country.length} أرقام بالضبط.` 
+      };
+    }
+
+    // 2. فحص البداية (إذا كانت معرفة في القائمة)
+    if (country.start.length > 0) {
+      const matchesStart = country.start.some(prefix => num.startsWith(prefix));
+      if (!matchesStart) {
+        return { 
+          valid: false, 
+          msg: `في ${country.name}، يجب أن يبدأ الرقم بـ: ${country.start.join(' أو ')}.` 
+        };
+      }
+    }
+
+    return { valid: true, msg: "" };
+  };
+
   const handleSignUp = async () => {
     // 1. فحص السن (أقل من 16 عام - مواليد بعد 2011)
+    if (!birthDate) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال تاريخ الميلاد." });
+      return;
+    }
     const birthYear = new Date(birthDate).getFullYear();
     if (birthYear > 2011) {
       toast({ 
         variant: "destructive", 
         title: "عذراً", 
-        description: "يحظر استخدام المنصة لمن هو أقل من 16 عام" 
+        description: "يحظر استخدام المنصة لمن هو أقل من 16 عام." 
       });
       return;
     }
 
-    if (!firstName || !lastName || !phoneNumber || !birthDate || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !phoneNumber || !email || !password || !confirmPassword) {
       toast({ variant: "destructive", title: "بيانات ناقصة" });
       return;
     }
 
-    // 2. التحقق من رقم الهاتف حسب الدولة
-    if (countryCode === "20") {
-      // التحقق الخاص بمصر: 10 أرقام وتبدأ بـ 10، 11، 12، 15
-      const egRegex = /^(10|11|12|15)\d{8}$/;
-      if (!egRegex.test(phoneNumber)) {
-        toast({ 
-          variant: "destructive", 
-          title: "رقم هاتف غير صحيح", 
-          description: "في مصر، يجب أن يتكون الرقم من 10 أرقام ويبدأ بـ 10 أو 11 أو 12 أو 15" 
-        });
-        return;
-      }
-    } else {
-      // فحص الطول العام للدول الأخرى
-      if (phoneNumber.length !== selectedCountry?.length) {
-        toast({ 
-          variant: "destructive", 
-          title: "رقم هاتف غير مكتمل", 
-          description: `يجب أن يتكون الرقم في ${selectedCountry?.name} من ${selectedCountry?.length} أرقام.` 
-        });
-        return;
-      }
+    // 2. التحقق الذكي من رقم الهاتف
+    const phoneValidation = validatePhone(countryCode, phoneNumber);
+    if (!phoneValidation.valid) {
+      toast({ 
+        variant: "destructive", 
+        title: "رقم هاتف غير صحيح", 
+        description: phoneValidation.msg 
+      });
+      return;
     }
 
     if (password !== confirmPassword) {
@@ -174,7 +192,7 @@ function LoginContent() {
           status: "active",
           createdAt: new Date().toISOString(),
           needsProfileCompletion: true,
-          password: password // يتم حفظها لغرض الإدارة كما هو مطلوب في الصفحات الإدارية
+          password: password 
         });
 
         toast({ title: "تم إنشاء الحساب بنجاح!" });
@@ -251,33 +269,43 @@ function LoginContent() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label className="font-black flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> اختر الدولة</Label>
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="h-14 rounded-xl border-2 font-black">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {COUNTRIES.map((c) => (
+                      <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
+                        <div className="flex items-center gap-3 w-full justify-end" dir="rtl">
+                          <span className="text-xl">{c.flag}</span>
+                          <span className="flex-1 text-right">{c.name}</span>
+                          <span className="text-muted-foreground font-mono">+{c.code}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="font-black">الدولة ورقم الهاتف</Label>
-                  <div className="flex gap-2" dir="ltr">
-                    <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-[120px] h-14 rounded-xl border-2 font-black">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-80">
-                        {COUNTRIES.map((c) => (
-                          <SelectItem key={`${c.code}-${c.name}`} value={c.code} className="font-bold">
-                            <span className="ml-2 text-lg">{c.flag}</span>
-                            <span>+{c.code}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <Label className="font-black">رقم الهاتف</Label>
+                  <div className="relative" dir="ltr">
                     <Input 
-                      placeholder={"رقم الهاتف"} 
+                      placeholder={"أدخل الأرقام فقط"} 
                       maxLength={selectedCountry?.length}
                       value={phoneNumber} 
                       onChange={(e)=>setPhoneNumber(e.target.value.replace(/\D/g, ''))} 
-                      className="h-14 flex-1 rounded-xl border-2 font-black text-lg text-left" 
+                      className="h-14 rounded-xl border-2 font-black text-lg text-left pl-16" 
                     />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-black border-r pr-3">
+                      +{countryCode}
+                    </div>
                   </div>
                   <p className="text-[9px] font-bold text-muted-foreground pr-2">
-                    {selectedCountry?.name}: مطلوب {selectedCountry?.length} أرقام.
+                    مطلوب {selectedCountry?.length} أرقام {selectedCountry?.start.length ? `تبدأ بـ ${selectedCountry.start.join('/')}` : ''}.
                   </p>
                 </div>
                 <div className="space-y-2">
