@@ -9,10 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Mail, Phone, Fingerprint, ShieldCheck, Loader2, Key, UserCheck, UserX } from "lucide-react";
+import { Search, Mail, Phone, Fingerprint, ShieldCheck, Loader2, Key, UserCheck, UserX, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * مركز التوثيق اليدوي والبحث عن الحسابات.
+ * يسمح للمسؤول بالبحث عن أي مستخدم عبر (Email, Phone, ID) ومنحه شارة التوثيق.
+ */
 export default function AdminAccountManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -88,7 +92,7 @@ export default function AdminAccountManagement() {
       await addDoc(collection(firestore, "adminLogs"), {
         action: newStatus ? 'verify_user' : 'unverify_user',
         targetUserId: targetUser.id,
-        details: `تم ${newStatus ? 'منح' : 'سحب'} شارة التوثيق يدوياً`,
+        details: `تم ${newStatus ? 'منح' : 'سحب'} شارة التوثيق يدوياً من مركز البحث`,
         timestamp: new Date().toISOString()
       });
 
@@ -104,23 +108,23 @@ export default function AdminAccountManagement() {
   return (
     <div className="p-6 md:p-10 space-y-10" dir="rtl">
       <div className="border-r-8 border-primary pr-6 text-right">
-        <h1 className="text-4xl font-black font-headline text-zinc-900">إدارة الحسابات والتوثيق اليدوي</h1>
-        <p className="text-muted-foreground text-lg font-bold">ابحث عن مستخدم لتوثيق حسابه أو الاطلاع على بياناته.</p>
+        <h1 className="text-4xl font-black font-headline text-zinc-900">البحث والتوثيق اليدوي</h1>
+        <p className="text-muted-foreground text-lg font-bold">ابحث عن أي مستخدم بواسطة البريد، الهاتف، أو الـ ID ومنحه شارة التوثيق.</p>
       </div>
 
       <Card className="max-w-3xl mx-auto shadow-2xl rounded-[3rem] border-2 overflow-hidden bg-white">
         <CardHeader className="bg-zinc-900 text-white p-10 text-right">
           <CardTitle className="text-2xl font-black flex items-center gap-4 justify-end">
-            <Search className="text-primary h-8 w-8" /> ابحث عن مستخدم الآن
+            <Search className="text-primary h-8 w-8" /> محرك بحث الحسابات
           </CardTitle>
-          <CardDescription className="text-zinc-400 font-bold">أدخل البريد الإلكتروني، رقم الهاتف، أو User ID.</CardDescription>
+          <CardDescription className="text-zinc-400 font-bold">أدخل البريد الإلكتروني، رقم الهاتف، أو User ID للوصول الفوري.</CardDescription>
         </CardHeader>
         <CardContent className="p-10 space-y-8 text-right">
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <Label className="font-black text-lg">بيانات البحث</Label>
               <Input 
-                placeholder="مثال: name@example.com أو 010..." 
+                placeholder="مثال: name@example.com أو 010... أو ID" 
                 className="h-16 text-xl rounded-2xl border-2 font-bold text-right"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -173,19 +177,6 @@ export default function AdminAccountManagement() {
                     {isUpdating ? <Loader2 className="animate-spin ml-2" /> : (targetUser.isVerified ? <UserX className="ml-2" /> : <UserCheck className="ml-2" />)}
                     {targetUser.isVerified ? "إلغاء توثيق الحساب" : "منح شارة التوثيق الزرقاء"}
                   </Button>
-                </div>
-
-                <div className="md:col-span-2 p-8 bg-primary/5 rounded-3xl border-2 border-primary/20 space-y-4 text-right">
-                  <div className="flex items-center gap-3 text-primary justify-end">
-                    <Label className="text-xl font-black uppercase tracking-wider">كلمة المرور الحالية</Label>
-                    <Key size={24} className="animate-bounce" />
-                  </div>
-                  <div className="relative">
-                    <p className="text-4xl font-mono font-black tracking-widest text-zinc-800 break-all bg-white p-6 rounded-2xl shadow-inner border-2 text-center">
-                      {targetUser.password || "غير مسجلة يدوياً"}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-bold text-center">* ملاحظة: كلمة المرور تظهر هنا لأغراض الدعم الفني الطارئ فقط.</p>
                 </div>
               </div>
             </div>

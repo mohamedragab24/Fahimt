@@ -24,7 +24,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
 
+/**
+ * صفحة مراجعة طلبات التوثيق الرسمية المرفوعة من قبل المستخدمين.
+ */
 export default function AdminVerification() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -67,7 +71,7 @@ export default function AdminVerification() {
         title: isApproved ? "تم توثيق هويتك بنجاح!" : "فشل توثيق الهوية",
         message: isApproved 
           ? "تهانينا، تم التحقق من وثائقك الثبوتية بنجاح."
-          : "عذراً، لم نتمكن من قبول وثائق الهوية المرفوعة.",
+          : "عذراً، لم نتمكن من قبول وثائق الهوية المرفوعة. يرجى إعادة الرفع بجودة أفضل.",
         type: isApproved ? "verification_success" : "verification_failed",
         read: false,
         createdAt: new Date().toISOString()
@@ -88,16 +92,24 @@ export default function AdminVerification() {
     <div className="p-6 md:p-10 space-y-12" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-r-8 border-accent pr-6">
         <div className="space-y-2 text-right">
-          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">مركز توثيق الهوية</h1>
-          <p className="text-muted-foreground text-lg">مراجعة البطاقات الشخصية ومنح شارة التوثيق الزرقاء.</p>
+          <h1 className="text-4xl md:text-5xl font-black font-headline text-zinc-900">طلبات توثيق الهوية</h1>
+          <p className="text-muted-foreground text-lg">مراجعة البطاقات الشخصية المرفوعة من قبل المفهمين والمستفهمين.</p>
         </div>
+        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl font-black border-2 gap-2">
+          <Link href="/admin/accounts"><Search size={20}/> البحث والتوثيق يدوياً بالبريد/الهاتف</Link>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {isLoading ? (
           <div className="col-span-full py-32 text-center animate-pulse font-black text-2xl">جاري فحص الطلبات...</div>
+        ) : pendingUsers?.length === 0 ? (
+          <div className="col-span-full py-32 text-center flex flex-col items-center gap-6 opacity-30">
+            <FileCheck size={80} />
+            <p className="text-2xl font-black">لا توجد طلبات توثيق هوية بانتظار المراجعة.</p>
+          </div>
         ) : pendingUsers?.map((u) => (
-          <Card key={u.id} className="shadow-xl rounded-[3rem] overflow-hidden border-2 bg-white">
+          <Card key={u.id} className="shadow-xl rounded-[3rem] overflow-hidden border-2 bg-white hover:border-primary/20 transition-all">
             <CardHeader className="bg-muted/30 p-8 flex flex-col items-center gap-4 text-center">
               <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
                 <AvatarImage src={u.profilePictureUrl} />
@@ -110,7 +122,7 @@ export default function AdminVerification() {
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <Button onClick={() => setSelectedUser(u)} className="w-full h-14 rounded-2xl font-black text-lg bg-zinc-900 shadow-lg">
-                <Eye className="ml-2" /> مراجعة الوثائق
+                <Eye className="ml-2" /> مراجعة الوثائق المرفوعة
               </Button>
             </CardContent>
           </Card>
@@ -126,23 +138,45 @@ export default function AdminVerification() {
           </DialogHeader>
           <ScrollArea className="max-h-[75vh]">
             <div className="p-8 space-y-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-right">
                 <div className="space-y-4">
-                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الأمامي</Label>
+                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الأمامي (ID Front)</Label>
                   <div className="aspect-[1.6/1] bg-zinc-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl">
-                    {selectedUser?.idCardFront ? <img src={selectedUser.idCardFront} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-zinc-400"><AlertCircle/></div>}
+                    {selectedUser?.idCardFront ? (
+                      <img src={selectedUser.idCardFront} className="w-full h-full object-cover" alt="ID Front" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 gap-2">
+                        <AlertCircle />
+                        <span className="text-xs font-bold">لم ترفع صورة الوجه الأمامي</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الخلفي</Label>
+                  <Label className="font-black text-lg border-r-4 border-primary pr-3 block">الوجه الخلفي (ID Back)</Label>
                   <div className="aspect-[1.6/1] bg-zinc-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl">
-                    {selectedUser?.idCardBack ? <img src={selectedUser.idCardBack} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-zinc-400"><AlertCircle/></div>}
+                    {selectedUser?.idCardBack ? (
+                      <img src={selectedUser.idCardBack} className="w-full h-full object-cover" alt="ID Back" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 gap-2">
+                        <AlertCircle />
+                        <span className="text-xs font-bold">لم ترفع صورة الوجه الخلفي</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+              
+              <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 flex items-start gap-4 text-right">
+                <AlertCircle size={20} className="text-blue-600 shrink-0 mt-1" />
+                <p className="text-sm font-bold text-blue-800 leading-relaxed">
+                  تأكد من وضوح البيانات ومطابقتها لاسم المستخدم المسجل قبل الضغط على "اعتماد التوثيق".
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-6 pt-4 pb-6">
-                <Button onClick={() => handleAction(selectedUser.id, 'approve')} className="h-20 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl text-white shadow-2xl">اعتماد التوثيق</Button>
-                <Button onClick={() => handleAction(selectedUser.id, 'reject')} variant="destructive" className="h-20 rounded-[2rem] font-black text-2xl shadow-2xl">رفض الطلب</Button>
+                <Button onClick={() => handleAction(selectedUser.id, 'approve')} className="h-20 rounded-[2rem] bg-green-600 hover:bg-green-700 font-black text-2xl text-white shadow-2xl transition-all">اعتماد التوثيق</Button>
+                <Button onClick={() => handleAction(selectedUser.id, 'reject')} variant="destructive" className="h-20 rounded-[2rem] font-black text-2xl shadow-2xl transition-all">رفض الطلب</Button>
               </div>
             </div>
           </ScrollArea>
