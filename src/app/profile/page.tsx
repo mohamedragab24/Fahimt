@@ -112,7 +112,7 @@ export default function ProfilePage() {
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12 mb-24" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline text-zinc-900">إكمال بيانات الملف الشخصي</h1>
+        <h1 className="text-4xl font-black font-headline text-zinc-900">الملف الشخصي</h1>
         <Button variant="outline" onClick={() => signOut(auth).then(()=>router.push("/login"))} className="rounded-xl h-12 font-bold text-red-600 border-red-100">
           <LogOut className="ml-2" /> خروج
         </Button>
@@ -134,7 +134,12 @@ export default function ProfilePage() {
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e)=>handleFileUpload(e, 'profilePictureUrl')} />
                 </div>
                 <div className="flex-1 text-center md:text-right">
-                  <h2 className="text-3xl font-black">{formData.fullName}</h2>
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <h2 className="text-3xl font-black">{formData.fullName}</h2>
+                    {profile?.isVerified && (
+                      <ShieldCheck className="h-8 w-8 text-blue-500 fill-blue-500/10" />
+                    )}
+                  </div>
                   <Badge variant="outline" className="mt-2 text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
                 </div>
               </div>
