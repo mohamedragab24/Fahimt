@@ -77,16 +77,20 @@ export default function AdminApprovals() {
   const handleApproveProfile = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
+    
+    // نقل الصورة من حقل "قيد الانتظار" إلى الحقل الرسمي
     updateDocumentNonBlocking(uRef, { 
+      profilePictureUrl: u.pendingProfilePictureUrl,
       isProfileApproved: true, 
       profilePicturePending: false,
+      pendingProfilePictureUrl: null,
       status: 'active' 
     });
     
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: u.id,
       title: "تم اعتماد صورتك الشخصية!",
-      message: "تهانينا، تم مراجعة صورتك الشخصية واعتماد حسابك بنجاح في فهمت.",
+      message: "تهانينا، تم مراجعة صورتك الشخصية واعتمادها بنجاح في فهمت.",
       type: "approval",
       read: false,
       createdAt: new Date().toISOString()
@@ -99,22 +103,23 @@ export default function AdminApprovals() {
   const handleRejectProfile = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
+    
+    // حذف الصورة المنتظرة دون المساس بالرسمية (إذا كانت موجودة)
     updateDocumentNonBlocking(uRef, { 
-      isProfileApproved: false, 
       profilePicturePending: false,
-      profilePictureUrl: null 
+      pendingProfilePictureUrl: null 
     });
     
     addDocumentNonBlocking(collection(firestore, "notifications"), {
       userId: u.id,
       title: "تم رفض الصورة الشخصية",
-      message: "عذراً، الصورة الشخصية لا تستوفي المعايير. يرجى رفع صورة بديلة واضحة.",
+      message: "عذراً، الصورة الشخصية المرفوعة لا تستوفي المعايير. يرجى رفع صورة بديلة واضحة.",
       type: "rejection",
       read: false,
       createdAt: new Date().toISOString()
     });
 
-    toast({ variant: "destructive", title: "تم الرفض", description: "تم حذف الصورة وإبلاغ المستخدم." });
+    toast({ variant: "destructive", title: "تم الرفض", description: "تم رفض الصورة وإبلاغ المستخدم." });
     setSelectedUser(null);
   };
 
@@ -233,7 +238,8 @@ export default function AdminApprovals() {
                   <CardHeader className="bg-muted/30 p-8 flex flex-col items-center text-center">
                     <div className="relative mb-4 group-hover:scale-105 transition-transform">
                       <Avatar className="h-32 w-32 border-8 border-white shadow-2xl">
-                        <AvatarImage src={p.profilePictureUrl} />
+                        {/* نُظهر الصورة الجديدة التي تنتظر المراجعة */}
+                        <AvatarImage src={p.pendingProfilePictureUrl} />
                         <AvatarFallback className="text-4xl font-black">{p.fullName?.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="absolute -bottom-2 -right-2 bg-orange-500 text-white p-2 rounded-xl shadow-lg animate-pulse">
@@ -326,7 +332,8 @@ export default function AdminApprovals() {
             <div className="py-6 space-y-8">
               <div className="flex flex-col items-center gap-6 p-8 bg-muted/20 rounded-[2.5rem] border-2 border-dashed">
                 <Avatar className="h-48 w-48 border-8 border-white shadow-2xl">
-                  <AvatarImage src={selectedUser.profilePictureUrl} />
+                  {/* نعرض الصورة التي رفعها المستخدم حديثاً */}
+                  <AvatarImage src={selectedUser.pendingProfilePictureUrl} />
                   <AvatarFallback className="text-5xl font-black">{selectedUser.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center space-y-2">

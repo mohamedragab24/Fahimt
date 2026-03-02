@@ -56,7 +56,8 @@ export default function ProfilePage() {
       setFormData({
         fullName: profile.fullName || "",
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
-        profilePictureUrl: profile.profilePictureUrl || "",
+        // نُظهر للمستخدم الصورة التي تنتظر المراجعة إذا وجدت، وإلا الصورة الرسمية
+        profilePictureUrl: profile.profilePicturePending ? profile.pendingProfilePictureUrl : (profile.profilePictureUrl || ""),
         bio: profile.bio || "",
         idCardFront: profile.idCardFront || "",
         idCardBack: profile.idCardBack || ""
@@ -76,18 +77,27 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!userRef) return;
+    if (!userRef || !profile) return;
     setIsSaving(true);
     try {
       const updateData: any = {
-        ...formData,
+        fullName: formData.fullName,
+        birthDate: formData.birthDate ? new Date(formData.birthDate).toISOString() : null,
+        bio: formData.bio,
+        idCardFront: formData.idCardFront,
+        idCardBack: formData.idCardBack,
         updatedAt: new Date().toISOString(),
         needsProfileCompletion: false
       };
       
-      if (formData.profilePictureUrl !== profile?.profilePictureUrl) {
-        updateData.isProfileApproved = false;
+      // إذا قام المستخدم بتغيير الصورة المعروضة حالياً عن الصورة الرسمية المسجلة
+      const currentOfficial = profile.profilePictureUrl || "";
+      const currentPending = profile.pendingProfilePictureUrl || "";
+      
+      if (formData.profilePictureUrl !== (profile.profilePicturePending ? currentPending : currentOfficial)) {
+        updateData.pendingProfilePictureUrl = formData.profilePictureUrl;
         updateData.profilePicturePending = true;
+        // لا نقوم بتحديث profilePictureUrl هنا، نتركها كما هي للآخرين حتى يوافق المسؤول
       }
       
       if (formData.idCardFront !== profile?.idCardFront) {
@@ -103,7 +113,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) return <div className="p-20 text-center font-black">جاري تحميل بياناتك...</div>;
+  if (isLoading) return <div className="p-20 text-center font-black animate-pulse">جاري تحميل بياناتك...</div>;
 
   const defaultAvatar = profile?.gender === 'female' 
     ? "https://picsum.photos/seed/female/200/200" 
@@ -143,6 +153,13 @@ export default function ProfilePage() {
                   <Badge variant="outline" className="mt-2 text-primary font-bold">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
                 </div>
               </div>
+
+              {profile?.profilePicturePending && (
+                <div className="bg-orange-50 p-4 rounded-xl flex items-center gap-2 text-orange-700 font-black text-xs border border-orange-100 mb-8 animate-in fade-in">
+                  <Clock size={16} className="shrink-0 animate-pulse" />
+                  <span>صورتك الشخصية الجديدة قيد المراجعة حالياً من قبل الإدارة.</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
