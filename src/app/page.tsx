@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -22,10 +21,13 @@ import {
   Target,
   ChevronRight,
   HelpCircle,
-  ArrowLeft
+  ArrowLeft,
+  BadgeCent,
+  Clock,
+  ClipboardList
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, limit, where, orderBy, addDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
@@ -72,6 +74,19 @@ export default function HomePage() {
 
   const [appealReason, setAppealReason] = useState("");
   const [isSendingAppeal, setIsSendingAppeal] = useState(false);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      // Stay on landing page
+    }
+  }, [user, isUserLoading]);
+
+  // Fix: Move navigation logic to useEffect to avoid rendering errors
+  useEffect(() => {
+    if (!isProfileLoading && profile?.needsProfileCompletion) {
+      router.push("/profile");
+    }
+  }, [profile, isProfileLoading, router]);
 
   const handleSendAppeal = async () => {
     if (!appealReason.trim() || !firestore || !user) return;
@@ -127,8 +142,7 @@ export default function HomePage() {
   }
 
   if (profile.needsProfileCompletion) {
-    router.push("/profile");
-    return null;
+    return null; // Will redirect via useEffect
   }
 
   return (
@@ -202,7 +216,7 @@ function LandingPage({ router, settings }: any) {
           <div className="absolute inset-0 z-0">
             <img 
               src={landingBg} 
-              className="w-full h-full object-cover object-top brightness-[0.8]" 
+              className="w-full h-full object-cover object-top brightness-100" 
               alt="Landing Background"
             />
           </div>
@@ -332,6 +346,125 @@ function LandingPage({ router, settings }: any) {
   );
 }
 
+function MustafhemView({ profile, router }: any) {
+  const firestore = useFirestore();
+  const requestsQuery = useMemoFirebase(() => {
+    if (!firestore || !profile.id) return null;
+    return query(collection(firestore, "istifhams"), where("mustafhemId", "==", profile.id), orderBy("createdAt", "desc"), limit(5));
+  }, [firestore, profile.id]);
+
+  const { data: myRequests } = useCollection(requestsQuery);
+
+  return (
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="rounded-[2.5rem] p-10 bg-primary text-white space-y-6 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/create-request')}>
+          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center"><Plus size={32} /></div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-black">عندك سؤال؟</h2>
+            <p className="text-primary-foreground/80 font-bold text-lg">اطرح استفهامك الآن واحصل على شرح فوري.</p>
+          </div>
+          <Button className="bg-white text-primary hover:bg-zinc-100 font-black rounded-xl h-14 text-lg w-full">طلب استفهام جديد</Button>
+        </Card>
+
+        <Card className="rounded-[2.5rem] p-10 border-2 space-y-6 hover:border-primary/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
+          <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center text-primary"><Search size={32} /></div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-black text-zinc-800">تصفح المفهمين</h2>
+            <p className="text-muted-foreground font-bold text-lg">استكشف نخبة الخبراء الموثقين في كافة التخصصات.</p>
+          </div>
+          <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 font-black rounded-xl h-14 text-lg w-full">استكشاف الخبراء</Button>
+        </Card>
+      </div>
+
+      <div className="space-y-6">
+        <div className="flex justify-between items-center px-2">
+          <h3 className="text-2xl font-black text-zinc-800">أحدث استفهاماتي</h3>
+          <Button variant="link" onClick={() => router.push('/requests')} className="font-black text-primary">عرض الكل</Button>
+        </div>
+        <div className="grid gap-4">
+          {myRequests?.map((req) => (
+            <IstifhamCard key={req.id} req={req} router={router} />
+          ))}
+          {(!myRequests || myRequests.length === 0) && (
+            <div className="py-20 text-center border-4 border-dashed rounded-[3rem] opacity-30 font-black text-xl">لا توجد استفهامات سابقة.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MufhemView({ profile, router }: any) {
+  const firestore = useFirestore();
+  const availableQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "istifhams"), where("status", "==", "active"), limit(10));
+  }, [firestore]);
+
+  const { data: availableRequests } = useCollection(availableQuery);
+
+  return (
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="rounded-[2.5rem] p-10 bg-accent text-white space-y-6 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/portfolio/add')}>
+          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center"><Layout size={32} /></div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-black">أضف لعملك</h2>
+            <p className="text-accent-foreground/80 font-bold text-lg">انشر نماذج من شرحك لزيادة ثقة الطلاب بك.</p>
+          </div>
+          <Button className="bg-white text-accent hover:bg-zinc-100 font-black rounded-xl h-14 text-lg w-full">إضافة عمل للمعرض</Button>
+        </Card>
+
+        <Card className="rounded-[2.5rem] p-10 border-2 space-y-6 hover:border-accent/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
+          <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center text-accent"><Zap size={32} /></div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-black text-zinc-800">فرص التفهيم</h2>
+            <p className="text-muted-foreground font-bold text-lg">تصفح طلبات الطلاب وقدم عروضك الآن.</p>
+          </div>
+          <Button variant="outline" className="border-accent text-accent hover:bg-accent/5 font-black rounded-xl h-14 text-lg w-full">تصفح الاستفهامات</Button>
+        </Card>
+      </div>
+
+      <div className="space-y-6">
+        <h3 className="text-2xl font-black text-zinc-800 px-2">استفهامات قد تناسبك</h3>
+        <div className="grid gap-4">
+          {availableRequests?.map((req) => (
+            <IstifhamCard key={req.id} req={req} router={router} />
+          ))}
+          {(!availableRequests || availableRequests.length === 0) && (
+            <div className="py-20 text-center border-4 border-dashed rounded-[3rem] opacity-30 font-black text-xl">لا توجد طلبات متاحة حالياً.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IstifhamCard({ req, router }: any) {
+  return (
+    <Card 
+      onClick={() => router.push(`/requests/${req.id}`)} 
+      className="rounded-[2rem] border-2 hover:border-primary/20 transition-all cursor-pointer group bg-white shadow-md overflow-hidden flex flex-col md:flex-row"
+    >
+      <div className="md:w-48 bg-zinc-50/50 p-6 flex flex-col items-center justify-center text-center border-l shrink-0">
+        <Avatar className="h-16 w-16 border-2 border-white shadow-lg mb-2">
+          <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">{req.mustafhemName?.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <p className="font-black text-sm text-zinc-900">{req.mustafhemName}</p>
+      </div>
+      <div className="flex-1 p-6 flex flex-col space-y-4">
+        <div className="flex flex-wrap items-center gap-3 text-[10px] font-black text-zinc-400">
+          <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg flex items-center gap-1"><BadgeCent size={12} /> {req.amount} ج.م</span>
+          <span className="flex items-center gap-1"><Clock size={12} /> منذ {getTimeAgo(req.createdAt)}</span>
+          <Badge className="mr-auto bg-primary/10 text-primary border-none">{req.status === 'active' ? 'مفتوح' : 'مكتمل'}</Badge>
+        </div>
+        <h3 className="text-xl font-black text-zinc-800 group-hover:text-primary transition-colors">{req.title}</h3>
+      </div>
+    </Card>
+  );
+}
+
 function StepItem({ icon: Icon, color, title, desc }: any) {
   return (
     <div className="flex gap-6 items-start text-right group">
@@ -367,21 +500,6 @@ function LandingNavLink({ href, icon: Icon, label }: { href: string, icon: any, 
       <span className="whitespace-nowrap">{label}</span>
     </Link>
   );
-}
-
-function MustafhemView({ profile, settings, router }: any) {
-  // ... (Same logic as before)
-  return <div>{/* UI content same as before */}</div>;
-}
-
-function MufhemView({ profile, settings, router }: any) {
-  // ... (Same logic as before)
-  return <div>{/* UI content same as before */}</div>;
-}
-
-function IstifhamCard({ req, allUsers, router }: any) {
-  // ... (Same logic as before)
-  return <div>{/* UI content same as before */}</div>;
 }
 
 function getTimeAgo(dateStr: string) {

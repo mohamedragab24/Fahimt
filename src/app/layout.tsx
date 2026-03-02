@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientWrapper } from '@/components/layout/client-wrapper';
@@ -16,8 +15,8 @@ export const metadata: Metadata = {
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت, منصة فهمت, خبير تعليمي',
   manifest: '/manifest.json', 
   icons: {
-    icon: 'https://picsum.photos/seed/fahimt-logo/32/32',
-    apple: 'https://picsum.photos/seed/fahimt-logo/180/180',
+    icon: 'https://picsum.photos/seed/fahimt-logo/512/512',
+    apple: 'https://picsum.photos/seed/fahimt-logo/512/512',
   },
   appleWebApp: {
     capable: true,
