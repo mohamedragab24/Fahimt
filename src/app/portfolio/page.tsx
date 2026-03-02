@@ -1,27 +1,22 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, orderBy } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Layout, PlayCircle, Plus, Filter, Check, ChevronRight, Zap, Layers, Activity } from "lucide-react";
+import { Search, Layout, PlayCircle, Plus, Filter, Check, ChevronRight, Zap, Layers, Activity, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/**
- * صفحة معرض الأعمال - تم تحديثها لتشمل خيار "أخرى" في الفلترة الهرمية.
- */
 export default function GlobalPortfolioPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // حالات الفلترة الهرمية
   const [selectedMain, setSelectedMain] = useState("all");
   const [selectedSub, setSelectedSub] = useState("all");
   const [selectedOpt, setSelectedOpt] = useState("all");
@@ -39,14 +34,12 @@ export default function GlobalPortfolioPage() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  // جلب كافة التصنيفات
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "categories"), orderBy("name", "asc"));
   }, [firestore]);
   const { data: allCats } = useCollection(categoriesQuery);
 
-  // تصنيفات المستويات
   const mainCategories = useMemo(() => allCats?.filter(c => c.type === 'main' || !c.type) || [], [allCats]);
   const subCategories = useMemo(() => {
     if (selectedMain === "all") return [];
@@ -59,7 +52,6 @@ export default function GlobalPortfolioPage() {
     return allCats?.filter(c => c.type === 'option' && c.parentId === parent?.id) || [];
   }, [allCats, selectedSub, subCategories]);
 
-  // عرض الأعمال المعتمدة فقط
   const portfolioQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -77,7 +69,6 @@ export default function GlobalPortfolioPage() {
 
   const { data: allUsers } = useCollection(usersQuery);
 
-  // منطق التصفية
   const filteredItems = useMemo(() => {
     if (!rawPortfolioItems) return [];
     
@@ -98,7 +89,6 @@ export default function GlobalPortfolioPage() {
 
   return (
     <div className="p-6 md:p-10 space-y-10 bg-[#f8f9fa] min-h-screen pb-24" dir="rtl">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto">
         <div className="space-y-2 text-right w-full md:w-auto border-r-8 border-primary pr-6">
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 flex items-center gap-3">
@@ -127,9 +117,7 @@ export default function GlobalPortfolioPage() {
         </div>
       </div>
 
-      {/* Hierarchical Filter Pills */}
       <div className="max-w-7xl mx-auto space-y-6 bg-white p-6 rounded-[2.5rem] shadow-sm border">
-        {/* المستوى الأول: الأقسام */}
         <div className="flex flex-col space-y-2">
           <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
             <Filter size={12} /> الأقسام الرئيسية
@@ -143,7 +131,6 @@ export default function GlobalPortfolioPage() {
           </div>
         </div>
 
-        {/* المستوى الثاني: التخصصات */}
         {selectedMain !== "all" && (
           <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
@@ -159,7 +146,6 @@ export default function GlobalPortfolioPage() {
           </div>
         )}
 
-        {/* المستوى الثالث: الخيارات */}
         {selectedSub !== "all" && (
           <div className="flex flex-col space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-2">
@@ -176,7 +162,6 @@ export default function GlobalPortfolioPage() {
         )}
       </div>
 
-      {/* Grid Content */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-w-7xl mx-auto">
         {isPortfolioLoading ? (
           <div className="col-span-full py-20 text-center animate-pulse font-black text-2xl opacity-20">جاري تحميل المعرض...</div>
@@ -215,9 +200,14 @@ export default function GlobalPortfolioPage() {
                 </div>
                 
                 <div className="px-4 space-y-2 text-right">
-                  <h3 className="font-black text-xl text-zinc-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">{item.title}</h3>
+                  <h3 className="font-black text-xl text-zinc-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                    {item.title}
+                  </h3>
                   <div className="flex flex-col">
-                    <p className="text-sm text-zinc-400 font-bold">{teacher?.fullName}</p>
+                    <p className="text-sm text-zinc-400 font-bold flex items-center gap-1">
+                      {teacher?.fullName}
+                      {teacher?.isVerified && <ShieldCheck size={14} className="text-blue-500" />}
+                    </p>
                     <p className="text-xs text-zinc-300 font-bold mt-1">{item.categorySub || item.category || "خبير تعليمي"}</p>
                   </div>
                 </div>

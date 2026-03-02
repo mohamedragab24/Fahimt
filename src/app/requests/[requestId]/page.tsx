@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -60,6 +59,12 @@ export default function RequestDetailsPage() {
 
   const { data: offers } = useCollection(offersQuery);
 
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"));
+  }, [firestore]);
+  const { data: allUsers } = useCollection(usersQuery);
+
   const userRef = useMemoFirebase(() => {
     if (!firestore || !currentUser?.uid) return null;
     return doc(firestore, "users", currentUser.uid);
@@ -83,7 +88,6 @@ export default function RequestDetailsPage() {
   const isOwner = currentUser?.uid === request.mustafhemId;
   const isMufhem = profile?.role === 'mufhem';
   const myOffer = offers?.find((o: any) => o.mufhemId === currentUser?.uid);
-  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-20" dir="rtl">
@@ -136,7 +140,6 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {/* زر تقديم عرض للمفهمين - يوجه لصفحة مستقلة */}
                 {!isOwner && isMufhem && request.status === 'active' && !myOffer && (
                   <div className="pt-10">
                     <Button 
@@ -162,40 +165,45 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {/* قائمة العروض لصاحب الطلب */}
                 {isOwner && request.status === 'active' && (
                   <div className="space-y-8 pt-10">
                     <h3 className="text-2xl font-black border-r-8 border-primary pr-4 flex items-center gap-3">
                       العروض المقدمة ({offers?.length || 0})
                     </h3>
                     <div className="grid gap-6">
-                      {offers?.map((offer: any) => (
-                        <Card key={offer.id} className="rounded-3xl border-2 hover:border-primary/20 transition-all shadow-md overflow-hidden bg-white">
-                          <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div className="flex items-start gap-4 text-right flex-1">
-                              <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
-                                <AvatarImage src={offer.mufhemAvatar} />
-                                <AvatarFallback className="bg-primary/10 text-primary font-black">{offer.mufhemName?.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-black text-xl">{offer.mufhemName}</h4>
-                                  <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px]">5.0 <Star size={10} className="fill-yellow-500 mr-1"/></Badge>
-                                </div>
-                                <p className="text-sm text-zinc-600 font-medium mt-1 line-clamp-2">"{offer.details}"</p>
-                                <div className="flex gap-4 mt-3 text-[10px] font-bold text-zinc-400">
-                                  <span className="flex items-center gap-1"><Clock size={12}/> الموعد: {offer.duration} يوم</span>
-                                  <span className="flex items-center gap-1"><BadgeCent size={12}/> السعر: {offer.amount} ج.م</span>
+                      {offers?.map((offer: any) => {
+                        const offerer = allUsers?.find(u => u.id === offer.mufhemId);
+                        return (
+                          <Card key={offer.id} className="rounded-3xl border-2 hover:border-primary/20 transition-all shadow-md overflow-hidden bg-white">
+                            <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                              <div className="flex items-start gap-4 text-right flex-1">
+                                <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
+                                  <AvatarImage src={offer.mufhemAvatar} />
+                                  <AvatarFallback className="bg-primary/10 text-primary font-black">{offer.mufhemName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-black text-xl flex items-center gap-1">
+                                      {offer.mufhemName}
+                                      {offerer?.isVerified && <ShieldCheck size={16} className="text-blue-500" />}
+                                    </h4>
+                                    <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px]">5.0 <Star size={10} className="fill-yellow-500 mr-1"/></Badge>
+                                  </div>
+                                  <p className="text-sm text-zinc-600 font-medium mt-1 line-clamp-2">"{offer.details}"</p>
+                                  <div className="flex gap-4 mt-3 text-[10px] font-bold text-zinc-400">
+                                    <span className="flex items-center gap-1"><Clock size={12}/> الموعد: {offer.duration} يوم</span>
+                                    <span className="flex items-center gap-1"><BadgeCent size={12}/> السعر: {offer.amount} ج.م</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex flex-col gap-2 w-full md:w-auto">
-                              <Button onClick={() => acceptOffer(offer)} className="bg-green-600 hover:bg-green-700 h-12 rounded-xl font-black">قبول وبدء</Button>
-                              <Button variant="outline" onClick={() => router.push('/messages')} className="h-12 rounded-xl font-black border-primary text-primary">استفسار</Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                              <div className="flex flex-col gap-2 w-full md:w-auto">
+                                <Button onClick={() => acceptOffer(offer)} className="bg-green-600 hover:bg-green-700 h-12 rounded-xl font-black">قبول وبدء</Button>
+                                <Button variant="outline" onClick={() => router.push('/messages')} className="h-12 rounded-xl font-black border-primary text-primary">استفسار</Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                       {(!offers || offers.length === 0) && (
                         <div className="py-16 text-center text-muted-foreground font-bold italic border-2 border-dashed rounded-3xl bg-zinc-50">
                           لا توجد عروض مقدمة بعد.
@@ -205,7 +213,6 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {/* قسم الدفع الفوري (يظهر للمستفهم عند القبول) */}
                 {isOwner && request.status === 'accepted' && (
                   <div className="relative group animate-in slide-in-from-bottom-6 duration-700">
                     <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-primary rounded-[4rem] blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
@@ -235,7 +242,6 @@ export default function RequestDetailsPage() {
                   </div>
                 )}
 
-                {/* زر الدخول للمحاضرة (بعد الدفع) */}
                 {(isOwner || isMufhem) && request.status === 'paid' && (
                   <div className="bg-green-50 p-12 rounded-[3.5rem] border-4 border-dashed border-green-200 flex flex-col items-center text-center space-y-8 animate-in zoom-in">
                     <div className="bg-white p-6 rounded-full shadow-xl text-green-600">

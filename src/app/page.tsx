@@ -24,7 +24,8 @@ import {
   ArrowLeft,
   BadgeCent,
   Clock,
-  ClipboardList
+  ClipboardList,
+  Layers
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
@@ -40,8 +41,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const LANDING_FAQS = [
   { 
-    q: "ما هي منصة فهمني وما الذي يميزها؟", 
-    a: "منصة فهمني هي وسيط تقني يربط بين المستفهم من يبحث عن معلومة أو شرح سريع و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في الفهم اللحظي\" عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." 
+    q: "ما هي منصة فهمت وما الذي يميزها؟", 
+    a: "منصة فهمت هي وسيط تقني يربط بين المستفهم (من يبحث عن معلومة أو شرح سريع) و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." 
   },
   { 
     q: "هل يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", 
@@ -49,7 +50,7 @@ const LANDING_FAQS = [
   },
   { 
     q: "ما هو الإجراء المتبع في حال حدوث خلاف أثناء الجلسة؟", 
-    a: "تعتمد المنصة على تسجيل الجلسة كمرجع أساسي وهو تسجيل مؤقت يحذف نهائياً في حالة عدم وجود شكوى أو خلاف) في حال وجود شكوى، يقوم فريق الدعم الفني بمراجعة التسجيل والتحكيم بين الطرفين بناء على محتوى الشرح" 
+    a: "تعتمد المنصة على تسجيل الجلسة كمرجع أساسي (وهو تسجيل مؤقت يحذف نهائياً في حالة عدم وجود شكوى أو خلاف). في حال وجود شكوى، يقوم فريق الدعم الفني بمراجعة التسجيل والتحكيم بين الطرفين بناءً على محتوى الشرح." 
   }
 ];
 
@@ -75,13 +76,6 @@ export default function HomePage() {
   const [appealReason, setAppealReason] = useState("");
   const [isSendingAppeal, setIsSendingAppeal] = useState(false);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      // Stay on landing page
-    }
-  }, [user, isUserLoading]);
-
-  // Fix: Move navigation logic to useEffect to avoid rendering errors
   useEffect(() => {
     if (!isProfileLoading && profile?.needsProfileCompletion) {
       router.push("/profile");
@@ -141,10 +135,6 @@ export default function HomePage() {
     );
   }
 
-  if (profile.needsProfileCompletion) {
-    return null; // Will redirect via useEffect
-  }
-
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="relative overflow-hidden bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-2 border-primary/5">
@@ -182,7 +172,6 @@ function LandingPage({ router, settings }: any) {
   return (
     <div className="relative min-h-screen bg-white font-body overflow-x-hidden flex flex-col" dir="rtl">
       <div className="relative min-h-screen flex flex-col">
-        {/* Header Overlay */}
         <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
@@ -211,7 +200,6 @@ function LandingPage({ router, settings }: any) {
           </div>
         </header>
 
-        {/* Hero Section */}
         <main className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -254,7 +242,6 @@ function LandingPage({ router, settings }: any) {
         </main>
       </div>
 
-      {/* قسم كيف يعمل فهمت؟ */}
       <section className="bg-zinc-50 py-24 px-6 border-y">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-10">
@@ -292,7 +279,6 @@ function LandingPage({ router, settings }: any) {
         </div>
       </section>
 
-      {/* قسم لماذا تختار فهمت؟ */}
       <section className="bg-white py-24 px-6">
         <div className="max-w-7xl mx-auto space-y-20">
           <div className="text-center space-y-4">
@@ -319,7 +305,6 @@ function LandingPage({ router, settings }: any) {
         </div>
       </section>
 
-      {/* قسم أسئلة شائعة */}
       <section className="bg-zinc-50 py-24 px-6 border-t">
         <div className="max-w-7xl mx-auto space-y-20">
           <div className="text-center space-y-6">

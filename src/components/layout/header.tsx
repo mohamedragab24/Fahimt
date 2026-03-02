@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare, Bell } from "lucide-react";
+import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare, Bell, ShieldCheck } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useFirebase, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,7 +39,6 @@ export function Header() {
 
   const { data: profile } = useDoc(userRef);
 
-  // استعلام الرسائل غير المقروءة
   const unreadChatsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -52,7 +50,6 @@ export function Header() {
   const { data: unreadChats } = useCollection(unreadChatsQuery);
   const unreadMessagesCount = unreadChats?.filter(c => c.lastSenderId !== user?.uid).length || 0;
 
-  // استعلام الإشعارات غير المقروءة
   const unreadNotifsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -98,7 +95,6 @@ export function Header() {
             <div className="flex items-center gap-1 md:gap-2">
               {user && (
                 <>
-                  {/* أيقونة الرسائل */}
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -113,7 +109,6 @@ export function Header() {
                     )}
                   </Button>
 
-                  {/* أيقونة الإشعارات */}
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -143,7 +138,10 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-64 p-4 rounded-[2rem] shadow-2xl border-2" dir="rtl">
                       <div className="flex flex-col items-center gap-3 py-4 text-right">
-                        <p className="font-black text-lg">{profile?.fullName}</p>
+                        <p className="font-black text-lg flex items-center gap-1">
+                          {profile?.fullName}
+                          {profile?.isVerified && <ShieldCheck size={16} className="text-blue-500" />}
+                        </p>
                         <Badge className="mt-2">{profile?.role === 'mufhem' ? 'مُفهم' : 'مُستفهم'}</Badge>
                       </div>
                       <DropdownMenuSeparator />

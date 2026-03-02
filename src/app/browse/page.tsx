@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -21,7 +20,8 @@ import {
   Layers,
   ChevronRight,
   Timer,
-  Activity
+  Activity,
+  ShieldCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,6 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-/**
- * صفحة تصفح الاستفهامات - تم تثبيت كافة الاستيرادات المفقودة والتنسيق الهيكلي المطلوب.
- */
 export default function BrowseRequestsPage() {
   const firestore = useFirestore();
   const router = useRouter();
@@ -93,7 +90,7 @@ export default function BrowseRequestsPage() {
         <div className="relative w-full md:w-96">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder="ابحث باسم المفهم..." 
+            placeholder="ابحث باسم المستفهم..." 
             className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white text-right font-bold text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -183,7 +180,10 @@ function IstifhamCard({ req, allUsers, router }: any) {
           <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{req.mustafhemName?.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="space-y-1 text-center">
-          <p className="font-black text-xl text-zinc-900 leading-tight">{req.mustafhemName}</p>
+          <p className="font-black text-xl text-zinc-900 leading-tight flex items-center justify-center gap-1">
+            {req.mustafhemName}
+            {requester?.isVerified && <ShieldCheck size={16} className="text-blue-500" />}
+          </p>
           <p className="text-[10px] text-zinc-400 font-bold">{requester?.specialization || "مستفهم طموح"}</p>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -43,7 +42,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -88,7 +87,10 @@ export function AppSidebar() {
                   <AvatarFallback className="text-[10px] font-black">{profile?.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col truncate min-w-0">
-                  <span className="font-black text-[12px] truncate">{profile?.fullName}</span>
+                  <span className="font-black text-[12px] truncate flex items-center gap-1">
+                    {profile?.fullName}
+                    {profile?.isVerified && <ShieldCheck size={12} className="text-blue-500" />}
+                  </span>
                   <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 mr-auto px-1.5">{profile?.role === 'mufhem' ? 'مفهم' : 'مستفهم'}</Badge>
                 </div>
               </div>
