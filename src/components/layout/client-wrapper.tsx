@@ -18,7 +18,7 @@ interface ClientWrapperProps {
 }
 
 /**
- * مغلف الواجهة الرئيسي - تم تثبيت عرض القائمة الجانبية على 12rem وضبط حالتها الافتراضية كـ مفتوحة.
+ * مغلف الواجهة الرئيسي - تم إصلاح التداخل في تعريفات Sidebar لمنع خطأ RangeError.
  */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
@@ -36,7 +36,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
     <FirebaseClientProvider>
       <ThemeManager>
         <SidebarProvider defaultOpen={true}>
-          <div className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar" style={{ "--sidebar-width": "12rem", "--sidebar-width-icon": "2.5rem" } as React.CSSProperties}>
+          <div className="flex min-h-svh w-full bg-background overflow-hidden relative">
             <AppSidebar />
             <div className="flex flex-col flex-1 min-w-0 w-full relative">
               <Header />
