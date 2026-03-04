@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFirestore, useCollection, useMemoFirebase, useDoc, useUser } from "@/firebase";
@@ -107,8 +108,6 @@ export default function TeachersPage() {
     }
   };
 
-  const verifiedBadgeUrl = settings?.verifiedBadgeUrl || PlaceHolderImages.find(img => img.id === 'verified-badge')?.imageUrl;
-
   return (
     <div className="p-6 md:p-10 space-y-12 bg-zinc-50/50 min-h-screen" dir="rtl">
       <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -140,7 +139,6 @@ export default function TeachersPage() {
             
             <div className="space-y-1 mb-4 flex flex-col items-center w-full">
               <div className="flex items-center gap-2 justify-center">
-                <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
                 <h3 className="text-lg font-bold text-zinc-800 flex items-center gap-1">
                   {teacher.fullName}
                   {teacher.isVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}

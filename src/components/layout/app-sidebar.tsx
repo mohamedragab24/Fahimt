@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -133,7 +134,7 @@ export function AppSidebar() {
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild><SidebarMenuButton className="text-right"><Settings className="h-5 w-5 ml-2" /><span className="font-bold">الإعدادات</span><ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" /></SidebarMenuButton></CollapsibleTrigger>
-              <CollapsibleContent><SidebarMenuSub className="mr-3 pr-3 border-r-2"><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> الملف الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> المحفظة</Link></SidebarMenuSubButton></SidebarMenuSubItem></SidebarMenuSub></CollapsibleContent>
+              <CollapsibleContent><SidebarMenuSub className="mr-3 pr-3 border-r-2"><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> الملف الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> المحفظة</Link></SidebarMenuSubButton></SidebarMenuSub></CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
         </SidebarMenu>
