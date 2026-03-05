@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -17,9 +16,6 @@ interface ClientWrapperProps {
   children: React.ReactNode;
 }
 
-/**
- * مغلف الواجهة الرئيسي - تم إصلاح التداخل في تعريفات Sidebar لمنع خطأ RangeError.
- */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -36,7 +32,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
     <FirebaseClientProvider>
       <ThemeManager>
         <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-svh w-full bg-background overflow-hidden relative">
+          <div className="flex min-h-svh w-full bg-background overflow-hidden relative" dir="rtl">
             <AppSidebar />
             <div className="flex flex-col flex-1 min-w-0 w-full relative">
               <Header />
@@ -89,7 +85,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
         root.style.setProperty('--radius', settings.borderRadius);
       }
 
-      if (settings.faviconUrl && typeof document !== 'undefined') {
+      if (settings.logoUrl && typeof document !== 'undefined') {
         const updateFavicon = (url: string) => {
           if (!document.head) return;
           const cacheBuster = settings.updatedAt ? encodeURIComponent(settings.updatedAt) : Date.now();
@@ -100,7 +96,7 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
             existingLinks.forEach(link => { (link as HTMLLinkElement).href = finalUrl; });
           });
         };
-        updateFavicon(settings.faviconUrl);
+        updateFavicon(settings.logoUrl);
       }
 
       if (settings.siteTitle) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +42,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 const LANDING_FAQS = [
   { 
     q: "ما هي منصة فهمت وما الذي يميزها؟", 
-    a: "منصة فهمت هي وسيط تقني يربط بين المستفهم (من يبحث عن معلومة أو شرح سريع) و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." 
+    a: "منصة فهمت هي وسيط تقني يربط بين المستفهم من يبحث عن معلومة أو شرح سريع و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." 
   },
   { 
     q: "هل يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", 
@@ -156,9 +156,9 @@ export default function HomePage() {
         </div>
       </div>
       {profile.role === "mustafhem" ? (
-        <MustafhemView profile={profile} settings={settings} router={router} />
+        <MustafhemView profile={profile} router={router} />
       ) : (
-        <MufhemView profile={profile} settings={settings} router={router} />
+        <MufhemView profile={profile} router={router} />
       )}
     </div>
   );
@@ -174,7 +174,9 @@ function LandingPage({ router, settings }: any) {
       <div className="relative min-h-screen flex flex-col">
         <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg" />
+            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
+              <Menu className="h-6 w-6 md:h-7 md:size-7" />
+            </SidebarTrigger>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
@@ -433,18 +435,6 @@ function StepItem({ icon: Icon, color, title, desc }: any) {
         <p className="text-lg text-zinc-500 font-bold leading-relaxed">{desc}</p>
       </div>
     </div>
-  );
-}
-
-function FeatureCard({ icon: Icon, title, desc }: any) {
-  return (
-    <Card className="rounded-[3rem] border-2 p-10 text-center space-y-6 hover:shadow-2xl transition-all border-primary/5 hover:border-primary/20">
-      <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner">
-        <Icon size={40} />
-      </div>
-      <h4 className="text-2xl font-black text-zinc-800">{title}</h4>
-      <p className="text-lg text-zinc-500 font-bold leading-relaxed">{desc}</p>
-    </Card>
   );
 }
 
