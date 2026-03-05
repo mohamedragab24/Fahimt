@@ -25,7 +25,8 @@ import {
   BadgeCent,
   Clock,
   ClipboardList,
-  Layers
+  Layers,
+  ArrowRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc, useMemoFirebase, useCollection, useFirebase, useUser } from "@/firebase";
