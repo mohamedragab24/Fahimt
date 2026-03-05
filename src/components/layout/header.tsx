@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { GraduationCap, Layout, Search, Menu, User, Zap, MessageSquare, Bell, ShieldCheck } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, useFirebase, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where } from "firebase/firestore";
@@ -75,10 +74,6 @@ export function Header() {
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
-              <Menu className="h-6 w-6 md:h-7 md:size-7" />
-            </SidebarTrigger>
-
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 bg-transparent">
                 <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />
@@ -149,6 +144,8 @@ export function Header() {
                       <DropdownMenuItem onClick={() => router.push('/profile')} className="p-3 rounded-xl font-bold cursor-pointer">الملف الشخصي</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/wallet')} className="p-3 rounded-xl font-bold cursor-pointer">المحفظة</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/notifications')} className="p-3 rounded-xl font-bold cursor-pointer">الإشعارات</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {profile?.isAdmin && <DropdownMenuItem onClick={() => router.push('/admin')} className="p-3 rounded-xl font-bold cursor-pointer text-red-600">لوحة المسؤول</DropdownMenuItem>}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (

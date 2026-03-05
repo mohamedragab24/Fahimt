@@ -1,8 +1,7 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
@@ -16,6 +15,9 @@ interface ClientWrapperProps {
   children: React.ReactNode;
 }
 
+/**
+ * تم تعطيل SidebarProvider مؤقتاً لحل مشكلة RangeError: Invalid count value.
+ */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -31,23 +33,18 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <FirebaseClientProvider>
       <ThemeManager>
-        <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-svh w-full bg-background overflow-hidden relative" dir="rtl">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 w-full relative">
-              <Header />
-              <main className="flex-1 overflow-y-auto w-full">
-                <div className="max-w-[1920px] mx-auto w-full">
-                  {children}
-                </div>
-                <Footer />
-              </main>
+        <div className="flex min-h-svh w-full bg-background flex-col relative" dir="rtl">
+          <Header />
+          <main className="flex-1 overflow-y-auto w-full">
+            <div className="max-w-[1920px] mx-auto w-full">
+              {children}
             </div>
-          </div>
+            <Footer />
+          </main>
           {mounted && <PWAInstallBanner />}
           <FloatingChat />
           <Toaster />
-        </SidebarProvider>
+        </div>
       </ThemeManager>
     </FirebaseClientProvider>
   );

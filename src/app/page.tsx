@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -36,7 +37,6 @@ import { signOut } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -46,7 +46,7 @@ const LANDING_FAQS = [
     a: "منصة فهمت هي وسيط تقني يربط بين المستفهم من يبحث عن معلومة أو شرح سريع و المفهم (صاحب الخبرة والقدرة على الشرح). ما يميزنا هو التخصص في 'الفهم اللحظي' عبر جلسات مسجلة تضمن حق الطرفين، مع مراعاة الخصوصية التامة بفصل الجنسين في التعامل." 
   },
   { 
-    q: "هل يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", 
+    q: "يمكنني استخدام حسابي كمستفهم ومفهم في نفس الوقت؟", 
     a: "نعم، بضغطة زر واحدة يمكنك التحول من واجهة المستفهم لطلب المساعدة، إلى واجهة المفهم لتقديم عروضك ومساعدة الآخرين دون الحاجة لإنشاء حسابين." 
   },
   { 
@@ -175,9 +175,6 @@ function LandingPage({ router, settings }: any) {
       <div className="relative min-h-screen flex flex-col">
         <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
-              <Menu className="h-6 w-6 md:h-7 md:size-7" />
-            </SidebarTrigger>
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
@@ -201,7 +198,7 @@ function LandingPage({ router, settings }: any) {
           </div>
         </header>
 
-        <main className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden">
+        <main className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
               src={landingBg} 
@@ -282,16 +279,16 @@ function LandingPage({ router, settings }: any) {
 
       <section className="bg-zinc-50 py-24 px-6 border-t">
         <div className="max-w-7xl mx-auto space-y-20">
-          <div className="text-center space-y-6">
+          <div className="text-center">
             <h2 className="text-4xl md:text-6xl font-black text-zinc-900">أسئلة شائعة</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {LANDING_FAQS.map((faq, i) => (
               <Card key={i} className="rounded-[2.5rem] border-2 bg-white p-10 space-y-4 hover:border-primary/20 transition-all shadow-sm">
-                <h4 className="text-2xl font-black text-zinc-800 flex items-center gap-3">
-                  <HelpCircle className="text-primary" /> {faq.q}
+                <h4 className="text-2xl font-black text-zinc-800 flex items-center gap-3 text-right">
+                  <HelpCircle className="text-primary shrink-0" /> {faq.q}
                 </h4>
-                <p className="text-lg text-zinc-600 font-bold leading-relaxed">{faq.a}</p>
+                <p className="text-lg text-zinc-600 font-bold leading-relaxed text-right">{faq.a}</p>
               </Card>
             ))}
           </div>

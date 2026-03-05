@@ -56,7 +56,6 @@ export default function ProfilePage() {
       setFormData({
         fullName: profile.fullName || "",
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : "",
-        // نُظهر للمستخدم الصورة التي تنتظر المراجعة إذا وجدت، وإلا الصورة الرسمية
         profilePictureUrl: profile.profilePicturePending ? profile.pendingProfilePictureUrl : (profile.profilePictureUrl || ""),
         bio: profile.bio || "",
         idCardFront: profile.idCardFront || "",
@@ -90,14 +89,12 @@ export default function ProfilePage() {
         needsProfileCompletion: false
       };
       
-      // إذا قام المستخدم بتغيير الصورة المعروضة حالياً عن الصورة الرسمية المسجلة
       const currentOfficial = profile.profilePictureUrl || "";
       const currentPending = profile.pendingProfilePictureUrl || "";
       
       if (formData.profilePictureUrl !== (profile.profilePicturePending ? currentPending : currentOfficial)) {
         updateData.pendingProfilePictureUrl = formData.profilePictureUrl;
         updateData.profilePicturePending = true;
-        // لا نقوم بتحديث profilePictureUrl هنا، نتركها كما هي للآخرين حتى يوافق المسؤول
       }
       
       if (formData.idCardFront !== profile?.idCardFront) {
@@ -122,7 +119,10 @@ export default function ProfilePage() {
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-12 mb-24" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
-        <h1 className="text-4xl font-black font-headline text-zinc-900">الملف الشخصي</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-4xl font-black font-headline text-zinc-900">الملف الشخصي</h1>
+          {profile?.isVerified && <ShieldCheck className="h-10 w-10 text-blue-500" />}
+        </div>
         <Button variant="outline" onClick={() => signOut(auth).then(()=>router.push("/login"))} className="rounded-xl h-12 font-bold text-red-600 border-red-100">
           <LogOut className="ml-2" /> خروج
         </Button>
