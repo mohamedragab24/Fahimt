@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -175,9 +174,7 @@ function LandingPage({ router, settings }: any) {
       <div className="relative min-h-screen flex flex-col">
         <header className="absolute top-0 inset-x-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="flex items-center gap-4 shrink-0">
-            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg">
-              <Menu className="h-6 w-6 md:h-7 md:size-7" />
-            </SidebarTrigger>
+            <SidebarTrigger className="h-10 w-10 md:h-12 md:w-12 text-white bg-accent hover:bg-accent/90 rounded-xl shrink-0 border-none flex items-center justify-center shadow-lg" />
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden bg-transparent">
                 <img src={defaultLogo} className="w-full h-full object-contain" alt="Logo" />
@@ -276,32 +273,6 @@ function LandingPage({ router, settings }: any) {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-24 px-6">
-        <div className="max-w-7xl mx-auto space-y-20">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl md:text-6xl font-black text-zinc-900">لماذا تختار فهمت؟</h2>
-            <p className="text-xl text-zinc-500 font-bold max-w-2xl mx-auto">نحن نوفر لك البيئة الأكثر أماناً وجودة للتبادل المعرفي في العالم العربي.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <FeatureCard 
-              icon={ShieldCheck} 
-              title="أمان مالي تام" 
-              desc="لا يتم تحويل المستحقات للمفهم إلا بعد تأكيدك بأنك فهمت المعلومة بنسبة 100%."
-            />
-            <FeatureCard 
-              icon={Users} 
-              title="خبراء موثقون" 
-              desc="كافة المفهمين يتم مراجعة هويتهم وخبراتهم يدوياً قبل اعتمادهم في المنصة."
-            />
-            <FeatureCard 
-              icon={Target} 
-              title="شرح مخصص لك" 
-              desc="بدل مشاهدة فيديوهات عامة، احصل على شرح دقيق لنقطة ضعفك أنت شخصياً."
-            />
           </div>
         </div>
       </section>
