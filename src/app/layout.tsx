@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   keywords: 'تعلم, شرح فوري, دروس خصوصية, تعليم اونلاين, فهمت, منصة فهمت, خبير تعليمي',
   manifest: '/manifest.json', 
   icons: {
-    icon: 'https://picsum.photos/seed/fahimt-logo/512/512',
-    apple: 'https://picsum.photos/seed/fahimt-logo/512/512',
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   appleWebApp: {
     capable: true,
