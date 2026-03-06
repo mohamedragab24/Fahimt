@@ -201,7 +201,7 @@ export default function TeachersPage() {
                 </div>
                 <div className="bg-blue-50 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
                   <Briefcase className="text-blue-500 mb-1" size={20} />
-                  <p className="text-xs text-blue-600 font-bold">مشاريع منفذة</p>
+                  <p className="text-xs text-blue-600 font-bold">استفهامات أتمّها</p>
                   <p className="text-2xl font-black text-blue-700">{completedProjects?.length || 0}</p>
                 </div>
                 <div className="bg-zinc-100 p-4 rounded-2xl text-center flex flex-col items-center justify-center">
