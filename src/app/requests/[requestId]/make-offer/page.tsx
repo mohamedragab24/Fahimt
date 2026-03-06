@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   AlertCircle,
   HelpCircle,
-  User
+  User,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 /**
- * صفحة تقديم عرض تفهيم - تم تثبيت كافة الاستيرادات المفقودة (Badge, User).
+ * صفحة تقديم عرض تفهيم - تم تحديثها للفترة المجانية واختيار موعد محدد.
  */
 export default function MakeOfferPage() {
   const { requestId } = useParams();
@@ -37,23 +38,18 @@ export default function MakeOfferPage() {
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ amount: "", duration: "1", details: "" });
+  // السعر مثبت على صفر للفترة المجانية، والمدة أصبحت موعداً محدداً
+  const [formData, setFormData] = useState({ amount: "0", readyAt: "", details: "" });
 
   const requestRef = useMemoFirebase(() => (firestore && requestId) ? doc(firestore, "istifhams", requestId as string) : null, [firestore, requestId]);
   const { data: request, isLoading } = useDoc(requestRef);
-
-  useEffect(() => {
-    if (request) {
-      setFormData(prev => ({ ...prev, amount: request.amount.toString() }));
-    }
-  }, [request]);
 
   const handleSendOffer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !user || !request) return;
     
-    if (Number(formData.amount) <= 0) {
-      toast({ variant: "destructive", title: "مبلغ غير صحيح", description: "يرجى تحديد سعر مناسب لجهدك." });
+    if (!formData.readyAt) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى تحديد موعد جاهزيتك للجلسة." });
       return;
     }
 
@@ -63,8 +59,8 @@ export default function MakeOfferPage() {
         mufhemId: user.uid,
         mufhemName: user.displayName || "مفهم",
         mufhemAvatar: user.photoURL || "",
-        amount: Number(formData.amount),
-        duration: formData.duration,
+        amount: 0, // دائماً صفر في الفترة المجانية
+        readyAt: formData.readyAt,
         details: formData.details,
         status: "pending",
         createdAt: new Date().toISOString()
@@ -90,7 +86,7 @@ export default function MakeOfferPage() {
       <div className="flex items-center justify-between border-r-8 border-primary pr-6">
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-black font-headline text-zinc-900">تقديم عرض تفهيم</h1>
-          <p className="text-muted-foreground text-lg font-bold">ضع سعرك وخطة الشرح الخاصة بك لإقناع المستفهم.</p>
+          <p className="text-muted-foreground text-lg font-bold">ضع خطة الشرح الخاصة بك وموعد جاهزيتك لإقناع المستفهم.</p>
         </div>
         <Button variant="ghost" onClick={() => router.back()} className="h-14 rounded-2xl font-bold gap-2">
           <ChevronRight className="h-5 w-5" /> <span>رجوع</span>
@@ -105,7 +101,7 @@ export default function MakeOfferPage() {
             <h2 className="text-3xl font-black">{request?.title}</h2>
             <div className="pt-4 border-t border-white/10 flex gap-6 text-sm font-bold text-zinc-400 justify-end">
               <span className="flex items-center gap-2"><User size={16}/> المستفهم: {request?.mustafhemName}</span>
-              <span className="flex items-center gap-2"><BadgeCent size={16}/> ميزانية الطالب: {request?.amount} ج.م</span>
+              <span className="flex items-center gap-2"><Calendar size={16}/> موعد المستفهم: {new Date(request?.meetingTime).toLocaleString('ar-EG')}</span>
             </div>
           </div>
         </Card>
@@ -120,35 +116,33 @@ export default function MakeOfferPage() {
             <form onSubmit={handleSendOffer} className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3 text-right">
-                  <Label className="font-black text-lg flex items-center gap-2 justify-end">سعرك المقترح (ج.م) <BadgeCent size={18} className="text-green-600"/></Label>
+                  <Label className="font-black text-lg flex items-center gap-2 justify-end">سعرك المقترح <BadgeCent size={18} className="text-green-600"/></Label>
                   <Input 
-                    type="number" 
-                    className="h-16 rounded-2xl border-2 font-black text-3xl text-center shadow-inner focus:border-primary" 
-                    value={formData.amount} 
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})} 
-                    required 
+                    type="text" 
+                    readOnly
+                    className="h-16 rounded-2xl border-2 font-black text-3xl text-center shadow-inner bg-zinc-50 text-zinc-400" 
+                    value="0" 
                   />
-                  <p className="text-[10px] text-muted-foreground font-bold text-center">يمكنك اقتراح سعر أعلى أو أقل من ميزانية الطالب حسب جهدك.</p>
+                  <p className="text-[10px] text-green-600 font-black text-center">الخدمة مجانا لحين انتهاء الفترة المجانية</p>
                 </div>
                 <div className="space-y-3 text-right">
-                  <Label className="font-black text-lg flex items-center gap-2 justify-end">موعد الجاهزية (أيام) <Clock size={18} className="text-blue-600"/></Label>
+                  <Label className="font-black text-lg flex items-center gap-2 justify-end">موعد الجاهزية <Clock size={18} className="text-blue-600"/></Label>
                   <Input 
-                    type="number" 
-                    min="1"
-                    className="h-16 rounded-2xl border-2 font-bold text-xl text-center shadow-inner focus:border-primary" 
-                    value={formData.duration} 
-                    onChange={(e) => setFormData({...formData, duration: e.target.value})} 
+                    type="datetime-local" 
+                    className="h-16 rounded-2xl border-2 font-bold text-lg text-center shadow-inner focus:border-primary px-4" 
+                    value={formData.readyAt} 
+                    onChange={(e) => setFormData({...formData, readyAt: e.target.value})} 
                     required 
                   />
-                  <p className="text-[10px] text-muted-foreground font-bold text-center">كم يوماً تحتاج لتكون جاهزاً لهذه الجلسة؟</p>
+                  <p className="text-[10px] text-muted-foreground font-bold text-center">(يرجى الالتزام بالموعد الذي حدده المستفهم قدر الإمكان لزيادة فرصة قبول عرضك)</p>
                 </div>
               </div>
 
               <div className="space-y-3 text-right">
-                <Label className="font-black text-lg flex items-center gap-2 justify-end">كيف ستشرح هذا الموضوع؟ <FileText size={18} className="text-primary"/></Label>
+                <Label className="font-black text-lg flex items-center gap-2 justify-end">تفاصيل العرض <FileText size={18} className="text-primary"/></Label>
                 <Textarea 
                   className="h-48 rounded-[2rem] border-2 p-6 text-lg font-medium leading-relaxed focus:border-primary" 
-                  placeholder="اشرح أسلوبك، الأدوات التي ستستخدمها، ولماذا أنت الأنسب لفهم هذا الاستفهام..."
+                  placeholder="(اشرح اسلوبك ومؤهلاتك والأدوات التي ستستخدمها ووضح لماذا انت الأنسب لهذه المهمة)"
                   value={formData.details} 
                   onChange={(e) => setFormData({...formData, details: e.target.value})} 
                   required 
@@ -158,12 +152,12 @@ export default function MakeOfferPage() {
               <div className="p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 space-y-4">
                 <AlertCircle size={24} className="shrink-0 mt-1 text-blue-600" />
                 <p className="text-xs font-bold leading-relaxed text-blue-800">
-                  تنبيه: التزامك بالسعر والمدة المحددة في العرض هو أساس الثقة في فهمت. لا يحق لك طلب مبالغ إضافية خارج المنصة.
+                  تنبيه: التزامك بالموعد والجودة المحددة في العرض هو أساس الثقة في فهمت. لا يحق لك طلب مبالغ إضافية خارج المنصة.
                 </p>
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full h-24 rounded-[2.5rem] text-3xl font-black bg-primary shadow-2xl hover:scale-[1.02] transition-all">
-                {isSubmitting ? <><Loader2 className="animate-spin ml-3 h-8 w-8" /> جاري الإرسال...</> : "إرسال العرض المخصص"}
+                {isSubmitting ? <><Loader2 className="animate-spin ml-3 h-8 w-8" /> جاري الإرسال...</> : "إرسال العرض"}
               </Button>
             </form>
           </CardContent>
