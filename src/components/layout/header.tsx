@@ -13,6 +13,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -74,6 +75,9 @@ export function Header() {
         <div className="flex h-full items-center justify-between px-4 md:px-8 max-w-[1920px] mx-auto gap-4">
           
           <div className="flex items-center gap-4 shrink-0">
+            {/* زر فتح القائمة الجانبية */}
+            <SidebarTrigger className="text-zinc-600 hover:text-primary transition-colors" />
+            
             <Link href="/" className="flex items-center group shrink-0">
               <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 bg-transparent">
                 <img src={miniLogo} className="w-full h-full object-contain" alt="Logo" />

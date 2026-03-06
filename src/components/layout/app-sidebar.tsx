@@ -6,28 +6,22 @@ import {
   ClipboardList,
   Settings,
   LogOut,
-  Home,
   Users,
   Briefcase,
   HelpCircle,
-  MessageSquare,
   Zap,
-  User,
   Search,
-  RefreshCw,
-  Bell,
   BookOpen,
   ChevronDown,
   LayoutDashboard,
   ShieldCheck,
   Info,
   FileText,
-  ShieldAlert,
   History,
   Layout,
-  Star,
   PlusCircle,
-  ArrowRightLeft
+  User as UserIcon,
+  RefreshCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -46,12 +40,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -59,13 +50,20 @@ export function AppSidebar() {
   const { user, auth } = useFirebase();
   const { setOpen, setOpenMobile } = useSidebar();
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const userRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, "users", user.uid) : null, [firestore, user]);
   const { data: profile } = useDoc(userRef);
 
-  const handleLinkClick = () => { setOpen(false); setOpenMobile(false); };
-  const handleLogout = async () => { handleLinkClick(); await signOut(auth); router.push("/login"); };
+  const handleLinkClick = () => { 
+    setOpen(false); 
+    setOpenMobile(false); 
+  };
+
+  const handleLogout = async () => { 
+    handleLinkClick(); 
+    await signOut(auth); 
+    router.push("/login"); 
+  };
 
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const isAdmin = profile?.isAdmin || isMasterAdmin;
@@ -73,9 +71,9 @@ export function AppSidebar() {
   const NavItem = ({ href, icon: Icon, label }: any) => (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={pathname === href} onClick={handleLinkClick}>
-        <Link href={href} className="text-right flex-row-reverse justify-end font-bold">
-          <Icon className="h-5 w-5 ml-3 text-primary" />
-          <span>{label}</span>
+        <Link href={href} className="text-right flex-row-reverse justify-end font-bold gap-3">
+          <Icon className="h-5 w-5 text-primary shrink-0" />
+          <span className="flex-1 truncate">{label}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -93,6 +91,7 @@ export function AppSidebar() {
       <SidebarContent className="px-2 overflow-y-auto no-scrollbar">
         {user ? (
           <SidebarMenu className="space-y-1">
+            {/* الأقسام الأساسية للمسجل */}
             <NavItem href="/offers" icon={Zap} label="عروضي" />
             <NavItem href="/requests" icon={ClipboardList} label="استفهاماتي" />
             <NavItem href="/sessions" icon={History} label="جلساتي" />
@@ -109,17 +108,29 @@ export function AppSidebar() {
             <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
-                    <Settings className="h-5 w-5 ml-3 text-primary" />
-                    <span>الإعدادات</span>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold gap-3">
+                    <Settings className="h-5 w-5 text-primary shrink-0" />
+                    <span className="flex-1 truncate">الإعدادات</span>
                     <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs py-2">الملف الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/wallet" className="font-bold text-xs py-2">محفظتي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/portfolio/manage" className="font-bold text-xs py-2">معرض أعمالي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/profile" className="font-bold text-xs py-2">الملف الشخصي</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/wallet" className="font-bold text-xs py-2">محفظتي</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/portfolio/manage" className="font-bold text-xs py-2">معرض أعمالي</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
@@ -129,17 +140,29 @@ export function AppSidebar() {
             <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
-                    <HelpCircle className="h-5 w-5 ml-3 text-primary" />
-                    <span>مركز المساعدة</span>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold gap-3">
+                    <HelpCircle className="h-5 w-5 text-primary shrink-0" />
+                    <span className="flex-1 truncate">مركز المساعدة</span>
                     <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs py-2">الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs py-2">الأسئلة الشائعة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/contact-us" className="font-bold text-xs py-2">الدعم الفني</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/guide" className="font-bold text-xs py-2">الدليل الإرشادي</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/support" className="font-bold text-xs py-2">الأسئلة الشائعة</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/contact-us" className="font-bold text-xs py-2">الدعم الفني</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
@@ -149,27 +172,54 @@ export function AppSidebar() {
             <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
-                    <PlusCircle className="h-5 w-5 ml-3 text-primary" />
-                    <span>المزيد</span>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold gap-3">
+                    <PlusCircle className="h-5 w-5 text-primary shrink-0" />
+                    <span className="flex-1 truncate">المزيد</span>
                     <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/about" className="font-bold text-xs py-2">عن فهمت</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guarantees" className="font-bold text-xs py-2">ضمان الحقوق</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/terms" className="font-bold text-xs py-2">شروط الاستخدام</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/privacy-policy" className="font-bold text-xs py-2">سياسة الخصوصية</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/refund-policy" className="font-bold text-xs py-2">سياسة الاسترجاع</Link></SidebarMenuSubButton></SidebarMenuSubItem>
-                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/jobs" className="font-bold text-xs py-2">الوظائف</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/about" className="font-bold text-xs py-2">عن فهمت</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/guarantees" className="font-bold text-xs py-2">ضمان الحقوق</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/terms" className="font-bold text-xs py-2">شروط الاستخدام</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/privacy-policy" className="font-bold text-xs py-2">سياسة الخصوصية</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/refund-policy" className="font-bold text-xs py-2">سياسة الاسترجاع</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild onClick={handleLinkClick}>
+                        <Link href="/jobs" className="font-bold text-xs py-2">الوظائف</Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
             </Collapsible>
 
             {isAdmin && (
-              <NavItem href="/admin" icon={LayoutDashboard} label="لوحة المسؤول" />
+              <>
+                <SidebarSeparator className="my-4" />
+                <NavItem href="/admin" icon={LayoutDashboard} label="لوحة المسؤول" />
+              </>
             )}
           </SidebarMenu>
         ) : (
@@ -181,13 +231,12 @@ export function AppSidebar() {
             
             <SidebarSeparator className="my-4" />
 
-            {/* مركز المساعدة */}
             <Collapsible className="group/collapsible" defaultOpen>
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
-                    <HelpCircle className="h-5 w-5 ml-3 text-primary" />
-                    <span>مركز المساعدة</span>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold gap-3">
+                    <HelpCircle className="h-5 w-5 text-primary shrink-0" />
+                    <span className="flex-1 truncate">مركز المساعدة</span>
                     <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -201,13 +250,12 @@ export function AppSidebar() {
               </SidebarMenuItem>
             </Collapsible>
 
-            {/* المزيد */}
             <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
-                    <PlusCircle className="h-5 w-5 ml-3 text-primary" />
-                    <span>المزيد</span>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold gap-3">
+                    <PlusCircle className="h-5 w-5 text-primary shrink-0" />
+                    <span className="flex-1 truncate">المزيد</span>
                     <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -229,9 +277,9 @@ export function AppSidebar() {
       
       <SidebarFooter className="p-4 border-t bg-zinc-50">
         {user ? (
-          <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-red-600 font-black flex-row-reverse justify-end">
-            <LogOut className="h-5 w-5 ml-3" />
-            <span>خروج</span>
+          <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-red-600 font-black flex-row-reverse justify-end gap-3">
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span className="flex-1">خروج</span>
           </SidebarMenuButton>
         ) : (
           <SidebarMenuButton asChild onClick={handleLinkClick}>

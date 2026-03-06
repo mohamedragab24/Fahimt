@@ -36,13 +36,14 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
           <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir="rtl">
             <Header />
             <div className="flex flex-1 w-full">
-              <main className="flex-1 w-full flex flex-col relative">
+              {/* القائمة الجانبية تم استرجاعها هنا */}
+              <AppSidebar />
+              <main className="flex-1 w-full flex flex-col relative overflow-hidden">
                 <div className="flex-1 max-w-[1920px] mx-auto w-full">
                   {children}
                 </div>
                 <Footer />
               </main>
-              <AppSidebar />
             </div>
             {mounted && <PWAInstallBanner />}
             <FloatingChat />
