@@ -16,7 +16,7 @@ interface ClientWrapperProps {
 }
 
 /**
- * تم تعطيل SidebarProvider مؤقتاً لحل مشكلة RangeError: Invalid count value.
+ * تم حذف SidebarProvider و AppSidebar لحل مشكلة RangeError التي تسبب انهيار السيرفر.
  */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
@@ -33,9 +33,9 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <FirebaseClientProvider>
       <ThemeManager>
-        <div className="flex min-h-svh w-full bg-background flex-col relative" dir="rtl">
+        <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir="rtl">
           <Header />
-          <main className="flex-1 overflow-y-auto w-full">
+          <main className="flex-1 w-full">
             <div className="max-w-[1920px] mx-auto w-full">
               {children}
             </div>
