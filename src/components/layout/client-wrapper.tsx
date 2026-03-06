@@ -10,14 +10,13 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from "firebase/firestore";
 import { FloatingChat } from './floating-chat';
 import { PWAInstallBanner } from './pwa-install-banner';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/layout/app-sidebar';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
 }
 
-/**
- * تم حذف SidebarProvider و AppSidebar لحل مشكلة RangeError التي تسبب انهيار السيرفر.
- */
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -33,18 +32,23 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <FirebaseClientProvider>
       <ThemeManager>
-        <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir="rtl">
-          <Header />
-          <main className="flex-1 w-full">
-            <div className="max-w-[1920px] mx-auto w-full">
-              {children}
+        <SidebarProvider defaultOpen={false}>
+          <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir="rtl">
+            <Header />
+            <div className="flex flex-1 w-full">
+              <main className="flex-1 w-full flex flex-col relative">
+                <div className="flex-1 max-w-[1920px] mx-auto w-full">
+                  {children}
+                </div>
+                <Footer />
+              </main>
+              <AppSidebar />
             </div>
-            <Footer />
-          </main>
-          {mounted && <PWAInstallBanner />}
-          <FloatingChat />
-          <Toaster />
-        </div>
+            {mounted && <PWAInstallBanner />}
+            <FloatingChat />
+            <Toaster />
+          </div>
+        </SidebarProvider>
       </ThemeManager>
     </FirebaseClientProvider>
   );

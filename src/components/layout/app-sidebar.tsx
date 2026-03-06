@@ -17,13 +17,17 @@ import {
   RefreshCw,
   Bell,
   BookOpen,
-  Menu,
   ChevronDown,
   LayoutDashboard,
   ShieldCheck,
   Info,
   FileText,
-  ShieldAlert
+  ShieldAlert,
+  History,
+  Layout,
+  Star,
+  PlusCircle,
+  ArrowRightLeft
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -63,99 +67,180 @@ export function AppSidebar() {
   const handleLinkClick = () => { setOpen(false); setOpenMobile(false); };
   const handleLogout = async () => { handleLinkClick(); await signOut(auth); router.push("/login"); };
 
-  const toggleRole = async () => {
-    if (!profile || !userRef) return;
-    const newRole = profile.role === 'mufhem' ? 'mustafhem' : 'mufhem';
-    await updateDoc(userRef, { role: newRole });
-    toast({ title: "تم التبديل بنجاح" });
-    router.push("/");
-  };
-
   const isMasterAdmin = user?.email === "mohamed76y@gmail.com" || user?.email === "mohamjedminijd2006@gmail.com";
   const isAdmin = profile?.isAdmin || isMasterAdmin;
 
+  const NavItem = ({ href, icon: Icon, label }: any) => (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={pathname === href} onClick={handleLinkClick}>
+        <Link href={href} className="text-right flex-row-reverse justify-end font-bold">
+          <Icon className="h-5 w-5 ml-3 text-primary" />
+          <span>{label}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+
   return (
-    <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-sm fixed inset-y-0 z-50 bg-white">
-      <SidebarHeader className="p-4 shrink-0 text-right"><span className="font-black text-xs text-zinc-400">قائمة فهمت</span></SidebarHeader>
-      <SidebarSeparator />
-      <SidebarContent className="px-1.5 overflow-y-auto no-scrollbar">
-        {user && (
-          <div className="p-1.5 shrink-0">
-            <div className="bg-primary/5 p-3 rounded-2xl space-y-2.5 border text-right">
-              <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { handleLinkClick(); router.push('/profile'); }}>
-                <Avatar className="h-10 w-10 border-2 border-white shadow-md">
-                  <AvatarImage src={profile?.profilePictureUrl} />
-                  <AvatarFallback className="text-[10px] font-black">{profile?.fullName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col truncate min-w-0">
-                  <span className="font-black text-[12px] truncate flex items-center gap-1">
-                    {profile?.fullName}
-                    {profile?.isVerified && <ShieldCheck size={12} className="text-blue-500" />}
-                  </span>
-                  <Badge variant="secondary" className="w-fit text-[8px] h-4 mt-0.5 mr-auto px-1.5">{profile?.role === 'mufhem' ? 'مفهم' : 'مستفهم'}</Badge>
-                </div>
-              </div>
-              <button onClick={toggleRole} className="w-full h-10 rounded-xl text-[11px] font-black border-2 border-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1.5">
-                <RefreshCw className="h-4 w-4" /> التبديل بين: {profile?.role === 'mufhem' ? 'مستفهم' : 'مفهم'}
-              </button>
-            </div>
-          </div>
-        )}
-        <SidebarMenu className="space-y-1 pt-4 text-right">
-          <MenuLink href="/" icon={Home} label="الرئيسية" active={pathname === "/"} onClick={handleLinkClick} />
-          
-          <div className="px-4 pt-4 pb-2"><span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">🔹 تصفح</span></div>
-          <MenuLink href="/teachers" icon={Users} label="المُفهمين" active={pathname === "/teachers"} onClick={handleLinkClick} />
-          <MenuLink href="/portfolio" icon={Briefcase} label="أعمال المفهمين" active={pathname === "/portfolio"} onClick={handleLinkClick} />
-          <MenuLink href="/browse" icon={Search} label="الاستفهامات المطروحة" active={pathname === "/browse"} onClick={handleLinkClick} />
-          
-          {user && (
-            <>
-              <SidebarSeparator className="my-2" />
-              <MenuLink href="/notifications" icon={Bell} label="الإشعارات" active={pathname === "/notifications"} onClick={handleLinkClick} />
-              <MenuLink href="/messages" icon={MessageSquare} label="رسائلي" active={pathname === "/messages"} onClick={handleLinkClick} />
-              <MenuLink href="/requests" icon={ClipboardList} label="استفهاماتي" active={pathname === "/requests"} onClick={handleLinkClick} />
-            </>
-          )}
-
-          <div className="px-4 pt-4 pb-2"><span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">🔹 مركز المساعدة</span></div>
-          <MenuLink href="/guide" icon={BookOpen} label="الدليل الإرشادي" active={pathname === "/guide"} onClick={handleLinkClick} />
-          <MenuLink href="/support" icon={MessageSquare} label="الأسئلة الشائعة" active={pathname === "/support"} onClick={handleLinkClick} />
-          
-          {isAdmin && (
-            <>
-              <SidebarSeparator className="my-2" />
-              <div className="px-4 pt-4 pb-2"><span className="text-[10px] font-black text-red-500 uppercase tracking-widest">🛡️ الإدارة والرقابة</span></div>
-              <MenuLink href="/admin" icon={LayoutDashboard} label="لوحة المسؤول" active={pathname?.startsWith("/admin")} onClick={handleLinkClick} />
-            </>
-          )}
-
-          <SidebarSeparator className="my-2" />
-          <Collapsible className="group/collapsible">
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild><SidebarMenuButton className="text-right"><Settings className="h-5 w-5 ml-2" /><span className="font-bold">الإعدادات</span><ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" /></SidebarMenuButton></CollapsibleTrigger>
-              <CollapsibleContent><SidebarMenuSub className="mr-3 pr-3 border-r-2"><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/profile" className="font-bold text-xs"><User size={14} className="ml-2"/> الملف الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem><SidebarMenuSubItem><SidebarMenuSubButton asChild><Link href="/wallet" className="font-bold text-xs"><Wallet size={14} className="ml-2"/> المحفظة</Link></SidebarMenuSubButton></SidebarMenuSub></CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter className="p-3 border-t">
+    <Sidebar side="right" collapsible="offcanvas" className="border-l shadow-xl bg-white">
+      <SidebarHeader className="p-6 shrink-0 text-right">
+        <div className="flex items-center justify-end gap-3">
+          <span className="font-black text-xl text-primary">فهمت</span>
+          <div className="w-8 h-8 bg-primary rounded-lg"></div>
+        </div>
+      </SidebarHeader>
+      
+      <SidebarContent className="px-2 overflow-y-auto no-scrollbar">
         {user ? (
-          <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-red-600 font-black"><LogOut className="h-5 w-5 ml-2" /><span>خروج من فهمت</span></SidebarMenuButton>
+          <SidebarMenu className="space-y-1">
+            <NavItem href="/offers" icon={Zap} label="عروضي" />
+            <NavItem href="/requests" icon={ClipboardList} label="استفهاماتي" />
+            <NavItem href="/sessions" icon={History} label="جلساتي" />
+            
+            <SidebarSeparator className="my-4" />
+            
+            <NavItem href="/teachers" icon={Users} label="تصفح المفهمين" />
+            <NavItem href="/portfolio" icon={Layout} label="تصفح أعمال المفهمين" />
+            <NavItem href="/browse" icon={Search} label="تصفح الاستفهامات" />
+            
+            <SidebarSeparator className="my-4" />
+
+            {/* الإعدادات */}
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
+                    <Settings className="h-5 w-5 ml-3 text-primary" />
+                    <span>الإعدادات</span>
+                    <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/profile" className="font-bold text-xs py-2">الملف الشخصي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/wallet" className="font-bold text-xs py-2">محفظتي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/portfolio/manage" className="font-bold text-xs py-2">معرض أعمالي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+
+            {/* مركز المساعدة */}
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
+                    <HelpCircle className="h-5 w-5 ml-3 text-primary" />
+                    <span>مركز المساعدة</span>
+                    <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs py-2">الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs py-2">الأسئلة الشائعة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/contact-us" className="font-bold text-xs py-2">الدعم الفني</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+
+            {/* المزيد */}
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
+                    <PlusCircle className="h-5 w-5 ml-3 text-primary" />
+                    <span>المزيد</span>
+                    <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/about" className="font-bold text-xs py-2">عن فهمت</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guarantees" className="font-bold text-xs py-2">ضمان الحقوق</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/terms" className="font-bold text-xs py-2">شروط الاستخدام</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/privacy-policy" className="font-bold text-xs py-2">سياسة الخصوصية</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/refund-policy" className="font-bold text-xs py-2">سياسة الاسترجاع</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/jobs" className="font-bold text-xs py-2">الوظائف</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+
+            {isAdmin && (
+              <NavItem href="/admin" icon={LayoutDashboard} label="لوحة المسؤول" />
+            )}
+          </SidebarMenu>
         ) : (
-          <SidebarMenuButton asChild onClick={handleLinkClick}><Link href="/login" className="h-12 rounded-xl bg-primary text-white font-black flex items-center justify-center"><span>دخول / تسجيل</span></Link></SidebarMenuButton>
+          /* حالة عدم تسجيل الدخول */
+          <SidebarMenu className="space-y-1">
+            <NavItem href="/teachers" icon={Users} label="تصفح المفهمين" />
+            <NavItem href="/portfolio" icon={Layout} label="تصفح أعمال المفهمين" />
+            <NavItem href="/browse" icon={Search} label="تصفح الاستفهامات" />
+            
+            <SidebarSeparator className="my-4" />
+
+            {/* مركز المساعدة */}
+            <Collapsible className="group/collapsible" defaultOpen>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
+                    <HelpCircle className="h-5 w-5 ml-3 text-primary" />
+                    <span>مركز المساعدة</span>
+                    <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guide" className="font-bold text-xs py-2">الدليل الإرشادي</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/support" className="font-bold text-xs py-2">الأسئلة الشائعة</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/contact-us" className="font-bold text-xs py-2">الدعم الفني</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+
+            {/* المزيد */}
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-right flex-row-reverse justify-end font-bold">
+                    <PlusCircle className="h-5 w-5 ml-3 text-primary" />
+                    <span>المزيد</span>
+                    <ChevronDown className="mr-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="mr-8 pr-4 border-r-2 border-primary/10 space-y-1">
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/about" className="font-bold text-xs py-2">عن فهمت</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/guarantees" className="font-bold text-xs py-2">ضمان الحقوق</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/terms" className="font-bold text-xs py-2">شروط الاستخدام</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/privacy-policy" className="font-bold text-xs py-2">سياسة الخصوصية</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/refund-policy" className="font-bold text-xs py-2">سياسة الاسترجاع</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                    <SidebarMenuSubItem><SidebarMenuSubButton asChild onClick={handleLinkClick}><Link href="/jobs" className="font-bold text-xs py-2">الوظائف</Link></SidebarMenuSubButton></SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          </SidebarMenu>
+        )}
+      </SidebarContent>
+      
+      <SidebarFooter className="p-4 border-t bg-zinc-50">
+        {user ? (
+          <SidebarMenuButton onClick={handleLogout} className="h-12 rounded-xl text-red-600 font-black flex-row-reverse justify-end">
+            <LogOut className="h-5 w-5 ml-3" />
+            <span>خروج</span>
+          </SidebarMenuButton>
+        ) : (
+          <SidebarMenuButton asChild onClick={handleLinkClick}>
+            <Link href="/login" className="h-12 rounded-xl bg-primary text-white font-black flex items-center justify-center">
+              <span>دخول / تسجيل</span>
+            </Link>
+          </SidebarMenuButton>
         )}
       </SidebarFooter>
     </Sidebar>
-  );
-}
-
-function MenuLink({ href, icon: Icon, label, active, onClick }: any) {
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={active} onClick={onClick}>
-        <Link href={href} className="text-right"><Icon className="h-5 w-5 ml-2 text-primary" /><span className="font-bold">{label}</span></Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
   );
 }
