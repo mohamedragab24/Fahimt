@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -21,7 +22,8 @@ import {
   ChevronRight,
   Timer,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Plus
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -87,14 +89,22 @@ export default function BrowseRequestsPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10" dir="rtl">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-r-8 border-primary pr-6">
         <h1 className="text-4xl font-black font-headline tracking-tight text-zinc-900">الاستفهامات المطروحة</h1>
-        <div className="relative w-full md:w-96">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <Input 
-            placeholder="ابحث باسم المستفهم..." 
-            className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white text-right font-bold text-lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <Button 
+            onClick={() => router.push('/create-request')} 
+            className="h-14 px-8 rounded-2xl font-black text-lg bg-accent hover:bg-accent/90 shadow-lg order-2 md:order-none"
+          >
+            <Plus className="ml-2" /> طرح استفهام جديد
+          </Button>
+          <div className="relative w-full md:w-80">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Input 
+              placeholder="(ابحث بعنوان الاستفهام)" 
+              className="h-14 pr-12 rounded-2xl border-none shadow-md bg-white text-right font-bold text-lg"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
