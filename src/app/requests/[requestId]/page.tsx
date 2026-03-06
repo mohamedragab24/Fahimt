@@ -109,9 +109,11 @@ export default function RequestDetailsPage() {
             <Card className="rounded-[3rem] border-none shadow-xl bg-white overflow-hidden">
               <CardContent className="p-10 md:p-14 space-y-12">
                 <div className="space-y-4 text-right">
-                  <div className="flex items-center gap-3 justify-end mb-2">
+                  <div className="flex flex-wrap items-center gap-3 justify-start mb-2">
                     <span className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-black">{request.category}</span>
-                    <span className="text-zinc-400 text-xs font-bold flex items-center gap-1"><Clock size={14}/> منذ {new Date(request.createdAt).toLocaleDateString('ar-EG')}</span>
+                    {request.categorySub && <span className="bg-primary/5 text-primary/70 px-4 py-1.5 rounded-full text-xs font-black">{request.categorySub}</span>}
+                    {request.categoryOpt && <span className="bg-primary/5 text-primary/50 px-4 py-1.5 rounded-full text-xs font-black">{request.categoryOpt}</span>}
+                    <span className="text-zinc-400 text-xs font-bold flex items-center gap-1 mr-auto"><Clock size={14}/> منذ {new Date(request.createdAt).toLocaleDateString('ar-EG')}</span>
                   </div>
                   <h1 className="text-4xl md:text-5xl font-black text-zinc-900 leading-tight">
                     {request.title}
@@ -119,22 +121,22 @@ export default function RequestDetailsPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 justify-end text-zinc-400 font-black text-xs uppercase tracking-widest">
+                  <div className="flex items-center gap-3 justify-start text-zinc-800 font-black text-lg uppercase tracking-widest">
+                    <FileText size={22} className="text-primary" />
                     <span>تفاصيل الاستفهام</span>
-                    <FileText size={18} />
                   </div>
-                  <div className="text-xl text-zinc-700 leading-relaxed font-medium bg-zinc-50/50 p-10 rounded-[2.5rem] border-2 border-dashed border-zinc-100">
+                  <div className="text-lg text-zinc-700 leading-relaxed font-medium bg-zinc-50/50 p-10 rounded-[2.5rem] border-2 border-dashed border-zinc-100">
                     {request.description}
                   </div>
                 </div>
 
                 {request.goal && (
                   <div className="space-y-6">
-                    <div className="flex items-center gap-3 justify-end text-accent font-black text-xs uppercase tracking-widest">
+                    <div className="flex items-center gap-3 justify-start text-zinc-800 font-black text-lg uppercase tracking-widest">
+                      <Target size={22} className="text-accent" />
                       <span>الهدف المرجو تحقيقه</span>
-                      <Target size={18} />
                     </div>
-                    <div className="text-xl text-zinc-800 font-black italic bg-accent/5 p-10 rounded-[2.5rem] border-2 border-accent/10 border-dashed">
+                    <div className="text-lg text-zinc-800 font-bold italic bg-accent/5 p-10 rounded-[2.5rem] border-2 border-accent/10 border-dashed">
                       "{request.goal}"
                     </div>
                   </div>
@@ -146,7 +148,7 @@ export default function RequestDetailsPage() {
                       onClick={() => router.push(`/requests/${requestId}/make-offer`)}
                       className="w-full h-20 rounded-[2rem] text-2xl font-black bg-primary shadow-2xl hover:scale-[1.02] transition-all"
                     >
-                      <Zap className="ml-2" /> أنا أفهمك.. قدم عرضك الآن
+                      <Zap className="ml-2" /> قدم عرضك الآن
                     </Button>
                   </div>
                 )}
@@ -283,16 +285,6 @@ export default function RequestDetailsPage() {
                 </div>
               </div>
             </Card>
-
-            <div className="p-8 bg-zinc-900 rounded-[2.5rem] text-white space-y-4 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 left-0 p-10 opacity-5 -rotate-12">
-                <BadgeCent size={120} />
-              </div>
-              <h4 className="text-xl font-black flex items-center gap-2 relative z-10">ضمان فهمت <ShieldCheck size={24} className="text-primary" /></h4>
-              <p className="text-zinc-400 font-bold text-sm leading-relaxed relative z-10">
-                أموالك في أمان تام؛ حيث لا يتم تحويل المستحقات للمفهم إلا بعد انتهاء الجلسة وتأكيدك بأنك "فهمت" المعلومة تماماً.
-              </p>
-            </div>
           </div>
         </div>
       </div>
