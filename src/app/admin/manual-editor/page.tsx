@@ -103,7 +103,7 @@ export default function ManualEditorPage() {
     teacherDashboardSubtitle: "كلما زادت أعمالك المميزة في المعرض, زادت ثقة الطلاب باختيارك لمشاريعهم.",
     teacherDashboardBtn: "إضافة عمل جديد للمعرض",
     teachersListTitle: "نخبة 'المفهمين' الموثقين",
-    teachersListSearchPlaceholder: "ابحث باسم المدرس أو التخصص...",
+    teachersListSearchPlaceholder: "(ابحث باسم المفهم)",
     portfolioListTitle: "أعمال المفهمين",
     portfolioListSubtitle: "نماذج تعليمية ملهمة من خبراء منصة فهمت.",
     createIstifhamTitle: "تفاصيل الاستفهام",

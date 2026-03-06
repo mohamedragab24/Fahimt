@@ -117,7 +117,7 @@ export default function TeachersPage() {
         <div className="relative mt-8 max-w-xl mx-auto">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           <Input 
-            placeholder={settings?.teachersListSearchPlaceholder || "ابحث باسم المدرس أو التخصص..."} 
+            placeholder={settings?.teachersListSearchPlaceholder || "(ابحث باسم المفهم)"} 
             className="h-14 pr-12 rounded-2xl shadow-sm border-2 bg-white focus:border-primary"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
