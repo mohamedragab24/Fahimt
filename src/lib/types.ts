@@ -50,8 +50,6 @@ export interface CourseLesson {
   videoFileSize?: string;
 }
 
-export type CourseStatus = 'pending' | 'approved' | 'rejected';
-
 export interface Course {
   id: string;
   title: string;
@@ -63,10 +61,11 @@ export interface Course {
   instructorId: string;
   instructorName: string;
   instructorAvatar?: string;
-  status: CourseStatus; // حالة اعتماد الإدارة: قيد المراجعة / معتمد / مرفوض
-  rejectionReason?: string; // سبب الرفض اللي الإدارة بتكتبه للمفهم
-  isPaused?: boolean; // إيقاف مؤقت من الإدارة لكورس معتمد بالفعل
-  externalPlayerUrl?: string; // رابط المشغل الخارجي لباقي دروس الكورس (غير درس المعاينة)
+  isPublished: boolean;
+  /** Course must be approved by an admin before appearing publicly. */
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvedAt?: string;
+  courseUrl?: string;
   category: string;
   createdAt: string;
   updatedAt?: string;
@@ -77,7 +76,6 @@ export interface Course {
 export interface CourseEnrollment {
   id: string;
   courseId: string;
-  instructorId: string;
   studentId: string;
   studentName: string;
   studentEmail: string;

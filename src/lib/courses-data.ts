@@ -1,274 +1,285 @@
-"use client";
-
-// طبقة بيانات الكورسات — Firestore حقيقي مشترك بين كل المستخدمين
-// (بدل التخزين المحلي القديم اللي كان بيحفظ في كل متصفح لوحده).
-
 import { Course, CourseEnrollment } from "./types";
-import { initializeFirebase } from "@/firebase";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  where,
-  type Unsubscribe,
-} from "firebase/firestore";
 
-function db() {
-  return initializeFirebase().firestore;
-}
+const INITIAL_COURSES: Course[] = [];
 
-function reportPermissionError(path: string, operation: "write" | "create" | "update" | "delete", data?: any) {
-  errorEmitter.emit(
-    "permission-error",
-    new FirestorePermissionError({ path, operation, requestResourceData: data })
-  );
-}
+const STORAGE_KEY_COURSES = "fahimt_ready_courses_v2";
+const STORAGE_KEY_ENROLLMENTS = "fahimt_course_enrollments_v2";
 
-// ---------------------------------------------------------------------------
-// الكورسات — Courses
-// ---------------------------------------------------------------------------
+const DEMO_COURSE_IDS = new Set(["course-web-dev-pro", "course-math-calculus", "course-ai-prompting"]);
 
-/** اشتراك لحظي (Realtime) في كل الكورسات. استخدمه بدل getStoredCourses القديمة. */
-export function subscribeToCourses(
-  callback: (courses: Course[]) => void,
-  onError?: (err: unknown) => void
-): Unsubscribe {
-  const ref = collection(db(), "courses");
-  return onSnapshot(
-    ref,
-    (snap) => {
-      const courses = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Course[];
-      courses.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-      callback(courses);
-    },
-    (err) => {
-      console.error("تعذر جلب الكورسات من Firestore:", err);
-      onError?.(err);
-      callback([]);
+export function getStoredCourses(): Course[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_COURSES);
+    if (!raw) {
+      return [];
     }
-  );
-}
-
-export async function getCourseById(id: string): Promise<Course | undefined> {
-  const snap = await getDoc(doc(db(), "courses", id));
-  if (!snap.exists()) return undefined;
-  return { id: snap.id, ...(snap.data() as any) } as Course;
-}
-
-/** إنشاء كورس جديد أو تحديث كورس موجود. الكورس الجديد يبدأ دايمًا بحالة "قيد المراجعة". */
-export async function upsertCourse(course: Course, isNew: boolean): Promise<void> {
-  const firestore = db();
-  const ref = doc(firestore, "courses", course.id);
-  const nowIso = new Date().toISOString();
-
-  const payload: Course = isNew
-    ? { ...course, status: "pending", rejectionReason: "", isPaused: false, createdAt: nowIso, updatedAt: nowIso }
-    : { ...course, updatedAt: nowIso };
-
-  try {
-    await setDoc(ref, payload, { merge: true });
-  } catch (err) {
-    reportPermissionError(ref.path, isNew ? "create" : "update", payload);
-    throw err;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Ensure all demo mock courses are excluded
+    return parsed.filter((c: any) => c && c.id && !DEMO_COURSE_IDS.has(c.id));
+  } catch (e) {
+    console.error("Failed to parse stored courses", e);
+    return [];
   }
 }
 
-export async function deleteCourse(courseId: string): Promise<void> {
-  const ref = doc(db(), "courses", courseId);
+export function saveCourses(courses: Course[]): void {
+  if (typeof window === "undefined") return;
   try {
-    await deleteDoc(ref);
-  } catch (err) {
-    reportPermissionError(ref.path, "delete");
-    throw err;
+    localStorage.setItem(STORAGE_KEY_COURSES, JSON.stringify(courses));
+    window.dispatchEvent(new Event("fahimt_courses_updated"));
+  } catch (e) {
+    console.error("Failed to save courses", e);
   }
 }
 
-/** إجراءات الإدارة فقط: موافقة / رفض (مع سبب) / إيقاف مؤقت أو تفعيل كورس معتمد. */
-export async function approveCourse(courseId: string): Promise<void> {
-  const ref = doc(db(), "courses", courseId);
+export function getCourseById(id: string): Course | undefined {
+  const courses = getStoredCourses();
+  return courses.find(c => c.id === id);
+}
+
+export function upsertCourse(course: Course): void {
+  const courses = getStoredCourses();
+  const index = courses.findIndex(c => c.id === course.id);
+  if (index >= 0) {
+    courses[index] = { ...courses[index], ...course, updatedAt: new Date().toISOString() };
+  } else {
+    courses.unshift(course);
+  }
+  saveCourses(courses);
+}
+
+export function deleteCourse(courseId: string): void {
+  const courses = getStoredCourses();
+  const filtered = courses.filter(c => c.id !== courseId);
+  saveCourses(filtered);
+}
+
+export function getStoredEnrollments(): CourseEnrollment[] {
+  if (typeof window === "undefined") return [];
   try {
-    await updateDoc(ref, { status: "approved", rejectionReason: "", updatedAt: new Date().toISOString() });
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const c = snap.data() as any;
-      const { notifyFollowersOfNewCourse } = await import("./follow-data");
-      notifyFollowersOfNewCourse(c.instructorId, c.instructorName, c.title, courseId).catch(() => {});
-    }
-  } catch (err) {
-    reportPermissionError(ref.path, "update", { status: "approved" });
-    throw err;
+    const raw = localStorage.getItem(STORAGE_KEY_ENROLLMENTS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error("Failed to parse enrollments", e);
+    return [];
   }
 }
 
-export async function rejectCourse(courseId: string, reason: string): Promise<void> {
-  const ref = doc(db(), "courses", courseId);
+export function saveEnrollments(enrollments: CourseEnrollment[]): void {
+  if (typeof window === "undefined") return;
   try {
-    await updateDoc(ref, { status: "rejected", rejectionReason: reason, updatedAt: new Date().toISOString() });
-  } catch (err) {
-    reportPermissionError(ref.path, "update", { status: "rejected", rejectionReason: reason });
-    throw err;
+    localStorage.setItem(STORAGE_KEY_ENROLLMENTS, JSON.stringify(enrollments));
+    window.dispatchEvent(new Event("fahimt_enrollments_updated"));
+  } catch (e) {
+    console.error("Failed to save enrollments", e);
   }
 }
 
-export async function setCoursePaused(courseId: string, isPaused: boolean): Promise<void> {
-  const ref = doc(db(), "courses", courseId);
-  try {
-    await updateDoc(ref, { isPaused, updatedAt: new Date().toISOString() });
-  } catch (err) {
-    reportPermissionError(ref.path, "update", { isPaused });
-    throw err;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// الاشتراكات (المشتريات) — Enrollments
-// ---------------------------------------------------------------------------
-
-export function subscribeToEnrollments(
-  callback: (enrollments: CourseEnrollment[]) => void,
-  onError?: (err: unknown) => void
-): Unsubscribe {
-  const ref = collection(db(), "course_enrollments");
-  return onSnapshot(
-    ref,
-    (snap) => {
-      const enrollments = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as CourseEnrollment[];
-      callback(enrollments);
-    },
-    (err) => {
-      console.error("تعذر جلب الاشتراكات من Firestore:", err);
-      onError?.(err);
-      callback([]);
-    }
-  );
-}
-
-export async function isUserEnrolled(courseId: string, studentId?: string): Promise<boolean> {
+export function isUserEnrolled(courseId: string, studentId?: string): boolean {
   if (!studentId) return false;
-  const q = query(
-    collection(db(), "course_enrollments"),
-    where("courseId", "==", courseId),
-    where("studentId", "==", studentId)
-  );
-  const snap = await getDocs(q);
-  return !snap.empty;
+  const enrollments = getStoredEnrollments();
+  return enrollments.some(e => e.courseId === courseId && e.studentId === studentId);
 }
 
-export async function enrollStudent(
-  courseId: string,
-  instructorId: string,
-  studentId: string,
-  studentName: string,
-  studentEmail: string,
+export function enrollStudent(
+  courseId: string, 
+  studentId: string, 
+  studentName: string, 
+  studentEmail: string, 
   amount: number
-): Promise<CourseEnrollment> {
-  const firestore = db();
-  const already = await isUserEnrolled(courseId, studentId);
-  if (already) {
-    const q = query(
-      collection(firestore, "course_enrollments"),
-      where("courseId", "==", courseId),
-      where("studentId", "==", studentId)
-    );
-    const snap = await getDocs(q);
-    const existingDoc = snap.docs[0];
-    return { id: existingDoc.id, ...(existingDoc.data() as any) } as CourseEnrollment;
-  }
+): CourseEnrollment {
+  const enrollments = getStoredEnrollments();
+  const existing = enrollments.find(e => e.courseId === courseId && e.studentId === studentId);
+  if (existing) return existing;
 
-  const enrollmentId = `enroll-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   const newEnrollment: CourseEnrollment = {
-    id: enrollmentId,
+    id: `enroll-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     courseId,
-    instructorId,
     studentId,
     studentName,
     studentEmail,
     enrolledAt: new Date().toISOString(),
     amountPaid: amount,
     progressPercent: 0,
-    completedLessonIds: [],
+    completedLessonIds: []
   };
 
-  const enrollRef = doc(firestore, "course_enrollments", enrollmentId);
-  try {
-    await setDoc(enrollRef, newEnrollment);
-  } catch (err) {
-    reportPermissionError(enrollRef.path, "create", newEnrollment);
-    throw err;
-  }
+  enrollments.push(newEnrollment);
+  saveEnrollments(enrollments);
 
-  // تحديث عدد المبيعات في الكورس
-  const courseRef = doc(firestore, "courses", courseId);
-  try {
-    const courseSnap = await getDoc(courseRef);
-    const currentTotal = (courseSnap.exists() ? (courseSnap.data() as any).totalEnrollments : 0) || 0;
-    await updateDoc(courseRef, { totalEnrollments: currentTotal + 1 });
-  } catch {
-    // غير حرج: العملية الأساسية (الاشتراك) نجحت بالفعل حتى لو فشل تحديث العداد
+  // Update total enrollments in the course object
+  const courses = getStoredCourses();
+  const course = courses.find(c => c.id === courseId);
+  if (course) {
+    course.totalEnrollments = (course.totalEnrollments || 0) + 1;
+    saveCourses(courses);
   }
 
   return newEnrollment;
 }
 
-export async function updateLessonProgress(
-  courseId: string,
-  studentId: string,
-  lessonId: string,
-  isCompleted: boolean,
-  totalLessons: number
-): Promise<void> {
-  const firestore = db();
-  const q = query(
-    collection(firestore, "course_enrollments"),
-    where("courseId", "==", courseId),
-    where("studentId", "==", studentId)
-  );
-  const snap = await getDocs(q);
-  const existingDoc = snap.docs[0];
-  if (!existingDoc) return;
+export function updateLessonProgress(
+  courseId: string, 
+  studentId: string, 
+  lessonId: string, 
+  isCompleted: boolean
+): void {
+  const enrollments = getStoredEnrollments();
+  const enrollment = enrollments.find(e => e.courseId === courseId && e.studentId === studentId);
+  if (!enrollment) return;
 
-  const enrollment = existingDoc.data() as CourseEnrollment;
+  const course = getCourseById(courseId);
+  if (!course) return;
+
   const currentIds = new Set(enrollment.completedLessonIds || []);
   if (isCompleted) {
     currentIds.add(lessonId);
   } else {
     currentIds.delete(lessonId);
   }
-  const completedLessonIds = Array.from(currentIds);
-  const progressPercent = Math.min(100, Math.round((completedLessonIds.length / Math.max(1, totalLessons)) * 100));
 
-  const ref = doc(firestore, "course_enrollments", existingDoc.id);
-  try {
-    await updateDoc(ref, { completedLessonIds, progressPercent });
-  } catch (err) {
-    reportPermissionError(ref.path, "update", { completedLessonIds, progressPercent });
-    throw err;
-  }
+  enrollment.completedLessonIds = Array.from(currentIds);
+  const totalLessons = course.lessons.length || 1;
+  enrollment.progressPercent = Math.min(100, Math.round((enrollment.completedLessonIds.length / totalLessons) * 100));
+
+  saveEnrollments(enrollments);
 }
 
-export async function getEnrollmentsForInstructor(
-  instructorId: string
-): Promise<{ enrollment: CourseEnrollment; course: Course }[]> {
-  const firestore = db();
-  const coursesQ = query(collection(firestore, "courses"), where("instructorId", "==", instructorId));
-  const coursesSnap = await getDocs(coursesQ);
-  const courses = coursesSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Course[];
-  const courseIds = new Set(courses.map((c) => c.id));
+export function getEnrollmentsForInstructor(instructorId: string): { enrollment: CourseEnrollment; course: Course }[] {
+  const courses = getStoredCourses().filter(c => c.instructorId === instructorId);
+  const courseIds = new Set(courses.map(c => c.id));
+  const enrollments = getStoredEnrollments().filter(e => courseIds.has(e.courseId));
 
-  const enrollQ = query(collection(firestore, "course_enrollments"), where("instructorId", "==", instructorId));
-  const enrollSnap = await getDocs(enrollQ);
-  const enrollments = enrollSnap.docs
-    .map((d) => ({ id: d.id, ...(d.data() as any) })) as CourseEnrollment[];
+  return enrollments.map(e => ({
+    enrollment: e,
+    course: courses.find(c => c.id === e.courseId)!
+  }));
+}
 
-  return enrollments
-    .filter((e) => courseIds.has(e.courseId))
-    .map((e) => ({ enrollment: e, course: courses.find((c) => c.id === e.courseId)! }));
+// Firestore helpers used by the shared course platform.
+import type { Firestore } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
+
+export function mapFirestoreCourse(id: string, data: any): Course {
+  const rawLessons = Array.isArray(data?.lessons) ? data.lessons : [];
+  return {
+    id,
+    title: String(data?.title ?? data?.name ?? ""),
+    description: String(data?.description ?? ""),
+    coverUrl: String(data?.coverUrl ?? data?.thumbnailUrl ?? ""),
+    price: Number(data?.price ?? 0),
+    features: Array.isArray(data?.features) ? data.features.map(String) : [],
+    lessons: rawLessons.map((l: any, index: number) => ({
+      id: String(l?.id ?? `lesson-${index + 1}`),
+      title: String(l?.title ?? l?.name ?? ""),
+      description: l?.description ? String(l.description) : undefined,
+      videoUrl: String(l?.videoUrl ?? ""),
+      durationMinutes: Number(l?.durationMinutes ?? 0),
+      order: Number(l?.order ?? index + 1),
+      isFreePreview: Boolean(l?.isFreePreview ?? l?.isPreview ?? false),
+      videoFileName: l?.videoFileName ? String(l.videoFileName) : undefined,
+      videoFileSize: l?.videoFileSize ? String(l.videoFileSize) : undefined,
+    })),
+    instructorId: String(data?.instructorId ?? ""),
+    instructorName: String(data?.instructorName ?? ""),
+    instructorAvatar: data?.instructorAvatar ? String(data.instructorAvatar) : "",
+    isPublished: data?.isPublished === true,
+    approvalStatus: data?.approvalStatus ?? (data?.isPublished ? "approved" : "pending"),
+    approvedAt: data?.approvedAt ? String(data.approvedAt) : undefined,
+    courseUrl: data?.courseUrl ? String(data.courseUrl) : `https://fahmt-jonh.vercel.app/courses/${id}`,
+    category: String(data?.category ?? ""),
+    createdAt: String(data?.createdAt ?? ""),
+    updatedAt: data?.updatedAt ? String(data.updatedAt) : undefined,
+    totalEnrollments: Number(data?.totalEnrollments ?? 0),
+    rating: Number(data?.rating ?? 5),
+  };
+}
+
+export async function fetchFirestoreCourse(firestore: Firestore, courseId: string): Promise<Course | null> {
+  const courseSnap = await getDoc(doc(firestore, "courses", courseId));
+  if (!courseSnap.exists()) return null;
+  const lessonsSnap = await getDocs(collection(firestore, "courses", courseId, "lessons"));
+  const lessons = lessonsSnap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a: any, b: any) => Number(a.order ?? 0) - Number(b.order ?? 0));
+  return mapFirestoreCourse(courseSnap.id, { ...courseSnap.data(), lessons });
+}
+
+export async function fetchFirestoreCourses(firestore: Firestore): Promise<Course[]> {
+  const snap = await getDocs(query(collection(firestore, "courses"), orderBy("createdAt", "desc")));
+  return snap.docs.map((d) => mapFirestoreCourse(d.id, d.data()));
+}
+
+export async function getNextCourseId(firestore: Firestore): Promise<string> {
+  const snap = await getDocs(collection(firestore, "courses"));
+  let max = 0;
+  const pattern = /^course-(\d+)-789401347533-dr6h$/;
+  snap.docs.forEach((d) => {
+    const match = d.id.match(pattern);
+    if (match) max = Math.max(max, Number(match[1]));
+  });
+  return `course-${max + 1}-789401347533-dr6h`;
+}
+
+export async function saveCourseToFirestore(
+  firestore: Firestore,
+  course: Course,
+): Promise<void> {
+  const courseRef = doc(firestore, "courses", course.id);
+  const lessonData = course.lessons.map((lesson) => ({
+    id: lesson.id,
+    title: lesson.title,
+    description: lesson.description ?? "",
+    videoUrl: lesson.videoUrl,
+    durationMinutes: lesson.durationMinutes,
+    durationSeconds: Math.max(0, Math.round(lesson.durationMinutes * 60)),
+    order: lesson.order,
+    isFreePreview: lesson.isFreePreview === true,
+    isPreview: lesson.isFreePreview === true,
+    videoFileName: lesson.videoFileName ?? "",
+    videoFileSize: lesson.videoFileSize ?? "",
+  }));
+
+  await setDoc(courseRef, {
+    title: course.title,
+    description: course.description,
+    coverUrl: course.coverUrl,
+    price: course.price,
+    features: course.features,
+    instructorId: course.instructorId,
+    instructorName: course.instructorName,
+    instructorAvatar: course.instructorAvatar ?? "",
+    category: course.category,
+    isPublished: course.isPublished,
+    approvalStatus: course.approvalStatus ?? "pending",
+    approvedAt: course.approvedAt ?? null,
+    courseUrl: course.courseUrl ?? `https://fahmt-jonh.vercel.app/courses/${course.id}`,
+    createdAt: course.createdAt,
+    updatedAt: new Date().toISOString(),
+    totalEnrollments: course.totalEnrollments ?? 0,
+    rating: course.rating ?? 5,
+  }, { merge: true });
+
+  const batch = writeBatch(firestore);
+  course.lessons.forEach((lesson) => {
+    batch.set(
+      doc(courseRef, "lessons", lesson.id),
+      lessonData.find((l) => l.id === lesson.id)!,
+      { merge: true },
+    );
+  });
+  await batch.commit();
 }

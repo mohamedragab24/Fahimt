@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -51,22 +51,13 @@ export function CoursePurchaseDialog({
 
   const [paymentMethod, setPaymentMethod] = useState<"balance" | "card">("balance");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isAlreadyBought, setIsAlreadyBought] = useState(false);
-  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
-
-  useEffect(() => {
-    if (!open || !course) return;
-    setCheckingEnrollment(true);
-    isUserEnrolled(course.id, studentId)
-      .then((bought) => setIsAlreadyBought(bought))
-      .finally(() => setCheckingEnrollment(false));
-  }, [open, course?.id, studentId]);
 
   if (!course) return null;
 
+  const isAlreadyBought = isUserEnrolled(course.id, studentId);
   const isOwner = course.instructorId === studentId;
 
-  const handleConfirmPurchase = async () => {
+  const handleConfirmPurchase = () => {
     if (isAlreadyBought) {
       toast({
         variant: "destructive",
@@ -87,16 +78,16 @@ export function CoursePurchaseDialog({
 
     setIsProcessing(true);
 
-    try {
-      await enrollStudent(
+    setTimeout(() => {
+      enrollStudent(
         course.id,
-        course.instructorId,
         studentId,
         studentName,
         studentEmail,
         course.price
       );
 
+      setIsProcessing(false);
       toast({
         title: "تم الاشتراك في الكورس بنجاح!",
         description: "تم تفعيل الكورس في حسابك، يمكنك البدء في المشاهدة المحمية الآن فوراً."
@@ -108,15 +99,7 @@ export function CoursePurchaseDialog({
       } else {
         router.push(`/courses/${course.id}`);
       }
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "تعذر إتمام الشراء",
-        description: "حدث خطأ أثناء تفعيل اشتراكك، حاول مرة أخرى."
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+    }, 1200);
   };
 
   return (
@@ -270,7 +253,7 @@ export function CoursePurchaseDialog({
 
               <Button
                 onClick={handleConfirmPurchase}
-                disabled={isProcessing || checkingEnrollment}
+                disabled={isProcessing}
                 className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl px-8 h-12 text-base gap-2"
               >
                 {isProcessing ? "جارٍ إتمام الدفع..." : `تأكيد الشراء (${course.price} ج.م)`}

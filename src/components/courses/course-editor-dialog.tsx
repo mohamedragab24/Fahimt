@@ -40,11 +40,13 @@ import {
   Lock
 } from "lucide-react";
 import { Course, CourseLesson } from "@/lib/types";
+import { Firestore } from "firebase/firestore";
+import { getNextCourseId, saveCourseToFirestore } from "@/lib/courses-data";
 import { upsertCourse } from "@/lib/courses-data";
 import { useToast } from "@/hooks/use-toast";
 import { 
   compressImageToDataUrl, 
-  uploadPreviewVideoToStorage, 
+  processVideoFile, 
   extractVideoDuration, 
   formatBytes,
   resolveMediaUrl
@@ -58,6 +60,7 @@ interface CourseEditorDialogProps {
   instructorName: string;
   instructorAvatar?: string;
   onSaved?: () => void;
+  firestore?: Firestore;
 }
 
 export function CourseEditorDialog({
@@ -67,7 +70,8 @@ export function CourseEditorDialog({
   instructorId,
   instructorName,
   instructorAvatar,
-  onSaved
+  onSaved,
+  firestore
 }: CourseEditorDialogProps) {
   const { toast } = useToast();
 
@@ -83,8 +87,7 @@ export function CourseEditorDialog({
 
   const [price, setPrice] = useState<number>(courseToEdit?.price || 100);
   const [category, setCategory] = useState(courseToEdit?.category || "البرمجة والتقنية");
-  const [externalPlayerUrl, setExternalPlayerUrl] = useState<string>(courseToEdit?.externalPlayerUrl || "");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isPublished, setIsPublished] = useState<boolean>(courseToEdit ? courseToEdit.isPublished : true);
   
   // Lessons list
   const [lessons, setLessons] = useState<CourseLesson[]>(courseToEdit?.lessons || []);
@@ -96,9 +99,9 @@ export function CourseEditorDialog({
   const [selectedVideoName, setSelectedVideoName] = useState("");
   const [selectedVideoSize, setSelectedVideoSize] = useState("");
   const [isProcessingVideo, setIsProcessingVideo] = useState(false);
-  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [isVideoDragging, setIsVideoDragging] = useState(false);
   const [newLessonDuration, setNewLessonDuration] = useState(15);
+  const [newLessonIsFree, setNewLessonIsFree] = useState(false);
 
   // Preview lesson video modal/dialog state
   const [previewLesson, setPreviewLesson] = useState<CourseLesson | null>(null);
@@ -113,7 +116,7 @@ export function CourseEditorDialog({
       setCoverFileName("");
       setPrice(courseToEdit.price);
       setCategory(courseToEdit.category || "البرمجة والتقنية");
-      setExternalPlayerUrl(courseToEdit.externalPlayerUrl || "");
+      setIsPublished(courseToEdit.isPublished);
       setLessons(courseToEdit.lessons || []);
     } else {
       setTitle("");
@@ -122,7 +125,7 @@ export function CourseEditorDialog({
       setCoverFileName("");
       setPrice(100);
       setCategory("البرمجة والتقنية");
-      setExternalPlayerUrl("");
+      setIsPublished(true);
       setLessons([]);
     }
     // Reset new lesson form
@@ -132,6 +135,7 @@ export function CourseEditorDialog({
     setSelectedVideoSize("");
     setNewLessonTitle("");
     setNewLessonDuration(15);
+    setNewLessonIsFree(false);
   }, [courseToEdit, open]);
 
   // Handle Cover Image Upload from device
@@ -170,17 +174,12 @@ export function CourseEditorDialog({
       return;
     }
     setIsProcessingVideo(true);
-    setVideoUploadProgress(0);
     try {
       const sizeStr = formatBytes(file.size);
       const durationMin = await extractVideoDuration(file);
-      const { url, previewUrl } = await uploadPreviewVideoToStorage(
-        file,
-        instructorId || "unknown-instructor",
-        (percent) => setVideoUploadProgress(percent)
-      );
+      const { token, previewUrl } = await processVideoFile(file);
 
-      setSelectedVideoToken(url);
+      setSelectedVideoToken(token);
       setSelectedVideoPreview(previewUrl);
       setSelectedVideoName(file.name);
       setSelectedVideoSize(sizeStr);
@@ -195,14 +194,13 @@ export function CourseEditorDialog({
       }
 
       toast({
-        title: "تم رفع فيديو المعاينة بنجاح",
-        description: `${file.name} (${sizeStr}) - أصبح متاحاً لكل الطلاب على أي جهاز.`
+        title: "تم استلام الفيديو بنجاح",
+        description: `${file.name} (${sizeStr}) - المدة المقدرة: ${durationMin} دقيقة`
       });
     } catch {
-      toast({ title: "خطأ", description: "تعذر رفع ملف الفيديو، تأكد من اتصال الإنترنت وحاول مرة أخرى.", variant: "destructive" });
+      toast({ title: "خطأ", description: "تعذر استيراد ملف الفيديو.", variant: "destructive" });
     } finally {
       setIsProcessingVideo(false);
-      setVideoUploadProgress(0);
     }
   };
 
@@ -218,21 +216,20 @@ export function CourseEditorDialog({
       toast({ title: "تنبيه", description: "يرجى كتابة عنوان الدرس أولاً.", variant: "destructive" });
       return;
     }
-    const isPreviewLesson = lessons.length === 0;
-    if (isPreviewLesson && !selectedVideoToken) {
-      toast({ title: "تنبيه", description: "يرجى رفع فيديو المعاينة المجانية من جهازك أولاً.", variant: "destructive" });
+    if (!selectedVideoToken) {
+      toast({ title: "تنبيه", description: "يرجى رفع ملف الفيديو الخاص بالدرس من جهازك أولاً.", variant: "destructive" });
       return;
     }
 
     const newLesson: CourseLesson = {
       id: `les-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
       title: newLessonTitle.trim(),
-      videoUrl: isPreviewLesson ? selectedVideoToken : "",
+      videoUrl: selectedVideoToken,
       durationMinutes: Number(newLessonDuration) || 10,
       order: lessons.length + 1,
-      isFreePreview: isPreviewLesson,
-      videoFileName: isPreviewLesson ? (selectedVideoName || undefined) : undefined,
-      videoFileSize: isPreviewLesson ? (selectedVideoSize || undefined) : undefined
+      isFreePreview: newLessonIsFree,
+      videoFileName: selectedVideoName || undefined,
+      videoFileSize: selectedVideoSize || undefined
     };
 
     setLessons([...lessons, newLesson]);
@@ -244,6 +241,7 @@ export function CourseEditorDialog({
     setSelectedVideoSize("");
     setNewLessonTitle("");
     setNewLessonDuration(15);
+    setNewLessonIsFree(false);
     if (videoFileRef.current) {
       videoFileRef.current.value = "";
     }
@@ -290,17 +288,15 @@ export function CourseEditorDialog({
       return;
     }
     if (lessons.length === 0) {
-      toast({ title: "خطأ", description: "يجب إضافة درس المعاينة المجانية على الأقل داخل الكورس.", variant: "destructive" });
-      return;
-    }
-    if (lessons.length > 1 && !externalPlayerUrl.trim()) {
-      toast({ title: "خطأ", description: "يرجى إدخال رابط المشغل الخارجي الذي يستضيف باقي دروس الكورس.", variant: "destructive" });
+      toast({ title: "خطأ", description: "يجب إضافة درس وفيديو واحد على الأقل داخل الكورس.", variant: "destructive" });
       return;
     }
 
-    const isNew = !courseToEdit;
+    const generatedId = courseToEdit?.id || (
+      firestore ? await getNextCourseId(firestore) : `course-1-789401347533-dr6h`
+    );
     const courseData: Course = {
-      id: courseToEdit?.id || `course-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generatedId,
       title: title.trim(),
       description: description.trim(),
       coverUrl: coverUrl,
@@ -310,32 +306,35 @@ export function CourseEditorDialog({
       instructorId: instructorId || "current-instructor",
       instructorName: instructorName || "المُفهم المتخصص",
       instructorAvatar: instructorAvatar || "",
-      status: courseToEdit?.status || "pending",
-      rejectionReason: courseToEdit?.rejectionReason || "",
-      isPaused: courseToEdit?.isPaused || false,
-      externalPlayerUrl: externalPlayerUrl.trim(),
+      // كل كورس جديد يدخل مركز الاعتماد أولاً.
+      isPublished: courseToEdit?.approvalStatus === "approved" ? isPublished : false,
+      approvalStatus: courseToEdit?.approvalStatus === "approved" ? "approved" : "pending",
+      approvedAt: courseToEdit?.approvedAt,
+      courseUrl: `https://fahmt-jonh.vercel.app/courses/${generatedId}`,
       category,
       createdAt: courseToEdit?.createdAt || new Date().toISOString(),
       totalEnrollments: courseToEdit?.totalEnrollments || 0,
       rating: courseToEdit?.rating || 5.0
     };
 
-    setIsSaving(true);
-    try {
-      await upsertCourse(courseData, isNew);
-      toast({
-        title: "تم الحفظ بنجاح",
-        description: isNew
-          ? "تم إرسال الكورس للإدارة، وهيظهر للطلاب بعد الموافقة عليه."
-          : "تم حفظ التعديلات. أي تعديل على كورس مرفوض هيبقى برضو محتاج مراجعة الإدارة تاني."
-      });
-      onOpenChange(false);
-      if (onSaved) onSaved();
-    } catch (err) {
-      toast({ title: "تعذر الحفظ", description: "حدث خطأ أثناء حفظ الكورس، حاول مرة أخرى.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
+    upsertCourse(courseData);
+    if (firestore) {
+      try {
+        await saveCourseToFirestore(firestore, courseData);
+      } catch (error) {
+        console.error("Firestore course save failed:", error);
+        toast({ title: "تعذر رفع الكورس", description: "تم حفظ النسخة المحلية، لكن لم يتم حفظ الكورس على المنصة.", variant: "destructive" });
+        return;
+      }
     }
+    toast({
+      title: courseData.approvalStatus === "pending" ? "تم رفع الكورس للمراجعة" : "تم الحفظ بنجاح",
+      description: courseData.approvalStatus === "pending"
+        ? "الكورس الآن في مركز الاعتماد، وسيظهر لجميع المستخدمين بعد موافقة الإدارة."
+        : "تم حفظ الكورس بنجاح."
+    });
+    onOpenChange(false);
+    if (onSaved) onSaved();
   };
 
   return (
@@ -353,37 +352,25 @@ export function CourseEditorDialog({
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* حالة اعتماد الكورس من الإدارة */}
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border text-right space-y-1">
-              {!courseToEdit && (
-                <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  الكورس هيتبعت لإدارة المنصة للمراجعة أولاً، ومش هيظهر للطلاب إلا بعد الموافقة عليه.
+            {/* الحالة: نشر أو إخفاء */}
+            <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border">
+              <div className="space-y-0.5 text-right">
+                <Label className="text-base font-black flex items-center gap-2">
+                  {isPublished ? <Eye className="w-4 h-4 text-emerald-600" /> : <EyeOff className="w-4 h-4 text-amber-600" />}
+                  حالة الكورس: {isPublished ? "منشور للجميع" : "مخفي (مسودة)"}
+                </Label>
+                <p className="text-xs text-zinc-500 font-bold">
+                  {isPublished ? "يظهر الكورس للطلاب في صفحة الكورسات ويمكنهم شراؤه فوراً." : "لا يمكن للطلاب مشاهدة أو شراء الكورس حتى تقوم بنشره."}
                 </p>
-              )}
-              {courseToEdit?.status === "pending" && (
-                <p className="text-xs font-black text-amber-600 flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5" /> الكورس ده قيد المراجعة من الإدارة حالياً.
-                </p>
-              )}
-              {courseToEdit?.status === "approved" && (
-                <p className="text-xs font-black text-emerald-600 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> الكورس معتمد {courseToEdit.isPaused ? "لكن الإدارة أوقفته مؤقتاً حالياً." : "ومتاح للطلاب."}
-                </p>
-              )}
-              {courseToEdit?.status === "rejected" && (
-                <div className="text-xs font-black text-red-600 flex items-start gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    تم رفض هذا الكورس من الإدارة{courseToEdit.rejectionReason ? `: ${courseToEdit.rejectionReason}` : "."} عدّل الكورس واحفظه تاني عشان يترسل للمراجعة من جديد.
-                  </span>
-                </div>
-              )}
+              </div>
+              <Switch checked={isPublished} onCheckedChange={setIsPublished} />
             </div>
 
             {/* الأساسيات: الاسم والسعر والتصنيف */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 text-right md:col-span-2">
                 <Label className="font-black text-zinc-700">اسم الكورس *</Label>
+                <p className="text-[11px] text-muted-foreground font-bold">الرابط يُنشأ تلقائياً بالترتيب: https://fahmt-jonh.vercel.app/courses/course-N-789401347533-dr6h</p>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -420,24 +407,6 @@ export function CourseEditorDialog({
                 <option value="التصميم والمونتاج">التصميم والمونتاج</option>
                 <option value="إدارة الأعمال والتسويق">إدارة الأعمال والتسويق</option>
               </select>
-            </div>
-
-            {/* رابط المشغل الخارجي لباقي دروس الكورس */}
-            <div className="space-y-2 text-right">
-              <Label className="font-black text-zinc-700 flex items-center gap-1.5">
-                <Video className="w-4 h-4 text-primary" />
-                رابط المشغل الخارجي لباقي دروس الكورس (غير درس المعاينة)
-              </Label>
-              <Input
-                value={externalPlayerUrl}
-                onChange={(e) => setExternalPlayerUrl(e.target.value)}
-                placeholder="https://..."
-                className="h-12 rounded-xl font-bold ltr text-left"
-                dir="ltr"
-              />
-              <p className="text-xs text-zinc-500 font-bold leading-relaxed">
-                درس المعاينة المجانية بس هو اللي يتشغل من داخل المنصة. باقي الدروس بعد الشراء، الطالب هيتحول تلقائياً لهذا الرابط لمشاهدتها.
-              </p>
             </div>
 
             {/* قسم رفع صورة الغلاف من الجهاز (وليس لينك) */}
@@ -552,9 +521,9 @@ export function CourseEditorDialog({
               <div className="flex items-center justify-between">
                 <h3 className="font-black text-lg text-zinc-900 flex items-center gap-2">
                   <Film className="w-5 h-5 text-primary" />
-                  دروس الكورس ({lessons.length})
+                  دروس وفيديوهات الكورس ({lessons.length})
                 </h3>
-                <span className="text-xs text-zinc-500 font-bold">أول درس بيتضاف بيبقى هو درس المعاينة المجانية ولازم يترفع له فيديو</span>
+                <span className="text-xs text-zinc-500 font-bold">يتم رفع ملفات الفيديو وتشفيرها داخل مشغل المنصة</span>
               </div>
 
               {/* بطاقة رفع درس وفيديو جديد من الجهاز */}
@@ -562,12 +531,12 @@ export function CourseEditorDialog({
                 <div className="flex items-center justify-between">
                   <h4 className="font-black text-sm text-zinc-800 flex items-center gap-1.5">
                     <Upload className="w-4 h-4 text-primary" />
-                    {lessons.length === 0 ? "رفع فيديو المعاينة المجانية من جهازك:" : "فيديو (اختياري) — الدرس ده هيتشغل من المشغل الخارجي:"}
+                    رفع درس وفيديو جديد من جهازك:
                   </h4>
                   {isProcessingVideo && (
                     <span className="text-xs font-bold text-primary flex items-center gap-1">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      جاري رفع الفيديو... {videoUploadProgress}%
+                      جاري معالجة الفيديو...
                     </span>
                   )}
                 </div>
@@ -683,10 +652,10 @@ export function CourseEditorDialog({
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-2">
                     {lessons.length === 0 ? (
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 py-1 px-2.5 rounded-lg border border-emerald-200">
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>هذا الدرس هيبقى معاينة مجانية متاحة للطالب قبل الشراء.</span>
-                      </div>
+                      <>
+                        <Switch checked={newLessonIsFree} onCheckedChange={setNewLessonIsFree} />
+                        <Label className="text-xs font-bold text-zinc-700">معاينة مجانية (الدرس التعريفي الأول - متاح للطالب قبل الشراء)</Label>
+                      </>
                     ) : (
                       <div className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 py-1 px-2.5 rounded-lg border border-red-200">
                         <Lock className="w-3.5 h-3.5" />
@@ -732,35 +701,27 @@ export function CourseEditorDialog({
                         <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono mt-0.5">
                           <span>{lesson.durationMinutes} دقيقة</span>
                           <span>•</span>
-                          {lesson.isFreePreview ? (
-                            <span className="text-emerald-600 font-sans font-bold flex items-center gap-1">
-                              <FileVideo className="w-3 h-3" />
-                              {lesson.videoFileName || "فيديو مرفوع"}
-                              {lesson.videoFileSize ? ` (${lesson.videoFileSize})` : ""}
-                            </span>
-                          ) : (
-                            <span className="text-zinc-500 font-sans font-bold flex items-center gap-1">
-                              <Video className="w-3 h-3" />
-                              يتشغل عبر المشغل الخارجي
-                            </span>
-                          )}
+                          <span className="text-emerald-600 font-sans font-bold flex items-center gap-1">
+                            <FileVideo className="w-3 h-3" />
+                            {lesson.videoFileName || "فيديو مرفوع"}
+                            {lesson.videoFileSize ? ` (${lesson.videoFileSize})` : ""}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* زر معاينة الفيديو - لدرس المعاينة المجانية فقط */}
-                      {lesson.isFreePreview && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenPreview(lesson)}
-                          className="h-8 px-2.5 rounded-lg text-xs font-bold text-primary hover:bg-primary/10 gap-1"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          معاينة
-                        </Button>
-                      )}
+                      {/* زر معاينة الفيديو */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenPreview(lesson)}
+                        className="h-8 px-2.5 rounded-lg text-xs font-bold text-primary hover:bg-primary/10 gap-1"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        معاينة
+                      </Button>
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -803,9 +764,8 @@ export function CourseEditorDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl font-bold">
               إلغاء
             </Button>
-            <Button onClick={handleSaveCourse} disabled={isSaving} className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl px-8 gap-2">
-              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {courseToEdit ? "حفظ التعديلات" : "إرسال الكورس للمراجعة"}
+            <Button onClick={handleSaveCourse} className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl px-8">
+              {courseToEdit ? "حفظ التعديلات" : "حفظ ونشر الكورس"}
             </Button>
           </DialogFooter>
         </DialogContent>

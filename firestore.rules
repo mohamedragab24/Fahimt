@@ -107,23 +107,50 @@ service cloud.firestore {
 
     // الكورسات الجاهزة والدروس والاشتراكات
     match /courses/{courseId} {
-      allow read: if true;
-      // عند الإنشاء: لازم يكون المفهم هو صاحب الكورس، وتبدأ حالته "قيد المراجعة" دايمًا
-      allow create: if isSignedIn() &&
-        request.resource.data.instructorId == request.auth.uid &&
-        request.resource.data.status == 'pending';
-      // المفهم يقدر يعدّل محتوى كورسه لكن ميقدرش يغيّر حالة الاعتماد أو الإيقاف بنفسه — ده للإدارة بس
-      allow update: if isAdmin() || (
-        isSignedIn() &&
-        request.auth.uid == resource.data.instructorId &&
-        request.resource.data.status == resource.data.status &&
-        request.resource.data.isPaused == resource.data.isPaused
-      );
+      // Public users only see approved + published courses.
+      allow read: if resource.data.approvalStatus == "approved" && resource.data.isPublished == true
+                  || isAdmin()
+                  || (isSignedIn() && request.auth.uid == resource.data.instructorId);
+
+      // A new course must enter the moderation queue as pending and hidden.
+      allow create: if isSignedIn()
+                    && request.resource.data.instructorId == request.auth.uid
+                    && request.resource.data.approvalStatus == "pending"
+                    && request.resource.data.isPublished == false;
+
+      // Only admins can approve/reject. The instructor may edit their own pending/rejected course,
+      // but cannot change moderation state or publish it themselves.
+      allow update: if isAdmin()
+                    || (
+                      isSignedIn()
+                      && request.auth.uid == resource.data.instructorId
+                      && request.resource.data.instructorId == resource.data.instructorId
+                      && (
+                        (
+                          request.resource.data.approvalStatus == resource.data.approvalStatus
+                          && (
+                            resource.data.approvalStatus == "approved"
+                            || request.resource.data.isPublished == false
+                          )
+                        )
+                        || (
+                          resource.data.approvalStatus == "rejected"
+                          && request.resource.data.approvalStatus == "pending"
+                          && request.resource.data.isPublished == false
+                        )
+                      )
+                    );
+
       allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.instructorId);
 
       match /lessons/{lessonId} {
-        allow read: if true;
-        allow write: if isAdmin() || (isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId);
+        allow read: if get(/databases/$(database)/documents/courses/$(courseId)).data.approvalStatus == "approved"
+                    || isAdmin()
+                    || (isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId);
+        allow write: if isAdmin() || (
+          isSignedIn()
+          && request.auth.uid == get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId
+        );
       }
     }
 
@@ -131,13 +158,6 @@ service cloud.firestore {
       allow read: if isSignedIn() && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.instructorId || isAdmin());
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (request.auth.uid == resource.data.studentId || isAdmin());
-    }
-
-    // متابعة المُفهمين (لاستلام إشعارات الكورسات الجديدة)
-    match /course_follows/{followId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
-      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.followerId);
     }
 
     // الوظائف والتوظيف

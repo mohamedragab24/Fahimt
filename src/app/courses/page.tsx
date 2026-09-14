@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Layers, 
   Search, 
@@ -40,9 +39,12 @@ import {
 } from "@/components/ui/dialog";
 import { Course, CourseEnrollment } from "@/lib/types";
 import { 
-  subscribeToCourses,
-  subscribeToEnrollments,
-  deleteCourse
+  getStoredCourses, 
+  getStoredEnrollments, 
+  deleteCourse, 
+  upsertCourse,
+  isUserEnrolled,
+  fetchFirestoreCourses
 } from "@/lib/courses-data";
 import { CourseEditorDialog } from "@/components/courses/course-editor-dialog";
 import { CourseSalesDialog } from "@/components/courses/course-sales-dialog";
@@ -76,7 +78,6 @@ export default function CoursesPage() {
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(isMufhem ? "instructor" : "all");
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,18 +93,32 @@ export default function CoursesPage() {
   const [courseToPurchase, setCourseToPurchase] = useState<Course | null>(null);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
 
-  // اشتراك لحظي حقيقي في الكورسات والاشتراكات من Firestore (بدل التخزين المحلي القديم)
+  const refreshData = async () => {
+    const localCourses = getStoredCourses();
+    setEnrollments(getStoredEnrollments());
+    if (!firestore) {
+      setCourses(localCourses);
+      return;
+    }
+    try {
+      const sharedCourses = await fetchFirestoreCourses(firestore);
+      setCourses(sharedCourses.length ? sharedCourses : localCourses);
+    } catch (error) {
+      console.error("Failed to load shared courses:", error);
+      setCourses(localCourses);
+    }
+  };
+
   useEffect(() => {
-    setCoursesLoading(true);
-    const unsubCourses = subscribeToCourses((data) => {
-      setCourses(data);
-      setCoursesLoading(false);
-    });
-    const unsubEnrollments = subscribeToEnrollments((data) => setEnrollments(data));
+    refreshData();
+
+    const handleUpdate = () => refreshData();
+    window.addEventListener("fahimt_courses_updated", handleUpdate);
+    window.addEventListener("fahimt_enrollments_updated", handleUpdate);
 
     return () => {
-      unsubCourses();
-      unsubEnrollments();
+      window.removeEventListener("fahimt_courses_updated", handleUpdate);
+      window.removeEventListener("fahimt_enrollments_updated", handleUpdate);
     };
   }, []);
 
@@ -116,31 +131,47 @@ export default function CoursesPage() {
     }
   }, [isMufhem]);
 
-  const enrolledCourseIds = new Set(
-    enrollments.filter((e) => e.studentId === currentUserId).map((e) => e.courseId)
-  );
+  const handleTogglePublish = (course: Course) => {
+    if (course.approvalStatus !== "approved") {
+      toast({
+        variant: "destructive",
+        title: "الكورس قيد الاعتماد",
+        description: "لا يمكن نشر الكورس قبل موافقة الإدارة من مركز الاعتماد.",
+      });
+      return;
+    }
+    const updated = { ...course, isPublished: !course.isPublished };
+    upsertCourse(updated);
+    toast({
+      title: updated.isPublished ? "تم نشر الكورس" : "تم إخفاء الكورس",
+      description: updated.isPublished 
+        ? "أصبح الكورس متاحاً للطلاب في قائمة الكورسات." 
+        : "تم حجب الكورس عن الطلاب وأصبح مسودة خاصة."
+    });
+    refreshData();
+  };
 
   const handleDeleteCourse = (course: Course) => {
     setCourseToDelete(course);
   };
 
-  // Filtered public courses (for student browsing) — الكورسات المعتمدة وغير الموقفة مؤقتاً بس
+  // Filtered public courses (for student browsing)
   const publicCourses = courses.filter(c => {
     const matchesCategory = selectedCategory === "الكل" || c.category === selectedCategory;
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           c.instructorName.toLowerCase().includes(searchQuery.toLowerCase());
-    return c.status === "approved" && !c.isPaused && matchesCategory && matchesSearch;
+    return c.isPublished && c.approvalStatus === "approved" && matchesCategory && matchesSearch;
   });
 
   // Enrolled courses for the student
-  const myEnrolledCourses = courses.filter(c => enrolledCourseIds.has(c.id));
+  const myEnrolledCourses = courses.filter(c => isUserEnrolled(c.id, currentUserId));
 
   // Instructor courses (created by this instructor)
   const instructorCourses = courses.filter(c => {
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           c.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const isOwner = c.instructorId === currentUserId;
+    const isOwner = c.instructorId === currentUserId || c.instructorName === currentUserName;
     return matchesSearch && isOwner;
   });
 
@@ -310,7 +341,7 @@ export default function CoursesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {publicCourses.map((course) => {
-                  const userBought = enrolledCourseIds.has(course.id);
+                  const userBought = isUserEnrolled(course.id, currentUserId);
 
                   return (
                     <Card 
@@ -336,19 +367,10 @@ export default function CoursesPage() {
                         {/* محتوى البطاقة */}
                         <CardContent className="p-6 md:p-8 space-y-4 text-right">
                           <div className="flex items-center justify-between gap-2 text-xs font-bold text-zinc-500">
-                            <Link
-                              href={`/teachers/${course.instructorId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1.5 hover:text-primary transition-colors"
-                            >
-                              <Avatar className="w-5 h-5 shrink-0">
-                                <AvatarImage src={course.instructorAvatar} alt={course.instructorName} />
-                                <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                                  {course.instructorName?.charAt(0) || "م"}
-                                </AvatarFallback>
-                              </Avatar>
+                            <span className="flex items-center gap-1.5">
+                              <GraduationCap className="w-4 h-4 text-primary" />
                               {course.instructorName}
-                            </Link>
+                            </span>
                             <span className="flex items-center gap-1 font-mono">
                               <Clock className="w-3.5 h-3.5 text-zinc-400" />
                               {course.lessons.length} دروس
@@ -537,24 +559,15 @@ export default function CoursesPage() {
                       <div className="space-y-1.5 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="outline" className="font-bold text-xs">{course.category}</Badge>
-                          {course.status === "pending" && (
-                            <Badge className="border-none font-bold text-xs bg-amber-100 text-amber-700">قيد المراجعة</Badge>
-                          )}
-                          {course.status === "approved" && !course.isPaused && (
-                            <Badge className="border-none font-bold text-xs bg-emerald-100 text-emerald-700">معتمد ومنشور للطلاب</Badge>
-                          )}
-                          {course.status === "approved" && course.isPaused && (
-                            <Badge className="border-none font-bold text-xs bg-zinc-200 text-zinc-700">موقف مؤقتاً من الإدارة</Badge>
-                          )}
-                          {course.status === "rejected" && (
-                            <Badge className="border-none font-bold text-xs bg-red-100 text-red-700">مرفوض من الإدارة</Badge>
-                          )}
+                          <Badge className={`border-none font-bold text-xs ${
+                            course.approvalStatus === "approved" ? "bg-emerald-100 text-emerald-700" :
+                            course.approvalStatus === "rejected" ? "bg-red-100 text-red-700" :
+                            "bg-orange-100 text-orange-700"
+                          }`}>
+                            {course.approvalStatus === "approved" ? "معتمد للطلاب" :
+                             course.approvalStatus === "rejected" ? "مرفوض" : "قيد الاعتماد"}
+                          </Badge>
                         </div>
-                        {course.status === "rejected" && course.rejectionReason && (
-                          <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5 max-w-md">
-                            سبب الرفض: {course.rejectionReason}
-                          </p>
-                        )}
 
                         <h4 className="font-black text-lg md:text-xl text-zinc-900 dark:text-white">
                           {course.title}
@@ -582,6 +595,15 @@ export default function CoursesPage() {
                         <Link href={`/courses/${course.id}`}>
                           <Eye size={14} /> معاينة كطالب
                         </Link>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => handleTogglePublish(course)}
+                        className="rounded-xl font-bold text-xs h-10 gap-1.5 cursor-pointer"
+                      >
+                        {course.isPublished ? <EyeOff size={14} /> : <Eye size={14} />}
+                        {course.isPublished ? "إخفاء الكورس" : "نشر الكورس"}
                       </Button>
 
                       <Button
@@ -650,19 +672,17 @@ export default function CoursesPage() {
               <Button
                 type="button"
                 variant="destructive"
-                onClick={async () => {
+                onClick={() => {
                   if (courseToDelete) {
                     const idToDelete = courseToDelete.id;
-                    try {
-                      await deleteCourse(idToDelete);
-                      toast({
-                        title: "تم حذف الكورس بنجاح",
-                        description: "تمت إزالة الكورس نهائياً من لوحتك ومن المنصة."
-                      });
-                    } catch {
-                      toast({ title: "تعذر الحذف", description: "حدث خطأ أثناء حذف الكورس.", variant: "destructive" });
-                    }
+                    deleteCourse(idToDelete);
+                    setCourses((prev) => prev.filter((c) => c.id !== idToDelete));
                     setCourseToDelete(null);
+                    toast({
+                      title: "تم حذف الكورس بنجاح",
+                      description: "تمت إزالة الكورس نهائياً من لوحتك ومن المنصة."
+                    });
+                    refreshData();
                   }
                 }}
                 className="rounded-xl font-black bg-red-600 hover:bg-red-700 text-white gap-2 cursor-pointer shadow-md"
@@ -682,6 +702,8 @@ export default function CoursesPage() {
           instructorId={currentUserId}
           instructorName={currentUserName}
           instructorAvatar={currentUserAvatar}
+          onSaved={refreshData}
+          firestore={firestore}
         />
 
         <CourseSalesDialog
@@ -698,6 +720,7 @@ export default function CoursesPage() {
           studentName={currentUserName}
           studentEmail={currentUserEmail}
           onPurchaseSuccess={() => {
+            refreshData();
             setActiveTab("enrolled");
           }}
         />

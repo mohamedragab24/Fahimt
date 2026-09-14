@@ -32,10 +32,10 @@ import { Course, CourseLesson, CourseEnrollment } from "@/lib/types";
 import { 
   getCourseById, 
   isUserEnrolled, 
-  subscribeToEnrollments, 
-  updateLessonProgress 
+  getStoredEnrollments, 
+  updateLessonProgress,
+  fetchFirestoreCourse
 } from "@/lib/courses-data";
-import { subscribeToInstructorFollowers, followInstructor, unfollowInstructor } from "@/lib/follow-data";
 import { ProtectedVideoPlayer } from "@/components/courses/protected-video-player";
 import { CoursePurchaseDialog } from "@/components/courses/course-purchase-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -65,75 +65,80 @@ export default function CourseDetailPage() {
 
   const refreshCourseState = async () => {
     if (!courseId) return;
-    const found = await getCourseById(courseId);
-    setCourse(found || null);
+    const localFound = getCourseById(courseId);
+    if (firestore) {
+      try {
+        const sharedFound = await fetchFirestoreCourse(firestore, courseId);
+        setCourse(sharedFound || localFound || null);
+      } catch (error) {
+        console.error("Failed to load shared course:", error);
+        setCourse(localFound || null);
+      }
+    } else {
+      setCourse(localFound || null);
+    }
+
+    const enrolled = isUserEnrolled(courseId, currentUserId);
+    setIsEnrolled(enrolled);
+
+    if (enrolled) {
+      const enrollments = getStoredEnrollments();
+      const myEnroll = enrollments.find(e => e.courseId === courseId && e.studentId === currentUserId);
+      setUserEnrollment(myEnroll || null);
+    }
   };
 
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [followBusy, setFollowBusy] = useState(false);
 
   useEffect(() => {
-    if (!course?.instructorId) return;
-    const unsub = subscribeToInstructorFollowers(course.instructorId, (ids) => {
-      setIsSubscribed(Boolean(user?.uid && ids.includes(user.uid)));
-    });
-    return () => unsub();
-  }, [course?.instructorId, user?.uid]);
-
-  const handleToggleSubscribe = async () => {
-    if (!course?.instructorId) return;
-    if (!user?.uid) {
-      toast({ title: "سجّل دخولك الأول", description: "لازم تسجل دخول عشان تقدر تتابع المُفهم." });
-      return;
+    if (typeof window !== "undefined" && course?.instructorId) {
+      try {
+        const subs = JSON.parse(localStorage.getItem("fahimt_subscribed_instructors") || "[]");
+        setIsSubscribed(subs.includes(course.instructorId));
+      } catch (e) {
+        console.error(e);
+      }
     }
-    if (user.uid === course.instructorId) return;
-    setFollowBusy(true);
+  }, [course?.instructorId]);
+
+  const handleToggleSubscribe = () => {
+    if (!course?.instructorId) return;
     try {
-      if (isSubscribed) {
-        await unfollowInstructor(user.uid, course.instructorId);
+      const subs = JSON.parse(localStorage.getItem("fahimt_subscribed_instructors") || "[]");
+      let updated: string[];
+      if (subs.includes(course.instructorId)) {
+        updated = subs.filter((id: string) => id !== course.instructorId);
+        setIsSubscribed(false);
         toast({
           title: "تم إيقاف الإشعارات",
           description: `تم إيقاف إشعارات كورسات المُفهم ${course.instructorName}.`
         });
       } else {
-        await followInstructor(user.uid, course.instructorId, course.instructorName);
+        updated = [...subs, course.instructorId];
+        setIsSubscribed(true);
         toast({
           title: "🔔 تم تفعيل الإشعارات بنجاح!",
           description: `هتوصلك كل الكورسات والدروس الجديدة للمُفهم ${course.instructorName} أول ما تنزل.`
         });
       }
-    } catch {
-      toast({ variant: "destructive", title: "حدث خطأ", description: "حاول مرة أخرى." });
-    } finally {
-      setFollowBusy(false);
+      localStorage.setItem("fahimt_subscribed_instructors", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
     }
   };
 
   useEffect(() => {
     refreshCourseState();
-  }, [courseId]);
 
-  useEffect(() => {
-    if (!courseId) return;
-    const unsub = subscribeToEnrollments((all) => {
-      const myEnroll = all.find(e => e.courseId === courseId && e.studentId === currentUserId);
-      setIsEnrolled(Boolean(myEnroll));
-      setUserEnrollment(myEnroll || null);
-    });
-    return () => unsub();
-  }, [courseId, currentUserId]);
+    const handleUpdate = () => refreshCourseState();
+    window.addEventListener("fahimt_courses_updated", handleUpdate);
+    window.addEventListener("fahimt_enrollments_updated", handleUpdate);
 
-  // فتح المشغل الخارجي تلقائياً عند اختيار درس غير درس المعاينة (بعد الشراء أو للمفهم صاحب الكورس)
-  useEffect(() => {
-    if (!course) return;
-    const lesson = course.lessons[selectedLessonIndex];
-    if (!lesson) return;
-    const ownerView = Boolean(user?.uid && course.instructorId === user.uid);
-    const unlocked = isEnrolled || ownerView;
-    if (unlocked && !lesson.isFreePreview && course.externalPlayerUrl) {
-      window.open(course.externalPlayerUrl, "_blank", "noopener,noreferrer");
-    }
-  }, [selectedLessonIndex, isEnrolled, course, user?.uid]);
+    return () => {
+      window.removeEventListener("fahimt_courses_updated", handleUpdate);
+      window.removeEventListener("fahimt_enrollments_updated", handleUpdate);
+    };
+  }, [courseId, firestore]);
 
   if (!course) {
     return (
@@ -171,14 +176,15 @@ export default function CourseDetailPage() {
   const canPlayActiveLesson = !activeLessonLocked;
   const isCurrentCompleted = userEnrollment?.completedLessonIds?.includes(activeLesson?.id || "") || false;
 
-  const handleToggleLessonComplete = async () => {
+  const handleToggleLessonComplete = () => {
     if (!activeLesson || !isEnrolled) return;
     const nextState = !isCurrentCompleted;
-    await updateLessonProgress(course.id, currentUserId, activeLesson.id, nextState, course.lessons.length);
+    updateLessonProgress(course.id, currentUserId, activeLesson.id, nextState);
     toast({
       title: nextState ? "أحسنت! تم إكمال الدرس" : "تم إلغاء تحديد الإكمال",
       description: `الدرس: ${activeLesson.title}`
     });
+    refreshCourseState();
   };
 
   const handleSelectLesson = (index: number) => {
@@ -243,7 +249,6 @@ export default function CourseDetailPage() {
           {/* القسم الرئيسي (2/3): مشغل الفيديو المحمي أو بطاقة الشراء */}
           <div className="lg:col-span-2 space-y-6">
             {canPlayActiveLesson ? (
-              activeLesson.isFreePreview ? (
               <div className="space-y-4">
                 <ProtectedVideoPlayer
                   videoUrl={activeLesson.videoUrl}
@@ -276,31 +281,6 @@ export default function CourseDetailPage() {
                   </div>
                 )}
               </div>
-              ) : (
-                /* درس غير المعاينة: يتم التحويل تلقائياً لمشغل خارجي */
-                <div className="relative aspect-video rounded-3xl overflow-hidden bg-zinc-950 border-4 border-zinc-800 shadow-2xl flex flex-col items-center justify-center p-8 text-center text-white space-y-5">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary backdrop-blur-md shadow-inner">
-                    <ExternalLink className="w-10 h-10 stroke-[2.5]" />
-                  </div>
-                  <div className="space-y-2 max-w-md">
-                    <h3 className="text-2xl font-black">{activeLesson?.title}</h3>
-                    <p className="text-zinc-400 text-xs md:text-sm font-bold leading-relaxed">
-                      هذا الدرس يتم مشاهدته عبر مشغل خارجي. تم فتحه تلقائياً في نافذة جديدة، ولو منعها المتصفح اضغط الزر تحت.
-                    </p>
-                  </div>
-                  {course.externalPlayerUrl ? (
-                    <Button
-                      onClick={() => window.open(course.externalPlayerUrl, "_blank", "noopener,noreferrer")}
-                      className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl h-14 px-8 text-base shadow-xl hover:scale-105 transition-all gap-2 cursor-pointer"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                      <span>فتح المشغل الخارجي الآن</span>
-                    </Button>
-                  ) : (
-                    <p className="text-red-400 text-xs font-bold">لم يحدد المُفهم رابط المشغل الخارجي لهذا الكورس بعد.</p>
-                  )}
-                </div>
-              )
             ) : (
               /* شاشة حجب المحتوى غير المشترك به - تصميم أمني مع قفل واضح */
               <div className="relative aspect-video rounded-3xl overflow-hidden bg-zinc-950 border-4 border-zinc-800 shadow-2xl flex flex-col items-center justify-center p-8 text-center text-white space-y-5">
@@ -359,8 +339,8 @@ export default function CourseDetailPage() {
 
               {/* بطاقة المُفهم مع صورته الشخصية وزر دخول الملف الشخصي وزر تفعيل الإشعارات */}
               <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border-2 border-zinc-200 dark:border-zinc-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <Link href={`/teachers/${course.instructorId}`} className="flex items-center gap-3.5 group/inst">
-                  <Avatar className="w-14 h-14 rounded-2xl border-2 border-primary/20 shadow-md shrink-0 group-hover/inst:border-primary/50 transition-colors">
+                <div className="flex items-center gap-3.5">
+                  <Avatar className="w-14 h-14 rounded-2xl border-2 border-primary/20 shadow-md shrink-0">
                     <AvatarImage src={course.instructorAvatar} alt={course.instructorName} />
                     <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">
                       {course.instructorName?.charAt(0) || "م"}
@@ -368,7 +348,7 @@ export default function CourseDetailPage() {
                   </Avatar>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-black text-base text-zinc-900 dark:text-white group-hover/inst:text-primary transition-colors">
+                      <h4 className="font-black text-base text-zinc-900 dark:text-white">
                         {course.instructorName}
                       </h4>
                       <Badge className="bg-primary/15 text-primary border-none text-[11px] font-black px-2.5 py-0.5 rounded-lg">
@@ -376,10 +356,10 @@ export default function CourseDetailPage() {
                       </Badge>
                     </div>
                     <p className="text-xs text-zinc-500 font-bold">
-                      مُقدم هذا الكورس • اضغط لعرض ملفه الشخصي ومتابعته
+                      مُقدم هذا الكورس • يمكنك متابعته واستلام إشعارات كورساته القادمة فور نزولها
                     </p>
                   </div>
-                </Link>
+                </div>
 
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                   <Button
@@ -387,7 +367,7 @@ export default function CourseDetailPage() {
                     variant="outline"
                     className="rounded-xl font-black text-xs h-10 px-4 border-zinc-300 dark:border-zinc-700 hover:border-primary gap-1.5 cursor-pointer"
                   >
-                    <Link href={`/teachers/${course.instructorId}`}>
+                    <Link href="/profile">
                       <User className="w-3.5 h-3.5 text-primary" />
                       <span>الملف الشخصي للمُفهم</span>
                     </Link>
@@ -396,7 +376,6 @@ export default function CourseDetailPage() {
                   <Button
                     type="button"
                     onClick={handleToggleSubscribe}
-                    disabled={followBusy}
                     variant={isSubscribed ? "default" : "outline"}
                     className={`rounded-xl font-black text-xs h-10 px-4 gap-2 cursor-pointer shadow-sm transition-all ${
                       isSubscribed

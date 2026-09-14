@@ -47,7 +47,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       title: "الرقابة والاعتمادات",
       items: [
         { label: "مركز الاعتماد الموحد", href: "/admin/approvals", icon: FileCheck },
-        { label: "اعتماد الكورسات", href: "/admin/course-approvals", icon: GraduationCap },
         { label: "الاستفهامات المعلقة", href: "/admin/pending-requests", icon: HelpCircle },
         { label: "كافة الاستفهامات", href: "/admin/all-requests", icon: ClipboardList },
         { label: "الطلبات المكتملة", href: "/admin/completed-orders", icon: CheckCircle2 },

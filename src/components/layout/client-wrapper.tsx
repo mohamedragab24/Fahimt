@@ -12,7 +12,6 @@ import { FloatingChat } from './floating-chat';
 import { PWAInstallBanner } from './pwa-install-banner';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
-import { ScreenshotGuard } from '@/components/layout/screenshot-guard';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -20,11 +19,10 @@ interface ClientWrapperProps {
 
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const [mounted, setMounted] = useState(false);
+  const [currentDir] = useState<"rtl" | "ltr">("rtl");
 
   useEffect(() => {
     setMounted(true);
-    document.documentElement.lang = "ar";
-    document.documentElement.dir = "rtl";
 
     // Auto-recover from stale Webpack chunks or ChunkLoadError after updates
     const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
@@ -64,8 +62,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
     <FirebaseClientProvider>
       <ThemeManager>
         <SidebarProvider defaultOpen={false}>
-          <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden fahimt-protected" dir="rtl">
-            <ScreenshotGuard />
+          <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir={currentDir}>
             <Header />
             <div className="flex flex-1 w-full">
               {/* القائمة الجانبية تم استرجاعها هنا */}

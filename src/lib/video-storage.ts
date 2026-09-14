@@ -221,44 +221,6 @@ export function compressImageToDataUrl(
 }
 
 /**
- * يرفع فيديو المعاينة المجانية على Firebase Storage الحقيقي (بدل IndexedDB المحلي)
- * عشان أي طالب على أي جهاز يقدر يشاهده، مش بس جهاز المُفهم اللي رفعه.
- */
-export async function uploadPreviewVideoToStorage(
-  file: File,
-  instructorId: string,
-  onProgress?: (percent: number) => void
-): Promise<{ url: string; previewUrl: string }> {
-  const { initializeFirebase } = await import("@/firebase");
-  const { ref, uploadBytesResumable, getDownloadURL } = await import("firebase/storage");
-
-  const { storage } = initializeFirebase();
-  const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-  const storageRef = ref(storage, `course-previews/${instructorId}/${safeName}`);
-  const previewUrl = URL.createObjectURL(file);
-
-  return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file, { contentType: file.type || "video/mp4" });
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        onProgress?.(percent);
-      },
-      (err) => reject(err),
-      async () => {
-        try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          resolve({ url, previewUrl });
-        } catch (err) {
-          reject(err);
-        }
-      }
-    );
-  });
-}
-
-/**
  * Saves a video file into IndexedDB and returns a resolution token
  */
 export async function processVideoFile(file: File): Promise<{ token: string; previewUrl: string }> {
