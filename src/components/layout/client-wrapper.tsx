@@ -12,6 +12,7 @@ import { FloatingChat } from './floating-chat';
 import { PWAInstallBanner } from './pwa-install-banner';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { ScreenshotGuard } from '@/components/layout/screenshot-guard';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -22,18 +23,49 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
 
   useEffect(() => {
     setMounted(true);
+    document.documentElement.lang = "ar";
+    document.documentElement.dir = "rtl";
+
+    // Auto-recover from stale Webpack chunks or ChunkLoadError after updates
+    const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const error = 'reason' in event ? event.reason : event.error;
+      const isChunkLoadError = 
+        error?.name === 'ChunkLoadError' || 
+        error?.message?.includes('Loading chunk') ||
+        error?.message?.includes('ChunkLoadError');
+
+      if (isChunkLoadError) {
+        const lastReload = sessionStorage.getItem('chunk_reload_retry');
+        const now = Date.now();
+        // Prevent infinite loops: reload if not reloaded within 10 seconds
+        if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+          sessionStorage.setItem('chunk_reload_retry', now.toString());
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+    window.addEventListener('unhandledrejection', handleChunkError);
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(err => console.log('SW registration failed:', err));
       });
     }
+
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+      window.removeEventListener('unhandledrejection', handleChunkError);
+    };
   }, []);
 
   return (
     <FirebaseClientProvider>
       <ThemeManager>
         <SidebarProvider defaultOpen={false}>
-          <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden" dir="rtl">
+          <div className="flex min-h-svh w-full bg-background flex-col relative overflow-x-hidden fahimt-protected" dir="rtl">
+            <ScreenshotGuard />
             <Header />
             <div className="flex flex-1 w-full">
               {/* القائمة الجانبية تم استرجاعها هنا */}

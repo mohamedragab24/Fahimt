@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.Fahmani",
+      "sha256_cert_fingerprints": [
+        "86:84:EC:33:A1:0B:B6:DE:21:2C:05:83:3C:6F:03:C3:59:73:2B:70",
+        "90:B2:F9:CF:44:11:30:F0:F3:04:FE:9C:B2:59:FB:0B:B1:A8:D2:5A:01:CE:4E:1D:C8:16:FA:F7:E5:B3:21:FA"
+      ]
+    }
+  }
+]

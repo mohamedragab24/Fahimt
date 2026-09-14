@@ -37,3 +37,53 @@ export interface Transaction {
   date: string;
   status: 'completed' | 'pending' | 'failed';
 }
+
+export interface CourseLesson {
+  id: string;
+  title: string;
+  description?: string;
+  videoUrl: string; // Internal protected streaming URL or embedded video
+  durationMinutes: number;
+  order: number;
+  isFreePreview?: boolean;
+  videoFileName?: string;
+  videoFileSize?: string;
+}
+
+export type CourseStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  coverUrl: string;
+  price: number;
+  features: string[];
+  lessons: CourseLesson[];
+  instructorId: string;
+  instructorName: string;
+  instructorAvatar?: string;
+  status: CourseStatus; // حالة اعتماد الإدارة: قيد المراجعة / معتمد / مرفوض
+  rejectionReason?: string; // سبب الرفض اللي الإدارة بتكتبه للمفهم
+  isPaused?: boolean; // إيقاف مؤقت من الإدارة لكورس معتمد بالفعل
+  externalPlayerUrl?: string; // رابط المشغل الخارجي لباقي دروس الكورس (غير درس المعاينة)
+  category: string;
+  createdAt: string;
+  updatedAt?: string;
+  totalEnrollments?: number;
+  rating?: number;
+}
+
+export interface CourseEnrollment {
+  id: string;
+  courseId: string;
+  instructorId: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  enrolledAt: string;
+  amountPaid: number;
+  progressPercent: number;
+  completedLessonIds: string[];
+}
+

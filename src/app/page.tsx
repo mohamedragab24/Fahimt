@@ -77,12 +77,6 @@ export default function HomePage() {
   const [appealReason, setAppealReason] = useState("");
   const [isSendingAppeal, setIsSendingAppeal] = useState(false);
 
-  useEffect(() => {
-    if (!isProfileLoading && profile?.needsProfileCompletion) {
-      router.push("/profile");
-    }
-  }, [profile, isProfileLoading, router]);
-
   const handleSendAppeal = async () => {
     if (!appealReason.trim() || !firestore || !user) return;
     setIsSendingAppeal(true);
@@ -184,6 +178,7 @@ function LandingPage({ router, settings }: any) {
 
           <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
             <nav className="hidden lg:flex items-center gap-6 border-l border-zinc-100 pl-6">
+              <LandingNavLink href="/courses" icon={Layers} label="كورسات جاهزة" />
               <LandingNavLink href="/teachers" icon={GraduationCap} label="المُفهمين" />
               <LandingNavLink href="/portfolio" icon={Layout} label="أعمال المفهمين" />
               <LandingNavLink href="/browse" icon={Search} label="الاستفهامات" />
@@ -277,6 +272,63 @@ function LandingPage({ router, settings }: any) {
         </div>
       </section>
 
+      {/* قسم استعراض ميزة كورسات جاهزة المستقلة */}
+      <section className="bg-white py-24 px-6 border-t relative overflow-hidden">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 text-right">
+            <div className="space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-black text-sm">
+                <Layers size={16} /> ميزة مستقلة وجديدة
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-zinc-900 leading-tight">
+                كورسات جاهزة ومسجلة
+              </h2>
+              <p className="text-xl text-zinc-500 font-bold leading-relaxed">
+                اشترك وشاهد الكورس مباشرة من داخل المنصة بدون انتظار وبأعلى درجات الأمان ومكافحة التسريب وحماية حقوق المفهمين.
+              </p>
+            </div>
+
+            <Button asChild className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl px-8 h-14 text-lg shadow-xl shrink-0 gap-2">
+              <Link href="/courses">
+                تصفح جميع الكورسات <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="rounded-[2.5rem] border-2 bg-zinc-50/50 p-8 space-y-4 text-right hover:border-primary/30 transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black">
+                <PlayCircle size={28} />
+              </div>
+              <h4 className="text-2xl font-black text-zinc-800">مشاهدة فورية داخل المنصة</h4>
+              <p className="text-base text-zinc-600 font-bold leading-relaxed">
+                بمجرد إتمام الدفع، يظهر لك الكورس مباشرة وتبدأ المشاهدة دون الحاجة لتحميل ملفات الفيديو الكبيرة.
+              </p>
+            </Card>
+
+            <Card className="rounded-[2.5rem] border-2 bg-zinc-50/50 p-8 space-y-4 text-right hover:border-primary/30 transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                <ShieldCheck size={28} />
+              </div>
+              <h4 className="text-2xl font-black text-zinc-800">حماية فائقة للمحتوى</h4>
+              <p className="text-base text-zinc-600 font-bold leading-relaxed">
+                تقنيات ذكية تمنع تصوير وتسجيل الشاشة وتحميل الفيديو المباشر، مع علامة مائية ديناميكية بهوية المشاهد.
+              </p>
+            </Card>
+
+            <Card className="rounded-[2.5rem] border-2 bg-zinc-50/50 p-8 space-y-4 text-right hover:border-primary/30 transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black">
+                <BadgeCent size={28} />
+              </div>
+              <h4 className="text-2xl font-black text-zinc-800">للمفهمين: اربح من خبرتك</h4>
+              <p className="text-base text-zinc-600 font-bold leading-relaxed">
+                ارفع دوراتك، حدد أسعارك، وتابع أرباحك وقوائم المشتركين ومعدلات الإنجاز بكل شفافية وسهولة.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <section className="bg-zinc-50 py-24 px-6 border-t">
         <div className="max-w-7xl mx-auto space-y-20">
           <div className="text-center">
@@ -314,23 +366,32 @@ function MustafhemView({ profile, router }: any) {
 
   return (
     <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="rounded-[2.5rem] p-10 bg-primary text-white space-y-6 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/create-request')}>
-          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center"><Plus size={32} /></div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black">عندك سؤال؟</h2>
-            <p className="text-primary-foreground/80 font-bold text-lg">اطرح استفهامك الآن واحصل على شرح فوري.</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="rounded-[2.5rem] p-8 bg-primary text-white space-y-4 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/create-request')}>
+          <div className="bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center"><Plus size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black">عندك سؤال؟</h2>
+            <p className="text-primary-foreground/80 font-bold text-sm">اطرح استفهامك واحصل على شرح فوري.</p>
           </div>
-          <Button className="bg-white text-primary hover:bg-zinc-100 font-black rounded-xl h-14 text-lg w-full">طلب استفهام جديد</Button>
+          <Button className="bg-white text-primary hover:bg-zinc-100 font-black rounded-xl h-12 text-sm w-full">طلب استفهام جديد</Button>
         </Card>
 
-        <Card className="rounded-[2.5rem] p-10 border-2 space-y-6 hover:border-primary/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
-          <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center text-primary"><Search size={32} /></div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black text-zinc-800">تصفح المفهمين</h2>
-            <p className="text-muted-foreground font-bold text-lg">استكشف نخبة الخبراء الموثقين في كافة التخصصات.</p>
+        <Card className="rounded-[2.5rem] p-8 border-2 bg-white space-y-4 hover:border-primary/20 transition-all cursor-pointer" onClick={() => router.push('/courses')}>
+          <div className="bg-emerald-50 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center"><Layers size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-zinc-800">كورسات جاهزة</h2>
+            <p className="text-muted-foreground font-bold text-sm">تصفح الكورسات المسجلة وابدأ المشاهدة المحمية.</p>
           </div>
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 font-black rounded-xl h-14 text-lg w-full">استكشاف الخبراء</Button>
+          <Button variant="outline" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50 font-black rounded-xl h-12 text-sm w-full">استعراض الكورسات</Button>
+        </Card>
+
+        <Card className="rounded-[2.5rem] p-8 border-2 bg-white space-y-4 hover:border-primary/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
+          <div className="bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center text-primary"><Search size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-zinc-800">تصفح المفهمين</h2>
+            <p className="text-muted-foreground font-bold text-sm">استكشف نخبة الخبراء الموثقين في كافة التخصصات.</p>
+          </div>
+          <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 font-black rounded-xl h-12 text-sm w-full">استكشاف الخبراء</Button>
         </Card>
       </div>
 
@@ -363,23 +424,32 @@ function MufhemView({ profile, router }: any) {
 
   return (
     <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="rounded-[2.5rem] p-10 bg-accent text-white space-y-6 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/portfolio/add')}>
-          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center"><Layout size={32} /></div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black">أضف لعملك</h2>
-            <p className="text-accent-foreground/80 font-bold text-lg">انشر نماذج من شرحك لزيادة ثقة الطلاب بك.</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="rounded-[2.5rem] p-8 bg-accent text-white space-y-4 shadow-xl hover:scale-[1.02] transition-all cursor-pointer" onClick={() => router.push('/portfolio/add')}>
+          <div className="bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center"><Layout size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black">أضف لعملك</h2>
+            <p className="text-accent-foreground/80 font-bold text-sm">انشر نماذج من شرحك لزيادة ثقة الطلاب بك.</p>
           </div>
-          <Button className="bg-white text-accent hover:bg-zinc-100 font-black rounded-xl h-14 text-lg w-full">إضافة عمل للمعرض</Button>
+          <Button className="bg-white text-accent hover:bg-zinc-100 font-black rounded-xl h-12 text-sm w-full">إضافة عمل للمعرض</Button>
         </Card>
 
-        <Card className="rounded-[2.5rem] p-10 border-2 space-y-6 hover:border-accent/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
-          <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center text-accent"><Zap size={32} /></div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black text-zinc-800">فرص التفهيم</h2>
-            <p className="text-muted-foreground font-bold text-lg">تصفح طلبات الطلاب وقدم عروضك الآن.</p>
+        <Card className="rounded-[2.5rem] p-8 border-2 bg-white space-y-4 hover:border-accent/20 transition-all cursor-pointer" onClick={() => router.push('/courses')}>
+          <div className="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center"><Layers size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-zinc-800">كورسات جاهزة</h2>
+            <p className="text-muted-foreground font-bold text-sm">أنشئ كورساً، ارفع الدروس، وتابع مبيعاتك.</p>
           </div>
-          <Button variant="outline" className="border-accent text-accent hover:bg-accent/5 font-black rounded-xl h-14 text-lg w-full">تصفح الاستفهامات</Button>
+          <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 font-black rounded-xl h-12 text-sm w-full">إدارة كورساتي</Button>
+        </Card>
+
+        <Card className="rounded-[2.5rem] p-8 border-2 bg-white space-y-4 hover:border-accent/20 transition-all cursor-pointer" onClick={() => router.push('/browse')}>
+          <div className="bg-accent/10 w-14 h-14 rounded-2xl flex items-center justify-center text-accent"><Zap size={28} /></div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-zinc-800">فرص التفهيم</h2>
+            <p className="text-muted-foreground font-bold text-sm">تصفح طلبات الطلاب وقدم عروضك الآن.</p>
+          </div>
+          <Button variant="outline" className="border-accent text-accent hover:bg-accent/5 font-black rounded-xl h-12 text-sm w-full">تصفح الاستفهامات</Button>
         </Card>
       </div>
 
