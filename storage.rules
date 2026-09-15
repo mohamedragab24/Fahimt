@@ -1,29 +1,12 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // فيديوهات معاينة الكورسات — يرفعها المُفهم صاحب الكورس بس، وأي حد يقدر يشاهدها
-    match /course-previews/{instructorId}/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null
-                    && request.auth.uid == instructorId
-                    && request.resource.size < 300 * 1024 * 1024
-                    && request.resource.contentType.matches('video/.*');
-    }
-
-    // صور غلاف الكورسات
-    match /course-covers/{instructorId}/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null
-                    && request.auth.uid == instructorId
-                    && request.resource.size < 10 * 1024 * 1024
-                    && request.resource.contentType.matches('image/.*');
-    }
-
-    // باقي الملفات: افتراضيًا ممنوعة إلا لو مسجّل دخول (حماية أساسية)
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true; }
+    function ownsCourse(courseId) { return signedIn() && firestore.get(/databases/(default)/documents/courses/$(courseId)).data.instructorId == request.auth.uid; }
+    match /courses/{courseId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if admin() || ownsCourse(courseId);
     }
   }
 }

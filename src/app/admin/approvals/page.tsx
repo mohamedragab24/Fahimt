@@ -29,9 +29,7 @@ import {
   IdCard,
   AlertCircle,
   FileCheck,
-  Target,
-  GraduationCap,
-  BookOpen
+  Target
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -46,7 +44,6 @@ export default function AdminApprovals() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedIstifham, setSelectedIstifham] = useState<any>(null);
   const [selectedVerification, setSelectedVerification] = useState<any>(null);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -73,15 +70,9 @@ export default function AdminApprovals() {
     return query(collection(firestore, "users"), where("verificationStatus", "==", "pending"), limit(500));
   }, [firestore, canReadApprovals]);
 
-  const coursesQuery = useMemoFirebase(() => {
-    if (!firestore || !canReadApprovals) return null;
-    return query(collection(firestore, "courses"), where("approvalStatus", "==", "pending"), limit(500));
-  }, [firestore, canReadApprovals]);
-
   const { data: profiles, isLoading: profilesLoading } = useCollection(profilesQuery);
   const { data: istifhams, isLoading: istifhamsLoading } = useCollection(istifhamsQuery);
   const { data: verifications, isLoading: verificationsLoading } = useCollection(identityQuery);
-  const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);
 
   const handleApproveProfile = (u: any) => {
     if (!firestore) return;
@@ -193,48 +184,6 @@ export default function AdminApprovals() {
     setSelectedVerification(null);
   };
 
-  const handleApproveCourse = (course: any) => {
-    if (!firestore) return;
-    updateDocumentNonBlocking(doc(firestore, "courses", course.id), {
-      approvalStatus: "approved",
-      isPublished: true,
-      approvedAt: new Date().toISOString(),
-    });
-    if (course.instructorId) {
-      addDocumentNonBlocking(collection(firestore, "notifications"), {
-        userId: course.instructorId,
-        title: "تم اعتماد الكورس",
-        message: `تم اعتماد كورسك "${course.title}" وأصبح متاحاً لجميع المستخدمين.`,
-        type: "course_approval",
-        read: false,
-        createdAt: new Date().toISOString(),
-      });
-    }
-    toast({ title: "تم اعتماد الكورس", description: "الكورس أصبح متاحاً لجميع المستخدمين." });
-    setSelectedCourse(null);
-  };
-
-  const handleRejectCourse = (course: any) => {
-    if (!firestore) return;
-    updateDocumentNonBlocking(doc(firestore, "courses", course.id), {
-      approvalStatus: "rejected",
-      isPublished: false,
-      rejectedAt: new Date().toISOString(),
-    });
-    if (course.instructorId) {
-      addDocumentNonBlocking(collection(firestore, "notifications"), {
-        userId: course.instructorId,
-        title: "تم رفض الكورس",
-        message: `تم رفض كورسك "${course.title}" من مركز الاعتماد. يمكنك تعديل المحتوى وإعادة رفعه للمراجعة.`,
-        type: "course_rejection",
-        read: false,
-        createdAt: new Date().toISOString(),
-      });
-    }
-    toast({ variant: "destructive", title: "تم رفض الكورس", description: "تم إخفاء الكورس وإبلاغ المُفهم." });
-    setSelectedCourse(null);
-  };
-
   const handleRejectIdentity = (u: any) => {
     if (!firestore) return;
     const uRef = doc(firestore, "users", u.id);
@@ -269,7 +218,7 @@ export default function AdminApprovals() {
       </div>
 
       <Tabs defaultValue="profiles" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-16 p-1 bg-muted rounded-2xl mb-8">
+        <TabsList className="grid w-full grid-cols-3 h-16 p-1 bg-muted rounded-2xl mb-8">
           <TabsTrigger value="profiles" className="rounded-xl text-lg font-bold">
             <ImageIcon className="ml-2 h-5 w-5" /> الصور ({profiles?.length || 0})
           </TabsTrigger>
@@ -278,9 +227,6 @@ export default function AdminApprovals() {
           </TabsTrigger>
           <TabsTrigger value="identity" className="rounded-xl text-lg font-bold">
             <IdCard className="ml-2 h-5 w-5" /> توثيق الهوية ({verifications?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="courses" className="rounded-xl text-lg font-bold">
-            <GraduationCap className="ml-2 h-5 w-5" /> الكورسات ({courses?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -341,40 +287,6 @@ export default function AdminApprovals() {
           </div>
         </TabsContent>
 
-        <TabsContent value="courses">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {coursesLoading ? (
-              <p className="col-span-full text-center font-bold animate-pulse">جاري تحميل الكورسات المعلقة...</p>
-            ) : courses?.map((course) => (
-              <Card key={course.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border-2 bg-white">
-                <CardHeader className="bg-primary/5 p-6 text-right">
-                  <div className="flex items-center justify-between gap-3">
-                    <Badge className="bg-orange-100 text-orange-700 border-none font-black">قيد الاعتماد</Badge>
-                    <CardTitle className="font-black text-xl">{course.title}</CardTitle>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-mono mt-2 break-all">{course.courseUrl || `https://fahmt-jonh.vercel.app/courses/${course.id}`}</p>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4 text-right">
-                  {course.coverUrl && <img src={course.coverUrl} alt={course.title} className="w-full aspect-video object-cover rounded-2xl" />}
-                  <p className="font-bold text-zinc-600 line-clamp-3">{course.description}</p>
-                  <div className="grid grid-cols-2 gap-3 text-sm font-black">
-                    <div className="p-3 rounded-xl bg-zinc-50">المُفهم: {course.instructorName || "—"}</div>
-                    <div className="p-3 rounded-xl bg-zinc-50">السعر: {course.price || 0} ج.م</div>
-                    <div className="p-3 rounded-xl bg-zinc-50">الدروس: {Array.isArray(course.lessons) ? course.lessons.length : 0}</div>
-                    <div className="p-3 rounded-xl bg-zinc-50">الرقم: {course.id}</div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <Button variant="outline" onClick={() => setSelectedCourse(course)} className="rounded-xl font-black">التفاصيل</Button>
-                    <Button onClick={() => handleApproveCourse(course)} className="bg-green-600 hover:bg-green-700 rounded-xl font-black text-white">اعتماد</Button>
-                    <Button onClick={() => handleRejectCourse(course)} variant="destructive" className="rounded-xl font-black">رفض</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {!coursesLoading && courses?.length === 0 && <NoData message="لا توجد كورسات بانتظار الاعتماد." />}
-          </div>
-        </TabsContent>
-
         <TabsContent value="identity">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {verificationsLoading ? <p className="col-span-full text-center font-bold animate-pulse">جاري تحميل طلبات التوثيق...</p> :
@@ -409,29 +321,6 @@ export default function AdminApprovals() {
           </div>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={!!selectedCourse} onOpenChange={() => setSelectedCourse(null)}>
-        <DialogContent className="sm:max-w-[700px] rounded-[2.5rem]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right text-3xl font-black flex items-center gap-3">
-              <BookOpen className="text-primary" /> مراجعة الكورس
-            </DialogTitle>
-          </DialogHeader>
-          {selectedCourse && (
-            <div className="space-y-5 py-4 text-right">
-              <h3 className="text-2xl font-black">{selectedCourse.title}</h3>
-              <p className="font-bold text-zinc-600">{selectedCourse.description}</p>
-              <div className="p-4 rounded-2xl bg-zinc-50 font-mono text-sm break-all">
-                {selectedCourse.courseUrl || `https://fahmt-jonh.vercel.app/courses/${selectedCourse.id}`}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button onClick={() => handleApproveCourse(selectedCourse)} className="h-14 rounded-xl bg-green-600 text-white font-black">اعتماد ونشر</Button>
-                <Button onClick={() => handleRejectCourse(selectedCourse)} variant="destructive" className="h-14 rounded-xl font-black">رفض</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* مودال مراجعة الصورة الشخصية */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>

@@ -1,53 +1,41 @@
-
-export type UserRole = 'teacher' | 'student';
+export type UserRole = 'teacher' | 'student' | 'mufhem' | 'mustafhem';
 
 export interface UserProfile {
   id: string;
-  fullName: string;
+  fullName?: string;
+  name?: string;
   email: string;
-  phone: string;
-  birthDate: string;
+  phone?: string;
+  birthDate?: string;
   role: UserRole;
-  avatarUrl: string;
-  specialization?: string;
-  balance: number;
+  avatarUrl?: string;
+  balance?: number;
+  [key: string]: any;
 }
 
-export type RequestStatus = 'pending' | 'accepted' | 'completed' | 'canceled';
-
-export interface LearningRequest {
-  id: string;
-  title: string;
-  description: string;
-  amount: number;
-  meetingTime: string;
-  category: string;
-  status: RequestStatus;
-  studentId: string;
-  studentName: string;
-  teacherId?: string;
-  createdAt: string;
-}
-
-export interface Transaction {
-  id: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal' | 'payment' | 'earning';
-  description: string;
-  date: string;
-  status: 'completed' | 'pending' | 'failed';
-}
+export type CourseStatus = 'pending' | 'published' | 'rejected' | 'withdrawn';
 
 export interface CourseLesson {
   id: string;
   title: string;
   description?: string;
-  videoUrl: string; // Internal protected streaming URL or embedded video
-  durationMinutes: number;
-  order: number;
-  isFreePreview?: boolean;
+  videoUrl?: string;
+  storagePath?: string;
   videoFileName?: string;
   videoFileSize?: string;
+  durationMinutes: number;
+  durationSeconds?: number;
+  order: number;
+  lessonNumber: number;
+  isFreePreview: boolean;
+}
+
+export interface CourseReview {
+  reviewerId: string;
+  reviewerName: string;
+  reviewedAt: any;
+  decision: 'approved' | 'rejected' | 'withdrawn';
+  rejectionReason?: string;
 }
 
 export interface Course {
@@ -55,20 +43,24 @@ export interface Course {
   title: string;
   description: string;
   coverUrl: string;
+  coverStoragePath?: string;
+  coverFileName?: string;
   price: number;
+  promotionalPrice?: number | null;
   features: string[];
   lessons: CourseLesson[];
   instructorId: string;
   instructorName: string;
   instructorAvatar?: string;
+  status: CourseStatus;
   isPublished: boolean;
-  /** Course must be approved by an admin before appearing publicly. */
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
-  approvedAt?: string;
-  courseUrl?: string;
   category: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: any;
+  updatedAt?: any;
+  submittedAt?: any;
+  reviewedAt?: any;
+  reviewedBy?: string;
+  rejectionReason?: string;
   totalEnrollments?: number;
   rating?: number;
 }
@@ -79,9 +71,8 @@ export interface CourseEnrollment {
   studentId: string;
   studentName: string;
   studentEmail: string;
-  enrolledAt: string;
+  enrolledAt: any;
   amountPaid: number;
   progressPercent: number;
   completedLessonIds: string[];
 }
-
